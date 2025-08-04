@@ -1,0 +1,55 @@
+[project]
+name = "jiratui"
+version = "0.1.0"
+description = "A TUI for interacting with Atlassian's Jira from your terminal."
+readme = "README.md"
+requires-python = ">=3.13"
+
+authors = [
+  {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
+]
+maintainers = [
+  {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
+]
+keywords = ["tui", "jira"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: MacOS X",
+    "Environment :: X11 Applications",
+    "Framework :: AsyncIO",
+    "Framework :: Pydantic :: 2",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Terminals",
+]
+[project.urls]
+Homepage = ""
+Documentation = ""
+Repository = ""
+Issues = ""
+Changelog = "/blob/master/CHANGELOG.md"
+
+dependencies = [
+    "click>=8.2.1",
+    "httpx>=0.28.1",
+    "requests>=2.32.4",
+    "textual[syntax]>=5.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "textual-dev>=1.7.0",
+]
+
+[project.scripts]
+jtuicli = "jiratui.cli:cli"
