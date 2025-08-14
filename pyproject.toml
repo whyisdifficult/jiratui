@@ -11,7 +11,7 @@ authors = [
 maintainers = [
   {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
 ]
-keywords = ["tui", "jira"]
+keywords = ["tui", "jira", "cli"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -20,6 +20,7 @@ classifiers = [
     "Framework :: AsyncIO",
     "Framework :: Pydantic :: 2",
     "Framework :: Pytest",
+    "Framework :: Textual",
     "Intended Audience :: Developers",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
@@ -30,6 +31,17 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Terminals",
 ]
+dependencies = [
+    "httpx>=0.28.1",
+    "click>=8.2.1",
+    "requests>=2.32.4",
+    "textual[syntax]>=5.2.0",
+    "pydantic-settings[yaml]>=2.10.1",
+    "tonalite>=1.8.4",
+    "pre-commit>=4.2.0",
+    "python-json-logger>=3.3.0",
+]
+
 [project.urls]
 Homepage = ""
 Documentation = ""
@@ -37,19 +49,26 @@ Repository = ""
 Issues = ""
 Changelog = "/blob/master/CHANGELOG.md"
 
-dependencies = [
-    "click>=8.2.1",
-    "httpx>=0.28.1",
-    "requests>=2.32.4",
-    "textual[syntax]>=5.2.0",
-]
-
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "respx>=0.22.0",
     "textual-dev>=1.7.0",
+]
+lint = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.7",
 ]
 
 [project.scripts]
-jtuicli = "jiratui.cli:cli"
+jtuicli = "src.cli:jiratuicli"
+
+[build-system]
+requires = ["uv_build>=0.8.10,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""

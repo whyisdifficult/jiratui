@@ -1,0 +1,14 @@
+[
+    {
+        "id": "3",
+        "name": "Task",
+        "statuses": [
+            {
+                "description": "The issue is currently being worked on.",
+                "id": "10000",
+                "name": "In Progress"
+            }
+        ],
+        "subtask": false
+    }
+]

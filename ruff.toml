@@ -1,0 +1,57 @@
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "venv",
+]
+
+line-length = 100
+target-version = "py313"
+respect-gitignore = true
+
+[lint]
+ignore = ["E501", "A003", "A005"]
+select = [
+  "E",   # pycodestyle
+  "F",   # Pyflakes
+  "I",   # Isort
+  "A",   # flake8-builtin
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "T20", # flake8-print
+  # "D",   # docstrings
+]
+fixable = ["ALL"]
+
+[lint.isort]
+force-sort-within-sections = true
+extra-standard-library = ["dataclasses"]
+
+[lint.flake8-quotes]
+docstring-quotes = "double"
+
+[format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 100
+
+[lint.pydocstyle]
+convention = "google"

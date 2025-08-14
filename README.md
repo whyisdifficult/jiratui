@@ -1,2 +1,3 @@
-# jiratui
-A TUI for interacting with Atlassian Jira
+# JiraTUI
+
+A TUI for interacting with Atlassian's Jira

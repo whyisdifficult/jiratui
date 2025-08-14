@@ -1,0 +1,799 @@
+.jira-selector {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+}
+
+.rule-50 {
+    width: 100%;
+    content-align: right middle;
+    margin: 1 50 1 50;
+}
+
+/* Application - Layout */
+
+#main-container {
+    height: auto;
+}
+
+#run-button {
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+#search_results_container {
+    border: round $primary-lighten-3;
+    background: transparent;
+}
+
+#tabs {
+    width: 1fr;
+}
+
+.bottom-search-bar {
+    grid-size: 6 1;
+    grid-columns: 15% 12% 12% 15% 36% 10%;
+}
+
+.cols-3 {
+    column-span: 3;
+}
+
+.cols-2 {
+    column-span: 2;
+}
+
+/* Search Results */
+
+#search_results {
+    background: transparent;
+}
+
+/* Search Filters */
+
+#jira-issue-types-selector {
+    width: 20%;
+}
+
+#jira-issue-status-selector {
+    width: 20%;
+}
+
+#jira-users-selector {
+    width: 30%;
+}
+
+.work-item-key {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 25;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.input-date {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 18;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* JQL Expression */
+
+#input_search_term {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Tab Pane - Subtasks */
+
+IssueChildWorkItemsWidget {
+    hatch: right $success 20%;
+}
+
+/* Tab Pane - Remote Links */
+
+IssueRemoteLinksWidget {
+    hatch: right $success 20%;
+}
+
+/* Tab Pane - Attachments */
+
+IssueAttachmentsWidget {
+    hatch: right $success 20%;
+}
+
+/* Tab Pane - Related Work Items */
+
+RelatedIssuesWidget {
+    hatch: right $success 20%;
+}
+
+/* Tab Pane - Comments */
+
+IssueCommentsWidget {
+    hatch: right $success 20%;
+}
+
+/* Tab Pane - Description */
+
+.summary-description-container {
+    border: solid $primary;
+}
+
+/* margin: top right bottom left*/
+.summary-description-rule {
+    margin: 1 0 0 0;
+}
+
+IssueDescriptionWidget {
+    background: transparent;
+}
+
+/*  Work Item Details */
+
+#issue-details-form {
+    layout: grid;
+    grid-size: 3 9;
+    grid-rows: auto;
+}
+
+#jira-users-selector-edit {
+    border: round $accent;
+    padding: 0 1;
+}
+
+#jira-issue-status-selector-edit {
+    border: round $accent;
+    padding: 0 1;
+}
+
+.issue_details_input_field {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+IssueParentField {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+    &.issue_key {
+        width: 15;
+    }
+}
+
+IssueDetailsPrioritySelection {
+    border: round $accent;
+    padding: 0 1;
+}
+
+WorkItemDetailsDueDate {
+    box_sizing: content-box;
+    height: 1;
+    border: round $accent;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Help Screen */
+
+HelpScreen {
+    align: center middle;
+}
+
+HelpScreen > VerticalScroll {
+    width: 60%;
+    height: 80%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+
+/* Quit Screen */
+
+QuitScreen {
+    align: center middle;
+}
+QuitScreen > Grid {
+    grid-size: 2;
+    grid-gutter: 1 2;
+    grid-rows: 1fr 3;
+    padding: 0 1;
+    width: 60;
+    height: 11;
+    border: thick $background 80%;
+    background: $surface;
+}
+
+/* Modal Screens - Buttons and Question Label */
+
+#question {
+    column-span: 2;
+    height: 1fr;
+    width: 1fr;
+    content-align: center middle;
+}
+
+#button-quit {
+    width: 100%;
+}
+
+#button-cancel {
+    width: 100%;
+}
+
+/* Work Item (read-only) Details Screen */
+
+WorkItemReadOnlyDetailsScreen {
+    align: center middle;
+}
+
+WorkItemReadOnlyDetailsScreen > VerticalScroll {
+    width: 70%;
+    height: 85%;
+    border: round $foreground;
+    background: $background 60%;
+    padding: 0 1;
+}
+
+#work-item-readonly-details-dt {
+    background: transparent;
+}
+
+/* New Comment Screen */
+
+AddCommentScreen {
+    align: center middle;
+}
+AddCommentScreen > Vertical {
+    width: 50%;
+    height: 40%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+#add-comment-button-save {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+#add-comment-button-quit {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.add-comment-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+/* Add Remote Link Screen */
+
+AddRemoteLinkScreen {
+    align: center middle;
+}
+AddRemoteLinkScreen > Vertical {
+    width: 50%;
+    height: auto;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+#add-remote-link-button-save {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+#add-remote-link-button-quit {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.add-remote-link-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+RemoteLinkNameInputWidget {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+RemoteLinkURLInputWidget {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Add Work Item Relation */
+
+AddWorkItemRelationshipScreen {
+    align: center middle;
+}
+AddWorkItemRelationshipScreen > Vertical {
+    width: 50%;
+    height: auto;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+#add-link-button-save {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+#add-link-button-quit {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.issue-linking-grid {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+}
+
+.issue-linking-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+IssueLinkTypeSelector {
+    width: auto;
+    border: round $primary-lighten-3;
+    padding: 0 1;
+}
+
+LinkedWorkItemInputWidget {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Create Work Item Screen */
+
+#add-work-item-form {
+    width: 100%;
+}
+
+AddWorkItemScreen {
+    align: center middle;
+}
+AddWorkItemScreen > Vertical {
+    width: 70%;
+    height: auto;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+#add-work-item-button-save {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+#add-work-item-button-quit {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.add-work-item-fields-grid {
+    grid-size: 2 2;
+    grid-columns: 50% 50%;
+}
+
+.add-work-item-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+.create-work-item-description {
+    box_sizing: content-box;
+    height: 20%;
+    width: 80%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-parent-input-field {
+    box_sizing: content-box;
+    height: 1;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-input-date {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-generic-input-field {
+    box_sizing: content-box;
+    height: 1;
+    width: 60%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-generic-selector {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+}
+
+CreateWorkItemIssueSummaryField {
+    box_sizing: content-box;
+    height: 1;
+    width: 80%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+CreateWorkItemReporterSelectionInput {
+    border: round red;
+    padding: 0 1;
+}
+
+CreateWorkItemAssigneeSelectionInput {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+}
+
+CreateWorkItemIssueTypeSelectionInput {
+    border: round red;
+    padding: 0 1;
+}
+
+CreateWorkItemProjectSelectionInput {
+    border: round red;
+    padding: 0 1;
+}
+
+/* Confirmation Screen */
+
+ConfirmationScreen {
+    align: center middle;
+}
+ConfirmationScreen > Grid {
+    grid-size: 2;
+    grid-gutter: 1 2;
+    grid-rows: 1fr 3;
+    padding: 0 1;
+    width: 60;
+    height: 11;
+    border: thick $background 80%;
+    background: $surface;
+}
+
+#confirmation-question {
+    column-span: 2;
+    height: 1fr;
+    width: 1fr;
+    content-align: center middle;
+}
+
+#confirmation-button-accept {
+    width: 100%;
+}
+
+#confirmation-button-cancel {
+    width: 100%;
+}
+
+/* New Attachment Screen */
+
+AddAttachmentScreen {
+    align: center middle;
+}
+AddAttachmentScreen > Vertical {
+    width: 70%;
+    height: auto;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+
+#attachment-directory-tree {
+    background: $background 60%;
+    hatch: right $success 20%;
+    border: round $primary;
+}
+
+.add-attachment-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+#add-attachment-button-save {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+#add-attachment-button-quit {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+FileNameInputWidget {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 90%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Server Information Screen */
+
+ServerInfoScreen {
+    align: center middle;
+}
+
+ServerInfoScreen > VerticalScroll {
+    width: 50%;
+    height: auto;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+ServerInfoScreen > VerticalScroll > DataTable {
+    background: transparent;
+}
+
+/* Subtasks */
+
+ChildWorkItemCollapsible {
+    border: round $accent;
+    background: transparent;
+}
+
+/* Related Work Items */
+
+RelatedIssueCollapsible {
+    border: round $primary;
+    background: transparent;
+    padding: 0 0 0 0;
+    &.lowes-priority {
+        border: round grey;
+    }
+    &.low-priority {
+        border: round yellow;
+    }
+    &.medium-priority {
+        border: round purple;
+    }
+    &.high-priority {
+        border: round orange;
+    }
+    &.highest-priority {
+        border: round red;
+    }
+}
+
+.related-work-item-priority {
+    content-align: right middle;
+    margin: 0 1 0 0;
+}
+
+/* Comments */
+
+CommentCollapsible {
+    border: round $accent;
+    background: transparent;
+}
+
+/* Remote Links */
+
+IssueRemoteLinkCollapsible {
+    border: round $accent;
+    background: transparent;
+}
+
+/* Work Log Screen */
+
+WorkItemWorkLogScreen {
+    align: center middle;
+}
+
+WorkItemWorkLogScreen > Vertical {
+    width: 50%;
+    height: 70%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+
+WorkLogCollapsible {
+    border: round $accent;
+    background: transparent;
+}
+
+/* JQL Editor */
+
+JQLEditorScreen {
+    align: center middle;
+}
+
+JQLEditorScreen > Vertical {
+    width: 60%;
+    height: 70%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+
+.jql-expression-editor {
+    box_sizing: border-box;
+    border: round $primary-lighten-3;
+    margin: 0 0 1 0;
+    width: 100%;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}

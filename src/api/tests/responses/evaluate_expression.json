@@ -1,0 +1,29 @@
+{
+  "value": "The expression's result. This value can be any JSON, not necessarily a String",
+  "meta": {
+    "complexity": {
+      "steps": {
+        "value": 1,
+        "limit": 10000
+      },
+      "expensiveOperations": {
+        "value": 3,
+        "limit": 10
+      },
+      "beans": {
+        "value": 0,
+        "limit": 1000
+      },
+      "primitiveValues": {
+        "value": 1,
+        "limit": 10000
+      }
+    },
+    "issues": {
+      "jql": {
+        "nextPageToken": "EgQIlMIC",
+        "isLast": false
+      }
+    }
+  }
+}
