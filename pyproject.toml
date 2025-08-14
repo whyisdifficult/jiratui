@@ -63,12 +63,8 @@ lint = [
 ]
 
 [project.scripts]
-jtuicli = "src.cli:jiratuicli"
+jtuicli = "jiratui.cli:jiratuicli"
 
 [build-system]
 requires = ["uv_build>=0.8.10,<0.9.0"]
 build-backend = "uv_build"
-
-[tool.uv.build-backend]
-module-name = "src"
-module-root = ""
