@@ -3,7 +3,7 @@ name = "jiratui"
 version = "0.1.0"
 description = "A TUI for interacting with Atlassian's Jira from your terminal."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10,<3.14"
 
 authors = [
   {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
@@ -32,14 +32,13 @@ classifiers = [
     "Topic :: Terminals",
 ]
 dependencies = [
-    "httpx>=0.28.1",
     "click>=8.2.1",
-    "requests>=2.32.4",
-    "textual[syntax]>=5.2.0",
+    "httpx>=0.28.1",
+    "pre-commit>=4.3.0",
     "pydantic-settings[yaml]>=2.10.1",
-    "tonalite>=1.8.4",
-    "pre-commit>=4.2.0",
     "python-json-logger>=3.3.0",
+    "textual[syntax]>=5.3.0",
+    "tonalite>=1.8.4",
 ]
 
 [project.urls]
@@ -51,15 +50,17 @@ Changelog = "/blob/master/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "respx>=0.22.0",
     "textual-dev>=1.7.0",
 ]
 lint = [
     "mypy>=1.17.1",
-    "ruff>=0.12.7",
+    "ruff>=0.12.9",
+]
+test = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "respx>=0.22.0",
 ]
 
 [project.scripts]

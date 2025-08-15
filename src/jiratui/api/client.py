@@ -1,7 +1,6 @@
 from typing import Callable
 
 import httpx
-from requests.auth import HTTPBasicAuth
 
 from src.jiratui.exceptions import (
     AuthorizationException,
@@ -19,7 +18,7 @@ class JiraClient:
     def __init__(self, base_url: str, api_username: str, api_token: str):
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.Client = httpx.Client(timeout=None)
-        self.authentication = HTTPBasicAuth(api_username, api_token)
+        self.authentication = httpx.BasicAuth(api_username, api_token)
 
     @staticmethod
     def set_headers(headers: dict | None = None) -> dict:
@@ -89,7 +88,7 @@ class AsyncJiraClient:
     def __init__(self, base_url: str, api_username: str, api_token: str):
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=None)
-        self.authentication = HTTPBasicAuth(api_username, api_token)
+        self.authentication = httpx.BasicAuth(api_username, api_token)
 
     @staticmethod
     def set_headers(headers: dict | None = None) -> dict:

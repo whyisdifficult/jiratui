@@ -10,7 +10,10 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from src.jiratui.constants import ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL, ISSUE_SEARCH_DEFAULT_MAX_RESULTS
+from src.jiratui.constants import (
+    ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL,
+    ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
+)
 
 
 class ApplicationConfiguration(BaseSettings):
@@ -98,7 +101,7 @@ class ApplicationConfiguration(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        config_file = Path('..')
+        config_file = Path('jiratui.yaml')
         if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
             config_file = Path(jira_tui_config_file).resolve()
 

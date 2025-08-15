@@ -2,7 +2,6 @@ from datetime import date
 import json
 
 import httpx
-from requests.auth import HTTPBasicAuth
 
 from src.jiratui.api.client import AsyncJiraClient, JiraClient
 from src.jiratui.api.utils import build_issue_search_jql
@@ -11,14 +10,15 @@ from src.jiratui.models import WorkItemsSearchOrderBy
 
 
 class JiraAPI:
-    """
-    Version: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+    """Implements methods to connect to the Jira REST API.
+
+    Supported version: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
     """
 
     API_PATH_PREFIX = '/rest/api/3/'
 
     def __init__(self, base_url: str, api_username: str, api_token: str):
-        self.authentication = HTTPBasicAuth(api_username, api_token)
+        self.authentication = httpx.BasicAuth(api_username, api_token)
         self.client = AsyncJiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,

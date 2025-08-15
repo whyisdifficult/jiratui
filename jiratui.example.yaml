@@ -1,0 +1,15 @@
+jira_api_base_url: 'https://<your-hostname>.atlassian.net'
+jira_base_url: 'https://<your-hostname>.atlassian.net'
+jira_user_group_id: '12345'
+jira_account_id: '098765'
+search_results_per_page: 65
+search_issues_default_day_interval: 15
+show_issue_web_links: True
+default_project_key_or_id: 'MY-PROJECT-KEY'
+ignore_users_without_email: True
+custom_field_id_sprint: 'customfield_<MY-PROJECT-SPRINT-FIELD-ID>'
+pre_defined_jql_expressions:
+  1:
+    label: "Work in the current sprint"
+    expression: 'sprint in openSprints()'
+jql_expression_id_for_work_items_search: 1
