@@ -804,12 +804,12 @@ async def test_evaluate_expression(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_evaluate_expression(jira_api: JiraAPI):
+async def test_evaluate_expression_with_parameters(jira_api: JiraAPI):
     # GIVEN
     route = respx.post(get_url_pattern('expression/evaluate'))
     route.mock(return_value=httpx.Response(200, json={}))
     # WHEN
-    result = await jira_api.evaluate_expression('user=bart', issue_key='Task-1', project_key='P1')
+    await jira_api.evaluate_expression('user=bart', issue_key='Task-1', project_key='P1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/expression/evaluate'
     assert json.loads(route.calls.last.request.content) == {
@@ -1455,7 +1455,7 @@ async def test_get_comments(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_get_comments(jira_api: JiraAPI):
+async def test_get_comments_with_parameters(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('issue/1/comment'))
     route.mock(return_value=httpx.Response(200, json={}))
