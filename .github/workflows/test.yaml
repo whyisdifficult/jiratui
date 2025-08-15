@@ -24,9 +24,9 @@ jobs:
     - run: uv python install
     - name: Install Dependencies
       run: uv sync --all-extras --dev
-    - name: Run Tests
-      run: |
-          uv run make test
     - name: Run Linter
       run: |
         uv run make lint
+    - name: Run Tests
+      run: |
+          uv run make test
