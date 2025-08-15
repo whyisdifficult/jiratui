@@ -23,7 +23,7 @@ jobs:
         enable-cache: true
     - run: uv python install
     - name: Install Dependencies
-      run: uv sync --all-extras --dev
+      run: uv sync --all-extras --group lint --group test
     - name: Run Linter
       run: |
         uv run make lint
