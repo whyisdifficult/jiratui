@@ -7,13 +7,13 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import RelatedJiraIssue, JiraIssue
-from src.jiratui.utils.urls import build_external_url_for_issue
-from src.jiratui.widgets.confirmation_screen import ConfirmationScreen
-from src.jiratui.widgets.constants import RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING
-from src.jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
-from src.jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import RelatedJiraIssue, JiraIssue
+from jiratui.utils.urls import build_external_url_for_issue
+from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.constants import RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING
+from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
+from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
 
 
 class RelatedIssueCollapsible(Collapsible):

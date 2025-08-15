@@ -5,9 +5,9 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Rule, Select, Static
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import LinkIssueType
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import LinkIssueType
+from jiratui.widgets.base import CustomTitle
 
 
 class LinkedWorkItemInputWidget(Input):

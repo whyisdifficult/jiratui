@@ -2,7 +2,7 @@ from typing import Callable
 
 import httpx
 
-from src.jiratui.exceptions import (
+from jiratui.exceptions import (
     AuthorizationException,
     PermissionException,
     ResourceNotFoundException,

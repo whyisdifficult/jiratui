@@ -6,9 +6,9 @@ from textual.containers import Container
 from textual.reactive import Reactive, reactive
 from textual.widgets import DataTable
 
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.models import JiraIssueSearchResponse
-from src.jiratui.utils.styling import get_style_for_work_item_type, get_style_for_work_item_status
+from jiratui.config import CONFIGURATION
+from jiratui.models import JiraIssueSearchResponse
+from jiratui.utils.styling import get_style_for_work_item_type, get_style_for_work_item_status
 
 
 class IssuesSearchResultsTable(DataTable):

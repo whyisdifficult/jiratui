@@ -6,10 +6,10 @@ from textual.containers import VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Static
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import IssueRemoteLink
-from src.jiratui.widgets.confirmation_screen import ConfirmationScreen
-from src.jiratui.widgets.remote_links.add import AddRemoteLinkScreen
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import IssueRemoteLink
+from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.remote_links.add import AddRemoteLinkScreen
 
 
 class IssueRemoteLinkCollapsible(Collapsible):

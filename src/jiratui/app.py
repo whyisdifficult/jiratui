@@ -4,13 +4,13 @@ from pythonjsonlogger.json import JsonFormatter
 from textual.app import App
 from textual.binding import Binding
 
-from src.jiratui.api_controller.controller import APIController, APIControllerResponse
-from src.jiratui.config import ApplicationConfiguration, CONFIGURATION
-from src.jiratui.constants import LOGGER_NAME
-from src.jiratui.models import JiraServerInfo
-from src.jiratui.widgets.quit import QuitScreen
-from src.jiratui.widgets.screens import MainScreen
-from src.jiratui.widgets.server_info import ServerInfoScreen
+from jiratui.api_controller.controller import APIControllerResponse, APIController
+from jiratui.config import ApplicationConfiguration, CONFIGURATION
+from jiratui.constants import LOGGER_NAME
+from jiratui.models import JiraServerInfo
+from jiratui.widgets.quit import QuitScreen
+from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.server_info import ServerInfoScreen
 
 
 class JiraApp(App):
@@ -65,7 +65,7 @@ class JiraApp(App):
         )
 
     async def action_help(self) -> None:
-        from src.jiratui.widgets.help import HelpScreen
+        from jiratui.widgets.help import HelpScreen
 
         # get the widget that is currently focused
         focused = self.focused

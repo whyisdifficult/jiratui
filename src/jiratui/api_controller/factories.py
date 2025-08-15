@@ -1,8 +1,8 @@
 from datetime import datetime
 import json
 
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.models import (
+from jiratui.config import CONFIGURATION
+from jiratui.models import (
     Attachment,
     IssueComment,
     IssuePriority,

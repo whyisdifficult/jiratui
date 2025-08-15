@@ -4,7 +4,7 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, TextArea
 
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.widgets.base import CustomTitle
 
 
 class AddCommentScreen(Screen[str]):

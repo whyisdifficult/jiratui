@@ -6,13 +6,13 @@ import click
 from pydantic import ValidationError
 from rich.console import Console
 
-from src.jiratui.app import JiraApp
-from src.jiratui.commands.handler import CommandHandler
-from src.jiratui.commands.render import JiraUserGroupRenderer, CLIExceptionRenderer, JiraUserRenderer, \
+from jiratui.app import JiraApp
+from jiratui.commands.handler import CommandHandler
+from jiratui.commands.render import JiraUserGroupRenderer, CLIExceptionRenderer, JiraUserRenderer, \
     JiraIssueCommentTextRenderer, JiraIssueCommentsRenderer, JiraIssueCommentRenderer, JiraIssueMetadataRenderer, \
     JiraIssueSearchRenderer
-from src.jiratui.exceptions import CLIException
-from src.jiratui.config import ApplicationConfiguration
+from jiratui.exceptions import CLIException
+from jiratui.config import ApplicationConfiguration
 console = Console()
 
 

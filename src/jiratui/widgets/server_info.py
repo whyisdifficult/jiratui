@@ -4,9 +4,9 @@ from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import DataTable
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import JiraServerInfo, JiraMyselfInfo
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import JiraServerInfo, JiraMyselfInfo
+from jiratui.widgets.base import CustomTitle
 
 
 class ServerInfoScreen(ModalScreen):

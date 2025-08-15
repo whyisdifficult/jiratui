@@ -2,8 +2,8 @@ from textual import on
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Select
 
-from src.jiratui.widgets.base import DateInput
-from src.jiratui.widgets.jql import JQLEditorScreen
+from jiratui.widgets.base import DateInput
+from jiratui.widgets.jql import JQLEditorScreen
 
 
 class ProjectSelectionInput(Select):

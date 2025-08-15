@@ -7,11 +7,11 @@ from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Rule
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import JiraIssueSearchResponse
-from src.jiratui.utils.adf2md.adf2md import adf2md
-from src.jiratui.widgets.base import CustomTitle
-from src.jiratui.widgets.summary import IssueDescriptionWidget
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import JiraIssueSearchResponse
+from jiratui.utils.adf2md.adf2md import adf2md
+from jiratui.widgets.base import CustomTitle
+from jiratui.widgets.summary import IssueDescriptionWidget
 
 
 class WorkItemReadOnlyDetailsScreen(ModalScreen):

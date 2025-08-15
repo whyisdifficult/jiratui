@@ -3,7 +3,7 @@ from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Markdown
 
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.widgets.base import CustomTitle
 
 
 class HelpScreen(ModalScreen):

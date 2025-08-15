@@ -2,44 +2,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.jiratui.api_controller.controller import APIController, APIControllerResponse
-from src.jiratui.app import JiraApp
-from src.jiratui.config import ApplicationConfiguration
-from src.jiratui.models import JiraServerInfo
-
-
-# TODO extract and reuse
-@pytest.fixture
-def config_for_testing() -> ApplicationConfiguration:
-    return MagicMock(
-        spec=ApplicationConfiguration(
-            jira_api_username='foo',
-            jira_api_token='12345',
-            jira_api_base_url='foo.bar',
-            jira_user_group_id='qwerty',
-            tui_title=None,
-            tui_title_include_jira_server_title=False,
-        )
-    )
-
-
-@pytest.fixture
-def api(config_for_testing) -> APIController:
-    return APIController(config_for_testing)
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.app import JiraApp
+from jiratui.models import JiraServerInfo
 
 
 @pytest.fixture()
-def app(config_for_testing, api) -> JiraApp:
+def app(config_for_testing, jira_api_controller) -> JiraApp:
     app = JiraApp(config_for_testing)
-    app.api = api
+    app.api = jira_api_controller
     app._setup_logging = MagicMock()
     return app
 
 
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title(
     search_projects_mock: AsyncMock,
@@ -55,10 +34,10 @@ async def test_application_title(
         assert pilot.app.title == 'Jira TUI'
 
 
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_with_custom_title(
     search_projects_mock: AsyncMock,
@@ -74,11 +53,11 @@ async def test_application_title_with_custom_title(
         assert pilot.app.title == 'Hello World!'
 
 
-@patch('src.widgets.screens.APIController.server_info')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.server_info')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_without_custom_title_with_server_info(
     search_projects_mock: AsyncMock,
@@ -111,11 +90,11 @@ async def test_application_title_without_custom_title_with_server_info(
         assert pilot.app.title == 'Jira TUI - my title'
 
 
-@patch('src.widgets.screens.APIController.server_info')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.server_info')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_with_custom_title_with_server_info(
     search_projects_mock: AsyncMock,

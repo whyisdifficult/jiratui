@@ -5,7 +5,7 @@ from textual.containers import Horizontal, ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DirectoryTree, Input, Rule, Static
 
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.widgets.base import CustomTitle
 
 
 class AddAttachmentScreen(Screen[str]):

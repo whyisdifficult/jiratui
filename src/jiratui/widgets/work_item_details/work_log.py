@@ -5,11 +5,11 @@ from textual.containers import Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Collapsible, Footer, Link, Markdown
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.models import JiraWorklog
-from src.jiratui.utils.adf2md.adf2md import adf2md
-from src.jiratui.utils.urls import build_external_url_for_work_log
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import JiraWorklog
+from jiratui.utils.adf2md.adf2md import adf2md
+from jiratui.utils.urls import build_external_url_for_work_log
+from jiratui.widgets.base import CustomTitle
 
 
 class WorkLogCollapsible(Collapsible):

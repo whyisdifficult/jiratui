@@ -6,11 +6,11 @@ from textual.containers import VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import DataTable
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.models import Attachment
-from src.jiratui.widgets.attachments.add import AddAttachmentScreen
-from src.jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.config import CONFIGURATION
+from jiratui.models import Attachment
+from jiratui.widgets.attachments.add import AddAttachmentScreen
+from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
 class IssueAttachmentsWidget(VerticalScroll):

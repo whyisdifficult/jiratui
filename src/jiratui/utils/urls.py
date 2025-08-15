@@ -1,4 +1,4 @@
-from src.jiratui.config import CONFIGURATION
+from jiratui.config import CONFIGURATION
 
 
 def build_external_url_for_issue(key: str) -> str | None:

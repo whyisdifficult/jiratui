@@ -6,13 +6,13 @@ from textual.containers import VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Markdown, Rule, Static
 
-from src.jiratui.api_controller.controller import APIControllerResponse
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.models import IssueComment
-from src.jiratui.utils.adf2md.adf2md import adf2md
-from src.jiratui.utils.urls import build_external_url_for_comment
-from src.jiratui.widgets.comments.add import AddCommentScreen
-from src.jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.config import CONFIGURATION
+from jiratui.models import IssueComment
+from jiratui.utils.adf2md.adf2md import adf2md
+from jiratui.utils.urls import build_external_url_for_comment
+from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
 class CommentCollapsible(Collapsible):

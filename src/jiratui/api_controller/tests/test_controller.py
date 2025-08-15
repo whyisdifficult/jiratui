@@ -3,32 +3,9 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from src.jiratui.api.api import JiraAPI
-from src.jiratui.api_controller.controller import APIController, APIControllerResponse
-from src.jiratui.config import ApplicationConfiguration
-from src.jiratui.models import IssueStatus, IssueType, JiraUser, Project
-
-
-# TODO extract and reuse: see src.tests.test_main_screen.py
-@pytest.fixture
-def config_for_testing() -> ApplicationConfiguration:
-    return ApplicationConfiguration(
-        jira_api_username='foo',
-        jira_api_token='12345',
-        jira_api_base_url='foo.bar',
-        jira_user_group_id='qwerty',
-    )
-
-
-@pytest.fixture
-def api() -> JiraAPI:
-    return JiraAPI('', '', '')
-
-
-@pytest.fixture
-def jira_api_controller(config_for_testing) -> APIController:
-    return APIController(config_for_testing)
-
+from jiratui.api.api import JiraAPI
+from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_project')

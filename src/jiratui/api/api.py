@@ -3,10 +3,10 @@ import json
 
 import httpx
 
-from src.jiratui.api.client import AsyncJiraClient, JiraClient
-from src.jiratui.api.utils import build_issue_search_jql
-from src.jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
-from src.jiratui.models import WorkItemsSearchOrderBy
+from jiratui.api.client import AsyncJiraClient, JiraClient
+from jiratui.api.utils import build_issue_search_jql
+from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
+from jiratui.models import WorkItemsSearchOrderBy
 
 
 class JiraAPI:

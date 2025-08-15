@@ -2,7 +2,7 @@ from textual import on
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Select, TextArea
 
-from src.jiratui.widgets.base import DateInput
+from jiratui.widgets.base import DateInput
 
 
 class CreateWorkItemProjectSelectionInput(Select):

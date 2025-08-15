@@ -7,11 +7,11 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
 
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.models import JiraIssue
-from src.jiratui.utils.urls import build_external_url_for_issue
-from src.jiratui.widgets.create_work_item.screen import AddWorkItemScreen
-from src.jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.config import CONFIGURATION
+from jiratui.models import JiraIssue
+from jiratui.utils.urls import build_external_url_for_issue
+from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
+from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
 
 
 class ChildWorkItemCollapsible(Collapsible):

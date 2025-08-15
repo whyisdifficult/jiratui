@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from src.jiratui.api.api import JiraAPI
-from src.jiratui.api_controller.constants import (
+from jiratui.api.api import JiraAPI
+from jiratui.api_controller.constants import (
     MAXIMUM_PAGE_NUMBER_LIST_GROUPS,
     MAXIMUM_PAGE_NUMBER_SEARCH_PROJECTS,
     RECORDS_PER_PAGE_LIST_GROUP_USERS,
@@ -19,20 +19,20 @@ from src.jiratui.api_controller.constants import (
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_PROJECTS,
 )
-from src.jiratui.api_controller.factories import (
+from jiratui.api_controller.factories import (
     build_comments,
     build_issue_instance,
     build_related_work_items,
 )
-from src.jiratui.config import CONFIGURATION, ApplicationConfiguration
-from src.jiratui.constants import ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES, LOGGER_NAME
-from src.jiratui.exceptions import (
+from jiratui.config import CONFIGURATION, ApplicationConfiguration
+from jiratui.constants import ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES, LOGGER_NAME
+from jiratui.exceptions import (
     ServiceInvalidResponseException,
     ServiceUnavailableException,
     UpdateWorkItemException,
     ValidationError,
 )
-from src.jiratui.models import (
+from jiratui.models import (
     Attachment,
     BaseModel,
     IssueComment,

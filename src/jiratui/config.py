@@ -10,7 +10,7 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from src.jiratui.constants import (
+from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL,
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )

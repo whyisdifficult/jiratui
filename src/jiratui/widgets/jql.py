@@ -5,8 +5,8 @@ from textual.events import Key
 from textual.screen import ModalScreen
 from textual.widgets import Select, TextArea
 
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.config import CONFIGURATION
+from jiratui.widgets.base import CustomTitle
 
 
 class PreDefinedJQLExpressionsWidget(Select):

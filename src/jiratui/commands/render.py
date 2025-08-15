@@ -5,8 +5,8 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from src.jiratui.models import IssueComment, JiraIssueSearchResponse, JiraUser, JiraUserGroup
-from src.jiratui.utils.adf2md import adf2md
+from jiratui.models import IssueComment, JiraIssueSearchResponse, JiraUser, JiraUserGroup
+from jiratui.utils.adf2md import adf2md
 
 
 class Renderer:

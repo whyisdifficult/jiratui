@@ -1,5 +1,5 @@
-from src.jiratui.utils.adf2md import markdown, nodes
-from src.jiratui.utils.adf2md.nodes import Node
+from jiratui.utils.adf2md import markdown, nodes
+from jiratui.utils.adf2md.nodes import Node
 
 
 def adf2md(json_data: dict | list[dict]) -> str:

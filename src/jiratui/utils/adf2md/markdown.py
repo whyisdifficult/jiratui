@@ -1,6 +1,6 @@
 from typing import Optional
 
-from src.jiratui.utils.adf2md.nodes import Node, NodeType
+from jiratui.utils.adf2md.nodes import Node, NodeType
 
 
 def gen_md_from_root_node(root_node: Node) -> str:

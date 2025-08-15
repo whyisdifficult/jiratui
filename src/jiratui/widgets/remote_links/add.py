@@ -5,7 +5,7 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Rule, Static
 
-from src.jiratui.widgets.base import CustomTitle
+from jiratui.widgets.base import CustomTitle
 
 
 class RemoteLinkURLInputWidget(Input):

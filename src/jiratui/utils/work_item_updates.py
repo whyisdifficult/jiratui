@@ -1,4 +1,4 @@
-from src.jiratui.models import IssuePriority, JiraUser
+from jiratui.models import IssuePriority, JiraUser
 
 
 def can_update_work_item_priority(

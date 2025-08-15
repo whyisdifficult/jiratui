@@ -11,23 +11,23 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Rule, Select, TabbedContent, TabPane
 from textual.worker import Worker
 
-from src.jiratui.api_controller.controller import APIControllerResponse, APIController
-from src.jiratui.config import CONFIGURATION
-from src.jiratui.constants import LOGGER_NAME
-from src.jiratui.models import JiraIssueSearchResponse, WorkItemsSearchOrderBy, IssueType, JiraUser, JiraIssue
-from src.jiratui.utils.adf2md.adf2md import adf2md
-from src.jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
-from src.jiratui.widgets.comments.comments import IssueCommentsWidget
-from src.jiratui.widgets.create_work_item.screen import AddWorkItemScreen
-from src.jiratui.widgets.filters import UserSelectionInput, IssueStatusSelectionInput, ProjectSelectionInput, \
+from jiratui.api_controller.controller import APIControllerResponse, APIController
+from jiratui.config import CONFIGURATION
+from jiratui.constants import LOGGER_NAME
+from jiratui.models import JiraIssueSearchResponse, WorkItemsSearchOrderBy, IssueType, JiraUser, JiraIssue
+from jiratui.utils.adf2md.adf2md import adf2md
+from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
+from jiratui.widgets.comments.comments import IssueCommentsWidget
+from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
+from jiratui.widgets.filters import UserSelectionInput, IssueStatusSelectionInput, ProjectSelectionInput, \
     IssueTypeSelectionInput, WorkItemInputWidget, JQLSearchWidget, OrderByWidget, IssueSearchCreatedFromWidget, \
     IssueSearchCreatedUntilWidget
-from src.jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
-from src.jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
-from src.jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
-from src.jiratui.widgets.subtasks import IssueChildWorkItemsWidget
-from src.jiratui.widgets.summary import IssueSummaryWidget, IssueDescriptionWidget
-from src.jiratui.widgets.work_item_details.details import IssueDetailsWidget
+from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
+from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
+from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
+from jiratui.widgets.summary import IssueSummaryWidget, IssueDescriptionWidget
+from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 
 
 @dataclass

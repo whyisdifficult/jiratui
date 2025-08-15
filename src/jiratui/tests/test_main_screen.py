@@ -4,45 +4,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from textual.widgets import Select
 
-from src.jiratui.api_controller.controller import APIController, APIControllerResponse
-from src.jiratui.app import JiraApp
-from src.jiratui.config import ApplicationConfiguration
-from src.jiratui.models import Project, JiraUser, IssueStatus, IssueType
-from src.jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
-from src.jiratui.widgets.comments.comments import IssueCommentsWidget
-from src.jiratui.widgets.filters import WorkItemInputWidget, OrderByWidget, JQLSearchWidget, \
+from jiratui.app import JiraApp
+from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.models import Project, JiraUser, IssueStatus, IssueType
+from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
+from jiratui.widgets.comments.comments import IssueCommentsWidget
+from jiratui.widgets.filters import WorkItemInputWidget, OrderByWidget, JQLSearchWidget, \
     IssueSearchCreatedUntilWidget, IssueSearchCreatedFromWidget, UserSelectionInput, ProjectSelectionInput, \
     IssueStatusSelectionInput, IssueTypeSelectionInput
-from src.jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
-from src.jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
-from src.jiratui.widgets.search import IssuesSearchResultsTable
-from src.jiratui.widgets.work_item_details.details import IssueDetailsWidget
-
-
-# TODO extract and reuse
-@pytest.fixture
-def config_for_testing() -> ApplicationConfiguration:
-    return MagicMock(
-        spec=ApplicationConfiguration(
-            jira_api_username='foo',
-            jira_api_token='12345',
-            jira_api_base_url='foo.bar',
-            jira_user_group_id='qwerty',
-            tui_title=None,
-            tui_title_include_jira_server_title=False,
-        )
-    )
-
-
-@pytest.fixture
-def api(config_for_testing) -> APIController:
-    return APIController(config_for_testing)
-
+from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
+from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.search import IssuesSearchResultsTable
+from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 
 @pytest.fixture()
-def app(config_for_testing, api) -> JiraApp:
+def app(config_for_testing, jira_api_controller) -> JiraApp:
     app = JiraApp(config_for_testing)
-    app.api = api
+    app.api = jira_api_controller
     app._setup_logging = MagicMock()
     return app
 
@@ -67,10 +45,11 @@ def app(config_for_testing, api) -> JiraApp:
         ('7', IssueRemoteLinksWidget),
     ],
 )
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_quick_access_keys(
     search_projects_mock: AsyncMock,
@@ -88,17 +67,17 @@ async def test_quick_access_keys(
         assert isinstance(main_screen.focused, widget)
 
 
-@patch('src.widgets.screens.APIController.search_projects')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.APIController.search_projects')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @pytest.mark.asyncio
 async def test_fetch_projects(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     get_users_mock: AsyncMock,
     search_projects_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     search_projects_mock.return_value = APIControllerResponse(
@@ -117,15 +96,15 @@ async def test_fetch_projects(
         ]
 
 
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_fetch_users_without_project_selection(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     async with app.run_test() as pilot:
@@ -140,17 +119,17 @@ async def test_fetch_users_without_project_selection(
         assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
-@patch('src.widgets.screens.APIController.search_users_assignable_to_projects')
-@patch('src.widgets.screens.APIController.search_projects')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.APIController.search_users_assignable_to_projects')
+@patch('jiratui.widgets.screens.APIController.search_projects')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @pytest.mark.asyncio
 async def test_fetch_users_with_project_selection(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_projects_mock: AsyncMock,
     search_users_assignable_to_projects_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -193,17 +172,17 @@ async def test_fetch_users_with_project_selection(
         assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
-@patch('src.widgets.screens.APIController.search_users_assignable_to_projects')
-@patch('src.widgets.screens.APIController.search_projects')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.APIController.search_users_assignable_to_projects')
+@patch('jiratui.widgets.screens.APIController.search_projects')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @pytest.mark.asyncio
 async def test_fetch_users_with_project_selection_search_users_error(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_projects_mock: AsyncMock,
     search_users_assignable_to_projects_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -230,10 +209,10 @@ async def test_fetch_users_with_project_selection_search_users_error(
         assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
-@patch('src.widgets.screens.APIController.list_all_active_users_in_group')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_fetch_users_without_project_selection_with_users_group_id(
     search_projects_mock: AsyncMock,
@@ -241,7 +220,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id(
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
     config_for_testing,
-    api,
+    jira_api_controller,
     app,
 ):
     config_for_testing.jira_user_group_id = '1'
@@ -280,10 +259,10 @@ async def test_fetch_users_without_project_selection_with_users_group_id(
         ]
 
 
-@patch('src.widgets.screens.APIController.list_all_active_users_in_group')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_fetch_users_without_project_selection_with_users_group_id_user_listing_error(
     search_projects_mock: AsyncMock,
@@ -291,7 +270,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
     config_for_testing,
-    api,
+    jira_api_controller,
     app,
 ):
     config_for_testing.jira_user_group_id = '1'
@@ -308,17 +287,17 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
         assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
-@patch('src.widgets.screens.APIController.status')
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.status')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_mount_fetch_statuses_without_initial_project_key(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -339,17 +318,17 @@ async def test_mount_fetch_statuses_without_initial_project_key(
         assert main_screen.issue_status_selector.statuses == [('Done', '1'), ('To Do', '2')]
 
 
-@patch('src.widgets.screens.APIController.status')
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.status')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_mount_fetch_statuses_without_initial_project_key_status_error(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -365,17 +344,17 @@ async def test_mount_fetch_statuses_without_initial_project_key_status_error(
         assert main_screen.issue_status_selector.statuses == []
 
 
-@patch('src.widgets.screens.APIController.get_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.get_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_mount_fetch_issues_types_without_initial_project_key(
     search_projects_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -398,17 +377,17 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
         assert main_screen.issue_type_selector._options == [('', Select.BLANK), ('Task', 1)]
 
 
-@patch('src.widgets.screens.APIController.get_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.APIController.get_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_error(
     search_projects_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -424,10 +403,10 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
 
 
 @pytest.mark.parametrize('expression_id, expected_expression', [(1, 'sprint=2'), (2, None)])
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_mount_without_initial_project_key_set_jql_expression(
     search_projects_mock: AsyncMock,
@@ -437,7 +416,7 @@ async def test_mount_without_initial_project_key_set_jql_expression(
     config_for_testing,
     expression_id: int,
     expected_expression: str,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -450,17 +429,17 @@ async def test_mount_without_initial_project_key_set_jql_expression(
         assert main_screen.jql_expression_input.expression == expected_expression
 
 
-@patch('src.widgets.screens.MainScreen.fetch_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.APIController.search_projects')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.APIController.search_projects')
 @pytest.mark.asyncio
 async def test_select_project(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
-    api,
+    jira_api_controller,
     app,
 ):
     # GIVEN
@@ -494,11 +473,11 @@ async def test_select_project(
         assert main_screen.project_selector.selection == 'P1'
 
 
-@patch('src.widgets.screens.MainScreen.action_search')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.action_search')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_search_button_triggers_issue_search(
     search_projects_mock: AsyncMock,
@@ -516,11 +495,11 @@ async def test_search_button_triggers_issue_search(
         action_search_mock.assert_called_once()
 
 
-@patch('src.widgets.screens.MainScreen.search_issues')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.search_issues')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_search_button_resets_widgets(
     search_projects_mock: AsyncMock,
@@ -549,11 +528,11 @@ async def test_click_search_button_resets_widgets(
         assert main_screen.search_results_table.page == 1
 
 
-@patch('src.widgets.screens.MainScreen.search_issues')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.search_issues')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_next_page_search_results(
     search_projects_mock: AsyncMock,
@@ -575,11 +554,11 @@ async def test_click_next_page_search_results(
         assert main_screen.search_results_table.page == 1
 
 
-@patch('src.widgets.screens.MainScreen.search_issues')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.search_issues')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_next_page_search_results_with_missing_token(
     search_projects_mock: AsyncMock,
@@ -601,11 +580,11 @@ async def test_click_next_page_search_results_with_missing_token(
         assert main_screen.search_results_table.page == 0
 
 
-@patch('src.widgets.screens.MainScreen.search_issues')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.search_issues')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_previous_page_search_results(
     search_projects_mock: AsyncMock,
@@ -627,11 +606,11 @@ async def test_click_previous_page_search_results(
         assert main_screen.search_results_table.page == 1
 
 
-@patch('src.widgets.screens.MainScreen.search_issues')
-@patch('src.widgets.screens.MainScreen.get_users')
-@patch('src.widgets.screens.MainScreen.fetch_statuses')
-@patch('src.widgets.screens.MainScreen.fetch_issue_types')
-@patch('src.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screens.MainScreen.search_issues')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_previous_page_search_results_with_missing_token(
     search_projects_mock: AsyncMock,

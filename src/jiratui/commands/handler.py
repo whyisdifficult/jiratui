@@ -2,14 +2,14 @@ import asyncio
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from src.jiratui.api_controller.controller import APIController, APIControllerResponse
-from src.jiratui.config import CONFIGURATION, ApplicationConfiguration
-from src.jiratui.exceptions import (
+from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.config import CONFIGURATION, ApplicationConfiguration
+from jiratui.exceptions import (
     CLIException,
     UpdateWorkItemException,
     ValidationError,
 )
-from src.jiratui.models import (
+from jiratui.models import (
     IssueComment,
     IssueTransition,
     JiraIssueSearchResponse,
@@ -17,7 +17,7 @@ from src.jiratui.models import (
     JiraUserGroup,
     WorkItemsSearchOrderBy,
 )
-from src.jiratui.utils.work_item_updates import can_update_work_item_assignee, can_update_work_item_priority
+from jiratui.utils.work_item_updates import can_update_work_item_assignee, can_update_work_item_priority
 
 
 class CommandHandler:

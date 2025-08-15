@@ -5,15 +5,10 @@ import httpx
 import pytest
 import respx
 
-from src.jiratui.api.api import JiraAPI
-from src.jiratui.api.utils import build_issue_search_jql
-from src.jiratui.models import WorkItemsSearchOrderBy
-from src.jiratui.utils.tests import get_url_pattern, load_json_response
-
-
-@pytest.fixture
-def jira_api() -> JiraAPI:
-    return JiraAPI('https://foo.bar', '', '')
+from jiratui.api.api import JiraAPI
+from jiratui.api.utils import build_issue_search_jql
+from jiratui.models import WorkItemsSearchOrderBy
+from jiratui.utils.tests import get_url_pattern, load_json_response
 
 
 @pytest.mark.asyncio
@@ -2036,7 +2031,7 @@ async def test_update_issue(jira_api: JiraAPI):
     assert result == {}
 
 
-@patch('src.api.api.build_issue_search_jql')
+@patch('jiratui.api.api.build_issue_search_jql')
 @pytest.mark.asyncio
 @respx.mock
 async def test_search_issues(build_issue_search_jql_mock: Mock, jira_api: JiraAPI):
@@ -2057,7 +2052,7 @@ async def test_search_issues(build_issue_search_jql_mock: Mock, jira_api: JiraAP
     assert result == {}
 
 
-@patch('src.api.api.build_issue_search_jql')
+@patch('jiratui.api.api.build_issue_search_jql')
 @pytest.mark.asyncio
 @respx.mock
 async def test_search_issues_with_parameters(build_issue_search_jql_mock: Mock, jira_api: JiraAPI):
@@ -2268,7 +2263,7 @@ async def test_create_issue_remote_link(jira_api: JiraAPI):
     assert result is None
 
 
-@patch('src.api.api.build_issue_search_jql')
+@patch('jiratui.api.api.build_issue_search_jql')
 @pytest.mark.asyncio
 @respx.mock
 async def test_work_items_search_approximate_count(

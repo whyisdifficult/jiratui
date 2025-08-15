@@ -1,6 +1,6 @@
 from datetime import date
 
-from src.jiratui.models import WorkItemsSearchOrderBy
+from jiratui.models import WorkItemsSearchOrderBy
 
 
 def build_issue_search_jql(
