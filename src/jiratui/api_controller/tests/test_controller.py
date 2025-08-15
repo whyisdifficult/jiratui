@@ -109,7 +109,7 @@ async def test_status(status_mock: Mock, jira_api_controller: APIController):
     response = await jira_api_controller.status()
     assert response == APIControllerResponse(
         success=True,
-        result=[IssueStatus(id=1, name='To Do', description='some description')],
+        result=[IssueStatus(id='1', name='To Do', description='some description')],
         error=None,
     )
     status_mock.assert_called_once_with()
@@ -332,7 +332,7 @@ async def test_get_project_statuses(
         result={
             '1': {
                 'issue_type_name': 'a',
-                'issue_type_statuses': [IssueStatus(id=1, name='name 1', description='d1')],
+                'issue_type_statuses': [IssueStatus(id='1', name='name 1', description='d1')],
             },
             '2': {
                 'issue_type_name': 'b',
@@ -373,8 +373,8 @@ async def test_get_issue_types_for_project(
     assert response == APIControllerResponse(
         success=True,
         result=[
-            IssueType(id=1, name='Task'),
-            IssueType(id=2, name='Bug'),
+            IssueType(id='1', name='Task'),
+            IssueType(id='2', name='Bug'),
         ],
         error=None,
     )

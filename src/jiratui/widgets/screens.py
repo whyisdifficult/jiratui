@@ -402,7 +402,7 @@ class MainScreen(Screen):
                     statuses.append((status.name, str(status.id)))
         return sorted(statuses, key=lambda x: x[0])
 
-    async def fetch_issue_types(self) -> list[tuple[str, int]]:
+    async def fetch_issue_types(self) -> list[tuple[str, str]]:
         """Retrieves the list of type of work items.
 
         If a project is selected then it will retrieve the types of work items associated to the project; otherwise it
@@ -429,7 +429,7 @@ class MainScreen(Screen):
             return []
         types = response.result or []
         types.sort(key=lambda x: x.name)
-        work_item_types: list[tuple[str, int]] = []
+        work_item_types: list[tuple[str, str]] = []
         for item in types:
             if item.scope_project:
                 name = f'({item.scope_project.name}) {item.name}'

@@ -180,7 +180,7 @@ class APIController:
             for status in record.get('statuses', []):
                 statuses_for_issue_type.append(
                     IssueStatus(
-                        id=int(status.get('id')),
+                        id=str(status.get('id')),
                         name=status.get('name'),
                         description=status.get('description'),
                     )
@@ -206,7 +206,9 @@ class APIController:
         for item in response:
             statuses.append(
                 IssueStatus(
-                    id=item.get('id'), name=item.get('name'), description=item.get('description')
+                    id=str(item.get('id')),
+                    name=item.get('name'),
+                    description=item.get('description'),
                 )
             )
         return APIControllerResponse(result=statuses)
@@ -365,7 +367,7 @@ class APIController:
             return APIControllerResponse(success=False, error=str(e))
         return APIControllerResponse(
             result=[
-                IssueType(id=int(item.get('id')), name=item.get('name'))
+                IssueType(id=str(item.get('id')), name=item.get('name'))
                 for item in project.get('issueTypes', []) or []
             ]
         )
@@ -401,7 +403,7 @@ class APIController:
 
                 result.append(
                     IssueType(
-                        id=item.get('id'),
+                        id=str(item.get('id')),
                         name=item.get('name'),
                         scope_project=scope_project,
                     )

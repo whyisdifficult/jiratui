@@ -82,14 +82,14 @@ class JiraIssueField(BaseModel):
 
 @dataclass
 class IssueStatus(BaseModel):
-    id: int
+    id: str
     name: str
     description: str | None = None
 
 
 @dataclass
 class IssueType(BaseModel):
-    id: int
+    id: str
     name: str
     scope_project: Project | None = None
 

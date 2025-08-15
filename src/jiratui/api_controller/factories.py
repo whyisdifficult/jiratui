@@ -95,10 +95,7 @@ def build_issue_instance(
         )
         if priority
         else None,
-        status=IssueStatus(
-            id=status.get('id'),
-            name=status.get('name'),
-        ),
+        status=IssueStatus(id=str(status.get('id')), name=status.get('name')),
         assignee=JiraUser(
             account_id=assignee.get('accountId'),
             active=assignee.get('active'),
@@ -161,10 +158,10 @@ def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
                     if comment.get('updated')
                     else None,
                     update_author=JiraUser(
-                        account_id=author.get('accountId'),
-                        display_name=author.get('displayName'),
-                        active=author.get('active'),
-                        email=author.get('emailAddress'),
+                        account_id=update_author.get('accountId'),
+                        display_name=update_author.get('displayName'),
+                        active=update_author.get('active'),
+                        email=update_author.get('emailAddress'),
                     )
                     if update_author
                     else None,
@@ -193,7 +190,7 @@ def build_related_work_items(links: list[dict]) -> list[RelatedJiraIssue]:
                         if inward_issue.get('fields', {}).get('priority')
                         else None,
                         status=IssueStatus(
-                            id=inward_issue.get('fields', {}).get('status', {}).get('id'),
+                            id=str(inward_issue.get('fields', {}).get('status', {}).get('id')),
                             name=inward_issue.get('fields', {}).get('status', {}).get('name'),
                         ),
                         issue_type=IssueType(
@@ -220,7 +217,7 @@ def build_related_work_items(links: list[dict]) -> list[RelatedJiraIssue]:
                         if outward_issue.get('fields', {}).get('priority')
                         else None,
                         status=IssueStatus(
-                            id=outward_issue.get('fields', {}).get('status', {}).get('id'),
+                            id=str(outward_issue.get('fields', {}).get('status', {}).get('id')),
                             name=outward_issue.get('fields', {}).get('status', {}).get('name'),
                         ),
                         issue_type=IssueType(
