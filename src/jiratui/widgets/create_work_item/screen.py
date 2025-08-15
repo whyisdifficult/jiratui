@@ -9,12 +9,18 @@ from textual.widget import Widget
 from textual.widgets import Button, Input, Rule, Select, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import Project, IssueType
+from jiratui.models import IssueType, Project
 from jiratui.utils.create_work_item import create_widgets_for_work_item_creation
 from jiratui.widgets.base import CustomTitle
-from jiratui.widgets.create_work_item.fields import CreateWorkItemProjectSelectionInput, \
-    CreateWorkItemReporterSelectionInput, CreateWorkItemIssueTypeSelectionInput, CreateWorkItemAssigneeSelectionInput, \
-    CreateWorkItemDescription, CreateWorkItemParentKeyField, CreateWorkItemIssueSummaryField
+from jiratui.widgets.create_work_item.fields import (
+    CreateWorkItemAssigneeSelectionInput,
+    CreateWorkItemDescription,
+    CreateWorkItemIssueSummaryField,
+    CreateWorkItemIssueTypeSelectionInput,
+    CreateWorkItemParentKeyField,
+    CreateWorkItemProjectSelectionInput,
+    CreateWorkItemReporterSelectionInput,
+)
 
 
 class AddWorkItemScreen(Screen):

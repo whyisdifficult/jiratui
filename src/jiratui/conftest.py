@@ -16,9 +16,11 @@ def config_for_testing() -> ApplicationConfiguration:
         tui_title_include_jira_server_title=False,
     )
 
+
 @pytest.fixture
 def jira_api_controller(config_for_testing) -> APIController:
     return APIController(config_for_testing)
+
 
 @pytest.fixture
 def jira_api() -> JiraAPI:

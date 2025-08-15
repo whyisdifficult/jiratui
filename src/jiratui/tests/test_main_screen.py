@@ -4,18 +4,27 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from textual.widgets import Select
 
-from jiratui.app import JiraApp
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import Project, JiraUser, IssueStatus, IssueType
+from jiratui.app import JiraApp
+from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
-from jiratui.widgets.filters import WorkItemInputWidget, OrderByWidget, JQLSearchWidget, \
-    IssueSearchCreatedUntilWidget, IssueSearchCreatedFromWidget, UserSelectionInput, ProjectSelectionInput, \
-    IssueStatusSelectionInput, IssueTypeSelectionInput
+from jiratui.widgets.filters import (
+    IssueSearchCreatedFromWidget,
+    IssueSearchCreatedUntilWidget,
+    IssueStatusSelectionInput,
+    IssueTypeSelectionInput,
+    JQLSearchWidget,
+    OrderByWidget,
+    ProjectSelectionInput,
+    UserSelectionInput,
+    WorkItemInputWidget,
+)
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.search import IssuesSearchResultsTable
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
+
 
 @pytest.fixture()
 def app(config_for_testing, jira_api_controller) -> JiraApp:
@@ -45,7 +54,6 @@ def app(config_for_testing, jira_api_controller) -> JiraApp:
         ('7', IssueRemoteLinksWidget),
     ],
 )
-
 @patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
@@ -86,7 +94,7 @@ async def test_fetch_projects(
             Project(id='1', name='Project A', key='P1'),
         ]
     )
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         assert main_screen.project_selector.selection is None
         assert main_screen.project_selector._options == [
@@ -107,7 +115,7 @@ async def test_fetch_users_without_project_selection(
     jira_api_controller,
     app,
 ):
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # WHEN
         result = await main_screen.fetch_users()
@@ -149,7 +157,7 @@ async def test_fetch_users_with_project_selection(
             )
         ]
     )
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         main_screen.project_selector.value = 'P1'
         # WHEN
@@ -193,7 +201,7 @@ async def test_fetch_users_with_project_selection_search_users_error(
         ]
     )
     search_users_assignable_to_projects_mock.return_value = APIControllerResponse(success=False)
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         main_screen.project_selector.value = 'P1'
         # WHEN
@@ -308,7 +316,7 @@ async def test_mount_fetch_statuses_without_initial_project_key(
         ]
     )
     # WHEN
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
@@ -334,7 +342,7 @@ async def test_mount_fetch_statuses_without_initial_project_key_status_error(
     # GIVEN
     status_mock.return_value = APIControllerResponse(success=False)
     # WHEN
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
@@ -368,7 +376,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
         ]
     )
     # WHEN
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
@@ -393,7 +401,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
     # GIVEN
     get_issue_types_mock.return_value = APIControllerResponse(success=False)
     # WHEN
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
@@ -423,7 +431,7 @@ async def test_mount_without_initial_project_key_set_jql_expression(
     app.initial_jql_expression_id = expression_id
     config_for_testing.pre_defined_jql_expressions = {1: {'expression': 'sprint=2'}}
     # WHEN
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # THEN
         assert main_screen.jql_expression_input.expression == expected_expression
@@ -459,7 +467,7 @@ async def test_select_project(
             display_name='Bart Simpson',
         )
     ]
-    async with app.run_test() as pilot:
+    async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # WHEN
         main_screen.project_selector.value = 'P1'
@@ -488,7 +496,7 @@ async def test_search_button_triggers_issue_search(
     app,
 ):
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        cast('MainScreen', app.screen)  # noqa: F821
         # WHEN
         await pilot.press('ctrl+r')
         # THEN

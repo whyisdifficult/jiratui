@@ -8,7 +8,7 @@ from textual.widgets import DataTable
 
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssueSearchResponse
-from jiratui.utils.styling import get_style_for_work_item_type, get_style_for_work_item_status
+from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 
 
 class IssuesSearchResultsTable(DataTable):

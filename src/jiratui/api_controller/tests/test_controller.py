@@ -7,6 +7,7 @@ from jiratui.api.api import JiraAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 
+
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_project')
 async def test_get_project(get_project_mock: Mock, jira_api_controller: APIController):

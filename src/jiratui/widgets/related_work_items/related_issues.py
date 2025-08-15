@@ -8,7 +8,7 @@ from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import RelatedJiraIssue, JiraIssue
+from jiratui.models import JiraIssue, RelatedJiraIssue
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.constants import RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING

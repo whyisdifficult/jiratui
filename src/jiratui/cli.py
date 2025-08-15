@@ -8,11 +8,19 @@ from rich.console import Console
 
 from jiratui.app import JiraApp
 from jiratui.commands.handler import CommandHandler
-from jiratui.commands.render import JiraUserGroupRenderer, CLIExceptionRenderer, JiraUserRenderer, \
-    JiraIssueCommentTextRenderer, JiraIssueCommentsRenderer, JiraIssueCommentRenderer, JiraIssueMetadataRenderer, \
-    JiraIssueSearchRenderer
-from jiratui.exceptions import CLIException
+from jiratui.commands.render import (
+    CLIExceptionRenderer,
+    JiraIssueCommentRenderer,
+    JiraIssueCommentsRenderer,
+    JiraIssueCommentTextRenderer,
+    JiraIssueMetadataRenderer,
+    JiraIssueSearchRenderer,
+    JiraUserGroupRenderer,
+    JiraUserRenderer,
+)
 from jiratui.config import ApplicationConfiguration
+from jiratui.exceptions import CLIException
+
 console = Console()
 
 

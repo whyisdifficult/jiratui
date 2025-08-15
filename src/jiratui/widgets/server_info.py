@@ -5,7 +5,7 @@ from textual.screen import ModalScreen
 from textual.widgets import DataTable
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import JiraServerInfo, JiraMyselfInfo
+from jiratui.models import JiraMyselfInfo, JiraServerInfo
 from jiratui.widgets.base import CustomTitle
 
 

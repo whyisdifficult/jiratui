@@ -4,8 +4,8 @@ from pythonjsonlogger.json import JsonFormatter
 from textual.app import App
 from textual.binding import Binding
 
-from jiratui.api_controller.controller import APIControllerResponse, APIController
-from jiratui.config import ApplicationConfiguration, CONFIGURATION
+from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.models import JiraServerInfo
 from jiratui.widgets.quit import QuitScreen

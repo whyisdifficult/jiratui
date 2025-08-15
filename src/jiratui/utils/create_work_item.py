@@ -3,8 +3,11 @@ from enum import Enum
 from textual.widget import Widget
 from textual.widgets import Select
 
-from jiratui.widgets.create_work_item.fields import CreateWorkItemDueDate, CreateWorkItemSelectionInput, \
-    CreateWorkItemTextField
+from jiratui.widgets.create_work_item.fields import (
+    CreateWorkItemDueDate,
+    CreateWorkItemSelectionInput,
+    CreateWorkItemTextField,
+)
 
 
 class CreateWorkItemFieldId(Enum):

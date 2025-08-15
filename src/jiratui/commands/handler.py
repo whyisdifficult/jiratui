@@ -17,7 +17,10 @@ from jiratui.models import (
     JiraUserGroup,
     WorkItemsSearchOrderBy,
 )
-from jiratui.utils.work_item_updates import can_update_work_item_assignee, can_update_work_item_priority
+from jiratui.utils.work_item_updates import (
+    can_update_work_item_assignee,
+    can_update_work_item_priority,
+)
 
 
 class CommandHandler:
