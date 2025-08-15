@@ -33,7 +33,7 @@ Make sure the branch's name starts with `feature/`.
   git commit -m "Add feature: your-feature-name"
   ```
 
-- **Push to Your Fork**: Push your changes to your forked repository:
+- **Push Your Changes**: Push your changes to the repository:
 
 ```bash
 git push origin feature/your-feature-name
