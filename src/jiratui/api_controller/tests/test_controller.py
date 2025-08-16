@@ -5,7 +5,20 @@ import pytest
 
 from jiratui.api.api import JiraAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.models import IssueStatus, IssueType, JiraUser, Project
+from jiratui.exceptions import ServiceInvalidResponseException, ServiceUnavailableException
+from jiratui.models import (
+    IssueRemoteLink,
+    IssueStatus,
+    IssueType,
+    JiraIssue,
+    JiraIssueSearchResponse,
+    JiraMyselfInfo,
+    JiraServerInfo,
+    JiraUser,
+    JiraUserGroup,
+    Project,
+)
+from jiratui.utils.tests import load_json_response
 
 
 @pytest.mark.asyncio
@@ -628,6 +641,41 @@ async def test_search_users_assignable_to_issue_include_users_without_email(
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'user_assignable_search')
+async def test_search_users_assignable_to_issue_skip_users_without_email(
+    user_assignable_search_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.skip_users_without_email = True
+    user_assignable_search_mock.return_value = [
+        {'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True},
+        {'accountId': '456', 'emailAddress': '', 'displayName': 'homer', 'active': False},
+    ]
+    # WHEN
+    response = await jira_api_controller.search_users_assignable_to_issue('key1', active=None)
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraUser(
+                email='a@a.com',
+                account_id='123',
+                active=True,
+                display_name='john',
+            ),
+        ],
+        error=None,
+    )
+    user_assignable_search_mock.assert_called_once_with(
+        issue_key='key1',
+        query=None,
+        offset=0,
+        limit=1000,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_assignable_search')
 async def test_search_users_assignable_to_issue_with_exception(
     user_assignable_search_mock: Mock, jira_api_controller: APIController
 ):
@@ -753,6 +801,43 @@ async def test_search_users_assignable_to_projects_include_users_without_email(
                 active=False,
                 display_name='homer',
             ),
+            JiraUser(
+                email='a@a.com',
+                account_id='123',
+                active=True,
+                display_name='john',
+            ),
+        ],
+        error=None,
+    )
+    user_assignable_multi_projects_mock.assert_called_once_with(
+        project_keys=['key1', 'key2'],
+        query=None,
+        offset=0,
+        limit=1000,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_assignable_multi_projects')
+async def test_search_users_assignable_to_projects_skip_users_without_email(
+    user_assignable_multi_projects_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.skip_users_without_email = True
+    user_assignable_multi_projects_mock.return_value = [
+        {'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True},
+        {'accountId': '456', 'emailAddress': '', 'displayName': 'homer', 'active': False},
+    ]
+    # WHEN
+    response = await jira_api_controller.search_users_assignable_to_projects(
+        project_keys=['key1', 'key2'], active=None
+    )
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
             JiraUser(
                 email='a@a.com',
                 account_id='123',
@@ -955,3 +1040,777 @@ def test_build_criteria_for_searching_work_items_with_config_values(
     )
     # THEN
     assert criteria == expected_criteria
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_issue')
+async def test_get_issue(
+    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
+    # WHEN
+    response = await jira_api_controller.get_issue('10002')
+    # THEN
+    assert response.success is True
+    assert isinstance(response.result.issues[0], JiraIssue)
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.next_page_token is None
+    assert response.result.is_last is None
+    assert response.result.issues[0].id == '10002'
+    assert response.result.issues[0].key == 'SCRUM-10'
+    assert response.result.issues[0].summary == '(Sample) Set Up Payment Logging'
+    assert response.result.issues[0].status == IssueStatus(
+        name='In Progress',
+        id='10001',
+    )
+    assert response.result.issues[0].project == Project(
+        id='10000', name='Test Project', key='SCRUM'
+    )
+    assert response.result.issues[0].created == datetime(2025, 7, 5, 14, 34, 59)
+    assert response.result.issues[0].updated == datetime(2025, 7, 14, 22, 33, 38)
+    assert response.result.issues[0].due_date == datetime(2025, 12, 31).date()
+    assert response.result.issues[0].reporter == JiraUser(
+        account_id='abe10be',
+        active=True,
+        display_name='Bart',
+        email='bart@simpson.com',
+    )
+    assert response.result.issues[0].issue_type == IssueType(
+        id='10003', name='Task', scope_project=None
+    )
+    assert response.result.issues[0].description == {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': 'Create a logging system to store payment transaction metadata.',
+                    }
+                ],
+            }
+        ],
+    }
+    assert response.result.issues[0].attachments == []
+    get_issue_mock.assert_has_calls(
+        [
+            call(issue_id_or_key='10002', fields=None, properties=None),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_issue')
+async def test_get_issue_with_api_error(
+    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_mock.side_effect = ValueError('an error')
+    # WHEN
+    response = await jira_api_controller.get_issue('10002')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.result is None
+    assert response.error == 'Failed to retrieve the work item 10002: an error.'
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.build_issue_instance')
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_issue')
+async def test_get_issue_with_instance_building_error(
+    get_issue_mock: Mock,
+    configuration_mock: Mock,
+    build_issue_instance_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
+    build_issue_instance_mock.side_effect = ValueError('another error')
+    # WHEN
+    response = await jira_api_controller.get_issue('10002')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.result is None
+    assert (
+        response.error
+        == 'Failed to extract the details of the requested work item 10002: another error'
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_issue')
+async def test_get_issue_with_additional_parameters(
+    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
+    # WHEN
+    response = await jira_api_controller.get_issue('10002', fields=['f1', 'f2'], properties='p1,p2')
+    # THEN
+    assert response.success is True
+    assert isinstance(response.result.issues[0], JiraIssue)
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.next_page_token is None
+    assert response.result.is_last is None
+    get_issue_mock.assert_has_calls(
+        [
+            call(issue_id_or_key='10002', fields='f1,f2', properties='p1,p2'),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_groups_in_bulk')
+async def test_find_groups(
+    get_groups_in_bulk_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_groups_in_bulk_mock.return_value = {
+        'values': [{'groupId': '5', 'name': 'g1'}, {'groupId': '6', 'name': 'g2'}]
+    }
+    # WHEN
+    response = await jira_api_controller.find_groups(
+        2, limit=5, groups_ids=['5,,6'], groups_names=['g1', 'g2']
+    )
+    # THEN
+    assert response.success is True
+    assert isinstance(response.result, list)
+    assert isinstance(response.result[0], JiraUserGroup)
+    get_groups_in_bulk_mock.assert_has_calls(
+        [
+            call(offset=2, limit=5, groups_ids=['5,,6'], groups_names=['g1', 'g2']),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_groups_in_bulk')
+async def test_find_groups_with_api_error(
+    get_groups_in_bulk_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_groups_in_bulk_mock.side_effect = ValueError('an error')
+    # WHEN
+    response = await jira_api_controller.find_groups(
+        2, limit=5, groups_ids=['5,,6'], groups_names=['g1', 'g2']
+    )
+    # THEN
+    assert response.success is False
+    assert response.result is None
+    assert response.error == 'an error'
+    get_groups_in_bulk_mock.assert_has_calls(
+        [
+            call(offset=2, limit=5, groups_ids=['5,,6'], groups_names=['g1', 'g2']),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_users_in_group')
+async def test_count_users_in_group(
+    get_users_in_group_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_users_in_group_mock.return_value = {'total': '5'}
+    # WHEN
+    response = await jira_api_controller.count_users_in_group('g1')
+    # THEN
+    assert response.success is True
+    assert isinstance(response.result, int)
+    assert response.result == 5
+    get_users_in_group_mock.assert_has_calls([call(group_id='g1')])
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(JiraAPI, 'get_users_in_group')
+async def test_count_users_in_group_with_api_error(
+    get_users_in_group_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_users_in_group_mock.side_effect = ValueError('an error')
+    # WHEN
+    response = await jira_api_controller.count_users_in_group('g1')
+    # THEN
+    assert response.success is False
+    assert response.result is None
+    assert response.error == 'an error'
+    get_users_in_group_mock.assert_has_calls([call(group_id='g1')])
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'search_projects')
+@patch.object(JiraAPI, 'get_issue_types_for_user')
+async def test_get_issue_types(
+    get_issue_types_for_user_mock: Mock,
+    search_projects_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_issue_types_for_user_mock.return_value = [
+        {'id': '1', 'name': 'Task', 'scope': {'type': 'Project', 'project': {'id': '1'}}},
+        {'id': '2', 'name': 'Bug', 'scope': {'type': 'Another', 'project': {'id': '2'}}},
+    ]
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[
+            Project(id='1', name='Project 1', key='P1'),
+            Project(id='2', name='Project 2', key='P2'),
+        ]
+    )
+    # WHEN
+    response = await jira_api_controller.get_issue_types()
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            IssueType(
+                id='1', name='Task', scope_project=Project(id='1', name='Project 1', key='P1')
+            ),
+            IssueType(id='2', name='Bug', scope_project=None),
+        ],
+        error=None,
+    )
+    get_issue_types_for_user_mock.assert_called_once()
+    search_projects_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_issue_types_for_user')
+async def test_get_issue_types_with_api_error(
+    get_issue_types_for_user_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_types_for_user_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_issue_types()
+    # THEN
+    assert response == APIControllerResponse(success=False, error='some error')
+    get_issue_types_for_user_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'raised_error, expected_error_message',
+    [
+        (ServiceUnavailableException(), 'Unable to connect to the Jira server.'),
+        (ServiceInvalidResponseException(), 'The response from the server contains errors.'),
+        (
+            ValueError('some error'),
+            'There was an unknown error while searching for work items: some error',
+        ),
+    ],
+)
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
+async def test_search_issues_with_api_error(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    raised_error,
+    expected_error_message: str,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.side_effect = raised_error
+    # WHEN
+    response = await jira_api_controller.search_issues()
+    # THEN
+    assert response == APIControllerResponse(success=False, error=expected_error_message)
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
+async def test_search_issues(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    configuration_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {'issues': [load_json_response(__file__, 'issue.json')]}
+    # WHEN
+    response = await jira_api_controller.search_issues()
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.is_last is None
+    assert response.result.next_page_token is None
+    assert response.result.issues[0].id == '10002'
+    assert response.result.issues[0].key == 'SCRUM-10'
+    assert response.result.issues[0].summary == '(Sample) Set Up Payment Logging'
+    assert response.result.issues[0].status == IssueStatus(
+        name='In Progress',
+        id='10001',
+    )
+    assert response.result.issues[0].project == Project(
+        id='10000', name='Test Project', key='SCRUM'
+    )
+    assert response.result.issues[0].created == datetime(2025, 7, 5, 14, 34, 59)
+    assert response.result.issues[0].updated == datetime(2025, 7, 14, 22, 33, 38)
+    assert response.result.issues[0].due_date == datetime(2025, 12, 31).date()
+    assert response.result.issues[0].reporter == JiraUser(
+        account_id='abe10be',
+        active=True,
+        display_name='Bart',
+        email='bart@simpson.com',
+    )
+    assert response.result.issues[0].issue_type == IssueType(
+        id='10003', name='Task', scope_project=None
+    )
+    assert response.result.issues[0].description == {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': 'Create a logging system to store payment transaction metadata.',
+                    }
+                ],
+            }
+        ],
+    }
+    assert response.result.issues[0].attachments == []
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
+async def test_search_issues_with_next_page(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {
+        'issues': [load_json_response(__file__, 'issue.json')],
+        'nextPageToken': 't1',
+        'isLast': False,
+    }
+    # WHEN
+    response = await jira_api_controller.search_issues()
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.is_last is False
+    assert response.result.next_page_token == 't1'
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.build_issue_instance')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
+async def test_search_issues_with_missing_issues(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    build_issue_instance_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {
+        'issues': [load_json_response(__file__, 'issue.json')],
+        'nextPageToken': 't1',
+        'isLast': False,
+    }
+    build_issue_instance_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.search_issues()
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.is_last is False
+    assert response.result.next_page_token == 't1'
+    assert response.result.issues == []
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'work_items_search_approximate_count')
+async def test_count_issues(
+    work_items_search_approximate_count_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    configuration_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    work_items_search_approximate_count_mock.return_value = {'count': '5'}
+    # WHEN
+    response = await jira_api_controller.count_issues()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert isinstance(response.result, int)
+    assert response.result == 5
+    work_items_search_approximate_count_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'work_items_search_approximate_count')
+async def test_count_issues_with_api_error(
+    work_items_search_approximate_count_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    configuration_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    work_items_search_approximate_count_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.count_issues()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.result is None
+    assert response.error == 'Failed to count the number of work items: some error'
+    work_items_search_approximate_count_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'work_items_search_approximate_count')
+async def test_count_issues_with_criteria(
+    work_items_search_approximate_count_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    configuration_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {
+        'updated_from': datetime(2025, 12, 31).date(),
+        'jql': 'query',
+    }
+    work_items_search_approximate_count_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.count_issues()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.result is None
+    assert response.error == 'Failed to count the number of work items: some error'
+    work_items_search_approximate_count_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=datetime(2025, 12, 31).date(),
+        status=None,
+        assignee=None,
+        issue_type=None,
+        jql_query='query',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_issue_remote_links')
+async def test_get_issue_remote_links(
+    get_issue_remote_links_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_remote_links_mock.return_value = load_json_response(
+        __file__, 'issue_remote_links.json'
+    )
+    # WHEN
+    response = await jira_api_controller.get_issue_remote_links('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert isinstance(response.result, list)
+    assert isinstance(response.result[0], IssueRemoteLink)
+    assert response.result == [
+        IssueRemoteLink(
+            id='10000',
+            global_id='system=http://www.mycompany.com/support&id=1',
+            relationship='causes',
+            title='TSTSUP-111',
+            summary='Customer support issue',
+            url='http://www.mycompany.com/support?id=1',
+            application_name='My Acme Tracker',
+            status_title=None,
+            status_resolved=True,
+        ),
+        IssueRemoteLink(
+            id='10001',
+            global_id='system=http://www.anothercompany.com/tester&id=1234',
+            relationship='is tested by',
+            title='Test Case #1234',
+            summary='Test that the submit button saves the item',
+            url='http://www.anothercompany.com/tester/testcase/1234',
+            application_name='My Acme Tester',
+            status_title=None,
+            status_resolved=False,
+        ),
+    ]
+    get_issue_remote_links_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_issue_remote_links')
+async def test_get_issue_remote_links_with_api_error(
+    get_issue_remote_links_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_remote_links_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_issue_remote_links('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    get_issue_remote_links_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_issue_remote_link')
+async def test_create_issue_remote_link_with_api_error(
+    create_issue_remote_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    create_issue_remote_link_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.create_issue_remote_link(
+        '1', 'http://www.a.com', 'a title'
+    )
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    create_issue_remote_link_mock.assert_called_once_with('1', 'http://www.a.com', 'a title')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_issue_remote_link')
+async def test_create_issue_remote_link_with_invalid_url(
+    create_issue_remote_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    create_issue_remote_link_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.create_issue_remote_link('1', 'www.a.com', 'a title')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'The url must be a full url including the http:// schema.'
+    assert response.result is None
+    create_issue_remote_link_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_issue_remote_link')
+async def test_create_issue_remote_link_without_title(
+    create_issue_remote_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    create_issue_remote_link_mock.return_value = None
+    # WHEN
+    response = await jira_api_controller.create_issue_remote_link('1', 'http://www.a.com', '')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result is None
+    create_issue_remote_link_mock.assert_called_once_with(
+        '1', 'http://www.a.com', 'http://www.a.com'
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_issue_remote_link')
+async def test_delete_issue_remote_link(
+    delete_issue_remote_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_issue_remote_link_mock.return_value = None
+    # WHEN
+    response = await jira_api_controller.delete_issue_remote_link('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result is None
+    delete_issue_remote_link_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_issue_remote_link')
+async def test_delete_issue_remote_link_with_api_error(
+    delete_issue_remote_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_issue_remote_link_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.delete_issue_remote_link('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    delete_issue_remote_link_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'server_info')
+async def test_server_info(server_info_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    server_info_mock.return_value = {
+        'baseUrl': 'url1',
+        'displayUrlServicedeskHelpCenter': 'url3',
+        'displayUrlConfluence': 'url4',
+        'version': '1',
+        'deploymentType': 'dev',
+        'buildNumber': '2',
+        'buildDate': '2025-12-31',
+        'serverTime': '10:00',
+        'scmInfo': 'info',
+        'serverTitle': 'title',
+        'serverTimeZone': 'UTC',
+        'defaultLocale': {'locale': 'EU'},
+    }
+    # WHEN
+    response = await jira_api_controller.server_info()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == JiraServerInfo(
+        base_url='url1',
+        display_url_servicedesk_help_center='url3',
+        display_url_confluence='url4',
+        version='1',
+        deployment_type='dev',
+        build_number=2,
+        build_date='2025-12-31',
+        server_time='10:00',
+        scm_info='info',
+        server_title='title',
+        default_locale='EU',
+        server_time_zone='UTC',
+    )
+    server_info_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'server_info')
+async def test_server_info_with_api_error(
+    server_info_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    server_info_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.server_info()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    server_info_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'myself')
+async def test_myself(myself_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    myself_mock.return_value = {
+        'accountId': '1',
+        'accountType': 'user',
+        'active': True,
+        'displayName': 'bart',
+        'emailAddress': 'bart@simpson.com',
+        'groups': {'items': [{'id': '1', 'name': 'g1'}]},
+    }
+    # WHEN
+    response = await jira_api_controller.myself()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == JiraMyselfInfo(
+        account_id='1',
+        account_type='user',
+        active=True,
+        display_name='bart',
+        email='bart@simpson.com',
+        groups=[JiraUserGroup(id='1', name='g1')],
+    )
+    myself_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'myself')
+async def test_myself_with_api_error(myself_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    myself_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.myself()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    myself_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_edit_metadata')
+async def test_get_edit_metadata_for_issue(
+    issue_edit_metadata_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    issue_edit_metadata_mock.return_value = {'key': 'value'}
+    # WHEN
+    response = await jira_api_controller.get_edit_metadata_for_issue('1')
+    # THEN
+    assert isinstance(response, dict)
+    assert response == {'key': 'value'}
+    issue_edit_metadata_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_edit_metadata')
+async def test_get_edit_metadata_for_issue_with_api_error(
+    issue_edit_metadata_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    issue_edit_metadata_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_edit_metadata_for_issue('1')
+    # THEN
+    assert isinstance(response, dict)
+    assert response == {}
+    issue_edit_metadata_mock.assert_called_once_with('1')

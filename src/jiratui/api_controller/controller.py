@@ -232,7 +232,7 @@ class APIController:
 
         Returns:
             An instance of `APIControllerResponse` with the list of `JiraUserGroup` instances. If an error occurs an
-            instance of `APIControllerResponse` with the `error` message.
+            instance of `APIControllerResponse` with the `error` message and `success = False`.
         """
         groups: list[JiraUserGroup] = []
         try:
@@ -282,7 +282,7 @@ class APIController:
                 },
             )
             return APIControllerResponse(success=False, error=str(e))
-        return APIControllerResponse(result=response.get('total', 0))
+        return APIControllerResponse(result=int(response.get('total', 0)))
 
     async def list_all_active_users_in_group(self, group_id: str) -> APIControllerResponse:
         """Retrieves all the active users in a group.
@@ -508,7 +508,10 @@ class APIController:
             relevant users. The string can match the prefix of the attribute's value. For example, `query=john` matches
             a user with a `displayName` of John Smith and a user with an `emailAddress` of johnson@example.com.
             active: if set to `True` (default) it will retrieve active users only.
+
         Returns:
+            An instance of `APIFacadeResponse` with a list of `JiraUser` and `success = True`. If an error occurs then
+            `success = False` and the error message in the `error` key.
         """
 
         try:
@@ -558,17 +561,21 @@ class APIController:
     ) -> APIControllerResponse:
         """Retrieves a work item (aka. Jira issue) by its key or id.
 
-        :param issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
-        :param fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
-        to retrieve a subset of fields. Allowed values:
-            *all Returns all fields.
-            *navigable Returns navigable fields.
-        Any issue field, prefixed with a minus to exclude.
-        :param properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
-        list. Allowed values:
-            *all Returns all issue properties.
-            Any issue property key, prefixed with a minus to exclude.
-        :return: an instance of `APIFacadeResponse` with the issue.
+        Args:
+            issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
+            fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
+            to retrieve a subset of fields. Allowed values:
+            - *all: Returns all fields.
+            - *navigable: Returns navigable fields.
+            - Any issue field, prefixed with a minus to exclude.
+            properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
+            list. Allowed values:
+            - *all Returns all issue properties.
+            - Any issue property key, prefixed with a minus to exclude.
+
+        Returns:
+            An instance of `APIFacadeResponse` with the issue and `success = True`. If an error occurs then
+            `success = False` and the error message in the `error` key.
         """
 
         fields = ','.join(fields) if fields else None
@@ -626,7 +633,7 @@ class APIController:
                 )
             except Exception as e:
                 self.logger.error(
-                    'There was an error while extracting data form an issue',
+                    'There was an error while extracting data from an issue',
                     extra={'error': str(e), 'issue_id_or_key': issue_id_or_key},
                 )
                 return APIControllerResponse(
@@ -686,20 +693,24 @@ class APIController:
     ) -> APIControllerResponse:
         """Searches for issues matching specified JQL query and other criteria.
 
-        :param project_key: the case-sensitive key of the project whose work items we want to search.
-        :param created_from: search work items created from this date forward (inclusive).
-        :param created_until: search work items created until this date (inclusive).
-        :param status: search work items with this status.
-        :param assignee: search work items assigned to this user's account ID.
-        :param issue_type: search work items of this type.
-        :param jql_query: search work items using this (additional) JQL query.
-        :param next_page_token: the token that identifies the next page of results. This helps implements pagination of
-        results.
-        :param limit: the maximum number of items to retrieve.
-        :param order_by: an instance of `WorkItemsSearchOrderBy` to sort the results.
-        :param fields: the fields to retrieve for every work item. It defaults to: `'id', 'key', 'status', 'summary', 'issuetype'`
-        :return: an instance of `APIControllerResponse` with the work items found or, en error if the search can not be
-        performed.
+        Args:
+            project_key: the case-sensitive key of the project whose work items we want to search.
+            created_from: search work items created from this date forward (inclusive).
+            created_until: search work items created until this date (inclusive).
+            status: search work items with this status.
+            assignee: search work items assigned to this user's account ID.
+            issue_type: search work items of this type.
+            jql_query: search work items using this (additional) JQL query.
+            next_page_token: the token that identifies the next page of results. This helps implements pagination of
+            results.
+            limit: the maximum number of items to retrieve.
+            order_by: an instance of `WorkItemsSearchOrderBy` to sort the results.
+            fields: the fields to retrieve for every work item. It defaults to: `'id', 'key', 'status', 'summary',
+            'issuetype'`
+
+        Returns:
+            An instance of `APIControllerResponse` with the work items found or, en error if the search can not be
+            performed.
         """
 
         criteria: dict = self._build_criteria_for_searching_work_items(
@@ -798,15 +809,18 @@ class APIController:
     ) -> APIControllerResponse:
         """Estimates the number of work items yield by a search.
 
-        :param project_key: the case-sensitive key of the project whose work items we want to search.
-        :param created_from: search work items created from this date forward (inclusive).
-        :param created_until: search work items created until this date (inclusive).
-        :param status: search work items with this status.
-        :param assignee: search work items assigned to this user's account ID.
-        :param issue_type: search work items of this type.
-        :param jql_query: search work items using this (additional) JQL query.
-        :return: an instance of `APIControllerResponse` with the count of work items or, en error if the estimation can
-        not be calculated.
+        Args:
+            project_key: the case-sensitive key of the project whose work items we want to search.
+            created_from: search work items created from this date forward (inclusive).
+            created_until: search work items created until this date (inclusive).
+            status: search work items with this status.
+            assignee: search work items assigned to this user's account ID.
+            issue_type: search work items of this type.
+            jql_query: search work items using this (additional) JQL query.
+
+        Returns:
+            An instance of `APIControllerResponse` with the count of work items or, en error if the estimation can not
+            be calculated.
         """
 
         criteria: dict = self._build_criteria_for_searching_work_items(
@@ -834,16 +848,20 @@ class APIController:
             return APIControllerResponse(
                 success=False, error=f'Failed to count the number of work items: {str(e)}'
             )
-        return APIControllerResponse(result=response.get('count', 0))
+        return APIControllerResponse(result=int(response.get('count', 0)))
 
     async def get_issue_remote_links(
         self, issue_key_or_id: str, global_id: str | None = None
     ) -> APIControllerResponse:
         """Retrieves the web links of a work item.
 
-        :param issue_key_or_id: the ID or case-sensitive key of a work item whose web links we want to retrieve.
-        :param global_id: an optional global ID that identifies a Web Link.
-        :return: a list of `IssueRemoteLink` with the details of every Web Link associated to the given work item.
+        Args:
+            issue_key_or_id: the ID or case-sensitive key of a work item whose web links we want to retrieve.
+            global_id: an optional global ID that identifies a Web Link.
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `IssueRemoteLink` or, `success = False` with
+            an `error` key if there is an error.
         """
 
         try:
@@ -853,11 +871,11 @@ class APIController:
         return APIControllerResponse(
             result=[
                 IssueRemoteLink(
-                    id=item.get('id'),
+                    id=str(item.get('id')),
                     global_id=item.get('globalId'),
                     relationship=item.get('relationship'),
                     title=item.get('object', {}).get('title'),
-                    summary=item.get('summary'),
+                    summary=item.get('object', {}).get('summary'),
                     url=item.get('object', {}).get('url'),
                     application_name=item.get('application', {}).get('name'),
                     status_title=item.get('object', {}).get('status', {}).get('title'),
@@ -892,6 +910,11 @@ class APIController:
         return APIControllerResponse()
 
     async def server_info(self) -> APIControllerResponse:
+        """Retrieves details of the Jira server instance.
+
+        Returns:
+            An instance of `APIControllerResponse` with the details.
+        """
         try:
             response: dict = await self.api.server_info()
         except Exception as e:
@@ -907,7 +930,7 @@ class APIController:
                 display_url_confluence=response.get('displayUrlConfluence'),
                 version=response.get('version'),
                 deployment_type=response.get('deploymentType'),
-                build_number=response.get('buildNumber'),
+                build_number=int(response.get('buildNumber', 0)),
                 build_date=response.get('buildDate'),
                 server_time=response.get('serverTime'),
                 scm_info=response.get('scmInfo'),
@@ -918,6 +941,11 @@ class APIController:
         )
 
     async def myself(self) -> APIControllerResponse:
+        """Retrieves details of the Jira user connecting to the API.
+
+        Returns:
+            An instance of `APIControllerResponse` with the details.
+        """
         try:
             response: dict = await self.api.myself()
         except Exception as e:

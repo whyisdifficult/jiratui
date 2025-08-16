@@ -15,21 +15,24 @@ def build_issue_search_jql(
     jql_query: str | None = None,
     order_by: WorkItemsSearchOrderBy | None = None,
 ) -> str:
-    """
+    """Builds a JQL query expression to search issues based on different criteria.
 
-    :param project_key:
-    :param created_from:
-    :param created_until:
-    :param updated_from:
-    :param updated_until:
-    :param status: find work items whose status matches this status name/ID.
-    :param assignee: find work items assigned to the given user. The user is specified by the account ID, email
-    address or name of a user.
-    :param issue_type:
-    :param jql_query:
-    :param order_by: used to specify the fields by whose values the search results will be sorted. This requirement
-    needs to be placed at the end of the JQL query, otherwise the JQL will be invalid.
-    :return:
+    Args:
+        project_key: the case-sensitive key of a project.
+        created_from: a date to search for issues.
+        created_until: a date to search for issues.
+        updated_from: a date to search for issues.
+        updated_until: a date to search for issues.
+        status: find work items whose status matches this status name/ID.
+        assignee: find work items assigned to the given user. The user is specified by the account ID, email address or
+        name of a user.
+        issue_type: the type of issue.
+        jql_query: a string with a JQL query expression.
+        order_by: used to specify the fields by whose values the search results will be sorted. This requirement needs
+        to be placed at the end of the JQL query, otherwise the JQL will be invalid.
+
+    Returns:
+        A string with the JQL query.
     """
     fields: list[str] = []
     if project_key:
