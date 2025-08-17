@@ -1013,8 +1013,9 @@ class APIController:
                 'The selected work item does not include the required fields metadata.'
             )
 
-        if 'summary' in updates and not updates.get('summary'):
-            raise ValidationError('The summary field can not be empty.')
+        if 'summary' in updates:
+            if not (summary := updates.get('summary')) or not summary.strip():
+                raise ValidationError('The summary field can not be empty.')
 
         fields_to_update: dict[str, list] = {}
 
@@ -1046,7 +1047,7 @@ class APIController:
                 ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "duedate" can not be updated for the selected work item.',
+                    'The field "due_date" can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
@@ -1080,7 +1081,7 @@ class APIController:
                 ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "assignee" can not be updated for the selected work item.',
+                    'The field "assignee_account_id" can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 

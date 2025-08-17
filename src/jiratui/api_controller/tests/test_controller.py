@@ -5,10 +5,17 @@ import pytest
 
 from jiratui.api.api import JiraAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.exceptions import ServiceInvalidResponseException, ServiceUnavailableException
+from jiratui.exceptions import (
+    ServiceInvalidResponseException,
+    ServiceUnavailableException,
+    UpdateWorkItemException,
+    ValidationError,
+)
 from jiratui.models import (
     IssueRemoteLink,
     IssueStatus,
+    IssueTransition,
+    IssueTransitionState,
     IssueType,
     JiraIssue,
     JiraIssueSearchResponse,
@@ -17,8 +24,14 @@ from jiratui.models import (
     JiraUser,
     JiraUserGroup,
     Project,
+    UpdateWorkItemResponse,
 )
 from jiratui.utils.tests import load_json_response
+
+
+@pytest.fixture
+def work_item() -> JiraIssue:
+    return Mock(spec=JiraIssue)
 
 
 @pytest.mark.asyncio
@@ -1814,3 +1827,233 @@ async def test_get_edit_metadata_for_issue_with_api_error(
     assert isinstance(response, dict)
     assert response == {}
     issue_edit_metadata_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_missing_edit_meta(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = None
+    # WHEN/THEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='Missing expected metadata.',
+    ):
+        await jira_api_controller.update_issue(work_item, {})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_missing_edit_meta_fields(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {}}
+    # WHEN/THEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The selected work item does not include the required fields metadata.',
+    ):
+        await jira_api_controller.update_issue(work_item, {})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_missing_summary(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'field': 'value'}}
+    # WHEN/THEN
+    with pytest.raises(
+        ValidationError,
+        match='The summary field can not be empty.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'summary': ' '})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_no_updates(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'field': 'value'}}
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {})
+    # THEN
+    assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
+
+
+@pytest.mark.parametrize('field_name', ['summary', 'due_date', 'priority', 'assignee_account_id'])
+@pytest.mark.asyncio
+async def test_update_issue_with_update_fields(
+    field_name: str,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'field': 'value'}}
+    work_item.key = 'WI1'
+    # WHEN/THEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match=f'The field "{field_name}" can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {field_name: 'value'})
+
+
+@pytest.mark.parametrize(
+    'field_name, field_key',
+    [
+        ('summary', 'summary'),
+        ('due_date', 'duedate'),
+        ('priority', 'priority'),
+        ('assignee_account_id', 'assignee'),
+    ],
+)
+@pytest.mark.asyncio
+async def test_update_issue_with_update_fields_no_update_allowed(
+    field_name: str,
+    field_key: str,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {field_key: {'operations': {}}}}
+    work_item.key = 'WI1'
+    # WHEN/THEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match=f'The field "{field_key}" can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {field_name: 'value'})
+
+
+@pytest.mark.parametrize(
+    'field_name, field_key, updated_fields',
+    [
+        ('summary', 'summary', ['summary']),
+        ('due_date', 'duedate', ['due_date']),
+        ('priority', 'priority', ['priority']),
+        ('assignee_account_id', 'assignee', ['assignee_account_id']),
+    ],
+)
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_update_fields_update_allowed(
+    update_issue_mock: Mock,
+    field_name: str,
+    field_key: str,
+    updated_fields: list[str],
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {field_key: {'operations': {'set': 'new value'}}}}
+    work_item.key = 'WI1'
+    update_issue_mock.return_value = {'fields': {field_name: 'new value'}}
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {field_name: 'value'})
+    # THEN
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_update_labels(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'summary': {'operations': {}}}}
+    work_item.key = 'WI1'
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
+    # THEN
+    assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
+
+
+@pytest.mark.asyncio
+async def test_update_issue_with_update_labels_not_allowed(
+    work_item: JiraIssue, jira_api_controller: APIController
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'labels': {'operations': {'add': 'allowed'}}}}
+    work_item.key = 'WI1'
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
+    # THEN
+    assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_update_labels_allowed(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    work_item.edit_meta = {'fields': {'labels': {'operations': {'set': 'allowed'}}}}
+    work_item.key = 'WI1'
+    update_issue_mock.return_value = {'fields': {'labels': 'new value'}}
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
+    # THEN
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=['labels'])
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'transitions')
+async def test_transitions(transitions_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    transitions_mock.return_value = {
+        'transitions': [
+            {
+                'to': {
+                    'description': 'a description',
+                    'name': 'a name',
+                    'id': '5',
+                },
+                'id': '2',
+                'name': 'T2',
+            },
+            {'id': '3', 'name': 'T3'},
+        ]
+    }
+    # WHEN
+    response = await jira_api_controller.transitions('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [
+        IssueTransition(
+            id='2',
+            name='T2',
+            to_state=IssueTransitionState(
+                id='5',
+                name='a name',
+                description='a description',
+            ),
+        )
+    ]
+    transitions_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'transitions')
+async def test_transitions_with_api_error(
+    transitions_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    transitions_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.transitions('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    transitions_mock.assert_called_once_with('1')

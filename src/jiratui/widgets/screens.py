@@ -326,12 +326,13 @@ class MainScreen(Screen):
     async def on_mount(self) -> None:
         self.run_worker(self.fetch_projects())
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
-        # users and statuses after the project dropdown is updated with the selection; in this case there is no need
-        # to fetch users and statuses here
-        if not self.initial_project_key:
+        # users, status codes and work item types after the project dropdown is updated with the selection; in this
+        # case there is no need to fetch users, status codes and work item types
+        if not CONFIGURATION.get().use_project_workflow and not self.initial_project_key:
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
             self.run_worker(self.fetch_users())
+
         if self.initial_jql_expression_id and (
             pre_defined_jql_expressions := CONFIGURATION.get().pre_defined_jql_expressions
         ):

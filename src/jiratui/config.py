@@ -75,6 +75,11 @@ class ApplicationConfiguration(BaseSettings):
     """If True (default) the status of a work item will be styled when it is displayed in the search results."""
     search_results_style_work_item_type: bool = True
     """If True (default) the type of a work item will be styled when it is displayed in the search results."""
+    use_project_workflow: bool = True
+    """When this is True the application will only load the list of available projects at startup. The list
+    of status codes, users and work items types will be loaded when the user selects a project. If this is False then
+    the application fill load (i.e. fetch from the API) available status codes, users and work items types in addition
+    to the available projects. This may make the startup slower."""
     tui_title: str | None = None
     """An optional title for the application. This is displayed in the top bar."""
     tui_title_include_jira_server_title: bool = True

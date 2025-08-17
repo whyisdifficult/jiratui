@@ -5,7 +5,7 @@ Thank you for considering contributing to our project! We welcome contributions 
 project, you agree to abide by our code of conduct.
 
 ## 2. **Code of Conduct**
-Please read our [Code of Conduct](CODE_OF_CONDUCT) to understand the expectations for behavior in our community.
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the expectations for behavior in our community.
 
 ## 3. **How to Contribute**
 Here are the steps to contribute to the project:

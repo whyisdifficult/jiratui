@@ -125,7 +125,10 @@ $ jtuicli issues search --key SCRUM-1
 | SCRUM-1 | Bug  | 2025-07-31 15:55 | To Do (10000) | lisa@simpson.com  | bart@simpson.com  | Write 100 times "I will be a good student" |
 ```
 
-## Searching for Comments
+### Listing Comments
+
+To list the comments of a work item use the `comments list` command and pass the (case-sensitive) key of the work
+item whose comments you want to list.
 
 ```shell
 $ jtuicli comments list SCRUM-1
@@ -135,6 +138,11 @@ $ jtuicli comments list SCRUM-1
 | 1  | SCRUM-1   | maggue@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World! |
 ```
 
+If you want to see the text of a specific comment use the `comments show` command and pass the (case-sensitive) key of
+the work item followed by the ID of the comment.
+
 ```shell
 $ jtuicli comments show SCRUM-1 1
+
+Hello World!
 ```
