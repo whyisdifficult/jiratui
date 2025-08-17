@@ -505,7 +505,6 @@ def search_users_groups(
                 limit=limit,
                 group_ids=[gid.strip() for gid in group_ids.split(',')] if group_ids else None,
                 group_names=[gn.strip() for gn in group_names.split(',')] if group_names else None,
-                group_id=group_id,
             )
         except CLIException as e:
             console.print('Unable to retrieve user groups.')

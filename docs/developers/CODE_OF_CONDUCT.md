@@ -43,7 +43,7 @@ offline event. Representation of a project may be further defined and clarified 
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project
-maintainers at [pythondeveloper@outlook.com](pythondeveloper@outlook.com). All complaints will be reviewed and investigated and will result in a
+maintainers at **pythondeveloper@outlook.com**. All complaints will be reviewed and investigated and will result in a
 response that is deemed necessary and appropriate to the circumstances. Maintainers are obligated to maintain
 confidentiality with regard to the reporter of an incident.
 

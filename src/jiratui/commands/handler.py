@@ -42,7 +42,6 @@ class CommandHandler:
         self,
         group_ids: list[str] | None = None,
         group_names: list[str] | None = None,
-        group_id: str | None = None,
         offset: int = 0,
         limit: int | None = None,
     ) -> list[JiraUserGroup]:

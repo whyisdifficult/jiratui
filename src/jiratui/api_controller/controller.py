@@ -234,11 +234,16 @@ class APIController:
             An instance of `APIControllerResponse` with the list of `JiraUserGroup` instances. If an error occurs an
             instance of `APIControllerResponse` with the `error` message and `success = False`.
         """
+        limit = (
+            RECORDS_PER_PAGE_LIST_GROUPS
+            if limit is None
+            else min(limit, RECORDS_PER_PAGE_LIST_GROUPS)
+        )
         groups: list[JiraUserGroup] = []
         try:
             response: dict = await self.api.get_groups_in_bulk(
                 offset=offset,
-                limit=min(limit, RECORDS_PER_PAGE_LIST_GROUPS),
+                limit=limit,
                 groups_ids=groups_ids,
                 groups_names=groups_names,
             )

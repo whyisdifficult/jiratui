@@ -6,7 +6,7 @@ from rich.table import Table
 from rich.text import Text
 
 from jiratui.models import IssueComment, JiraIssueSearchResponse, JiraUser, JiraUserGroup
-from jiratui.utils.adf2md import adf2md
+from jiratui.utils.adf2md.adf2md import adf2md
 
 
 class Renderer:
