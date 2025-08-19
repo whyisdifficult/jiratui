@@ -4,7 +4,7 @@ import re
 
 
 def load_json_response(current_file: str, filename: str):
-    """Loads JSON file located in the responses directory."""
+    """Loads JSON file."""
     base_dir = os.path.dirname(current_file)
     file_path = os.path.join(base_dir, 'responses', filename)
     with open(file_path) as json_file:

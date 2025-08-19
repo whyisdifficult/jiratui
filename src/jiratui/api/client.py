@@ -1,7 +1,9 @@
+import logging
 from typing import Callable
 
 import httpx
 
+from jiratui.constants import LOGGER_NAME
 from jiratui.exceptions import (
     AuthorizationException,
     PermissionException,
@@ -19,6 +21,7 @@ class JiraClient:
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.Client = httpx.Client(timeout=None)
         self.authentication = httpx.BasicAuth(api_username, api_token)
+        self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
     def set_headers(headers: dict | None = None) -> dict:
@@ -50,19 +53,20 @@ class JiraClient:
             )
         except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.ConnectError) as e:
             msg = f'{e.__class__.__name__}: {e}.'
-            # logger.error(msg, extra={'details': log_extra})
-            raise ServiceUnavailableException(msg, extra={}) from e
+            self.logger.error(msg, extra={'url': url})
+            raise ServiceUnavailableException(msg, extra={'url': url}) from e
 
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
+            msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(msg, extra={'url': url, 'status_code': response.status_code})
             if response.status_code == 404:
                 raise ResourceNotFoundException(str(e)) from e
             if response.status_code == 401:
                 raise AuthorizationException(str(e)) from e
             if response.status_code == 403:
                 raise PermissionException(str(e)) from e
-            msg = f'{e.__class__.__name__}: {e}.'
             raise ServiceInvalidRequestException(
                 msg, extra={'status_code': response.status_code}
             ) from e
@@ -77,6 +81,7 @@ class JiraClient:
                 return {}
             # This may happen if nginx responds with an error page or on calling ping
             log_msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(log_msg, extra={'url': url, 'status_code': response.status_code})
             raise ServiceInvalidResponseException(log_msg, extra={}) from e
 
         return response_json
@@ -89,6 +94,7 @@ class AsyncJiraClient:
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=None)
         self.authentication = httpx.BasicAuth(api_username, api_token)
+        self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
     def set_headers(headers: dict | None = None) -> dict:
@@ -130,12 +136,14 @@ class AsyncJiraClient:
             )
         except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.ConnectError) as e:
             msg = f'{e.__class__.__name__}: {e}.'
-            # logger.error(msg, extra={'details': log_extra})
-            raise ServiceUnavailableException(msg, extra={}) from e
+            self.logger.error(msg, extra={'url': url})
+            raise ServiceUnavailableException(msg, extra={'url': url}) from e
 
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
+            msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(msg, extra={'url': url, 'status_code': response.status_code})
             if response.status_code == 404:
                 raise ResourceNotFoundException(
                     'The requested resource was not found',
@@ -160,7 +168,6 @@ class AsyncJiraClient:
                         'status_code': 403,
                     },
                 ) from e
-            msg = f'{e.__class__.__name__}: {e}.'
             raise ServiceInvalidRequestException(
                 msg, extra={'status_code': response.status_code}
             ) from e
@@ -175,6 +182,7 @@ class AsyncJiraClient:
                 return {}
             # This may happen if nginx responds with an error page or on calling ping
             log_msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(log_msg, extra={'url': url, 'status_code': response.status_code})
             raise ServiceInvalidResponseException(log_msg, extra={}) from e
 
         return response_json

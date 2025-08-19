@@ -3,6 +3,17 @@ from jiratui.utils.adf2md.nodes import Node
 
 
 def adf2md(json_data: dict | list[dict]) -> str:
+    """Converts Atlassian's JIRA's ADF json-encoded string (Atlassian Document Format) to a Markdown string.
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
+
+    Args:
+        json_data: the dictionary or list of dictionaries that should be converted to Markdown.
+
+    Returns:
+        A Markdown string.
+    """
     root_nodes: list[Node] = []
 
     if isinstance(json_data, list):
