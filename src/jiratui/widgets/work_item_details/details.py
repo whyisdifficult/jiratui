@@ -12,7 +12,7 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
 from jiratui.utils.work_item_updates import (
-    can_update_work_item_assignee,
+    work_item_assignee_has_changed,
     work_item_priority_has_changed,
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
@@ -565,7 +565,9 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed
-            if can_update_work_item_assignee(self.issue.assignee, self.assignee_selector.selection):
+            if work_item_assignee_has_changed(
+                self.issue.assignee, self.assignee_selector.selection
+            ):
                 payload['assignee_account_id'] = self.assignee_selector.selection
 
         if self.work_item_labels_widget.update_enabled and self.work_item_labels_widget.value:

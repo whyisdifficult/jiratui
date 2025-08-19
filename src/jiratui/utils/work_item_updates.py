@@ -27,26 +27,28 @@ def work_item_priority_has_changed(
         return True
 
 
-def can_update_work_item_assignee(
+def work_item_assignee_has_changed(
     current_assignee: JiraUser | None = None,
     target_assignee_account_id: str | None = None,
 ) -> bool:
-    """Determines if we can/should update the assignee of a work item based on the current and the new desired value.
+    """Determines if the assignee of a work item has changed wrt. to a new assignee selected by the user from the
+    assignee/users dropdown.
 
     Args:
         current_assignee: the work item's current assignee user.
         target_assignee_account_id: the account ID of the new user that we want to assign to the work item.
 
     Returns:
-        `True` if we should/can update the assignee of the work item; `False` otherwise.
+        `True` if the assignee of the work item has changed; `False` otherwise.
     """
 
-    return (
-        (
-            target_assignee_account_id
-            and current_assignee
-            and target_assignee_account_id != current_assignee.account_id
-        )
-        or (target_assignee_account_id and not current_assignee)
-        or (not target_assignee_account_id and current_assignee)
-    )
+    if current_assignee is None:
+        if target_assignee_account_id is None:
+            return False
+        else:
+            return True
+    else:
+        if target_assignee_account_id is None:
+            return True
+        else:
+            return current_assignee.account_id != target_assignee_account_id

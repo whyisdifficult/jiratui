@@ -18,7 +18,7 @@ from jiratui.models import (
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.work_item_updates import (
-    can_update_work_item_assignee,
+    work_item_assignee_has_changed,
     work_item_priority_has_changed,
 )
 
@@ -248,7 +248,7 @@ class CommandHandler:
         ]:
             # set to unassign the work item
             updates['assignee_account_id'] = None
-        if can_update_work_item_assignee(issue.assignee, assignee_account_id):
+        if work_item_assignee_has_changed(issue.assignee, assignee_account_id):
             updates['assignee_account_id'] = assignee_account_id
         if due_date:
             updates['due_date'] = str(due_date)
