@@ -1,3 +1,7 @@
+.PHONY: install_pre_commit
+	pre-commit install -t pre-commit
+	pre-commit install -t pre-push
+
 .PHONY: lint
 lint:
 	ruff format .
