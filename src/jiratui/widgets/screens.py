@@ -184,7 +184,6 @@ class MainScreen(Screen):
         """The API instance used by the screen to interact with the Jira REST API via a an API controller."""
         self.available_users: list[tuple[str, str]] = []
         self.available_issues_status: list[tuple[str, str]] = []
-
         self.initial_project_key = project_key
         """Pre-selected project key. This is passed during the initialization of the application."""
         self.initial_assignee_account_id = user_account_id
@@ -324,11 +323,13 @@ class MainScreen(Screen):
         yield Footer()
 
     async def on_mount(self) -> None:
+        # fetch the list of projects
         self.run_worker(self.fetch_projects())
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
-        # users, status codes and work item types after the project dropdown is updated with the selection; in this
-        # case there is no need to fetch users, status codes and work item types
-        if not CONFIGURATION.get().use_project_workflow and not self.initial_project_key:
+        # users, status codes and work item types after the project dropdown is updated with the selection.
+        # the same happens when the user configures the app to fetch only projects on start up
+        if not CONFIGURATION.get().on_start_up_only_fetch_projects and not self.initial_project_key:
+            # in this case there is no need to fetch users, status codes and work item types
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
             self.run_worker(self.fetch_users())
@@ -336,13 +337,22 @@ class MainScreen(Screen):
         if self.initial_jql_expression_id and (
             pre_defined_jql_expressions := CONFIGURATION.get().pre_defined_jql_expressions
         ):
-            if expression_data := pre_defined_jql_expressions.get(self.initial_jql_expression_id):
-                if expression := expression_data.get('expression'):
-                    self.jql_expression_input.expression = expression.replace('\n', ' ').replace(
-                        '\t', ' '
-                    )
+            if (
+                expression_data := pre_defined_jql_expressions.get(self.initial_jql_expression_id)
+            ) and (expression := expression_data.get('expression')):
+                self.jql_expression_input.expression = expression.replace('\n', ' ').replace(
+                    '\t', ' '
+                )
 
     async def fetch_projects(self) -> None:
+        """Fetches the list of available projects.
+
+        If a list of projects exists then it will set the list of projects in projects dropdown widget and, pre-select
+        a value if required.
+
+        Returns:
+            Nothing.
+        """
         response: APIControllerResponse = await self.api.search_projects()
         if not response.success:
             self.notify(f'Failed to fetch the list of projects: {response.error}')
@@ -354,8 +364,11 @@ class MainScreen(Screen):
         }
 
     async def fetch_statuses(self) -> list[tuple[str, str]]:
-        """Retrieves the valid status codes depending on the selected project and type of work item."""
+        """Retrieves the valid status codes depending on the selected project and type of work item.
 
+        Returns:
+            A list of tuples with the name and id of every project status code.
+        """
         if self.project_selector.selection:
             return await self._fetch_project_statuses(self.project_selector.selection)
         response: APIControllerResponse = await self.api.status()
@@ -375,8 +388,11 @@ class MainScreen(Screen):
     async def _fetch_project_statuses(self, project_key: str) -> list[tuple[str, str]]:
         """Fetches the status codes applicable to a project and optionally to the type of issue selected by the user.
 
-        :param project_key: the key of the project whose status codes we want to retrieve.
-        :return:
+        Args:
+            project_key: the key of the project whose status codes we want to retrieve.
+
+        Returns:
+            A list of tuples with the name and id of every project status code.
         """
 
         response: APIControllerResponse = await self.api.get_project_statuses(project_key)
@@ -624,12 +640,19 @@ class MainScreen(Screen):
         return WorkItemSearchResult(response=response.result, total=total, start=total, end=total)
 
     async def search_issues(self, next_page_token: str | None = None) -> None:
-        """
-        If a specific issue is specified in the Issue Key input then the app searches the details of that issue
+        """Searches work items.
+
+        If a specific issue is specified in the Issue Key input widget then the app searches the details of that issue
         only. If, on the other hand, no issue is specified then the app searches issues based on the given criteria.
 
-        :param next_page_token:
-        :return:
+        Once the results are retrieved this method will update a reactive attribute in the search results table to
+        update the results.
+
+        Args:
+            next_page_token: a token that identifies the next page of results.
+
+        Returns:
+            Nothing.
         """
 
         # clear current results page
@@ -736,8 +759,11 @@ class MainScreen(Screen):
         """Handles the event to create a work item after the user clicks on the "save" button in the create-work-item
         screen.
 
-        :param data: a dictionary with the details of the fields and values to create the item.
-        :return: None
+        Args:
+            data: a dictionary with the details of the fields and values to create the item.
+
+        Returns:
+            Nothing.
         """
 
         if data:
@@ -755,7 +781,17 @@ class MainScreen(Screen):
                     title='Create Work Item',
                 )
 
-    async def on_key(self, event: Key):
+    async def on_key(self, event: Key) -> None:
+        """Handles events triggered every time the user presses a key.
+
+        The only events being handled are the keystrokes related to the pagination of search results.
+
+        Args:
+            event: the event with the details of the key pressed.
+
+        Returns:
+            Nothing.
+        """
         if event.key in ['alt+right']:
             # fetch contents of page self.page + 1
             if next_page_token := self.search_results_table.token_by_page.get(

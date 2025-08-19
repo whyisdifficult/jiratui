@@ -1,23 +1,30 @@
 from jiratui.models import IssuePriority, JiraUser
 
 
-def can_update_work_item_priority(
+def work_item_priority_has_changed(
     current_priority: IssuePriority | None = None,
     target_priority: str | None = None,
 ) -> bool:
-    """Determines if we can/should update the priority of a work item based on the current and the new desired value.
+    """Determines if the priority of a work item has changed wrt. to a new priority selected by the user from the
+    priority dropdown.
 
     Args:
-        current_priority: the work item's current priority.
-        target_priority: the ID of the new priority that we want to assign to the work item.
+        current_priority: the current priority of the work item.
+        target_priority: the new priority selected by the user.
 
     Returns:
-        `True` if we should/can update the priority of the work item; `False` otherwise.
+        `True` id the priority has changed; `False` otherwise.
     """
-
-    return (current_priority is None and target_priority) or (
-        current_priority is not None and target_priority and target_priority != current_priority.id
-    )
+    if current_priority is None:
+        if not target_priority:
+            return False
+        return True
+    else:
+        if not target_priority:
+            return True
+        if current_priority.id == target_priority:
+            return False
+        return True
 
 
 def can_update_work_item_assignee(

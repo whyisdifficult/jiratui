@@ -303,26 +303,14 @@ def add_comment(message: str, work_item_key: str):
 @comments.command('list')
 @click.argument('work-item-key')
 @click.option(
-    '--offset',
-    '-o',
-    default=None,
+    '--page',
+    '-p',
+    default=1,
     type=int,
-    help='The index of the first item to return in a page of results (page offset).',
-)
-@click.option(
-    '--limit',
-    '-l',
-    default=None,
-    type=int,
-    help='The maximum number of items to return per page.',
+    help='The page number we want to retrieve. The max number of items per page is 10',
 )
 @click.option('--comment-id', '-c', default=None, help='The ID of a comment')
-def list_comments(
-    work_item_key: str,
-    offset: int | None = None,
-    limit: int | None = None,
-    comment_id: str | None = None,
-):
+def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = None):
     """Lists the comments of the work item identified by WORK_ITEM_KEY.
 
     WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
@@ -330,7 +318,7 @@ def list_comments(
     handler = CommandHandler()
     with console.status('Fetching comments for the issue...'):
         try:
-            response = handler.get_comments(work_item_key, comment_id, offset=offset, limit=limit)
+            response = handler.get_comments(work_item_key, comment_id, page=page)
         except CLIException as e:
             console.print('Unable to retrieve the comments for the given issue')
             renderer = CLIExceptionRenderer()
@@ -460,14 +448,11 @@ def search_users(email_or_name: str):
     help='Retrieve the groups with this name.  Accepts a comma-separated list of names.',
 )
 @click.option(
-    '--offset',
-    '-o',
+    '--page',
+    '-p',
     type=int,
-    default=0,
-    help='The index of the first item to return in a page of results (page offset).',
-)
-@click.option(
-    '--limit', '-l', type=int, default=None, help='The maximum number of items to return per page.'
+    default=1,
+    help='The page number we want to retrieve. The max number of items per page is 25',
 )
 @click.option(
     '--group-id',
@@ -478,8 +463,7 @@ def search_users_groups(
     group_ids: str | None = None,
     group_names: str | None = None,
     group_id: str | None = None,
-    offset: int = 0,
-    limit: int | None = None,
+    page: int = 1,
 ) -> None:
     """Searches Jira users groups. Use it to find groups of users by name or ID. Useful for setting the config variable
     jira_user_group_id."""
@@ -501,8 +485,7 @@ def search_users_groups(
         # find Jira users groups
         try:
             items = handler.search_user_groups(
-                offset=offset,
-                limit=limit,
+                page=page,
                 group_ids=[gid.strip() for gid in group_ids.split(',')] if group_ids else None,
                 group_names=[gn.strip() for gn in group_names.split(',')] if group_names else None,
             )
@@ -520,4 +503,4 @@ def jiratuicli():
 
 
 if __name__ == '__main__':
-    cli()
+    jiratuicli()

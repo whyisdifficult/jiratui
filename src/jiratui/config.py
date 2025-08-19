@@ -15,6 +15,8 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 
+DEFAULT_YAML_CONFIG_FILE_NAME = 'jiratui.yaml'
+
 
 class ApplicationConfiguration(BaseSettings):
     jira_api_username: str
@@ -75,7 +77,7 @@ class ApplicationConfiguration(BaseSettings):
     """If True (default) the status of a work item will be styled when it is displayed in the search results."""
     search_results_style_work_item_type: bool = True
     """If True (default) the type of a work item will be styled when it is displayed in the search results."""
-    use_project_workflow: bool = True
+    on_start_up_only_fetch_projects: bool = True
     """When this is True the application will only load the list of available projects at startup. The list
     of status codes, users and work items types will be loaded when the user selects a project. If this is False then
     the application fill load (i.e. fetch from the API) available status codes, users and work items types in addition
@@ -90,10 +92,10 @@ class ApplicationConfiguration(BaseSettings):
     """The name of the log file to use."""
 
     model_config = SettingsConfigDict(
-        env_file='.env.jiratui',
+        env_file=os.getenv('JIRA_TUI_ENV_FILE', '.env.jiratui') or '.env.jiratui',
         env_file_encoding='utf-8',
         env_prefix='JIRA_TUI_',
-        yaml_file='jiratui.yaml',
+        yaml_file=DEFAULT_YAML_CONFIG_FILE_NAME,
         extra='allow',
     )
 
@@ -106,7 +108,7 @@ class ApplicationConfiguration(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        config_file = Path('jiratui.yaml')
+        config_file = Path(DEFAULT_YAML_CONFIG_FILE_NAME)
         if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
             config_file = Path(jira_tui_config_file).resolve()
 

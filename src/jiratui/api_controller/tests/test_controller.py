@@ -12,6 +12,7 @@ from jiratui.exceptions import (
     ValidationError,
 )
 from jiratui.models import (
+    IssueComment,
     IssueRemoteLink,
     IssueStatus,
     IssueTransition,
@@ -23,10 +24,35 @@ from jiratui.models import (
     JiraServerInfo,
     JiraUser,
     JiraUserGroup,
+    LinkIssueType,
     Project,
     UpdateWorkItemResponse,
 )
 from jiratui.utils.tests import load_json_response
+
+
+@pytest.fixture
+def transitions() -> list[IssueTransition]:
+    return [
+        IssueTransition(
+            id='1',
+            name='To Do',
+            to_state=IssueTransitionState(
+                id='3',
+                name='To Do',
+                description='a task to do',
+            ),
+        ),
+        IssueTransition(
+            id='2',
+            name='Done',
+            to_state=IssueTransitionState(
+                id='4',
+                name='To Do',
+                description='a task done',
+            ),
+        ),
+    ]
 
 
 @pytest.fixture
@@ -2057,3 +2083,424 @@ async def test_transitions_with_api_error(
     assert response.error == 'some error'
     assert response.result is None
     transitions_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'transition_issue')
+@patch.object(APIController, 'transitions')
+async def test_transition_issue_status(
+    transitions_mock: Mock,
+    transition_issue_mock: Mock,
+    transitions: list[IssueTransition],
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    transitions_mock.return_value = APIControllerResponse(result=transitions)
+    transition_issue_mock.return_value = APIControllerResponse(result=[])
+    # WHEN
+    response = await jira_api_controller.transition_issue_status('1', '3')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result is None
+    transitions_mock.assert_called_once_with('1')
+    transition_issue_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'transition_issue')
+@patch.object(APIController, 'transitions')
+async def test_transition_issue_status_with_transition_issue_api_error(
+    transitions_mock: Mock,
+    transition_issue_mock: Mock,
+    transitions: list[IssueTransition],
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    transitions_mock.return_value = APIControllerResponse(result=transitions)
+    transition_issue_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.transition_issue_status('1', '3')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    transitions_mock.assert_called_once_with('1')
+    transition_issue_mock.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transitions')
+async def test_transition_issue_status_status_not_found(
+    transitions_mock: Mock,
+    transitions: list[IssueTransition],
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    transitions_mock.return_value = APIControllerResponse(result=transitions)
+    # WHEN
+    response = await jira_api_controller.transition_issue_status('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'Unable to find a valid transition for the given status ID.'
+    assert response.result is None
+    transitions_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transitions')
+async def test_transition_issue_status_with_api_error(
+    transitions_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    transitions_mock.return_value = APIControllerResponse(success=False, error='some error')
+    # WHEN
+    response = await jira_api_controller.transition_issue_status('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert (
+        response.error
+        == 'Unable to find valid status transitions for the selected item: some error'
+    )
+    assert response.result is None
+    transitions_mock.assert_called_once_with('1')
+
+
+@pytest.fixture
+def comment_response() -> dict:
+    return {
+        'author': {
+            'accountId': '1',
+            'emailAddress': 'bart@foo.com',
+            'active': True,
+            'displayName': 'Bart',
+        },
+        'updateAuthor': {
+            'accountId': '2',
+            'emailAddress': 'homer@foo.com',
+            'active': True,
+            'displayName': 'Homer',
+        },
+        'created': '2025-12-31T10:20:00',
+        'updated': '2025-12-31T10:20:00',
+        'id': '1',
+        'body': {},
+    }
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comment')
+async def test_get_comment(
+    get_comment_mock: Mock,
+    comment_response: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_comment_mock.return_value = comment_response
+    # WHEN
+    response = await jira_api_controller.get_comment('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body=None,
+    )
+    get_comment_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comment')
+async def test_get_comment_with_api_error(
+    get_comment_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_comment_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_comment('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    get_comment_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comments')
+async def test_get_comments(
+    get_comments_mock: Mock,
+    comment_response: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_comments_mock.return_value = {'comments': [comment_response]}
+    # WHEN
+    response = await jira_api_controller.get_comments('1', 0, 10)
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [
+        IssueComment(
+            id='1',
+            author=JiraUser(
+                account_id='1',
+                display_name='Bart',
+                active=True,
+                email='bart@foo.com',
+            ),
+            created=datetime(2025, 12, 31, 10, 20, 0),
+            updated=datetime(2025, 12, 31, 10, 20, 0),
+            update_author=JiraUser(
+                account_id='2',
+                display_name='Homer',
+                active=True,
+                email='homer@foo.com',
+            ),
+            body=None,
+        )
+    ]
+    get_comments_mock.assert_called_once_with('1', 0, 10)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comments')
+async def test_get_comments_with_api_error(
+    get_comments_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_comments_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_comments('1', 0, 10)
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'Failed to retrieve the comments: some error'
+    assert response.result is None
+    get_comments_mock.assert_called_once_with('1', 0, 10)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_comment')
+async def test_add_comment(
+    add_comment_mock: Mock, comment_response: dict, jira_api_controller: APIController
+):
+    # GIVEN
+    add_comment_mock.return_value = comment_response
+    # WHEN
+    response = await jira_api_controller.add_comment('1', 'text')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body=None,
+    )
+    add_comment_mock.assert_called_once_with('1', 'text')
+
+
+@pytest.mark.asyncio
+async def test_add_comment_without_message(jira_api_controller: APIController):
+    # WHEN
+    response = await jira_api_controller.add_comment('1', '')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'Missing required message.'
+    assert response.result is None
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_comment')
+async def test_add_comment_with_api_error(
+    add_comment_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    add_comment_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.add_comment('1', 'text')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    add_comment_mock.assert_called_once_with('1', 'text')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_comment')
+async def test_delete_comment(delete_comment_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    delete_comment_mock.return_value = APIControllerResponse()
+    # WHEN
+    response = await jira_api_controller.delete_comment('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    delete_comment_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_comment')
+async def test_delete_comment_with_api_error(
+    delete_comment_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_comment_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.delete_comment('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    delete_comment_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_issue_link')
+async def test_link_work_items(create_issue_link_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    create_issue_link_mock.return_value = APIControllerResponse()
+    # WHEN
+    response = await jira_api_controller.link_work_items('1', '2', 'causes', '4')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    create_issue_link_mock.assert_called_once_with(
+        left_issue_key='1',
+        right_issue_key='2',
+        link_type='causes',
+        link_type_id='4',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_issue_link')
+async def test_link_work_items_with_api_error(
+    create_issue_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    create_issue_link_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.link_work_items('1', '2', 'causes', '4')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    create_issue_link_mock.assert_called_once_with(
+        left_issue_key='1',
+        right_issue_key='2',
+        link_type='causes',
+        link_type_id='4',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_issue_link')
+async def test_delete_issue_link(delete_issue_link_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    delete_issue_link_mock.return_value = APIControllerResponse()
+    # WHEN
+    response = await jira_api_controller.delete_issue_link('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    delete_issue_link_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_issue_link')
+async def test_delete_issue_link_with_api_error(
+    delete_issue_link_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_issue_link_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.delete_issue_link('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    delete_issue_link_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_link_types')
+async def test_issue_link_types(issue_link_types_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    issue_link_types_mock.return_value = {
+        'issueLinkTypes': [
+            {
+                'id': '1',
+                'name': 'type 1',
+                'inward': 'in',
+                'outward': 'out',
+            }
+        ]
+    }
+    # WHEN
+    response = await jira_api_controller.issue_link_types()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [LinkIssueType(id='1', name='type 1', inward='in', outward='out')]
+    issue_link_types_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_link_types')
+async def test_issue_link_types_with_api_error(
+    issue_link_types_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    issue_link_types_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.issue_link_types()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    issue_link_types_mock.assert_called_once_with()

@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from pythonjsonlogger.json import JsonFormatter
 from textual.app import App
@@ -120,4 +121,7 @@ class JiraApp(App):
 
 
 if __name__ == '__main__':
-    JiraApp(ApplicationConfiguration()).run()  # noqa
+    try:
+        JiraApp(ApplicationConfiguration()).run()  # noqa
+    except Exception as e:
+        sys.exit(str(e))

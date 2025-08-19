@@ -13,7 +13,7 @@ from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
 from jiratui.utils.work_item_updates import (
     can_update_work_item_assignee,
-    can_update_work_item_priority,
+    work_item_priority_has_changed,
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
 from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
@@ -551,12 +551,17 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     payload['due_date'] = cleaned_value
 
         if self.priority_selector.update_enabled:
-            if can_update_work_item_priority(self.issue.priority, self.priority_selector.selection):
-                payload['priority'] = self.priority_selector.selection
-            else:
-                self.notify(
-                    'Updating the priority of this work item is not possible', severity='warning'
-                )
+            if work_item_priority_has_changed(
+                self.issue.priority, self.priority_selector.selection
+            ):
+                if self.priority_selector.selection is None:
+                    # the user is trying to set the priority to None; this is not allowed
+                    self.notify(
+                        'Unsetting the priority of this work item is not possible',
+                        severity='warning',
+                    )
+                else:
+                    payload['priority'] = self.priority_selector.selection
 
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed

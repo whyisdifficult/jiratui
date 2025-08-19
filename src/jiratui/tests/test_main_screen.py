@@ -1,10 +1,10 @@
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from textual.widgets import Select
 
-from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
@@ -24,6 +24,14 @@ from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidge
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.search import IssuesSearchResultsTable
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
+
+
+@pytest.fixture()
+def jira_users() -> list[JiraUser]:
+    return [
+        Mock(spec=JiraUser),
+        Mock(spec=JiraUser),
+    ]
 
 
 @pytest.fixture()
@@ -108,13 +116,16 @@ async def test_fetch_projects(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_fetch_users_without_project_selection(
+async def test_fetch_users_without_project_selection_without_jira_user_group_id(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
+    # GIVEN
+    config_for_testing.jira_user_group_id = None
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
         # WHEN
@@ -123,8 +134,61 @@ async def test_fetch_users_without_project_selection(
         assert main_screen.project_selector.selection is None
         assert main_screen.available_users == []
         assert result == []
-        assert main_screen.users_selector.users == {'users': [], 'selection': None}
-        assert main_screen.users_selector._options == [('', Select.BLANK)]
+
+
+@patch.object(APIController, 'list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_users_without_project_selection_with_jira_user_group_id(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    list_all_active_users_in_group_mock: AsyncMock,
+    jira_users,
+    config_for_testing,
+    jira_api_controller,
+    app,
+):
+    # GIVEN
+    config_for_testing.jira_user_group_id = '1'
+    list_all_active_users_in_group_mock.return_value = APIControllerResponse(result=jira_users)
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        # WHEN
+        result = await main_screen.fetch_users()
+        # THEN
+        assert main_screen.project_selector.selection is None
+        assert main_screen.available_users == []
+        assert result == jira_users
+
+
+@patch.object(APIController, 'list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_users_without_project_selection_with_jira_user_group_id_api_error(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    list_all_active_users_in_group_mock: AsyncMock,
+    config_for_testing,
+    jira_api_controller,
+    app,
+):
+    # GIVEN
+    config_for_testing.jira_user_group_id = '1'
+    list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        # WHEN
+        result = await main_screen.fetch_users()
+        # THEN
+        assert main_screen.project_selector.selection is None
+        assert main_screen.available_users == []
+        assert result == []
 
 
 @patch('jiratui.widgets.screens.APIController.search_users_assignable_to_projects')
@@ -176,8 +240,6 @@ async def test_fetch_users_with_project_selection(
                 display_name='Bart Simpson',
             )
         ]
-        assert main_screen.users_selector.users == {'users': [], 'selection': None}
-        assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
 @patch('jiratui.widgets.screens.APIController.search_users_assignable_to_projects')
@@ -213,16 +275,14 @@ async def test_fetch_users_with_project_selection_search_users_error(
             project_keys=['P1'], active=True
         )
         assert result == []
-        assert main_screen.users_selector.users == {'users': [], 'selection': None}
-        assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
-@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch.object(APIController, 'list_all_active_users_in_group')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_fetch_users_without_project_selection_with_users_group_id(
+async def test_fetch_users_without_project_selection_with_users_group_id_without_using_project_workflow(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -232,6 +292,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id(
     app,
 ):
     config_for_testing.jira_user_group_id = '1'
+    config_for_testing.on_start_up_only_fetch_projects = False
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(
         result=[
             JiraUser(
@@ -267,12 +328,12 @@ async def test_fetch_users_without_project_selection_with_users_group_id(
         ]
 
 
-@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch.object(APIController, 'list_all_active_users_in_group')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_fetch_users_without_project_selection_with_users_group_id_user_listing_error(
+async def test_fetch_users_without_project_selection_with_users_group_id_using_project_workflow(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -282,6 +343,47 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     app,
 ):
     config_for_testing.jira_user_group_id = '1'
+    config_for_testing.on_start_up_only_fetch_projects = True
+    list_all_active_users_in_group_mock.return_value = APIControllerResponse(
+        result=[
+            JiraUser(
+                email='foo@bar',
+                account_id='12345',
+                active=True,
+                display_name='Bart Simpson',
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        await pilot.press('')
+        # THEN
+        assert main_screen.initial_project_key is None
+        assert main_screen.project_selector.selection is None
+        list_all_active_users_in_group_mock.assert_not_called()
+        assert main_screen.available_users == []
+        assert main_screen.users_selector.users is None
+        assert main_screen.users_selector._options == [
+            ('', Select.BLANK),
+        ]
+
+
+@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_users_without_project_selection_with_users_group_id_user_listing_error_without_use_project_workflow(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    list_all_active_users_in_group_mock: AsyncMock,
+    config_for_testing,
+    jira_api_controller,
+    app,
+):
+    config_for_testing.jira_user_group_id = '1'
+    config_for_testing.on_start_up_only_fetch_projects = False
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test() as pilot:
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
@@ -295,24 +397,55 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
         assert main_screen.users_selector._options == [('', Select.BLANK)]
 
 
+@patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_users_without_project_selection_with_users_group_id_user_listing_error_using_project_workflow(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    list_all_active_users_in_group_mock: AsyncMock,
+    config_for_testing,
+    jira_api_controller,
+    app,
+):
+    config_for_testing.jira_user_group_id = '1'
+    config_for_testing.on_start_up_only_fetch_projects = True
+    list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test() as pilot:
+        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        await pilot.press('')
+        # THEN
+        assert main_screen.initial_project_key is None
+        assert main_screen.project_selector.selection is None
+        list_all_active_users_in_group_mock.assert_not_called()
+        assert main_screen.available_users == []
+        assert main_screen.users_selector.users is None
+        assert main_screen.users_selector._options == [('', Select.BLANK)]
+
+
 @patch('jiratui.widgets.screens.APIController.status')
 @patch('jiratui.widgets.screens.MainScreen.fetch_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_mount_fetch_statuses_without_initial_project_key(
+async def test_mount_fetch_statuses_without_initial_project_key_without_using_project_workflow(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
+    config_for_testing.on_start_up_only_fetch_projects = False
     status_mock.return_value = APIControllerResponse(
         result=[
-            IssueStatus(id=2, name='To Do', description='A task to do'),
-            IssueStatus(id=1, name='Done', description='A task done'),
+            IssueStatus(id='2', name='To Do', description='A task to do'),
+            IssueStatus(id='1', name='Done', description='A task done'),
         ]
     )
     # WHEN
@@ -331,16 +464,51 @@ async def test_mount_fetch_statuses_without_initial_project_key(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
+async def test_mount_fetch_statuses_without_initial_project_key_using_project_workflow(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_users_mock: AsyncMock,
+    status_mock: AsyncMock,
+    config_for_testing,
+    jira_api_controller,
+    app,
+):
+    # GIVEN
+    config_for_testing.on_start_up_only_fetch_projects = True
+    status_mock.return_value = APIControllerResponse(
+        result=[
+            IssueStatus(id='2', name='To Do', description='A task to do'),
+            IssueStatus(id='1', name='Done', description='A task done'),
+        ]
+    )
+    # WHEN
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        # THEN
+        assert main_screen.initial_project_key is None
+        assert main_screen.project_selector.selection is None
+        status_mock.assert_not_called()
+        assert main_screen.available_issues_status == []
+        assert main_screen.issue_status_selector.statuses is None
+
+
+@patch('jiratui.widgets.screens.APIController.status')
+@patch('jiratui.widgets.screens.MainScreen.fetch_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
 async def test_mount_fetch_statuses_without_initial_project_key_status_error(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
     status_mock.return_value = APIControllerResponse(success=False)
+    config_for_testing.on_start_up_only_fetch_projects = False
     # WHEN
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # noqa: F821
@@ -362,14 +530,16 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
+    config_for_testing.on_start_up_only_fetch_projects = False
     get_issue_types_mock.return_value = APIControllerResponse(
         result=[
             IssueType(
-                id=1,
+                id='1',
                 name='Task',
                 scope_project=None,
             )
@@ -382,7 +552,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
         get_issue_types_mock.assert_called_once()
-        assert main_screen.issue_type_selector._options == [('', Select.BLANK), ('Task', 1)]
+        assert main_screen.issue_type_selector._options == [('', Select.BLANK), ('Task', '1')]
 
 
 @patch('jiratui.widgets.screens.APIController.get_issue_types')
@@ -395,10 +565,12 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
+    config_for_testing.on_start_up_only_fetch_projects = False
     get_issue_types_mock.return_value = APIControllerResponse(success=False)
     # WHEN
     async with app.run_test():
@@ -447,10 +619,12 @@ async def test_select_project(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
+    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
+    config_for_testing.on_start_up_only_fetch_projects = False
     search_projects_mock.return_value = APIControllerResponse(
         result=[
             Project(id='2', name='Project B', key='P2'),

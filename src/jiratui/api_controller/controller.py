@@ -1199,10 +1199,10 @@ class APIController:
                 created=datetime.fromisoformat(comment.get('created')),
                 updated=datetime.fromisoformat(comment.get('updated')),
                 update_author=JiraUser(
-                    account_id=author.get('accountId'),
-                    display_name=author.get('displayName'),
-                    active=author.get('active'),
-                    email=author.get('emailAddress'),
+                    account_id=update_author.get('accountId'),
+                    display_name=update_author.get('displayName'),
+                    active=update_author.get('active'),
+                    email=update_author.get('emailAddress'),
                 )
                 if update_author
                 else None,
@@ -1419,6 +1419,16 @@ class APIController:
             return APIControllerResponse(success=False, error=str(e))
 
     async def create_work_item(self, data: dict) -> APIControllerResponse:
+        """Creates a work item.
+
+        Args:
+            data: the data that includes the fields and values to create the work item.
+
+        Returns:
+            An instance of `APIControllerResponse` with an instance of `JiraBaseIssue` as the result. This includes the
+            item id and key. If an error occurs then  `APIControllerResponse.success == False` and
+            `APIControllerResponse.error` indicates the error.
+        """
         fields = {}
 
         if assignee_account_id := data.get('assignee_account_id'):
@@ -1468,7 +1478,24 @@ class APIController:
                 error='The work item was not created because there are no details to create it.',
             )
 
-        result: dict = await self.api.create_work_item(fields)
+        try:
+            result: dict = await self.api.create_work_item(fields)
+        except Exception as e:
+            self.logger.error(
+                'An error occurred while trying to create an item',
+                extra={
+                    'error_message': str(e),
+                    'assignee_account_id': data.get('assignee_account_id'),
+                    'reporter_account_id': data.get('reporter_account_id'),
+                    'issue_type_id': data.get('issue_type_id'),
+                    'parent_key': data.get('parent_key'),
+                    'project_key': data.get('project_key'),
+                    'duedate': data.get('duedate'),
+                    'summary': data.get('summary'),
+                    'priority': data.get('priority'),
+                },
+            )
+            return APIControllerResponse(success=False, error=str(e))
         return APIControllerResponse(
             result=JiraBaseIssue(id=result.get('id'), key=result.get('key'))
         )

@@ -57,8 +57,9 @@ class JiraAPI:
             order_by: sort the results by a field: `key` (default), `category`, `issueCount`, `lastIssueUpdatedTime`,
             `name`, `owner`, `archivedDate`, `deletedDate`.
             keys: the project keys to filter the results by.
-        Returns:
 
+        Returns:
+            A dictionary with the details of the projects.
         """
         params = {}
         if order_by:
@@ -161,7 +162,7 @@ class JiraAPI:
         limit: int | None = 50,
         query: str | None = None,
     ) -> list[dict]:
-        """Returns a list of users that can be assigned to an issue.
+        """Retrieves a list of users that can be assigned to an issue.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-search-get
@@ -253,19 +254,23 @@ class JiraAPI:
         search and check for moved issues is performed. If a matching issue is found its details are returned, a 302
         or other redirect is not returned. The issue key returned in the response is the key of the issue found.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
 
-        :param issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
-        :param fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
-        to retrieve a subset of fields. Allowed values:
-            *all Returns all fields.
-            *navigable Returns navigable fields.
-        Any issue field, prefixed with a minus to exclude.
-        :param properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
-        list. Allowed values:
-            *all Returns all issue properties.
-            Any issue property key, prefixed with a minus to exclude.
-        :return: a dictionary with the detail sof the issue.
+        Args:
+            issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
+            fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
+            to retrieve a subset of fields. Allowed values:
+                *all Returns all fields.
+                *navigable Returns navigable fields.
+            Any issue field, prefixed with a minus to exclude.
+            properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
+            list. Allowed values:
+                *all Returns all issue properties.
+                Any issue property key, prefixed with a minus to exclude.
+
+        Returns:
+            A dictionary with the detail sof the issue.
         """
         params = {'expand': 'editmeta'}
         if fields is not None:
@@ -361,31 +366,33 @@ class JiraAPI:
         """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
         results.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post
 
-        :param order_by: used to specify the fields by whose values the search results will be sorted. This requirement
-        needs to be placed at the end of the JQL query, otherwise the JQL will be invalid. Possible values are:
-        order by created asc
-        order by created desc
-        order by priority asc
-        order by priority desc
-        order by key asc
-        order by key desc
+        Args:
+            project_key: search items that belong to the project with this (case-sensitive) key.
+            created_from: search items created from this date forward.
+            created_until: search items created until this date.
+            updated_from: search items updated from this date forward.
+            updated_until: search items updated until this date
+            status: search items with this status id.
+            assignee: search items assigned to this user (by account id).
+            issue_type: search items with this type id.
+            jql_query: a JQL expression to filter items.
+            fields: retrieve these fields for every item found.
+            next_page_token: an optional token to retrieve the next page of results.
+            limit: retrieve this max number of results per page.
+            order_by: sort the items according to these criteria. This requirement needs to be placed at the end of
+            the JQL query, otherwise the JQL will be invalid. Possible values are:
+            - order by created asc
+            - order by created desc
+            - order by priority asc
+            - order by priority desc
+            - order by key asc
+            - order by key desc
 
-        :param project_key:
-        :param created_from:
-        :param created_until:
-        :param updated_from:
-        :param updated_until:
-        :param status:
-        :param assignee:
-        :param issue_type:
-        :param jql_query:
-        :param fields:
-        :param next_page_token:
-        :param limit:
-        :param order_by:
-        :return:
+        Returns:
+            A dictionary with the results.
         """
         jql: str = build_issue_search_jql(
             project_key=project_key,
@@ -422,20 +429,24 @@ class JiraAPI:
         issue_type: int | None = None,
         jql_query: str | None = None,
     ) -> dict:
-        """Provide an estimated count of the issues that match the JQL. Recent updates might not be immediately visible
+        """Provides an estimated count of the issues that match the JQL. Recent updates might not be immediately visible
         in the returned output. This endpoint requires JQL to be bounded.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
 
-        :param project_key:
-        :param created_from:
-        :param created_until:
-        :param updated_from:
-        :param status:
-        :param assignee:
-        :param issue_type:
-        :param jql_query:
-        :return:
+        Args:
+            project_key: search items that belong to the project with this (case-sensitive) key.
+            created_from: search items created from this date forward.
+            created_until: search items created until this date.
+            updated_from: search items updated from this date forward.
+            status: search items with this status id.
+            assignee: search items assigned to this user (by account id).
+            issue_type: search items with this type id.
+            jql_query: a JQL expression to filter items.
+
+        Returns:
+            A dictionary with the estimated number of items that match the search criteria.
         """
         jql: str = build_issue_search_jql(
             project_key=project_key,
@@ -457,18 +468,18 @@ class JiraAPI:
     async def evaluate_expression(
         self, expression: str, issue_key: str = None, project_key: str = None
     ) -> dict:
-        """
+        """Evaluates a JQL expression.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-jira-expressions/#api-rest-api-3-expression-evaluate-post
 
         Args:
-            expression:
-            issue_key:
-            project_key:
+            expression: a JQL expression.
+            issue_key: a case-sensitive work item key.
+            project_key: a case-sensitive project key.
 
         Returns:
-
+            A dictionary with the result of the evaluation.
         """
         payload = {'expression': expression}
         if issue_key:
@@ -482,11 +493,25 @@ class JiraAPI:
         )
 
     async def server_info(self) -> dict:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-server-info/#api-group-server-info
+        """Retrieves information of the Jira server.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-server-info/#api-group-server-info
+
+        Returns:
+            A dictionary with the details.
+        """
         return await self.client.make_request(method=httpx.AsyncClient.get, url='serverInfo')
 
     async def myself(self) -> dict:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-myself/#api-rest-api-3-myself-get
+        """Retrieves information of the Jira user connecting to the Jira server.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-myself/#api-rest-api-3-myself-get
+
+        Returns:
+            A dictionary with the details.
+        """
         return await self.client.make_request(
             method=httpx.AsyncClient.get,
             url='myself',
@@ -580,19 +605,17 @@ class JiraAPI:
         Note that users are ordered by username, however the username is not returned in the results due to privacy
         reasons.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-member-get
-        see also: https://support.atlassian.com/user-management/docs/default-groups-and-permissions/
+        See Also:
+            - https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-member-get
+            - https://support.atlassian.com/user-management/docs/default-groups-and-permissions/
 
-        **Scopes**
-        **OAuth 2.0 scopes required**:
-        - Classic:
-            - RECOMMENDED: `manage:jira-configuration`
-            - Granular: `read:group:jira`, `read:user:jira`, `read:avatar:jira`
+        Args:
+            group_id: The ID of the group.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page (number should be between 1 and 50).
 
-        :param group_id: The ID of the group.
-        :param offset: the index of the first item to return in a page of results (page offset).
-        :param limit: the maximum number of items to return per page (number should be between 1 and 50).
-        :return:
+        Returns:
+            A dictionary with the details of the users.
         """
         params = {
             'includeInactiveUsers': False,
@@ -623,17 +646,17 @@ class JiraAPI:
         )
 
     async def get_comment(self, issue_id_or_key: str, comment_id: str) -> dict:
-        """https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-get
+        """Retrieves the detail sof a comment.
 
-        **Scopes**
-        **OAuth 2.0 scopes required**:
-        - Classic:
-            - RECOMMENDED: `read:jira-work`
-            - Granular: read:comment:jira, read:comment.property:jira, read:group:jira, read:project:jira, read:project-role:jira, read:user:jira, read:avatar:jira
+        See Also:
+        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-get
 
-        :param issue_id_or_key:
-        :param comment_id:
-        :return:
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
+            comment_id: the ID of the comment.
+
+        Returns:
+            A dictionary with the details of the comment.
         """
         return await self.client.make_request(
             method=httpx.AsyncClient.get,
@@ -643,18 +666,18 @@ class JiraAPI:
     async def get_comments(
         self, issue_id_or_key: str, offset: int | None = None, limit: int | None = None
     ) -> dict:
-        """https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
+        """Retrieves the comments of a work item.
 
-        **Scopes**
-        **OAuth 2.0 scopes required**:
-        - Classic:
-            - RECOMMENDED: `read:jira-work`
-            - Granular: read:comment:jira, read:comment.property:jira, read:group:jira, read:project:jira, read:project-role:jira, read:user:jira, read:avatar:jira
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
 
-        :param limit:
-        :param offset:
-        :param issue_id_or_key:
-        :return:
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page. The default is 50.
+
+        Returns:
+            A dictionary with the details of the comments.
         """
         params = {'orderBy': '-created'}
         if limit is not None:
@@ -668,17 +691,17 @@ class JiraAPI:
         )
 
     async def delete_comment(self, issue_id_or_key: str, comment_id: str) -> None:
-        """https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-delete
+        """Deletes a comment.
 
-        **Scopes**
-        **OAuth 2.0 scopes required**:
-        - Classic:
-            - RECOMMENDED: `read:jira-work`
-            - Granular: read:comment:jira, read:comment.property:jira, read:group:jira, read:project:jira, read:project-role:jira, read:user:jira, read:avatar:jira
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-delete
 
-        :param issue_id_or_key:
-        :param comment_id:
-        :return:
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item whose comment we want to delete.
+            comment_id: the ID of the comment.
+
+        Returns:
+            Nothing if the comment is deleted; an exception otherwise.
         """
         await self.client.make_request(
             method=httpx.AsyncClient.delete,
@@ -693,16 +716,17 @@ class JiraAPI:
         )
 
     async def update_issue(self, issue_id_or_key: str, payload: dict) -> dict:
-        """
+        """Updates a work item.
+
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-put
 
         Args:
-            issue_id_or_key:
-            payload:
+            issue_id_or_key: the case-sensitive key of the work item.
+            payload: the fields and their values.
 
         Returns:
-
+            A dictionary with the details of the work item after the update.
         """
         data = {'update': payload}
         return await self.client.make_request(
@@ -719,15 +743,16 @@ class JiraAPI:
         )
 
     async def transitions(self, issue_id_or_key: str) -> dict:
-        """
+        """Retrieves the applicable transitions for a work item.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-get
+
         Args:
-            issue_id_or_key:
+            issue_id_or_key: the case-sensitive key of the work item.
 
         Returns:
-
+            A dictionary with the details of the transitions.
         """
         return await self.client.make_request(
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/transitions'
@@ -781,10 +806,11 @@ class JiraAPI:
     ) -> dict:
         """Returns a page of field metadata for a specified project and type of issue id.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get
 
         Args:
-            project_id_or_key:
+            project_id_or_key: the case-sensitive key of the project.
             issue_type_id:
             offset:
             limit:
@@ -806,7 +832,7 @@ class JiraAPI:
     def add_attachment_to_issue(
         self, issue_id_or_key: str, filename, file_name: str, mime_type: str
     ) -> list[dict]:
-        """Adds one attachment to an issue.
+        """Adds an attachment to an issue.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-issue-issueidorkey-attachments-post
@@ -814,8 +840,13 @@ class JiraAPI:
         Attachments are posted as multipart/form-data (RFC 1867).
 
         Args:
+            issue_id_or_key: the case-sensitive key of the work item.
+            filename: the full name of the file to upload.
+            file_name: the name of the file to upload.
+            mime_type: the MIME type of the file.
 
         Returns:
+            A list of dictionaries with the results.
         """
         return self.sync_client.make_request(
             method=httpx.post,
@@ -849,12 +880,12 @@ class JiraAPI:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-get
 
         Args:
-            issue_id_or_key:
-            offset:
-            limit:
+            issue_id_or_key: the case-sensitive key of the work item.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page. The default is 50.
 
         Returns:
-
+            A dictionary with the worklog of the work item.
         """
         params = {}
         if offset is not None:
