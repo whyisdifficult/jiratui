@@ -8,12 +8,22 @@ project, you agree to abide by our code of conduct.
 Please read our [Code of Conduct](CODE_OF_CONDUCT) to understand the expectations for behavior in our community.
 
 ## 3. **How to Contribute**
+
 Here are the steps to contribute to the project:
 
 - **Clone the Repo**: Clone the repository to your local machine using:
 
 ```bash
 git clone https://github.com/whyisdifficult/jiratui.git
+```
+
+- **Set up the local environment**
+
+```shell
+cd jiratui
+source .venv/bin/activate
+make env  # or: uv sync --all-groups
+make install_pre_commit_hooks
 ```
 
 - **Create a Branch**: Create a new branch for your feature or bug fix:

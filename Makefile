@@ -1,4 +1,7 @@
-.PHONY: install_pre_commit
+.PHONY: env
+	uv sync --all-groups
+
+.PHONY: install_pre_commit_hooks
 	pre-commit install -t pre-commit
 	pre-commit install -t pre-push
 
