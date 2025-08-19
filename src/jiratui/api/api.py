@@ -1,5 +1,6 @@
 from datetime import date
 import json
+from typing import Any
 
 import httpx
 
@@ -61,7 +62,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the projects.
         """
-        params = {}
+        params: dict[str, Any] = {}
         if order_by:
             params['orderBy'] = order_by
         if offset is not None:
@@ -73,7 +74,7 @@ class JiraAPI:
         if keys:
             params['keys'] = ','.join(keys[:50])
 
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='project/search', params=params
         )
 
@@ -92,7 +93,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries.
         """
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'project/{project_key}/statuses'
         )
 
@@ -105,7 +106,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the details of the types of issues.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='issuetype')
+        return await self.client.make_request(method=httpx.AsyncClient.get, url='issuetype')  # type:ignore[return-value]
 
     async def get_statuses(
         self,
@@ -126,19 +127,19 @@ class JiraAPI:
         Returns:
 
         """
-        params = {}
+        params: dict[str, Any] = {}
         if project_id:
             params['projectId'] = project_id
         if offset:
             params['startAt'] = offset
         if limit:
             params['maxResults'] = limit
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='statuses/search', params=params
         )
 
     async def status(self) -> list[dict]:
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='status')
+        return await self.client.make_request(method=httpx.AsyncClient.get, url='status')  # type:ignore[return-value]
 
     async def get_project(self, key: str) -> dict:
         """Retrieves the details of a project.
@@ -151,7 +152,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the project.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url=f'project/{key}')
+        return await self.client.make_request(method=httpx.AsyncClient.get, url=f'project/{key}')  # type:ignore[return-value]
 
     async def user_assignable_search(
         self,
@@ -185,7 +186,7 @@ class JiraAPI:
         if not any([project_id_or_key, issue_id, issue_key]):
             raise ValueError('One of these parameters is required: project_id, issue_id, issue_key')
 
-        params = {}
+        params: dict[str, Any] = {}
         if project_id_or_key:
             params['project'] = project_id_or_key  # accept case-sensitive project key as well
         if offset is not None:
@@ -199,7 +200,7 @@ class JiraAPI:
         if issue_id:
             params['issueId'] = issue_id
 
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/assignable/search', params=params
         )
 
@@ -227,7 +228,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the details of the users.
         """
-        params = {}
+        params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
         if limit is not None:
@@ -236,7 +237,7 @@ class JiraAPI:
             params['projectKeys'] = ','.join(project_keys)
         if query:
             params['query'] = query
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url='user/assignable/multiProjectSearch',
             params=params,
@@ -272,12 +273,12 @@ class JiraAPI:
         Returns:
             A dictionary with the detail sof the issue.
         """
-        params = {'expand': 'editmeta'}
+        params: dict[str, Any] = {'expand': 'editmeta'}
         if fields is not None:
             params['fields'] = fields
         if properties is not None:
             params['properties'] = properties
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}',
             params=params,
@@ -298,10 +299,10 @@ class JiraAPI:
         Returns:
             A list of dictionaries.
         """
-        params = {}
+        params: dict[str, str] = {}
         if global_id:
             params['globalId'] = global_id
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/remotelink',
             params=params,
@@ -317,7 +318,7 @@ class JiraAPI:
         :param title:
         :return:
         """
-        payload = {
+        payload: dict[str, Any] = {
             'object': {
                 'title': title,
                 'url': url,
@@ -406,7 +407,7 @@ class JiraAPI:
             jql_query=jql_query,
             order_by=order_by,
         )
-        payload = {
+        payload: dict[str, Any] = {
             'jql': jql,
             'maxResults': limit or ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
         }
@@ -414,7 +415,7 @@ class JiraAPI:
             payload['fields'] = fields
         if next_page_token:
             payload['nextPageToken'] = next_page_token
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='search/jql', data=json.dumps(payload)
         )
 
@@ -459,7 +460,7 @@ class JiraAPI:
             jql_query=jql_query,
         )
 
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url='search/approximate-count',
             data=json.dumps({'jql': jql}),
@@ -481,12 +482,12 @@ class JiraAPI:
         Returns:
             A dictionary with the result of the evaluation.
         """
-        payload = {'expression': expression}
+        payload: dict[str, Any] = {'expression': expression}
         if issue_key:
             payload['issue'] = {'key': issue_key}
         if project_key:
             payload['project'] = {'key': project_key}
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url='expression/evaluate',
             data=json.dumps(payload),
@@ -501,7 +502,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='serverInfo')
+        return await self.client.make_request(method=httpx.AsyncClient.get, url='serverInfo')  # type:ignore[return-value]
 
     async def myself(self) -> dict:
         """Retrieves information of the Jira user connecting to the Jira server.
@@ -512,7 +513,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details.
         """
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url='myself',
             params={'expand': 'groups,applicationRoles'},
@@ -522,12 +523,12 @@ class JiraAPI:
 
     async def search_users(self, offset: int | None = None, limit: int | None = None) -> list[dict]:
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
-        params = {}
+        params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='users/search', params=params
         )
 
@@ -551,7 +552,7 @@ class JiraAPI:
         Returns:
 
         """
-        params = {}
+        params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
         if limit is not None:
@@ -560,7 +561,7 @@ class JiraAPI:
             params['username'] = username
         if query is not None:
             params['query'] = query
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/search', params=params
         )
 
@@ -584,7 +585,7 @@ class JiraAPI:
         Returns:
             A dictionary with the results of the current page.
         """
-        params = {}
+        params: dict[str, Any] = {}
         if limit is not None:
             params['maxResults'] = limit
         if offset is not None:
@@ -593,7 +594,7 @@ class JiraAPI:
             params['groupId'] = ','.join(groups_ids)
         if groups_names:
             params['groupName'] = ','.join(groups_names)
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='group/bulk', params=params
         )
 
@@ -617,7 +618,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the users.
         """
-        params = {
+        params: dict[str, Any] = {
             'includeInactiveUsers': False,
         }
         if offset is not None:
@@ -626,7 +627,7 @@ class JiraAPI:
             params['maxResults'] = limit
         if group_id:
             params['groupId'] = group_id
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='group/member', params=params
         )
 
@@ -639,7 +640,7 @@ class JiraAPI:
                 'version': 1,
             }
         }
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/comment',
             data=json.dumps(payload),
@@ -658,7 +659,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the comment.
         """
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/comment/{comment_id}',
         )
@@ -679,12 +680,12 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the comments.
         """
-        params = {'orderBy': '-created'}
+        params: dict[str, Any] = {'orderBy': '-created'}
         if limit is not None:
             params['maxResults'] = limit
         if offset is not None:
             params['startAt'] = offset
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/comment',
             params=params,
@@ -711,7 +712,7 @@ class JiraAPI:
 
     async def issue_edit_metadata(self, issue_id_or_key: str) -> dict:
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/editmeta'
         )
 
@@ -729,7 +730,7 @@ class JiraAPI:
             A dictionary with the details of the work item after the update.
         """
         data = {'update': payload}
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.put,
             url=f'issue/{issue_id_or_key}',
             data=json.dumps(data),
@@ -738,7 +739,7 @@ class JiraAPI:
 
     async def create_work_item(self, fields: dict) -> dict:
         payload = {'fields': fields}
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='issue', data=json.dumps(payload)
         )
 
@@ -754,7 +755,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the transitions.
         """
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/transitions'
         )
 
@@ -795,7 +796,7 @@ class JiraAPI:
 
     async def issue_link_types(self) -> dict:
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-link-types/#api-rest-api-3-issuelinktype-get
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='issueLinkType')
+        return await self.client.make_request(method=httpx.AsyncClient.get, url='issueLinkType')  # type:ignore[return-value]
 
     async def delete_issue_link(self, link_id: str) -> None:
         await self.client.make_request(method=httpx.AsyncClient.delete, url=f'issueLink/{link_id}')
@@ -823,7 +824,7 @@ class JiraAPI:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/createmeta/{project_id_or_key}/issuetypes/{issue_type_id}',
             params=params,
@@ -848,7 +849,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the results.
         """
-        return self.sync_client.make_request(
+        return self.sync_client.make_request(  # type:ignore[return-value]
             method=httpx.post,
             url=f'issue/{issue_id_or_key}/attachments',
             headers={'X-Atlassian-Token': 'no-check'},
@@ -892,7 +893,7 @@ class JiraAPI:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(
+        return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/worklog',
             params=params,

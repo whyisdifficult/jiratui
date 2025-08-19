@@ -40,7 +40,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
     async def on_mount(self) -> None:
         if not self._work_item_key:
             return
-        response: APIControllerResponse = await self.parent.api.get_issue(
+        response: APIControllerResponse = await self.parent.api.get_issue(  # type:ignore[attr-defined]
             issue_id_or_key=self._work_item_key
         )
         if not response.success:

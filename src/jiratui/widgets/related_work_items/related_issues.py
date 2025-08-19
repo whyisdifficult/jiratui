@@ -74,7 +74,7 @@ left.
             Nothing
         """
 
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.delete_issue_link(self._link_id)
         if not response.success:
             self.notify(
@@ -87,7 +87,7 @@ left.
                 'Link between work items deleted successfully',
                 title=self.NOTIFICATIONS_DEFAULT_TITLE,
             )
-            self.parent.issues = [i for i in self.parent.issues or [] if i.id != self._link_id]
+            self.parent.issues = [i for i in self.parent.issues or [] if i.id != self._link_id]  # type:ignore[attr-defined]
 
 
 class RelatedIssuesWidget(VerticalScroll):
@@ -146,7 +146,7 @@ To view the details of a related item simply focus on the item and then press `v
             )
 
     async def link_work_items(self, data: dict) -> None:
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.link_work_items(
             left_issue_key=self.issue_key,
             right_issue_key=data.get('right_issue_key'),
@@ -162,9 +162,7 @@ To view the details of a related item simply focus on the item and then press `v
         else:
             self.notify('Work items linked successfully', title=self.NOTIFICATIONS_DEFAULT_TITLE)
             # fetch the issue but only the issue-links field
-            response: APIControllerResponse = await application.api.get_issue(
-                self.issue_key, fields=['issuelinks']
-            )
+            response = await application.api.get_issue(self.issue_key, fields=['issuelinks'])
             if response.success and response.result and response.result.issues:
                 work_item: JiraIssue = response.result.issues[0]
                 self.issues = work_item.related_issues or []

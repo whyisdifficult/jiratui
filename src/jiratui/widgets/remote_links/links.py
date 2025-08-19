@@ -58,7 +58,7 @@ class IssueRemoteLinkCollapsible(Collapsible):
             Nothing
         """
 
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.delete_issue_remote_link(
             self._work_item_key, self._link_id
         )
@@ -70,7 +70,7 @@ class IssueRemoteLinkCollapsible(Collapsible):
             )
         else:
             self.notify('Link deleted successfully', title=self.NOTIFICATIONS_DEFAULT_TITLE)
-            self.parent.issue_key = self._work_item_key
+            self.parent.issue_key = self._work_item_key  # type:ignore[attr-defined]
 
 
 class IssueRemoteLinksWidget(VerticalScroll):
@@ -137,7 +137,7 @@ To delete a link simply focus on the title of the collapsible whose link you wan
         Returns:
             Nothing.
         """
-        screen = cast('MainScreen', self.screen)  # noqa: F821
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await screen.api.create_issue_remote_link(
             self.issue_key,
             data.get('link_url'),
@@ -164,7 +164,7 @@ To delete a link simply focus on the title of the collapsible whose link you wan
             Nothing.
         """
         links: list[IssueRemoteLink] = []
-        screen = cast('MainScreen', self.screen)  # noqa: F821
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await screen.api.get_issue_remote_links(issue_key)
         if not response.success:
             self.notify(

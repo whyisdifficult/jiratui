@@ -42,11 +42,11 @@ class CommentCollapsible(Collapsible):
 
     def _update_comments_after_delete(self) -> None:
         updated_comments: list[IssueComment] = []
-        for comment in self.parent.comments:
+        for comment in self.parent.comments:  # type:ignore[attr-defined]
             if comment.id == self._comment_id:
                 continue
             updated_comments.append(comment)
-        self.parent.comments = updated_comments
+        self.parent.comments = updated_comments  # type:ignore[attr-defined]
 
     async def delete_comment(self, work_item_key: str, comment_id: str) -> None:
         """Deletes a comment associated to the selected work item and retrieves the list comments if the comment is
@@ -57,7 +57,7 @@ class CommentCollapsible(Collapsible):
         :return: `None`
         """
 
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.delete_comment(
             work_item_key, comment_id
         )
@@ -75,7 +75,7 @@ class CommentCollapsible(Collapsible):
                     # fallback to removing the comment manually
                     self._update_comments_after_delete()
                 else:
-                    self.parent.comments = result
+                    self.parent.comments = result  # type:ignore[attr-defined]
             else:
                 # fallback to removing the comment manually
                 self._update_comments_after_delete()
@@ -130,7 +130,7 @@ pressing `d`. Comments can be added by pressing `n`.
         """
 
         if message := content.strip():
-            application = cast('JiraApp', self.app)  # noqa: F821
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = await application.api.add_comment(
                 self.issue_key, message
             )

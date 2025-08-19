@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import cast
+from typing import Any, cast
 
 from textual import on
 from textual.app import ComposeResult
@@ -534,7 +534,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
             )
 
     def _build_payload_for_update(self) -> dict:
-        payload = {}
+        payload: dict[str, Any] = {}
         if self.issue_summary_field.update_enabled:
             # check if the summary is not empty and has changed
             if (
@@ -588,7 +588,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
         Returns:
             Nothing.
         """
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
         if payload := self._build_payload_for_update():
             try:
                 response: APIControllerResponse = await application.api.update_issue(
@@ -632,7 +632,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
             self.issue_status_selector.selection is not None
             and self.issue_status_selector.selection != self.issue.status.id
         ):
-            response: APIControllerResponse = await application.api.transition_issue_status(
+            response = await application.api.transition_issue_status(
                 self.issue.key, self.issue_status_selector.selection
             )
             if not response.success:
@@ -695,14 +695,18 @@ To edit a field simply focus on it, change its value and then press `^s`.
         Returns:
             Nothing.
         """
-        response: APIControllerResponse = await self.app.api.search_users_assignable_to_issue(
+        response: APIControllerResponse = await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
             issue_key=work_item_key
         )
         if response.success:
-            selectable_users = response.result or self.available_users or []
-            self.assignee_selector.set_options(
-                [(user.display_name, user.account_id) for user in selectable_users]
-            )
+            if response.result:
+                user: JiraUser
+                selectable_users: list[tuple[str, str]] = []
+                for user in response.result:
+                    selectable_users.append((user.display_name, user.account_id))
+            else:
+                selectable_users = self.available_users or []
+            self.assignee_selector.set_options(selectable_users)
             if current_assignee:
                 self.assignee_selector.value = current_assignee.account_id
             self.assignee_selector.update_enabled = field_is_editable

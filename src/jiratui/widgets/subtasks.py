@@ -71,7 +71,7 @@ another work item `B` if the parent of `A` is `B`.
         self._issue_key = value
 
     async def action_create_work_item_subtask(self) -> None:
-        screen = cast('MainScreen', self.screen)  # noqa: F821
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         await self.app.push_screen(
             AddWorkItemScreen(
                 project_key=screen.project_selector.selection,

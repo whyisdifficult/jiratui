@@ -172,7 +172,7 @@ class CommandHandler:
             extra={'work_item_key': key, 'error_message': response.error},
         )
 
-    def get_comment(self, key: str, comment_id: str) -> IssueComment or None:
+    def get_comment(self, key: str, comment_id: str) -> IssueComment | None:
         """Retrieves the details of a single comment.
 
         Args:
@@ -252,7 +252,7 @@ class CommandHandler:
             updates['assignee_account_id'] = assignee_account_id
         if due_date:
             updates['due_date'] = str(due_date)
-        if work_item_priority_has_changed(issue.priority, priority_id):
+        if work_item_priority_has_changed(issue.priority, str(priority_id)):
             if priority_id is not None:
                 updates['priority'] = priority_id
             else:
@@ -294,9 +294,7 @@ class CommandHandler:
 
         issue = response.result.issues[0]
 
-        response: APIControllerResponse = await self.api.transition_issue_status(
-            issue.key, str(status_id)
-        )
+        response = await self.api.transition_issue_status(issue.key, str(status_id))
         if not response.success:
             raise CLIException(
                 f'Unable to transition the selected work item to the status with ID: {status_id}.',
@@ -377,7 +375,7 @@ class CommandHandler:
         issue = result.issues[0]
 
         # retrieve metadata related to status transitions
-        response: APIControllerResponse = await self.api.transitions(issue.key)
+        response = await self.api.transitions(issue.key)
         if not response.success:
             raise CLIException(
                 response.error, extra={'work_item_key': key, 'error_message': response.error}

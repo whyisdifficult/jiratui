@@ -102,7 +102,7 @@ class AddWorkItemScreen(Screen):
         self.run_worker(self.fetch_available_issue_types())
 
     async def fetch_available_projects(self) -> None:
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.search_projects()
         if not response.success:
             projects: list[Project] = []
@@ -112,7 +112,7 @@ class AddWorkItemScreen(Screen):
         self.project_selector.projects = {'projects': projects, 'selection': self._project_key}
 
     async def fetch_available_issue_types(self, project_key: str | None = None) -> None:
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         key = project_key or self.project_selector.selection
         if key:
             response: APIControllerResponse = await application.api.get_issue_types_for_project(key)
@@ -126,7 +126,7 @@ class AddWorkItemScreen(Screen):
 
     async def fetch_users(self, project_key: str) -> None:
         if project_key:
-            application = cast('JiraApp', self.app)  # noqa: F821
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = (
                 await application.api.search_users_assignable_to_projects(
                     project_keys=[project_key],
@@ -199,7 +199,7 @@ class AddWorkItemScreen(Screen):
 
     async def fetch_issue_create_metadata(self, project_key: str, issue_type_id: str) -> None:
         await self.additional_fields.remove_children()
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_issue_create_metadata(
             project_key, issue_type_id
         )

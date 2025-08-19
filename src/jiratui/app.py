@@ -96,7 +96,7 @@ class JiraApp(App):
             and response_server_info.result.base_url_or_server_title
         ):
             self.server_info = response_server_info.result
-            self.title = f'{self.title} - {self.server_info.base_url_or_server_title}'
+            self.title = f'{self.title} - {self.server_info.base_url_or_server_title}'  # type:ignore[has-type]
 
     def _set_application_title(self) -> None:
         if (custom_title := CONFIGURATION.get().tui_title) and custom_title.strip():
@@ -122,6 +122,6 @@ class JiraApp(App):
 
 if __name__ == '__main__':
     try:
-        JiraApp(ApplicationConfiguration()).run()  # noqa
+        JiraApp(ApplicationConfiguration()).run()  # type: ignore[call-arg] # noqa
     except Exception as e:
         sys.exit(str(e))

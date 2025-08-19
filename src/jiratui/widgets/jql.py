@@ -31,14 +31,14 @@ class JQLEditorScreen(ModalScreen[str]):
     def __init__(self, content: str | None = None):
         super().__init__()
         self.content = content or ''
-        self.predefined_jql_expressions = None
+        self.predefined_jql_expressions: dict | None = None
         if CONFIGURATION.get().pre_defined_jql_expressions:
             self.predefined_jql_expressions = CONFIGURATION.get().pre_defined_jql_expressions
 
     @property
     def expressions(self) -> list:
         if self.predefined_jql_expressions:
-            return self.predefined_jql_expressions.items()
+            return list(self.predefined_jql_expressions.items())
         return []
 
     def compose(self) -> ComposeResult:
@@ -59,7 +59,7 @@ class JQLEditorScreen(ModalScreen[str]):
             self.dismiss(self.query_one(TextArea).text.strip())
 
     @on(PreDefinedJQLExpressionsWidget.Changed)
-    def select_pre_defined_expression(self, event: PreDefinedJQLExpressionsWidget.Changed) -> None:
+    def select_pre_defined_expression(self, event: Select.Changed) -> None:
         if event.value != Select.BLANK:
             if (data := self.predefined_jql_expressions.get(event.value)) and (
                 expression := data.get('expression')

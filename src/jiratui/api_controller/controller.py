@@ -102,7 +102,7 @@ class APIController:
             return APIControllerResponse(success=False, error=str(e))
         return APIControllerResponse(
             result=Project(
-                id=response.get('id'), name=response.get('name'), key=response.get('key')
+                id=str(response.get('id')), name=response.get('name'), key=response.get('key')
             ),
         )
 
@@ -583,11 +583,11 @@ class APIController:
             `success = False` and the error message in the `error` key.
         """
 
-        fields = ','.join(fields) if fields else None
+        fields_strings: str | None = ','.join(fields) if fields else None
         try:
             issue: dict = await self.api.get_issue(
                 issue_id_or_key=issue_id_or_key,
-                fields=fields,
+                fields=fields_strings,
                 properties=properties,
             )
         except Exception as e:
@@ -596,7 +596,7 @@ class APIController:
                 extra={
                     'error': str(e),
                     'issue_id_or_key': issue_id_or_key,
-                    'fields': fields,
+                    'fields': fields_strings,
                     'properties': properties,
                 },
             )
@@ -1162,7 +1162,7 @@ class APIController:
             return APIControllerResponse(success=False, error=str(e))
         return APIControllerResponse()
 
-    async def get_comment(self, issue_key_or_id: str, comment_id: id) -> APIControllerResponse:
+    async def get_comment(self, issue_key_or_id: str, comment_id: str) -> APIControllerResponse:
         """Retrieves the details of a comment.
 
         Args:

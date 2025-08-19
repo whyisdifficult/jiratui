@@ -192,7 +192,7 @@ class TableRowPresenter(NodePresenter):
 
     @property
     def column_count(self) -> int:
-        return self.node.column_count
+        return self.node.column_count  # type:ignore[attr-defined]
 
 
 class TableHeaderPresenter(NodePresenter):
@@ -364,7 +364,7 @@ def _apply_formatting(text: str, format_symbols: str) -> str:
     return f'{format_symbols}{text}{format_symbols}{" " * trailing_spaces_count}'
 
 
-def remove_trailing_spaces(text: str) -> (str, int):
+def remove_trailing_spaces(text: str) -> tuple[str, int]:
     count = 0
     for ch in reversed(text):
         if ch == ' ':

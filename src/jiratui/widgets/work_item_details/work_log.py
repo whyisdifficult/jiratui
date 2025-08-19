@@ -48,7 +48,7 @@ class WorkItemWorkLogScreen(Screen):
         Returns:
             Nothing.
         """
-        application = cast('JiraApp', self.app)  # noqa: F821
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_work_item_worklog(
             self._work_item_key
         )

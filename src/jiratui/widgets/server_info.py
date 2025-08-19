@@ -39,7 +39,7 @@ class ServerInfoScreen(ModalScreen):
         if self._server_info:
             server_info = self._server_info
         else:
-            response_server_info: APIControllerResponse = await self.app.api.server_info()
+            response_server_info: APIControllerResponse = await self.app.api.server_info()  # type:ignore[attr-defined]
             if not response_server_info.success or not (server_info := response_server_info.result):
                 pass
 
@@ -102,7 +102,7 @@ class ServerInfoScreen(ModalScreen):
             )
 
         user_info: JiraMyselfInfo | None
-        response_myself: APIControllerResponse = await self.app.api.myself()
+        response_myself: APIControllerResponse = await self.app.api.myself()  # type:ignore[attr-defined]
         if response_myself.success and (user_info := response_myself.result):
             table = self.datatable_user_info
             table.add_columns(*['Property', 'Value'])

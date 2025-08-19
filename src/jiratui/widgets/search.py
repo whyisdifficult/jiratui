@@ -81,7 +81,7 @@ class IssuesSearchResultsTable(DataTable):
         self.focus()
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        screen = cast('MainScreen', self.screen)  # noqa: F821
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         # use exclusive=True to make sure that if the user selects another work item before the worker finishes
         # retrieving the data of the previously selected the correct data is fetched
         # the exclusive flag tells Textual to cancel all previous workers before starting the new one.

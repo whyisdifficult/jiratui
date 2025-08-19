@@ -11,9 +11,9 @@ class DateInput(MaskedInput):
     PLACEHOLDER = '2025-12-23'
     LABEL = 'Date'
     TOOLTIP = ''
-    ID = None
+    ID: str | None = None
     CLASSES = 'input-date'
-    BORDER_SUBTITLE = None
+    BORDER_SUBTITLE = ''
 
     def __init__(self, widget_id: str | None = None, valid_empty: bool = True):
         super().__init__(

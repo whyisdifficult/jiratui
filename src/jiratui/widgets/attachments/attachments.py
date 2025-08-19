@@ -67,7 +67,7 @@ the file.
     def upload_attachment(self, content: str) -> None:
         if content and (file_name := content.strip()):
             self.notify('Uploading attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
-            screen = cast('MainScreen', self.screen)  # noqa: F821
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = screen.api.add_attachment(self.issue_key, file_name)
             if not response.success:
                 self.notify(
@@ -139,15 +139,15 @@ class AttachmentsDataTable(DataTable):
 
     def _update_attachments_after_delete(self) -> None:
         updated_attachments: list[Attachment] = []
-        for attachment in self.parent.attachments:
+        for attachment in self.parent.attachments:  # type:ignore[attr-defined]
             if attachment.id == self._selected_attachment_id:
                 continue
             updated_attachments.append(attachment)
-        self.parent.attachments = updated_attachments
+        self.parent.attachments = updated_attachments  # type:ignore[attr-defined]
 
     async def handle_delete_choice(self, result: bool) -> None:
         if result is True:
-            screen = cast('MainScreen', self.screen)  # noqa: F821
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = await screen.api.delete_attachment(
                 self._selected_attachment_id
             )
@@ -160,14 +160,14 @@ class AttachmentsDataTable(DataTable):
             else:
                 self.notify('File deleted successfully', title=self.NOTIFICATIONS_DEFAULT_TITLE)
                 if CONFIGURATION.get().fetch_attachments_on_delete:
-                    response: APIControllerResponse = await screen.api.get_issue(
+                    response = await screen.api.get_issue(
                         self._work_item_key, fields=['attachment']
                     )
                     if not response.success or not (result := response.result):
                         # fallback to removing the attachment manually based on the id
                         self._update_attachments_after_delete()
                     else:
-                        self.parent.attachments = result.issues[0].attachments
+                        self.parent.attachments = result.issues[0].attachments  # type:ignore[attr-defined]
                 else:
                     # fallback to removing the attachment manually based on the id
                     self._update_attachments_after_delete()

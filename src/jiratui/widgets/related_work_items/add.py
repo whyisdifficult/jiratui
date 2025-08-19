@@ -94,7 +94,7 @@ class AddWorkItemRelationshipScreen(Screen[dict]):
         self.run_worker(self.fetch_issue_link_types())
 
     async def fetch_issue_link_types(self) -> None:
-        response: APIControllerResponse = await self.app.api.issue_link_types()
+        response: APIControllerResponse = await self.app.api.issue_link_types()  # type:ignore[attr-defined]
         if not response.success:
             self.notify(
                 'Unable to fetch the types of supported links',

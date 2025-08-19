@@ -394,7 +394,7 @@ def ui(
 ):
     """Launches the Jira TUI application."""
     try:
-        settings = ApplicationConfiguration()  # noqa
+        settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
     except ValidationError as e:
         console.print(
             'There are undefined configuration values. Make sure your config file is correct.'

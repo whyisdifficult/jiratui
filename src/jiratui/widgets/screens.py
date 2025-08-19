@@ -441,7 +441,7 @@ class MainScreen(Screen):
             return [(item.name, item.id) for item in types or []]
 
         # retrieve all available types of work items
-        response: APIControllerResponse = await self.api.get_issue_types()
+        response = await self.api.get_issue_types()
         if not response.success:
             return []
         types = response.result or []
