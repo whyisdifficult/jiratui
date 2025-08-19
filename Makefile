@@ -1,7 +1,21 @@
+.PHONY: help
+help:
+	@echo "Available targets:"
+	@echo "  env                        - Synchronize the uv environment"
+	@echo "  install_pre_commit_hooks   - Install pre-commit hooks"
+	@echo "  lint                       - Lint the code"
+	@echo "  test                       - Run tests"
+	@echo "  docs-live                  - Generate documentation with live reload"
+	@echo "  docs-markdown              - Generate documentation in Markdown format"
+	@echo "  docs-html                  - Generate documentation in HTML format"
+
+
 .PHONY: env
+env:
 	uv sync --all-groups
 
 .PHONY: install_pre_commit_hooks
+install_pre_commit_hooks:
 	pre-commit install -t pre-commit
 	pre-commit install -t pre-push
 
@@ -14,14 +28,17 @@ lint:
 test:
 	pytest src
 
+.PHONY: docs-live
 docs-live:
 	@echo 'Generating documentation with live reload'
 	sphinx-autobuild docs _build/html
 
+.PHONY: docs-markdown
 docs-markdown:
 	@echo 'Generating documentation in Markdown format'
 	sphinx-build -M markdown docs /tmp/markdown
 
+.PHONY: docs-html
 docs-html:
 ifeq ($(strip $(OUTPUT_DIR)),)
 	@echo 'Generating documentation in HTML format into docs/_build/html'

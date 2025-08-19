@@ -1,56 +1,75 @@
 # Contributing Guidelines
 
 ## 1. **Introduction**
+
 Thank you for considering contributing to our project! We welcome contributions from everyone. By participating in this
 project, you agree to abide by our code of conduct.
 
 ## 2. **Code of Conduct**
+
 Please read our [Code of Conduct](CODE_OF_CONDUCT) to understand the expectations for behavior in our community.
 
 ## 3. **How to Contribute**
 
 Here are the steps to contribute to the project:
 
-- **Clone the Repo**: Clone the repository to your local machine using:
+1.**Fork the Repository**
+
+2.**Clone the Repo**: Clone the repository to your local machine using:
 
 ```bash
-git clone https://github.com/whyisdifficult/jiratui.git
+git clone https://github.com/yourusername/repo.git
 ```
 
-- **Set up the local environment**
+3.**Set up the local environment**
 
 ```shell
-cd jiratui
+cd <to-your-local-repo>
 source .venv/bin/activate
 make env  # or: uv sync --all-groups
 make install_pre_commit_hooks
 ```
 
-- **Create a Branch**: Create a new branch for your feature or bug fix:
+4.**Create a Branch**: Create a new branch for your feature or bug fix:
 
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-Make sure the branch's name starts with `feature/`.
+5.**Make Changes**: Implement your changes. Ensure that your code adheres to the project's coding style and conventions.
 
-- **Make Changes**: Implement your changes. Ensure that your code adheres to the project's coding style and conventions.
+6.**Write Tests**: If applicable, write tests for your changes to ensure they work as expected.
 
-- **Write Tests**: If applicable, write tests for your changes to ensure they work as expected.
+7.**Test your Changes**:
 
-- **Commit Your Changes**: Commit your changes with a clear and descriptive message:
-  ```bash
-  git commit -m "Add feature: your-feature-name"
-  ```
+  - Make sure to run the tests with `make test`
+  - To test your changes manually it's recommended to run the [Textual dev console](https://textual.textualize.io/guide/devtools/#console)
 
-- **Push Your Changes**: Push your changes to the repository:
+```shell
+# console 1
+textual console
+```
+```bash
+# console 2
+textual run --dev src/jiratui/app.py
+```
+
+This will allow you to test the application and see live logs in the other terminal console.
+
+8.**Commit Your Changes**: Commit your changes with a clear and descriptive message:
+
+```bash
+git commit -m "Add feature: your-feature-name"
+```
+
+9.**Push Your Changes**: Push your changes to the repository:
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
-- **Create a Pull Request**: Go to the original repository and click on "New Pull Request." Select your branch and
-submit the pull request. Provide a clear description of your changes and why they are needed.
+10.**Create a Pull Request**: After pushing, go to your forked repository on GitHub, and you will see a prompt to create
+a pull request. Click on "Compare & pull request," add a description of your changes, and submit the PR.
 
 ## 4. **Pull Request Guidelines**
 
