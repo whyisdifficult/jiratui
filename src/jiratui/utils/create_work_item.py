@@ -37,10 +37,13 @@ PROCESS_OPTIONAL_FIELDS: list[str] = [
 
 
 def create_widgets_for_work_item_creation(data: list[dict]) -> list[Widget]:
-    """
+    """Creates a list of widgets for the "form" that allows users to create work items.
 
-    :param data:
-    :return:
+    Args:
+        data: a list of dictionaries with the create-metadata information.
+
+    Returns:
+        A list of `textual.widget.Widget` instances for every supported field.
     """
 
     widgets: list[Widget] = []

@@ -52,9 +52,12 @@ class CommentCollapsible(Collapsible):
         """Deletes a comment associated to the selected work item and retrieves the list comments if the comment is
         deleted successfully.
 
-        :param work_item_key: the key of the work item whose comment we want to remove.
-        :param comment_id: the ID of the comment we want to remove.
-        :return: `None`
+        Args:
+            work_item_key: the key of the work item whose comment we want to remove.
+            comment_id: the ID of the comment we want to remove.
+
+        Returns:
+            `None`
         """
 
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
@@ -116,7 +119,6 @@ pressing `d`. Comments can be added by pressing `n`.
 
     def action_add_comment(self) -> None:
         """Opens a screen to add a comment to the issue."""
-
         if self.issue_key:
             self.app.push_screen(AddCommentScreen(self.issue_key), self.save_comment)
         else:
@@ -125,10 +127,12 @@ pressing `d`. Comments can be added by pressing `n`.
     async def add_comment_to_issue(self, content: str) -> None:
         """Adds a comment to the issue and retrieves the list comments if the comment was added successfully.
 
-        :param content: the message of the comment.
-        :return: `None`
-        """
+        Args:
+            content: the message of the comment.
 
+        Return:
+            `None`
+        """
         if message := content.strip():
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = await application.api.add_comment(

@@ -36,8 +36,6 @@ class JiraAPI:
     def base_url(self) -> str:
         return self._base_url
 
-    ### ENDPOINTS - START
-
     async def search_projects(
         self,
         offset: int | None = None,
@@ -48,7 +46,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a paginated list of projects visible to the user (making the request).
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
 
         Args:
             offset: the index of the first item to return in a page of results (page offset).
@@ -125,7 +124,7 @@ class JiraAPI:
             limit: the maximum number of items to return per page. The Default is 200.
 
         Returns:
-
+            A dictionary with the statuses.
         """
         params: dict[str, Any] = {}
         if project_id:
@@ -311,12 +310,16 @@ class JiraAPI:
     async def create_issue_remote_link(self, issue_id_or_key: str, url: str, title: str) -> None:
         """Creates or updates a remote issue link for an issue.
 
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-post
+        See Also:
+        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-post
 
-        :param issue_id_or_key:
-        :param url:
-        :param title:
-        :return:
+        Args:
+            issue_id_or_key: the ID or case-sensitive key of the work item
+            url: the URL of the link.
+            title: the title of the link.
+
+        Returns:
+            Nothing.
         """
         payload: dict[str, Any] = {
             'object': {
@@ -331,17 +334,17 @@ class JiraAPI:
         )
 
     async def delete_issue_remote_link(self, issue_id_or_key: str, link_id: str) -> None:
-        """
+        """Deletes a web link associated to a work item.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-linkid-delete
 
         Args:
-            issue_id_or_key:
-            link_id:
+            issue_id_or_key: the ID or case-sensitive key of the work item
+            link_id: the IF of the link.
 
         Returns:
-
+            Nothing.
         """
         await self.client.make_request(
             method=httpx.AsyncClient.delete,
@@ -519,10 +522,20 @@ class JiraAPI:
             params={'expand': 'groups,applicationRoles'},
         )
 
-    ### ENDPOINTS - END
-
     async def search_users(self, offset: int | None = None, limit: int | None = None) -> list[dict]:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
+        """Retrieves a list of all users, including active users, inactive users and previously deleted users that have
+        an Atlassian account.
+
+        See Also:
+           https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
+
+        Args:
+            offset: the index of the first item to return.
+            limit: the maximum number of items to return (limited to 1000).
+
+        Returns:
+            A list of dictionaries with the details of the users.
+        """
         params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
@@ -539,18 +552,20 @@ class JiraAPI:
         offset: int | None = None,
         limit: int | None = None,
     ) -> list[dict]:
-        """
+        """Retrieves a list of active users that match the search string and property.
+
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get
 
         Args:
-            username:
-            query:
-            offset:
-            limit:
+            username: the username to filter users.
+            query: a query string that is matched against user attributes (`displayName`, and `emailAddress`) to
+            find relevant users.
+            offset: the index of the first item to return.
+            limit: the maximum number of items to return (limited to 1000).
 
         Returns:
-
+            A list of dictionaries with the details of the users.
         """
         params: dict[str, Any] = {}
         if offset is not None:
@@ -632,7 +647,18 @@ class JiraAPI:
         )
 
     async def add_comment(self, issue_id_or_key: str, message: str) -> dict:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-post
+        """Adds a comment to an issue.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-post
+
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
+            message: the message of the comment.
+
+        Returns:
+            A dictionary with the details of the comment.
+        """
         payload = {
             'body': {
                 'content': [{'content': [{'text': message, 'type': 'text'}], 'type': 'paragraph'}],
@@ -711,7 +737,17 @@ class JiraAPI:
         return None
 
     async def issue_edit_metadata(self, issue_id_or_key: str) -> dict:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get
+        """Retrieves the edit screen fields for an issue that are visible to and editable by the user.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get
+
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item.
+
+        Returns:
+            A dictionary with the metadata.
+        """
         return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/editmeta'
         )
@@ -738,6 +774,17 @@ class JiraAPI:
         )
 
     async def create_work_item(self, fields: dict) -> dict:
+        """Creates a work item.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+
+        Args:
+            fields: a dictionary with the fields and their values to create the item.
+
+        Returns:
+            A dictionary with the details of the new item.
+        """
         payload = {'fields': fields}
         return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='issue', data=json.dumps(payload)
@@ -760,6 +807,18 @@ class JiraAPI:
         )
 
     async def transition_issue(self, issue_id_or_key: str, transition_id: str) -> None:
+        """Performs an issue transition.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-post
+
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item.
+            transition_id: the ID of the status transition.
+
+        Returns:
+            Nothing.
+        """
         payload = {'transition': transition_id}
         await self.client.make_request(
             method=httpx.AsyncClient.post,
@@ -775,7 +834,21 @@ class JiraAPI:
         link_type: str,
         link_type_id: str,
     ) -> None:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/#api-rest-api-3-issuelink-post
+        """Creates a link between two issues. Use this operation to indicate a relationship between two issues and
+        optionally add a comment to the "from" (outward) issue
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/#api-rest-api-3-issuelink-post
+
+        Args:
+            left_issue_key: the case-sensitive key of the work item.
+            right_issue_key: the case-sensitive key of the work item.
+            link_type: the type of link.
+            link_type_id: the ID of the type of link.
+
+        Returns:
+            Nothing.
+        """
         payload = {
             'type': {
                 'id': link_type_id,
@@ -795,7 +868,14 @@ class JiraAPI:
         return None
 
     async def issue_link_types(self) -> dict:
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-link-types/#api-rest-api-3-issuelinktype-get
+        """Retrieves a list of all issue link types.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-link-types/#api-rest-api-3-issuelinktype-get
+
+        Returns:
+            A dictionary with the types of links between work items.
+        """
         return await self.client.make_request(method=httpx.AsyncClient.get, url='issueLinkType')  # type:ignore[return-value]
 
     async def delete_issue_link(self, link_id: str) -> None:
@@ -805,21 +885,21 @@ class JiraAPI:
     async def get_issue_create_meta(
         self, project_id_or_key: str, issue_type_id: str, offset: int = 0, limit: int | None = None
     ) -> dict:
-        """Returns a page of field metadata for a specified project and type of issue id.
+        """Retrieves a page of field metadata for a specified project and type of issue id.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get
 
         Args:
             project_id_or_key: the case-sensitive key of the project.
-            issue_type_id:
-            offset:
-            limit:
+            issue_type_id: the ID of a type of issue.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page.
 
         Returns:
-
+            A dictionary with the metadata to create work items of a given project and type.
         """
-        params = {}
+        params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
         if limit is not None:
@@ -859,9 +939,14 @@ class JiraAPI:
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-delete
-        :param attachment_id: The ID of the attachment.
-        :return: `None`; HTTP 204 if successful or an exception otherwise.
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-delete
+
+        Args:
+            attachment_id: The ID of the attachment.
+
+        Returns:
+            `None`; HTTP 204 if successful or an exception otherwise.
         """
         await self.client.make_request(
             method=httpx.AsyncClient.delete, url=f'attachment/{attachment_id}'

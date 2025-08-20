@@ -166,6 +166,15 @@ class APIController:
         return APIControllerResponse(result=projects)
 
     async def get_project_statuses(self, project_key: str) -> APIControllerResponse:
+        """Retrieves the statues applicable to issues of a project.
+
+        Args:
+            project_key: the case-sensitive key of a project.
+
+        Returns:
+            An instance of `APIControllerResponse` with the statuses grouped by type of issues. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message and `success = False`.
+        """
         try:
             response: list[dict] = await self.api.get_project_statuses(project_key)
         except Exception as e:
@@ -416,6 +425,15 @@ class APIController:
             return APIControllerResponse(result=result)
 
     async def search_users(self, email_or_name: str) -> APIControllerResponse:
+        """Searches users by email or name
+
+        Args:
+            email_or_name: the email or name to filter users
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `JiraUser` instances. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message.
+        """
         try:
             response: list[dict] = await self.api.user_search(query=f'{email_or_name}')
         except Exception as e:
@@ -1681,6 +1699,17 @@ class APIController:
         offset: int | None = None,
         limit: int | None = None,
     ) -> APIControllerResponse:
+        """Retrieves the work log of a work item.
+
+        Args:
+            issue_key_or_id: the case-sensitive key or id of a work item.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the `JiraWorklog` entries;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         try:
             response: dict = await self.api.get_issue_work_log(issue_key_or_id, offset, limit)
         except Exception as e:
