@@ -908,6 +908,16 @@ class APIController:
     async def delete_issue_remote_link(
         self, issue_key_or_id: str, link_id: str
     ) -> APIControllerResponse:
+        """Deletes a web link associated to a work item.
+
+        Args:
+            issue_key_or_id: the (case-sensitive) key of the work item.
+            link_id: the ID of the link we want to delete.
+
+        Returns:
+           An instance of `APIControllerResponse(success=True)` if the link was
+           deleted; `APIControllerResponse(success=False)` otherwise.
+        """
         try:
             await self.api.delete_issue_remote_link(issue_key_or_id, link_id)
         except Exception as e:
@@ -918,7 +928,8 @@ class APIController:
         """Retrieves details of the Jira server instance.
 
         Returns:
-            An instance of `APIControllerResponse` with the details.
+            An instance of `APIControllerResponse(success=True)` with the details or,
+            `APIControllerResponse(success=False)` if there is an error fetching the details.
         """
         try:
             response: dict = await self.api.server_info()
@@ -949,7 +960,8 @@ class APIController:
         """Retrieves details of the Jira user connecting to the API.
 
         Returns:
-            An instance of `APIControllerResponse` with the details.
+            An instance of `APIControllerResponse(success=True)` with the details or,
+            `APIControllerResponse(success=False)` if there is an error fetching the details.
         """
         try:
             response: dict = await self.api.myself()
@@ -974,6 +986,14 @@ class APIController:
         )
 
     async def get_edit_metadata_for_issue(self, issue_key_or_id: str) -> dict:
+        """Retrieve the metadata relevant for editing a work item.
+
+        Args:
+            issue_key_or_id: the (case-sensitive) key of the work item.
+
+        Returns:
+            A dictionary with the relevant metadata or, {} if there is an error fetching the data.
+        """
         try:
             return await self.api.issue_edit_metadata(issue_key_or_id)
         except Exception as e:
@@ -1106,6 +1126,15 @@ class APIController:
         return APIControllerResponse(result=UpdateWorkItemResponse(success=True))
 
     async def transitions(self, issue_id_or_key: str) -> APIControllerResponse:
+        """Retrieves the applicable (status) transitions of a work item.
+
+        Args:
+            issue_id_or_key: the (case-sensitive) key of the work item.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the list of `IssueTransition` instances or,
+            `APIControllerResponse(success=False)` if there is an error fetching the data.
+        """
         try:
             response: dict = await self.api.transitions(issue_id_or_key)
         except Exception as e:
@@ -1134,6 +1163,16 @@ class APIController:
     async def transition_issue_status(
         self, issue_id_or_key: str, status_id: str
     ) -> APIControllerResponse:
+        """Transitions a work item to a new status.
+
+        Args:
+            issue_id_or_key: the (case-sensitive) key of the work item.
+            status_id: the ID of the new status.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` if the work item was transitioned;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         response: APIControllerResponse = await self.transitions(issue_id_or_key)
         if not response.success or not response.result:
             return APIControllerResponse(
@@ -1347,6 +1386,18 @@ class APIController:
         link_type: str,
         link_type_id: str,
     ) -> APIControllerResponse:
+        """Creates a link between 2 work items.
+
+        Args:
+            left_issue_key: the (case-sensitive) key of the work item.
+            right_issue_key: the (case-sensitive) key of the work item.
+            link_type: the type of link to create.
+            link_type_id: the ID of the type of link.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` if the work items were linked successfully;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         try:
             await self.api.create_issue_link(
                 left_issue_key=left_issue_key,
@@ -1368,6 +1419,15 @@ class APIController:
             return APIControllerResponse(success=False, error=str(e))
 
     async def delete_issue_link(self, link_id: str) -> APIControllerResponse:
+        """Deletes the link between 2 work items.
+
+        Args:
+            link_id: the ID of the link to delete.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` if the work items were unlinked successfully;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         try:
             await self.api.delete_issue_link(link_id)
         except Exception as e:
@@ -1379,6 +1439,12 @@ class APIController:
         return APIControllerResponse()
 
     async def issue_link_types(self) -> APIControllerResponse:
+        """Retrieves the types of links that can be created between 2 work items.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the list of `LinkIssueType` instances;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         try:
             response: dict = await self.api.issue_link_types()
         except Exception as e:
@@ -1404,6 +1470,16 @@ class APIController:
         project_id_or_key: str,
         issue_type_id: str,
     ) -> APIControllerResponse:
+        """Retrieves the metadata relevant for creating work items of a project and of a certain type.
+
+        Args:
+            project_id_or_key: the (case-sensitive) key of the project.
+            issue_type_id: the ID of the type of work item.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the metadata;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
         try:
             response = await self.api.get_issue_create_meta(project_id_or_key, issue_type_id)
             return APIControllerResponse(result=response)

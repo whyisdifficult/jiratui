@@ -43,6 +43,14 @@ Commands:
 
 Before using the application, you need to configure a few settings.
 
+```{tip}
+The application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
+you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you
+want to define in a ENV variable called `JIRA_TUI_*`; where `*` is the name of the config variable.
+
+**Example**: to define the value of `jira_api_username` do this: `JIRA_TUI_JIRA_API_USERNAME=...`
+```
+
 ## Setting Up the Jira's Instance API
 
 You must provide the following values to connect to your Jira instance API:
@@ -146,3 +154,8 @@ $ jtuicli comments show SCRUM-1 1
 
 Hello World!
 ```
+
+# Contributing
+
+If you would like to contribute to the project make sure you are familiar with the
+[contribution guidelines](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
