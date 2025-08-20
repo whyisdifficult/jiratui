@@ -242,11 +242,6 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
     """Reactive variable that contains the work item currently being displayed."""
-    issue_available_statuses: Reactive[list[tuple[str, str]] | None] = reactive(
-        None, always_update=True
-    )
-    """Reactive variable that contains the possible status codes (and names) for the work item currently being
-    displayed."""
     clear_form: Reactive[bool] = reactive(False, always_update=True)
     """Reactive variable to clear the fields in the form."""
 
@@ -437,12 +432,6 @@ To edit a field simply focus on it, change its value and then press `^s`.
         if self.issue:
             self.app.push_screen(WorkItemWorkLogScreen(self.issue.key))
 
-    def _setup_status_selector(self, status_id: str) -> None:
-        for status in self.issue_available_statuses or []:
-            if status[1] == status_id:
-                self.issue_status_selector.value = status_id
-                return
-
     def _update_priority_selection(self, priorities, priority_id: str) -> None:
         for priority in priorities or []:
             if priority[1] == priority_id:
@@ -494,18 +483,6 @@ To edit a field simply focus on it, change its value and then press `^s`.
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
             self.work_item_labels_widget.value = ''
-
-    def watch_issue_available_statuses(self, response: list[tuple[str, str]]) -> None:
-        """Updates the values of the status selector every time the list of status codes is updated.
-
-        Args:
-            response: the (updated) list of status codes (and names) to set for the dropdown.
-
-        Returns:
-            Nothing.
-        """
-        if response:
-            self.issue_status_selector.set_options(response)
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
         self.time_tracking_container.remove_children()
@@ -689,6 +666,9 @@ To edit a field simply focus on it, change its value and then press `^s`.
     ) -> None:
         """Retrieves the users that can be assigned to a work item and sets the value of the assignee selector.
 
+        If the API does not return a list of users then the widget will fall back to using the list of available users
+        fetched by the application on start up; if any user is found.
+
         Args:
             work_item_key: the (case-sensitive) key of the work item.
             current_assignee: the user currently assigned to the item.
@@ -697,35 +677,52 @@ To edit a field simply focus on it, change its value and then press `^s`.
         Returns:
             Nothing.
         """
-        response: APIControllerResponse = await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
+        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.search_users_assignable_to_issue(
             issue_key=work_item_key
         )
-        if response.success:
-            if response.result:
-                user: JiraUser
-                selectable_users: list[tuple[str, str]] = []
-                for user in response.result:
-                    selectable_users.append((user.display_name, user.account_id))
-            else:
-                selectable_users = self.available_users or []
+        selectable_users: list[tuple[str, str]] = self.available_users or []
+        if response.result:
+            user: JiraUser
+            selectable_users = []
+            for user in response.result:
+                selectable_users.append((user.display_name, user.account_id))
+
+        if selectable_users:
             self.assignee_selector.set_options(selectable_users)
             if current_assignee:
+                # update the current selection
                 self.assignee_selector.value = current_assignee.account_id
             self.assignee_selector.update_enabled = field_is_editable
         else:
-            if self.available_users:
-                self.assignee_selector.set_options(self.available_users)
-                if current_assignee:
-                    self.assignee_selector.value = current_assignee.account_id
+            if current_assignee:
+                self.assignee_selector.set_options(
+                    [(current_assignee.display_name, current_assignee.account_id)]
+                )
                 self.assignee_selector.update_enabled = field_is_editable
             else:
-                if current_assignee:
-                    self.assignee_selector.set_options(
-                        [(current_assignee.display_name, current_assignee.account_id)]
-                    )
-                    self.assignee_selector.update_enabled = field_is_editable
-                else:
-                    self.assignee_selector.update_enabled = False
+                self.assignee_selector.update_enabled = False
+
+    async def retrieve_applicable_status_codes(
+        self,
+        project_key: str,
+        work_item_type_id: str,
+        current_status_id: str,
+    ) -> None:
+        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.get_project_statuses(project_key)
+        if not response.success:
+            self.issue_status_selector.set_options = []
+        else:
+            status_codes_by_work_item_type_id: dict = response.result or {}
+            record: dict = status_codes_by_work_item_type_id.get(work_item_type_id, {})
+            work_status_codes_options = sorted(
+                [(status.name, str(status.id)) for status in record.get('issue_type_statuses', [])],
+                key=lambda x: x[0],
+            )
+            self.issue_status_selector.set_options(work_status_codes_options)
+            if current_status_id and work_status_codes_options:
+                self.issue_status_selector.value = current_status_id
 
     def watch_issue(self, response: JiraIssue | None) -> None:
         """Updates the update-form fields associated to a work item.
@@ -742,6 +739,13 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         if not response:
             return
+
+        # fetch the list of status codes applicable for this work item and its type
+        self.run_worker(
+            self.retrieve_applicable_status_codes(
+                response.project.key, response.issue_type.id, str(response.status.id)
+            )
+        )
 
         editable_fields = self._determine_editable_fields(response.edit_meta)
 
@@ -784,9 +788,6 @@ To edit a field simply focus on it, change its value and then press `^s`.
         self.issue_due_date_field.update_enabled = editable_fields.get(
             self.issue_due_date_field.jira_field_key
         )
-
-        # set up the status selector based on the current value
-        self._setup_status_selector(str(response.status.id))
 
         # update the priority selection depending on whether the issue supports prioritization
         self._setup_priority_selector(response.edit_meta, response.priority)

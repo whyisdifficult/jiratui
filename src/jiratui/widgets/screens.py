@@ -183,6 +183,7 @@ class MainScreen(Screen):
         self.api = APIController() if not api else api
         """The API instance used by the screen to interact with the Jira REST API via a an API controller."""
         self.available_users: list[tuple[str, str]] = []
+        """The list of available users."""
         self.available_issues_status: list[tuple[str, str]] = []
         self.initial_project_key = project_key
         """Pre-selected project key. This is passed during the initialization of the application."""
@@ -369,6 +370,7 @@ class MainScreen(Screen):
         Returns:
             A list of tuples with the name and id of every project status code.
         """
+        self.logger.info('Fetching status codes')
         if self.project_selector.selection:
             return await self._fetch_project_statuses(self.project_selector.selection)
         response: APIControllerResponse = await self.api.status()
@@ -428,7 +430,7 @@ class MainScreen(Screen):
         Returns:
             A list of tuples with the id of the type of issue and the name of the type of issue.
         """
-
+        self.logger.info('Fetching type of work items')
         types: list[IssueType]
         if self.project_selector.selection:
             response: APIControllerResponse = await self.api.get_issue_types_for_project(
@@ -464,6 +466,7 @@ class MainScreen(Screen):
         Returns:
             A list of `JiraUser` instances.
         """
+        self.logger.info('Fetching users')
         return await self.get_users(project_key=self.project_selector.selection)
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
@@ -843,6 +846,17 @@ class MainScreen(Screen):
         This is triggered from the datatable that holds the search results:
         `jiratui.widgets.search.IssuesSearchResultsTable`
 
+        Every time a user selects a work item in the search results the application will do the following:
+
+        - retrieve the details of the work item by sending a request to the
+        API's [get_issue](#jiratui.api_controller.controller.APIController.get_issue) method.
+
+        - update the information on the description tab (summary and description)
+
+        - retrieve the subtasks associated to the selected work item
+
+        - update the data in all the other tabs
+
         Args:
             selected_work_item_key: the key if the work item selected by the user from the search results datatable.
 
@@ -851,7 +865,7 @@ class MainScreen(Screen):
         """
         if not selected_work_item_key:
             self.notify(
-                'Unable to retrieve the details of the work item.',
+                'You need to select a work item before fetching its details.',
                 title='Find Work Item',
                 severity='error',
             )
@@ -873,11 +887,10 @@ class MainScreen(Screen):
         self.issue_summary_widget.update(work_item.summary)
         self.run_worker(self._setup_work_item_description(work_item.description))
 
-        # step 3: set up the details form
-        self.issue_details_widget.issue_available_statuses = (
-            self.available_issues_status
-        )  # the assignable status codes for this issue
+        # step 3: set up the details tab
+        # set the assignable users for the selected work item
         self.issue_details_widget.available_users = self.available_users
+        # set the work item
         self.issue_details_widget.issue = work_item
 
         # step 4: populate the related-issues tab

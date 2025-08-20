@@ -114,15 +114,15 @@ class JiraAPI:
         offset: int | None = None,
         limit: int | None = None,
     ) -> dict:
-        """
+        """Retrieves a paginated list of statuses that match a search on project.
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-status/#api-rest-api-3-statuses-search-get
 
         Args:
-            project_id:
-            offset:
-            limit:
+            project_id: the ID of the project the status is part of or null for global statuses.
+            offset: the index of the first item to return in a page of results (page offset).
+            limit: the maximum number of items to return per page. The Default is 200.
 
         Returns:
 
