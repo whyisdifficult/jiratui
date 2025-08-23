@@ -43,13 +43,11 @@ Commands:
 
 Before using the application, you need to configure a few settings.
 
-```{tip}
-The application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
+**Tip**: the application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
 you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you
 want to define in a ENV variable called `JIRA_TUI_*`; where `*` is the name of the config variable.
 
 **Example**: to define the value of `jira_api_username` do this: `JIRA_TUI_JIRA_API_USERNAME=...`
-```
 
 ## Setting Up the Jira's Instance API
 
