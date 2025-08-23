@@ -1,0 +1,21 @@
+{
+    "isLast": true,
+    "maxResults": 2,
+    "nextPage": "https://your-domain.atlassian.net/rest/api/3/statuses/search?startAt=2&maxResults=2",
+    "startAt": 0,
+    "total": 5,
+    "values": [
+        {
+          "description": "The issue is resolved",
+          "id": "1000",
+          "name": "Finished",
+          "scope": {
+            "project": {
+              "id": "1"
+            },
+            "type": "PROJECT"
+          },
+          "statusCategory": "DONE"
+        }
+    ]
+}

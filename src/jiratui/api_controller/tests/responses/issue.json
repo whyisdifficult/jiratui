@@ -1,0 +1,730 @@
+{
+    "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+    "id": "10002",
+    "key": "SCRUM-10",
+    "editmeta":
+    {
+        "fields":
+        {
+            "summary":
+            {
+                "required": true,
+                "schema":
+                {
+                    "type": "string",
+                    "system": "summary"
+                },
+                "name": "Summary",
+                "key": "summary",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "parent":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "issuelink",
+                    "system": "parent"
+                },
+                "name": "Parent",
+                "key": "parent",
+                "hasDefaultValue": false,
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "issuetype":
+            {
+                "required": true,
+                "schema":
+                {
+                    "type": "issuetype",
+                    "system": "issuetype"
+                },
+                "name": "Issue Type",
+                "key": "issuetype",
+                "operations":
+                [],
+                "allowedValues":
+                [
+                    {
+                        "id": "10003",
+                        "description": "Tasks track small, distinct pieces of work.",
+                        "name": "Task",
+                        "subtask": false,
+                        "avatarId": 10318,
+                        "entityId": "3771ca71-cbf8-4fa4-af0e-470b16a5b45b",
+                        "hierarchyLevel": 0
+                    },
+                    {
+                        "id": "10004",
+                        "description": "Bugs track problems or errors.",
+                        "name": "Bug",
+                        "subtask": false,
+                        "avatarId": 10303,
+                        "entityId": "99bf222c-d168-40e6-a3f9-29ec08b2e252",
+                        "hierarchyLevel": 0
+                    }
+                ]
+            },
+            "customfield_10020":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "json",
+                    "custom": "com.pyxis.greenhopper.jira:gh-sprint",
+                    "customId": 10020
+                },
+                "name": "Sprint",
+                "key": "customfield_10020",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "description":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "string",
+                    "system": "description"
+                },
+                "name": "Description",
+                "key": "description",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10032":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "any",
+                    "custom": "com.atlassian.jira.plugins.jira-development-integration-plugin:devsummarycf",
+                    "customId": 10032
+                },
+                "name": "development",
+                "key": "customfield_10032",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10021":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "option",
+                    "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes",
+                    "customId": 10021
+                },
+                "name": "Flagged",
+                "key": "customfield_10021",
+                "operations":
+                [
+                    "add",
+                    "set",
+                    "remove"
+                ],
+                "allowedValues":
+                [
+                    {
+                        "value": "Impediment",
+                        "id": "10019"
+                    }
+                ]
+            },
+            "reporter":
+            {
+                "required": true,
+                "schema":
+                {
+                    "type": "user",
+                    "system": "reporter"
+                },
+                "name": "Reporter",
+                "key": "reporter",
+                "autoCompleteUrl": "https://myinstance.atlassian.net/rest/api/3/user/recommend?context=Reporter&issueKey=SCRUM-10",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "priority":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "priority",
+                    "system": "priority"
+                },
+                "name": "Priority",
+                "key": "priority",
+                "operations":
+                [
+                    "set"
+                ],
+                "allowedValues":
+                [
+                    {
+                        "name": "Highest",
+                        "id": "1"
+                    },
+                    {
+                        "name": "High",
+                        "id": "2"
+                    },
+                    {
+                        "name": "Medium",
+                        "id": "3"
+                    },
+                    {
+                        "name": "Low",
+                        "id": "4"
+                    },
+                    {
+                        "name": "Lowest",
+                        "id": "5"
+                    }
+                ]
+            },
+            "customfield_10001":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "team",
+                    "custom": "com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team",
+                    "customId": 10001,
+                    "configuration":
+                    {
+                        "com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team": true
+                    }
+                },
+                "name": "Team",
+                "key": "customfield_10001",
+                "autoCompleteUrl": "https://myinstance.atlassian.net/gateway/api/v1/recommendations",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10036":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "design.field.name",
+                    "custom": "com.atlassian.jira.plugins.jira-development-integration-plugin:designcf",
+                    "customId": 10036
+                },
+                "name": "Design",
+                "key": "customfield_10036",
+                "autoCompleteUrl": "",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10037":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "any",
+                    "custom": "com.atlassian.jira.plugins.jira-development-integration-plugin:vulnerabilitycf",
+                    "customId": 10037
+                },
+                "name": "Vulnerability",
+                "key": "customfield_10037",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "labels":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "string",
+                    "system": "labels"
+                },
+                "name": "Labels",
+                "key": "labels",
+                "autoCompleteUrl": "https://myinstance.atlassian.net/rest/api/1.0/labels/10002/suggest?query=",
+                "operations":
+                [
+                    "add",
+                    "set",
+                    "remove",
+                    "edit"
+                ]
+            },
+            "customfield_10015":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "date",
+                    "custom": "com.atlassian.jira.plugin.system.customfieldtypes:datepicker",
+                    "customId": 10015
+                },
+                "name": "Start date",
+                "key": "customfield_10015",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10016":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "number",
+                    "custom": "com.pyxis.greenhopper.jira:jsw-story-points",
+                    "customId": 10016
+                },
+                "name": "Story point estimate",
+                "key": "customfield_10016",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "environment":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "string",
+                    "system": "environment"
+                },
+                "name": "Environment",
+                "key": "environment",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "customfield_10019":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "any",
+                    "custom": "com.pyxis.greenhopper.jira:gh-lexo-rank",
+                    "customId": 10019
+                },
+                "name": "Rank",
+                "key": "customfield_10019",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "attachment":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "attachment",
+                    "system": "attachment"
+                },
+                "name": "Attachment",
+                "key": "attachment",
+                "operations":
+                [
+                    "set",
+                    "copy"
+                ]
+            },
+            "duedate":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "date",
+                    "system": "duedate"
+                },
+                "name": "Due date",
+                "key": "duedate",
+                "operations":
+                [
+                    "set"
+                ]
+            },
+            "issuelinks":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "array",
+                    "items": "issuelinks",
+                    "system": "issuelinks"
+                },
+                "name": "Linked Issues",
+                "key": "issuelinks",
+                "autoCompleteUrl": "https://myinstance.atlassian.net/rest/api/3/issue/picker?currentProjectId=&showSubTaskParent=true&showSubTasks=true&currentIssueKey=SCRUM-10&query=",
+                "operations":
+                [
+                    "add",
+                    "copy"
+                ]
+            },
+            "comment":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "comments-page",
+                    "system": "comment"
+                },
+                "name": "Comment",
+                "key": "comment",
+                "operations":
+                [
+                    "add",
+                    "edit",
+                    "remove"
+                ]
+            },
+            "assignee":
+            {
+                "required": false,
+                "schema":
+                {
+                    "type": "user",
+                    "system": "assignee"
+                },
+                "name": "Assignee",
+                "key": "assignee",
+                "autoCompleteUrl": "https://myinstance.atlassian.net/rest/api/3/user/assignable/search?issueKey=SCRUM-10&query=",
+                "operations":
+                [
+                    "set"
+                ]
+            }
+        }
+    },
+    "fields":
+    {
+        "statuscategorychangedate": "2025-07-08T15:23:50.516+0200",
+        "issuetype":
+        {
+            "id": "10003",
+            "description": "Tasks track small, distinct pieces of work.",
+            "name": "Task",
+            "subtask": false,
+            "entityId": "3771ca71-cbf8-4fa4-af0e-470b16a5b45b",
+            "hierarchyLevel": 0
+        },
+        "parent":
+        {
+            "id": "10000",
+            "key": "SCRUM-1",
+            "fields":
+            {
+                "summary": "(Sample) Payment Processing with Async",
+                "status":
+                {
+                    "description": "This work item is being actively worked on at the moment by the assignee.",
+                    "name": "In Progress",
+                    "id": "10001",
+                    "statusCategory":
+                    {
+                        "id": 4,
+                        "key": "indeterminate",
+                        "colorName": "yellow",
+                        "name": "In Progress"
+                    }
+                },
+                "priority":
+                {
+                    "name": "Medium",
+                    "id": "3"
+                },
+                "issuetype":
+                {
+                    "id": "10001",
+                    "description": "Epics track collections of related bugs, stories, and tasks.",
+                    "name": "Epic",
+                    "subtask": false,
+                    "entityId": "83c9c838-aa16-421a-8180-01891cce6fb0",
+                    "hierarchyLevel": 1
+                }
+            }
+        },
+        "timespent": null,
+        "project":
+        {
+            "id": "10000",
+            "key": "SCRUM",
+            "name": "Test Project",
+            "projectTypeKey": "software",
+            "simplified": true
+        },
+        "fixVersions": [],
+        "aggregatetimespent": null,
+        "statusCategory":
+        {
+            "id": 4,
+            "key": "indeterminate",
+            "colorName": "yellow",
+            "name": "In Progress"
+        },
+        "resolution": null,
+        "customfield_10036": null,
+        "resolutiondate": null,
+        "workratio": -1,
+        "issuerestriction":
+        {
+            "issuerestrictions": {},
+            "shouldDisplay": true
+        },
+        "watches":
+        {
+            "watchCount": 1,
+            "isWatching": true
+        },
+        "lastViewed": "2025-07-09T11:34:16",
+        "created": "2025-07-05T14:34:59",
+        "customfield_10020":
+        [
+            {
+                "id": 2,
+                "name": "SCRUM Sprint 0",
+                "state": "active",
+                "boardId": 1,
+                "startDate": "2025-07-05T12:35:00.967Z",
+                "endDate": "2025-07-19T12:35:00.967Z"
+            }
+        ],
+        "customfield_10021": null,
+        "priority": null,
+        "labels":
+        [],
+        "customfield_10016": null,
+        "customfield_10019": "0|i0001r:",
+        "timeestimate": null,
+        "aggregatetimeoriginalestimate": null,
+        "versions":
+        [],
+        "issuelinks":
+        [
+            {
+                "id": "10033",
+                "type":
+                {
+                    "id": "10003",
+                    "name": "Relates",
+                    "inward": "relates to",
+                    "outward": "relates to"
+                },
+                "outwardIssue":
+                {
+                    "id": "10005",
+                    "key": "SCRUM-9",
+                    "fields":
+                    {
+                        "summary": "(Sample) Add Login Rate Limiting",
+                        "status":
+                        {
+                            "description": "This work item is being actively worked on at the moment by the assignee.",
+                            "name": "In Progress",
+                            "id": "10001",
+                            "statusCategory":
+                            {
+                                "id": 4,
+                                "key": "indeterminate",
+                                "colorName": "yellow",
+                                "name": "In Progress"
+                            }
+                        },
+                        "priority":
+                        {
+                            "name": "Highest",
+                            "id": "1"
+                        },
+                        "issuetype":
+                        {
+                            "id": "10003",
+                            "description": "Tasks track small, distinct pieces of work.",
+                            "name": "Task",
+                            "subtask": false,
+                            "avatarId": 10318,
+                            "entityId": "3771ca71-cbf8-4fa4-af0e-470b16a5b45b",
+                            "hierarchyLevel": 0
+                        }
+                    }
+                }
+            },
+            {
+                "id": "10075",
+                "type":
+                {
+                    "id": "10001",
+                    "name": "Cloners",
+                    "inward": "is cloned by",
+                    "outward": "clones"
+                },
+                "inwardIssue":
+                {
+                    "id": "10000",
+                    "key": "SCRUM-1",
+                    "fields":
+                    {
+                        "summary": "(Sample) Payment Processing with Async",
+                        "status":
+                        {
+                            "description": "This work item is being actively worked on at the moment by the assignee.",
+                            "name": "In Progress",
+                            "id": "10001",
+                            "statusCategory":
+                            {
+                                "id": 4,
+                                "key": "indeterminate",
+                                "colorName": "yellow",
+                                "name": "In Progress"
+                            }
+                        },
+                        "priority":
+                        {
+                            "name": "Medium",
+                            "id": "3"
+                        },
+                        "issuetype":
+                        {
+                            "id": "10001",
+                            "description": "Epics track collections of related bugs, stories, and tasks.",
+                            "name": "Epic",
+                            "subtask": false,
+                            "avatarId": 10307,
+                            "entityId": "01891cce6fb0",
+                            "hierarchyLevel": 1
+                        }
+                    }
+                }
+            }
+        ],
+        "assignee":
+        {
+            "accountId": "abe10be",
+            "emailAddress": "bart@simpson.com",
+            "displayName": "Bart",
+            "active": true,
+            "timeZone": "Europe/Amsterdam",
+            "accountType": "atlassian"
+        },
+        "updated": "2025-07-14T22:33:38",
+        "status":
+        {
+            "description": "This work item is being actively worked on at the moment by the assignee.",
+            "name": "In Progress",
+            "id": "10001",
+            "statusCategory":
+            {
+                "id": 4,
+                "key": "indeterminate",
+                "colorName": "yellow",
+                "name": "In Progress"
+            }
+        },
+        "components":
+        [],
+        "timeoriginalestimate": null,
+        "description":
+        {
+            "type": "doc",
+            "version": 1,
+            "content":
+            [
+                {
+                    "type": "paragraph",
+                    "content":
+                    [
+                        {
+                            "type": "text",
+                            "text": "Create a logging system to store payment transaction metadata."
+                        }
+                    ]
+                }
+            ]
+        },
+        "timetracking":
+        {},
+        "customfield_10015": null,
+        "security": null,
+        "attachment": [],
+        "aggregatetimeestimate": null,
+        "summary": "(Sample) Set Up Payment Logging",
+        "creator":
+        {
+            "accountId": "abe10be",
+            "emailAddress": "bart@simpson.com",
+            "displayName": "Bart",
+            "active": true,
+            "timeZone": "Europe/Amsterdam",
+            "accountType": "atlassian"
+        },
+        "subtasks":
+        [],
+        "reporter":
+        {
+            "accountId": "abe10be",
+            "emailAddress": "bart@simpson.com",
+            "displayName": "Bart",
+            "active": true,
+            "timeZone": "Europe/Amsterdam",
+            "accountType": "atlassian"
+        },
+        "aggregateprogress":
+        {
+            "progress": 0,
+            "total": 0
+        },
+        "customfield_10001": null,
+        "environment": null,
+        "duedate": "2025-12-31",
+        "progress":
+        {
+            "progress": 0,
+            "total": 0
+        },
+        "votes":
+        {
+            "votes": 0,
+            "hasVoted": false
+        },
+        "comment":
+        {
+            "comments": [],
+            "maxResults": 0,
+            "total": 0,
+            "startAt": 0
+        },
+        "worklog":
+        {
+            "startAt": 0,
+            "maxResults": 20,
+            "total": 0,
+            "worklogs":
+            []
+        }
+    }
+}

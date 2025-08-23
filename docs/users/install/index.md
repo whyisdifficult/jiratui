@@ -1,0 +1,37 @@
+# Installation
+
+The recommended way to install the application is via [uv](https://docs.astral.sh/uv/):
+
+```shell
+uv add jiratui
+```
+
+Alternatively, you can install it using `pip`:
+
+```shell
+pip install jiratui
+```
+
+After installing the package, you can run the CLI tool with the following command:
+
+```shell
+jiratui
+```
+
+This will show you the available commands for the CLI tool
+
+```shell
+Usage: jiratui [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  comments  Use it to add, list or delete comments associated to work items.
+  issues    Use it to search, update or delete work items.
+  ui        Launches the Jira TUI application.
+  users     Use it to search users and user groups.
+```
+
+Before you can launch the UI or use the CLI's commands you need to configure a few things. Head over to the
+[configuration section](/users//configuration/index) to see how to do that.
