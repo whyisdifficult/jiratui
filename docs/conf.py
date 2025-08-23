@@ -2,13 +2,14 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+from datetime import datetime
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'JiraTUI'
 author = 'Gaston Tagni'
-project_copyright = '2025, Gaston Tagni'
+project_copyright = f'{datetime.now().year}, Gaston Tagni'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -21,7 +22,7 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = ['_build']
 
-language = None
+language = 'en'
 
 source_suffix = {
     '.md': 'markdown',
