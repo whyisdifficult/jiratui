@@ -763,13 +763,12 @@ async def test_delete_issue_remote_link(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.delete_issue_remote_link(
+    await jira_api.delete_issue_remote_link(
         'task-1',
         'link-1',
     )
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1/remotelink/link-1'
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1481,10 +1480,9 @@ async def test_delete_comment(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.delete_comment('task-1', 'comment-1')
+    await jira_api.delete_comment('task-1', 'comment-1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1/comment/comment-1'
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1681,11 +1679,10 @@ async def test_transition_issue(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.transition_issue('1', '2')
+    await jira_api.transition_issue('1', '2')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/transitions'
     assert json.loads(route.calls.last.request.content) == {'transition': '2'}
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1700,7 +1697,7 @@ async def test_create_issue_link_inward(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.create_issue_link('1', '2', 'inward', '8')
+    await jira_api.create_issue_link('1', '2', 'inward', '8')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issueLink'
     assert json.loads(route.calls.last.request.content) == {
@@ -1708,7 +1705,6 @@ async def test_create_issue_link_inward(jira_api: JiraAPI):
         'inwardIssue': {'key': '2'},
         'outwardIssue': {'key': '1'},
     }
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1723,7 +1719,7 @@ async def test_create_issue_link_outward(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.create_issue_link('1', '2', 'outward', '7')
+    await jira_api.create_issue_link('1', '2', 'outward', '7')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issueLink'
     assert json.loads(route.calls.last.request.content) == {
@@ -1731,7 +1727,6 @@ async def test_create_issue_link_outward(jira_api: JiraAPI):
         'inwardIssue': {'key': '1'},
         'outwardIssue': {'key': '2'},
     }
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1774,10 +1769,9 @@ async def test_delete_issue_link(jira_api: JiraAPI):
     route = respx.delete(get_url_pattern('issueLink/1'))
     route.mock(return_value=httpx.Response(204, json=None))
     # WHEN
-    result = await jira_api.delete_issue_link('1')
+    await jira_api.delete_issue_link('1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issueLink/1'
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -1890,10 +1884,9 @@ async def test_delete_attachment(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.delete_attachment('1')
+    await jira_api.delete_attachment('1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/attachment/1'
-    assert result is None
 
 
 @pytest.mark.asyncio
@@ -2251,7 +2244,7 @@ async def test_create_issue_remote_link(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.create_issue_remote_link('1', 'http://foo.bar', 'test')
+    await jira_api.create_issue_remote_link('1', 'http://foo.bar', 'test')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/remotelink'
     assert json.loads(route.calls.last.request.content) == {
@@ -2260,7 +2253,6 @@ async def test_create_issue_remote_link(jira_api: JiraAPI):
             'url': 'http://foo.bar',
         }
     }
-    assert result is None
 
 
 @patch('jiratui.api.api.build_issue_search_jql')

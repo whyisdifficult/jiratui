@@ -38,7 +38,7 @@ def jira_users() -> list[JiraUser]:
 def app(config_for_testing, jira_api_controller) -> JiraApp:
     app = JiraApp(config_for_testing)
     app.api = jira_api_controller
-    app._setup_logging = MagicMock()
+    app._setup_logging = MagicMock()  # type:ignore[method-assign]
     return app
 
 
@@ -79,7 +79,7 @@ async def test_quick_access_keys(
     """Test pressing certain keys focus the correct widget."""
     async with app.run_test() as pilot:
         await pilot.press(key)
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert isinstance(main_screen.focused, widget)
 
 
@@ -127,7 +127,7 @@ async def test_fetch_users_without_project_selection_without_jira_user_group_id(
     # GIVEN
     config_for_testing.jira_user_group_id = None
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         result = await main_screen.fetch_users()
         # THEN
@@ -155,7 +155,7 @@ async def test_fetch_users_without_project_selection_with_jira_user_group_id(
     config_for_testing.jira_user_group_id = '1'
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(result=jira_users)
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         result = await main_screen.fetch_users()
         # THEN
@@ -182,7 +182,7 @@ async def test_fetch_users_without_project_selection_with_jira_user_group_id_api
     config_for_testing.jira_user_group_id = '1'
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         result = await main_screen.fetch_users()
         # THEN
@@ -222,7 +222,7 @@ async def test_fetch_users_with_project_selection(
         ]
     )
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.project_selector.value = 'P1'
         # WHEN
         result = await main_screen.fetch_users()
@@ -264,7 +264,7 @@ async def test_fetch_users_with_project_selection_search_users_error(
     )
     search_users_assignable_to_projects_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.project_selector.value = 'P1'
         # WHEN
         result = await main_screen.fetch_users()
@@ -304,7 +304,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_without
         ]
     )
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         await pilot.press('')
         # THEN
         assert main_screen.initial_project_key is None
@@ -355,7 +355,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_using_p
         ]
     )
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         await pilot.press('')
         # THEN
         assert main_screen.initial_project_key is None
@@ -386,7 +386,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     config_for_testing.on_start_up_only_fetch_projects = False
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         await pilot.press('')
         # THEN
         assert main_screen.initial_project_key is None
@@ -415,7 +415,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     config_for_testing.on_start_up_only_fetch_projects = True
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         await pilot.press('')
         # THEN
         assert main_screen.initial_project_key is None
@@ -450,7 +450,7 @@ async def test_mount_fetch_statuses_without_initial_project_key_without_using_pr
     )
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
@@ -483,7 +483,7 @@ async def test_mount_fetch_statuses_without_initial_project_key_using_project_wo
     )
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
@@ -511,7 +511,7 @@ async def test_mount_fetch_statuses_without_initial_project_key_status_error(
     config_for_testing.on_start_up_only_fetch_projects = False
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
@@ -547,7 +547,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
     )
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
@@ -574,7 +574,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
     get_issue_types_mock.return_value = APIControllerResponse(success=False)
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
@@ -604,7 +604,7 @@ async def test_mount_without_initial_project_key_set_jql_expression(
     config_for_testing.pre_defined_jql_expressions = {1: {'expression': 'sprint=2'}}
     # WHEN
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
         assert main_screen.jql_expression_input.expression == expected_expression
 
@@ -642,7 +642,7 @@ async def test_select_project(
         )
     ]
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         main_screen.project_selector.value = 'P1'
         # THEN
@@ -670,7 +670,7 @@ async def test_search_button_triggers_issue_search(
     app,
 ):
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # noqa: F821
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         await pilot.press('ctrl+r')
         # THEN
@@ -692,7 +692,7 @@ async def test_click_search_button_resets_widgets(
     app,
 ):
     async with app.run_test() as pilot:
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         await pilot.press('ctrl+r')
         # THEN
@@ -726,7 +726,7 @@ async def test_click_next_page_search_results(
 ):
     async with app.run_test() as pilot:
         # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.page = 0
         main_screen.search_results_table.token_by_page = {1: 'token_a'}
         # WHEN
@@ -752,7 +752,7 @@ async def test_click_next_page_search_results_with_missing_token(
 ):
     async with app.run_test() as pilot:
         # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.page = 0
         main_screen.search_results_table.token_by_page = {2: 'token_a'}
         # WHEN
@@ -778,7 +778,7 @@ async def test_click_previous_page_search_results(
 ):
     async with app.run_test() as pilot:
         # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.page = 2
         main_screen.search_results_table.token_by_page = {1: 'token_a'}
         # WHEN
@@ -804,7 +804,7 @@ async def test_click_previous_page_search_results_with_missing_token(
 ):
     async with app.run_test() as pilot:
         # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.page = 1
         main_screen.search_results_table.token_by_page = {2: 'token_a'}
         # WHEN

@@ -350,6 +350,7 @@ class JiraAPI:
             method=httpx.AsyncClient.delete,
             url=f'issue/{issue_id_or_key}/remotelink/{link_id}',
         )
+        return None
 
     async def search_issues(
         self,
