@@ -103,7 +103,7 @@ async def test_fetch_projects(
         ]
     )
     async with app.run_test():
-        main_screen = cast('MainScreen', app.screen)  # noqa: F821
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert main_screen.project_selector.selection is None
         assert main_screen.project_selector._options == [
             ('', Select.BLANK),
