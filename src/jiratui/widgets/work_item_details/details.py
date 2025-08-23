@@ -712,7 +712,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_project_statuses(project_key)
         if not response.success:
-            self.issue_status_selector.set_options = []
+            self.issue_status_selector.set_options([])
         else:
             status_codes_by_work_item_type_id: dict = response.result or {}
             record: dict = status_codes_by_work_item_type_id.get(work_item_type_id, {})
