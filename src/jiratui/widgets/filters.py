@@ -151,13 +151,14 @@ class WorkItemInputWidget(Input):
 This expects a case-sensitive string. If defined, this has precedence over all the other search criteria.
     """
 
-    def __init__(self):
+    def __init__(self, value: str | None = None):
         super().__init__(
             id='input_issue_key',
             classes='work-item-key',
             type='text',
             placeholder='e.g. ABC-1234',
             tooltip='Search work items by key',
+            value=value,
         )
         self.border_title = 'Work Item Key'
         self.border_subtitle = '(k)'
@@ -259,9 +260,9 @@ load these expressions in the JQL Editor by focussing this field `(j)` and then 
         self.border_subtitle = '(j)'
 
     def watch_expression(self, value: str | None = None) -> None:
-        if value and value not in self.value:
-            if self.value:
-                self.value = f'{self.value} AND {self._clean_value(value)}'
+        if value and value not in self.value:  # type:ignore[has-type]
+            if self.value:  # type:ignore[has-type]
+                self.value = f'{self.value} AND {self._clean_value(value)}'  # type:ignore[has-type]
             else:
                 self.value = self._clean_value(value)
 

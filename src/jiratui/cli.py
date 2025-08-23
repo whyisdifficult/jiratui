@@ -375,6 +375,7 @@ def delete_comment(work_item_key: str, comment_id: str):
 
 @cli.command('ui')
 @click.option('--project-key', '-p', default=None, help='A case-sensitive Jira project key.')
+@click.option('--work-item-key', '-w', default=None, help='A case-sensitive Jira project key.')
 @click.option(
     '--assignee-account-id',
     '-u',
@@ -389,6 +390,7 @@ def delete_comment(work_item_key: str, comment_id: str):
 )
 def ui(
     project_key: str | None = None,
+    work_item_key: str | None = None,
     assignee_account_id: str | None = None,
     jql_expression_id: int | None = None,
 ):
@@ -408,6 +410,7 @@ def ui(
         project_key=project_key,
         user_account_id=assignee_account_id,
         jql_expression_id=jql_expression_id,
+        work_item_key=work_item_key,
     ).run()
 
 

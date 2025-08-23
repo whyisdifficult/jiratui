@@ -178,6 +178,7 @@ class MainScreen(Screen):
         project_key: str | None = None,
         user_account_id: str | None = None,
         jql_expression_id: int | None = None,
+        work_item_key: str | None = None,
     ):
         super().__init__()
         self.api = APIController() if not api else api
@@ -186,6 +187,9 @@ class MainScreen(Screen):
         """The list of available users."""
         self.available_issues_status: list[tuple[str, str]] = []
         self.initial_project_key = project_key
+        """A project key to set as the initial value of the projects dropdown widget."""
+        self.initial_work_item_key = work_item_key
+        """A work item key to set as the initial value of the work-item-key widget."""
         """Pre-selected project key. This is passed during the initialization of the application."""
         self.initial_assignee_account_id = user_account_id
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
@@ -292,7 +296,7 @@ class MainScreen(Screen):
                 yield IssueStatusSelectionInput(statuses=[])
                 yield UserSelectionInput(users=[])
             with ItemGrid(classes='bottom-search-bar'):
-                yield WorkItemInputWidget()
+                yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
                 yield IssueSearchCreatedUntilWidget()
                 yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())

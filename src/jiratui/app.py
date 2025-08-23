@@ -41,13 +41,41 @@ class JiraApp(App):
         project_key: str | None = None,
         user_account_id: str | None = None,
         jql_expression_id: int | None = None,
+        work_item_key: str | None = None,
     ):
+        """Initializes the application.
+
+        Args:
+            settings: the settings for the application.
+            project_key: the initial project key to set the selection in the project's dropdown.
+            user_account_id: the initial assignee to set the selection in the assignee's dropdown.
+            jql_expression_id: the ID of a JQL expression defined in the config file to use as the default expression
+            for searching work items when the user does not select any criteria in the UI.
+            work_item_key: a work item key to set the work item widget.
+        """
         super().__init__()
         self.config = settings
         CONFIGURATION.set(settings)
         self.api = APIController()  # required so screens can have access to the API
-        self.initial_project_key: str | None = project_key
-        self.initial_user_account_id: str | None = user_account_id
+
+        self.initial_project_key: str | None = None
+        selected_project_key = project_key or CONFIGURATION.get().default_project_key_or_id or None
+        if selected_project_key and (cleaned_selected_project_key := selected_project_key.strip()):
+            self.initial_project_key = cleaned_selected_project_key
+
+        self.initial_work_item_key: str | None = None
+        if work_item_key and (cleaned_work_item_key := work_item_key.strip()):
+            self.initial_work_item_key = cleaned_work_item_key
+
+        self.initial_user_account_id: str | None = None
+        selected_assignee_account_id = (
+            user_account_id or CONFIGURATION.get().jira_account_id or None
+        )
+        if selected_assignee_account_id and (
+            cleaned_selected_assignee_account_id := selected_assignee_account_id.strip()
+        ):
+            self.initial_user_account_id = cleaned_selected_assignee_account_id
+
         self.initial_jql_expression_id: int | None = jql_expression_id
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
@@ -62,6 +90,7 @@ class JiraApp(App):
                 self.initial_project_key,
                 self.initial_user_account_id,
                 self.initial_jql_expression_id,
+                self.initial_work_item_key,
             )
         )
 
