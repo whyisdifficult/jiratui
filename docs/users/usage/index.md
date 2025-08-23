@@ -5,13 +5,84 @@
 Once you have provided the necessary settings, you can run the application's UI with the following command:
 
 ```shell
-jtuicli ui
+jiratui ui
 ```
 
 If you are using a custom config file, run:
 
 ```shell
-JIRA_TUI_CONFIG_FILE=my-file.yaml jtuicli ui
+JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
+```
+
+### Passing Optional Arguments to the UI
+
+`jiratui ui` supports optional arguments that you can use to set options in the UI upon start up. You can view the list
+of supported arguments with the following command:
+
+```shell
+jiratui ui --help
+Usage: jiratui ui [OPTIONS]
+
+  Launches the Jira TUI application.
+
+Options:
+  -p, --project-key TEXT          A case-sensitive Jira project key.
+  -w, --work-item-key TEXT        A case-sensitive Jira project key.
+  -u, --assignee-account-id TEXT  A Jira user account ID. Typically this would be your Jira account ID so user-related
+                                  dropdowns can pre-select your user
+  -j, --jql-expression-id TEXT    The ID of a JQL expression as defined in the config.
+```
+
+**Select a Jira Project on Start Up**
+
+If you want your app to pre-select a project in the projects dropdown you can pass the project key with the argument
+`--project-key`. If the project exists the app will pre-select it.
+
+```{tip}
+You can configure the app to always do this by setting the variable `default_project_key_or_id` in the config
+file. That way you do not need to pass this argument when you start the app.
+```
+
+```shell
+jiratui ui --project-key PROJECT-1
+```
+
+**Select a Jira User on Start Up**
+
+If you want your app to pre-select a/your Jira user in the assignees dropdown you can pass the user account ID with
+the argument `--assignee-account-id`. If the user exists the app will pre-select it.
+
+```{tip}
+You can configure the app to always do this by setting the variable `jira_account_id` in the config
+file. That way you do not need to pass this argument when you start the app.
+```
+
+```shell
+jiratui ui --assignee-account-id 12345-67890
+```
+
+**Select a Jira Work Item on Start Up**
+
+If you want your app to pre-select a Jira issue in the "work item key" field you can pass the work item key with
+the argument `--work-item-key`.
+
+```shell
+jiratui ui --work-item-key ISSUE-1
+```
+
+**Select a JIra JQL Expression on Start Up**
+
+If you defined JQL expressions via the config variable `pre_defined_jql_expressions` and you would like the app to
+use a specific expression to search work items when no other criteria is selected then you can pass the argument
+`--jql-expression-id` with the ID of the expression.
+
+```{tip}
+You can configure the app to always do this by setting the variable `jql_expression_id_for_work_items_search` in the
+config file. That way you do not need to pass this argument when you start the app.
+```
+
+```shell
+jiratui ui --jql-expression-id 1
 ```
 
 ## CLI Interface
@@ -26,7 +97,7 @@ with the (case-sensitive) project key.
 **Example**: searching for issues of the project `SCRUM`
 
 ```shell
-$ jtuicli issues search --project-key SCRUM
+$ jiratui issues search --project-key SCRUM
 
 | Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
 |---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
@@ -40,7 +111,7 @@ issue key.
 **Example**: searching for the issue with key `SCRUM-1`
 
 ```shell
-$ jtuicli issues search --key SCRUM-1
+$ jiratui issues search --key SCRUM-1
 
 | Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
 |---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
@@ -53,7 +124,7 @@ The tool also provides a command to show metadata associated to a work item. Thi
 work item; for example if you want to transition the state of the item and you need to know the ID of the state.
 
 ```shell
-$ jtuicli issues metadata SCRUM-1
+$ jiratui issues metadata SCRUM-1
 
 Valid work types for work item: SCRUM-1
 
@@ -82,7 +153,7 @@ To list the comments of a work item use the `comments list` command and pass the
 item whose comments you want to list.
 
 ```shell
-$ jtuicli comments list SCRUM-1
+$ jiratui comments list SCRUM-1
 
 | ID | Issue Key | Author             | Created          | Updated          | Message      |
 |----|-----------|--------------------|------------------|------------------|--------------|
@@ -93,7 +164,7 @@ If you want to see the text of a specific comment use the `comments show` comman
 the work item followed by the ID of the comment.
 
 ```shell
-$ jtuicli comments show SCRUM-1 1
+$ jiratui comments show SCRUM-1 1
 
 Hello World!
 ```
@@ -104,7 +175,7 @@ To add a comment to a work item use the `comments add` command and pass the (cas
 item and the comment string you want to add.
 
 ```shell
-$ jtuicli comments add SCRUM-1 'My new comment'
+$ jiratui comments add SCRUM-1 'My new comment'
 
 | ID | Issue Key | Author             | Created          | Updated          | Message        |
 |----|-----------|--------------------|------------------|------------------|----------------|
@@ -115,11 +186,11 @@ $ jtuicli comments add SCRUM-1 'My new comment'
 ### Deleting a Comment
 
 ```shell
-$ jtuicli comments delete SCRUM-1 2
+$ jiratui comments delete SCRUM-1 2
 
 Comment deleted successfully.
 
-$ jtuicli comments list SCRUM-1
+$ jiratui comments list SCRUM-1
 
 | ID | Issue Key | Author             | Created          | Updated          | Message      |
 |----|-----------|--------------------|------------------|------------------|--------------|
@@ -132,7 +203,7 @@ You can search users with the command `users search` providing (part of) the nam
 user. In the following example we are searching for any user whose name or email include the string `maggie`.
 
 ```shell
-$ jtuicli users search maggie
+$ jiratui users search maggie
 
 | Account ID | Active | Name           | Email Address      |
 |------------|--------|----------------|--------------------|
@@ -148,7 +219,7 @@ In order to list all the known user groups in your Jira instance you can use the
 accepts 2 optional arguments to paginate results: `--offset` and `--limit`.
 
 ```shell
-$ jtuicli users groups
+$ jiratui users groups
 
 | ID   | Name         | Total users in group? |
 |------|--------------|-----------------------|
@@ -159,7 +230,7 @@ $ jtuicli users groups
 You can also search groups by the (exact) name. For example,
 
 ```shell
-$ jtuicli users groups --group-names developers
+$ jiratui users groups --group-names developers
 
 | ID   | Name         | Total users in group? |
 |------|--------------|-----------------------|

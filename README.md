@@ -21,13 +21,13 @@ pip install jiratui
 After installing the package, you can run the CLI tool with the following command:
 
 ```shell
-jtuicli
+jiratui
 ```
 
 This will show you the available commands for the CLI tool
 
 ```shell
-Usage: jtuicli [OPTIONS] COMMAND [ARGS]...
+Usage: jiratui [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -91,13 +91,13 @@ jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 Once you have provided the necessary settings, you can run the application's UI with the following command:
 
 ```shell
-jtuicli ui
+jiratui ui
 ```
 
 If you are using a custom config file, run:
 
 ```shell
-JIRA_TUI_CONFIG_FILE=my-file.yaml jtuicli ui
+JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
 ```
 
 ## CLI Interface
@@ -112,7 +112,7 @@ with the (case-sensitive) project key.
 **Example**: searching for issues of the project `SCRUM`
 
 ```shell
-$ jtuicli issues search --project-key SCRUM
+$ jiratui issues search --project-key SCRUM
 
 | Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
 |---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
@@ -126,7 +126,7 @@ issue key.
 **Example**: searching for the issue with key `SCRUM-1`
 
 ```shell
-$ jtuicli issues search --key SCRUM-1
+$ jiratui issues search --key SCRUM-1
 
 | Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
 |---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
@@ -139,7 +139,7 @@ To list the comments of a work item use the `comments list` command and pass the
 item whose comments you want to list.
 
 ```shell
-$ jtuicli comments list SCRUM-1
+$ jiratui comments list SCRUM-1
 
 | ID | Issue Key | Author             | Created          | Updated          | Message      |
 |----|-----------|--------------------|------------------|------------------|--------------|
@@ -150,7 +150,7 @@ If you want to see the text of a specific comment use the `comments show` comman
 the work item followed by the ID of the comment.
 
 ```shell
-$ jtuicli comments show SCRUM-1 1
+$ jiratui comments show SCRUM-1 1
 
 Hello World!
 ```
