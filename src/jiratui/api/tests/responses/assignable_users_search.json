@@ -1,0 +1,18 @@
+{
+  "accountId": "5b10a2844c20165700ede21g",
+  "accountType": "atlassian",
+  "active": true,
+  "applicationRoles": {
+    "items": [],
+    "size": 1
+  },
+  "displayName": "Mia Krystof",
+  "emailAddress": "mia@example.com",
+  "groups": {
+    "items": [],
+    "size": 3
+  },
+  "key": "",
+  "name": "",
+  "timeZone": "Australia/Sydney"
+}

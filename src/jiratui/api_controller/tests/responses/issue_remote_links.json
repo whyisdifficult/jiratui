@@ -1,0 +1,36 @@
+[
+  {
+    "application": {
+      "name": "My Acme Tracker",
+      "type": "com.acme.tracker"
+    },
+    "globalId": "system=http://www.mycompany.com/support&id=1",
+    "id": 10000,
+    "object": {
+      "status": {
+        "resolved": true
+      },
+      "summary": "Customer support issue",
+      "title": "TSTSUP-111",
+      "url": "http://www.mycompany.com/support?id=1"
+    },
+    "relationship": "causes"
+  },
+  {
+    "application": {
+      "name": "My Acme Tester",
+      "type": "com.acme.tester"
+    },
+    "globalId": "system=http://www.anothercompany.com/tester&id=1234",
+    "id": 10001,
+    "object": {
+      "status": {
+        "resolved": false
+      },
+      "summary": "Test that the submit button saves the item",
+      "title": "Test Case #1234",
+      "url": "http://www.anothercompany.com/tester/testcase/1234"
+    },
+    "relationship": "is tested by"
+  }
+]

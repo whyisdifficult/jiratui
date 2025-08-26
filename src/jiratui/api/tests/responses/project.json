@@ -1,0 +1,111 @@
+{
+    "assigneeType": "PROJECT_LEAD",
+    "components": [
+        {
+            "ari": "ari:cloud:compass:fdb3fdec-4e70-be56-11ee-0242ac120002:component/fdb3fdec-4e70-11ee-be56-0242ac120002/fdb3fdec-11ee-4e70-be56-0242ac120002",
+            "assignee": {
+                "accountId": "5b10a2844c20165700ede21g",
+                "accountType": "atlassian",
+                "active": false,
+                "displayName": "Mia Krystof",
+                "key": "",
+                "name": "",
+                "self": "https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"
+            },
+            "assigneeType": "PROJECT_LEAD",
+            "description": "This is a Jira component",
+            "id": "10000",
+            "isAssigneeTypeValid": false,
+            "lead": {
+                "accountId": "5b10a2844c20165700ede21g",
+                "accountType": "atlassian",
+                "active": false,
+                "displayName": "Mia Krystof",
+                "key": "",
+                "name": "",
+                "self": "https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"
+            },
+            "metadata": {
+                "icon": "https://www.example.com/icon.png"
+            },
+            "name": "Component 1",
+            "project": "HSP",
+            "projectId": 10000,
+            "realAssignee": {
+                "accountId": "5b10a2844c20165700ede21g",
+                "accountType": "atlassian",
+                "active": false,
+                "displayName": "Mia Krystof",
+                "key": "",
+                "name": "",
+                "self": "https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"
+            },
+            "realAssigneeType": "PROJECT_LEAD",
+            "self": "https://your-domain.atlassian.net/rest/api/3/component/10000"
+        }
+    ],
+    "description": "This project was created as an example for REST.",
+    "email": "from-jira@example.com",
+    "id": "10000",
+    "insight": {
+        "lastIssueUpdateTime": "2021-04-22T05:37:05.000+0000",
+        "totalIssueCount": 100
+    },
+    "issueTypes": [
+        {
+            "avatarId": 1,
+            "description": "A task that needs to be done.",
+            "hierarchyLevel": 0,
+            "iconUrl": "https://your-domain.atlassian.net/secure/viewavatar?size=xsmall&avatarId=10299&avatarType=issuetype\",",
+            "id": "3",
+            "name": "Task",
+            "self": "https://your-domain.atlassian.net/rest/api/3/issueType/3",
+            "subtask": false
+        },
+        {
+            "avatarId": 10002,
+            "description": "A problem with the software.",
+            "entityId": "9d7dd6f7-e8b6-4247-954b-7b2c9b2a5ba2",
+            "hierarchyLevel": 0,
+            "iconUrl": "https://your-domain.atlassian.net/secure/viewavatar?size=xsmall&avatarId=10316&avatarType=issuetype\",",
+            "id": "1",
+            "name": "Bug",
+            "scope": {
+                "project": {
+                    "id": "10000"
+                },
+                "type": "PROJECT"
+            },
+            "self": "https://your-domain.atlassian.net/rest/api/3/issueType/1",
+            "subtask": false
+        }
+    ],
+    "key": "EX",
+    "lead": {
+        "accountId": "5b10a2844c20165700ede21g",
+        "accountType": "atlassian",
+        "active": false,
+        "displayName": "Mia Krystof",
+        "key": "",
+        "name": "",
+        "self": "https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"
+    },
+    "name": "Example",
+    "projectCategory": {
+        "description": "First Project Category",
+        "id": "10000",
+        "name": "FIRST",
+        "self": "https://your-domain.atlassian.net/rest/api/3/projectCategory/10000"
+    },
+    "properties": {
+        "propertyKey": "propertyValue"
+    },
+    "roles": {
+        "Developers": "https://your-domain.atlassian.net/rest/api/3/project/EX/role/10000"
+    },
+    "self": "https://your-domain.atlassian.net/rest/api/3/project/EX",
+    "simplified": false,
+    "style": "classic",
+    "url": "https://www.example.com",
+    "versions": []
+}
