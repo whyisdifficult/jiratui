@@ -15,7 +15,7 @@ pip install jiratui
 After installing the package, you can run the CLI tool with the following command:
 
 ```shell
-jiratui
+jiratui --help
 ```
 
 This will show you the available commands for the CLI tool
