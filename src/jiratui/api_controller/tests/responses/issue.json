@@ -536,8 +536,7 @@
                     "inward": "relates to",
                     "outward": "relates to"
                 },
-                "outwardIssue":
-                {
+                "outwardIssue": {
                     "id": "10005",
                     "key": "SCRUM-9",
                     "fields":
@@ -583,8 +582,7 @@
                     "inward": "is cloned by",
                     "outward": "clones"
                 },
-                "inwardIssue":
-                {
+                "inwardIssue": {
                     "id": "10000",
                     "key": "SCRUM-1",
                     "fields":
@@ -666,11 +664,31 @@
                 }
             ]
         },
-        "timetracking":
-        {},
+        "timetracking": {
+            "originalEstimate": "2 minutes",
+            "remainingEstimate": "1 minute",
+            "timeSpent": "1 minute",
+            "originalEstimateSeconds": 120,
+            "remainingEstimateSeconds": 60,
+            "timeSpentSeconds": 60
+        },
         "customfield_10015": null,
         "security": null,
-        "attachment": [],
+        "attachment": [
+            {
+                "author": {
+                    "accountId": "1",
+                    "active": true,
+                    "displayName": "John Doe",
+                    "emailAddress": "foo@bar"
+                },
+                "id": "2",
+                "filename": "foo.txt",
+                "size": 1000,
+                "created": "2025-12-31",
+                "mimeType": "text"
+            }
+        ],
         "aggregatetimeestimate": null,
         "summary": "(Sample) Set Up Payment Logging",
         "creator":

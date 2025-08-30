@@ -63,6 +63,16 @@ class ParagraphPresenter(NodePresenter):
         return out
 
 
+class DatePresenter(NodePresenter):
+    def __init__(self, node: Node):
+        super().__init__(node)
+
+    def __str__(self) -> str:
+        if self.node.date_value is None:  # type:ignore[attr-defined]
+            return ''
+        return str(self.node.date_value)  # type:ignore[attr-defined]
+
+
 class TextPresenter(NodePresenter):
     # _text_node: TextNode
 
@@ -331,7 +341,8 @@ def create_node_presenter_from_node(
         return MediaPresenter(node)
     elif node.type == NodeType.EMOJI:
         return EmojiPresenter(node)
-
+    elif node.type == NodeType.DATE:
+        return DatePresenter(node)
     raise NotImplementedError(f"markdown presenter: unhandled node type '{node.type}'")
 
 

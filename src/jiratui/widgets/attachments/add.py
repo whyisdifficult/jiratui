@@ -5,12 +5,18 @@ from textual.containers import Horizontal, ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, DirectoryTree, Input, Rule, Static
 
+from jiratui.config import CONFIGURATION
 from jiratui.widgets.base import CustomTitle
 
 
 class AddAttachmentScreen(Screen[str]):
+    """The screen to select files to attach and attach them to a work item."""
+
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'Attach File'
+    DEFAULT_ATTACHMENTS_SOURCE_DIRECTORY = '/'
+    """The default source directory for searching files to attach. This can be overridden by the config variable
+    attachments_source_directory"""
 
     def __init__(self, work_item_key: str | None = None):
         super().__init__()
@@ -45,6 +51,12 @@ class AddAttachmentScreen(Screen[str]):
     def handle_cancel(self) -> None:
         self.dismiss('')
 
+    def _get_initial_directory_for_upload(self) -> str:
+        if attachments_source_directory := CONFIGURATION.get().attachments_source_directory:
+            if cleaned := attachments_source_directory.strip():
+                return cleaned
+        return self.DEFAULT_ATTACHMENTS_SOURCE_DIRECTORY
+
     def compose(self) -> ComposeResult:
         with Vertical():
             yield CustomTitle(f'Attach File to Work Item {self._work_item_key}')
@@ -56,7 +68,9 @@ class AddAttachmentScreen(Screen[str]):
             )
             yield Rule()
             with Horizontal():
-                yield DirectoryTree('/', id='attachment-directory-tree')
+                yield DirectoryTree(
+                    self._get_initial_directory_for_upload(), id='attachment-directory-tree'
+                )
                 with Vertical():
                     yield FileNameInputWidget()
                     with ItemGrid(classes='add-attachment-grid-buttons'):

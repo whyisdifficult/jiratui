@@ -1,8 +1,11 @@
+from datetime import date, datetime
 import enum
 from typing import Optional
 
 
 class NodeType(enum.Enum):
+    """The type of ADF nodes supported."""
+
     PARAGRAPH = (0, 'paragraph')
     TEXT = (1, 'text')
     HARD_BREAK = (2, 'hardBreak')
@@ -24,6 +27,7 @@ class NodeType(enum.Enum):
     MEDIA_SINGLE = (18, 'mediaSingle')
     MEDIA = (19, 'media')
     EMOJI = (20, 'emoji')
+    DATE = (21, 'date')
 
     def __str__(self):
         return self.value[1]
@@ -41,6 +45,8 @@ class NodeType(enum.Enum):
 
 
 class Node(object):
+    """The base implementation of a ADF Node."""
+
     _type: NodeType
     _type_str: str
     _attrs: dict
@@ -69,12 +75,52 @@ class Node(object):
         return self._child_nodes
 
 
+class DateNode(Node):
+    """Represents a date ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/date/
+    """
+
+    def __init__(self, node_dict: dict):
+        super().__init__(node_dict)
+        if 'timestamp' not in node_dict['attrs']:
+            raise ValueError("date node must contain 'attrs.timestamp' attribute")
+
+        self._text = node_dict['attrs']['timestamp']
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @property
+    def date_value(self) -> date | None:
+        if self._text:
+            try:
+                return datetime.fromtimestamp(int(self._text)).date()
+            except Exception:
+                return None
+        return None
+
+
 class ParagraphNode(Node):
+    """Represents a paragraph ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/paragraph/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
 
 class DocNode(Node):
+    """Represents a doc ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/doc/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -87,6 +133,12 @@ class DocNode(Node):
 
 
 class MentionNode(Node):
+    """Represents a mention ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/mention/
+    """
+
     _text: str
 
     def __init__(self, node_dict: dict):
@@ -106,6 +158,12 @@ class MentionNode(Node):
 
 
 class TextNode(Node):
+    """Represents a text ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/text/
+    """
+
     _text: str
     _marks: list[dict]
     _link: Optional[str] = None
@@ -163,6 +221,12 @@ class TextNode(Node):
 
 
 class BulletListNode(Node):
+    """Represents a bulletList ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/bulletList/
+    """
+
     _elements: list[Node]
 
     def __init__(self, node_dict: dict):
@@ -184,6 +248,12 @@ class BulletListNode(Node):
 
 
 class ListItemNode(Node):
+    """Represents a listItem ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/listItem/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -218,11 +288,23 @@ class OrderedListNode(Node):
 
 
 class BlockQuoteNode(Node):
+    """Represents a blockquote ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/blockquote/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
 
 class CodeBlockNode(Node):
+    """Represents a codeBlock ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/codeBlock/
+    """
+
     _language: str
 
     def __init__(self, node_dict: dict):
@@ -245,12 +327,24 @@ class CodeBlockNode(Node):
 
 
 class ExpandNode(Node):
+    """Represents a expand ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/expand/
+    """
+
     @property
     def expand_title(self) -> str:
         return self._attrs.get('title') or 'Click to expand'
 
 
 class HeadingNode(Node):
+    """Represents a heading ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/heading/
+    """
+
     _level: int
 
     def __init__(self, node_dict: dict):
@@ -270,6 +364,12 @@ class HeadingNode(Node):
 
 
 class MediaSingleNode(Node):
+    """Represents a mediaSingle ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/mediaSingle/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -288,6 +388,12 @@ class MediaSingleNode(Node):
 
 
 class MediaNode(Node):
+    """Represents a media ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/media/
+    """
+
     _media_id: str
     _media_type: str
 
@@ -316,6 +422,12 @@ class MediaNode(Node):
 
 
 class EmojiNode(Node):
+    """Represents a emoji ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/emoji/
+    """
+
     _short_name: str | None
 
     def __init__(self, node_dict: dict):
@@ -337,16 +449,34 @@ class EmojiNode(Node):
 
 
 class HardBreakNode(Node):
+    """Represents a hardBreak ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/hardBreak/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
 
 class PanelNode(Node):
+    """Represents a panel ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/panel/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
 
 class TableRow(Node):
+    """Represents a tableRow ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/table_row/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -362,6 +492,12 @@ class TableRow(Node):
 
 
 class TableNode(Node):
+    """Represents a table ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/table/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -390,6 +526,12 @@ class TableNode(Node):
 
 
 class TableCell(Node):
+    """Represents a tableCell ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/table_cell/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -399,12 +541,23 @@ class TableCell(Node):
 
 
 class TableHeader(TableCell):
+    """Represents a tableHeader ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/table_header/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
 
 class InlineCardNode(Node):
-    # https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/inlineCard/
+    """Represents a inlineCardNode ADF node
+
+    See Also:
+        https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/inlineCard/
+    """
+
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
@@ -418,6 +571,17 @@ class InlineCardNode(Node):
 
 
 def create_node_from_dict(node_dict: dict) -> Optional[Node]:
+    """Creates a `jiratui.utils.adf2md.nodes.Node` instance that represents an Atlassian's ADF Node.
+
+    Args:
+        node_dict: the details of the ADF Node
+
+    Returns:
+        An instance of `jiratui.utils.adf2md.nodes.Node` or, `None` if the `type` attribute is missing.
+
+    Raises:
+        NotImplementedError: if the type of ADF node is not supported.
+    """
     if 'type' not in node_dict:
         return None
 
@@ -428,54 +592,64 @@ def create_node_from_dict(node_dict: dict) -> Optional[Node]:
 
     if node_type == NodeType.TEXT:
         return TextNode(node_dict)
-
     if node_type == NodeType.DOC:
         return DocNode(node_dict)
     if node_type == NodeType.MENTION:
         return MentionNode(node_dict)
-
-    elif node_type == NodeType.PARAGRAPH:
+    if node_type == NodeType.PARAGRAPH:
         return ParagraphNode(node_dict)
-    elif node_type == NodeType.HARD_BREAK:
+    if node_type == NodeType.HARD_BREAK:
         return HardBreakNode(node_dict)
-    elif node_type == NodeType.BULLET_LIST:
+    if node_type == NodeType.BULLET_LIST:
         return BulletListNode(node_dict)
-    elif node_type == NodeType.LIST_ITEM:
+    if node_type == NodeType.LIST_ITEM:
         return ListItemNode(node_dict)
-    elif node_type == NodeType.PANEL:
+    if node_type == NodeType.PANEL:
         return PanelNode(node_dict)
-    elif node_type == NodeType.TABLE:
+    if node_type == NodeType.TABLE:
         return TableNode(node_dict)
-    elif node_type == NodeType.TABLE_ROW:
+    if node_type == NodeType.TABLE_ROW:
         return TableRow(node_dict)
-    elif node_type == NodeType.TABLE_HEADER:
+    if node_type == NodeType.TABLE_HEADER:
         return TableHeader(node_dict)
-    elif node_type == NodeType.TABLE_CELL:
+    if node_type == NodeType.TABLE_CELL:
         return TableCell(node_dict)
-
-    elif node_type == NodeType.ORDERED_LIST:
+    if node_type == NodeType.ORDERED_LIST:
         return OrderedListNode(node_dict)
-    elif node_type == NodeType.INLINE_CARD:
+    if node_type == NodeType.INLINE_CARD:
         return InlineCardNode(node_dict)
-    elif node_type == NodeType.BLOCKQUOTE:
+    if node_type == NodeType.BLOCKQUOTE:
         return BlockQuoteNode(node_dict)
-    elif node_type == NodeType.CODE_BLOCK:
+    if node_type == NodeType.CODE_BLOCK:
         return CodeBlockNode(node_dict)
-    elif node_type == NodeType.EXPAND:
+    if node_type == NodeType.EXPAND:
         return ExpandNode(node_dict)
-    elif node_type == NodeType.HEADING:
+    if node_type == NodeType.HEADING:
         return HeadingNode(node_dict)
-    elif node_type == NodeType.MEDIA_SINGLE:
+    if node_type == NodeType.MEDIA_SINGLE:
         return MediaSingleNode(node_dict)
-    elif node_type == NodeType.MEDIA:
+    if node_type == NodeType.MEDIA:
         return MediaNode(node_dict)
-    elif node_type == NodeType.EMOJI:
+    if node_type == NodeType.EMOJI:
         return EmojiNode(node_dict)
+    if node_type == NodeType.DATE:
+        return DateNode(node_dict)
 
     raise RuntimeError(f"unhandled node type '{node_type}'")
 
 
 def create_nodes_from_list(node_dict_list: list[dict]) -> list[Node]:
+    """Creates a list of `jiratui.utils.adf2md.nodes.Node` instances that represents a list of Atlassian's ADF Node.
+
+    Args:
+        node_dict_list: a list with the details of the ADF nodes.
+
+    Returns:
+        A list of instances of `jiratui.utils.adf2md.nodes.Node`.
+
+    Raises:
+        NotImplementedError: if the type of ADF node is not supported.
+    """
     out: list[Node] = []
 
     idx = 0

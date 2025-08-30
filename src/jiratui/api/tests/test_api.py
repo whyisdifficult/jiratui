@@ -8,7 +8,7 @@ import respx
 from jiratui.api.api import JiraAPI
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.models import WorkItemsSearchOrderBy
-from jiratui.utils.tests import get_url_pattern, load_json_response
+from jiratui.utils.test_utilities import get_url_pattern, load_json_response
 
 
 @pytest.mark.asyncio

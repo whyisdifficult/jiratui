@@ -696,7 +696,7 @@ ServerInfoScreen {
 }
 
 ServerInfoScreen > VerticalScroll {
-    width: 50%;
+    width: 60%;
     height: auto;
     border: round $foreground;
     background: $background 70%;

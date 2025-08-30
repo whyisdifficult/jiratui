@@ -12,6 +12,7 @@ from jiratui.exceptions import (
     ValidationError,
 )
 from jiratui.models import (
+    Attachment,
     IssueComment,
     IssueRemoteLink,
     IssueStatus,
@@ -28,7 +29,7 @@ from jiratui.models import (
     Project,
     UpdateWorkItemResponse,
 )
-from jiratui.utils.tests import load_json_response
+from jiratui.utils.test_utilities import load_json_response
 
 
 @pytest.fixture
@@ -1134,7 +1135,21 @@ async def test_get_issue(
             }
         ],
     }
-    assert response.result.issues[0].attachments == []
+    assert response.result.issues[0].attachments == [
+        Attachment(
+            id='2',
+            filename='foo.txt',
+            size=1000,
+            created=datetime(2025, 12, 31),
+            mime_type='text',
+            author=JiraUser(
+                account_id='1',
+                active=True,
+                display_name='John Doe',
+                email='foo@bar',
+            ),
+        )
+    ]
     get_issue_mock.assert_has_calls(
         [
             call(issue_id_or_key='10002', fields=None, properties=None),
@@ -1429,7 +1444,21 @@ async def test_search_issues(
             }
         ],
     }
-    assert response.result.issues[0].attachments == []
+    assert response.result.issues[0].attachments == [
+        Attachment(
+            id='2',
+            filename='foo.txt',
+            size=1000,
+            created=datetime(2025, 12, 31),
+            mime_type='text',
+            author=JiraUser(
+                account_id='1',
+                active=True,
+                display_name='John Doe',
+                email='foo@bar',
+            ),
+        )
+    ]
     build_criteria_for_searching_work_items_mock.assert_called_once()
     search_issues_mock.assert_called_once()
 

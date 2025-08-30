@@ -375,7 +375,7 @@ def delete_comment(work_item_key: str, comment_id: str):
 
 @cli.command('ui')
 @click.option('--project-key', '-p', default=None, help='A case-sensitive Jira project key.')
-@click.option('--work-item-key', '-w', default=None, help='A case-sensitive Jira project key.')
+@click.option('--work-item-key', '-w', default=None, help='A case-sensitive work item key.')
 @click.option(
     '--assignee-account-id',
     '-u',
