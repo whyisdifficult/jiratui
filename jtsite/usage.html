@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Gaston Tagni">
+
+    <title>JiraTUI - Using the Tool</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicons/favicon.png">
+
+    <!--    Stylesheets-->
+    <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==">
+    <link href="assets/css/theme.css" rel="stylesheet"/>
+    <link href="vendors/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+    <!--    Metadata-->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "JiraTUI",
+      "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
+      "url": "https://jiratui.sh",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Cross-platform",
+      "softwareVersion": "0.1.0",
+      "author": {
+        "@type": "Person",
+        "name": "Gaston Tagni",
+        "url": "https://github.com/whyisdifficult/jiratui"
+      }
+    }
+    </script>
+
+    <script>
+        function copyCode(elementId, copyBtnSelector) {
+          const codeBlock = document.getElementById(elementId);
+          const textArea = document.createElement('textarea');
+          textArea.value = codeBlock.textContent;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+
+          const copyBtn = document.getElementById(copyBtnSelector);
+          copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+          copyBtn.classList.remove('btn-outline-secondary');
+          copyBtn.classList.add('btn-success');
+
+          setTimeout(() => {
+            copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-secondary');
+          }, 2000);
+        }
+      </script>
+
+      <style>
+        pre {
+          background-color: #1f2937;
+          border-radius: 0.25rem;
+          padding: 1rem;
+          position: relative;
+          font-size: 1rem;
+        }
+    </script>
+
+    <style>
+        pre {
+            background-color: #1f2937;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        .copy-btn {
+          color: #fff;
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+        }
+
+        .navbar-toggler-icon {
+          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="main" id="top"><!--    Main Content-->
+      <nav class="navbar navbar-expand-lg sticky-top" data-navbar-darken-on-scroll="900">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">JiraTUI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link link-info" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-info" href="getting-started.html">Getting Started</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-300 active" aria-current="page">Usage</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-auto"> <!-- left column begin ============================-->
+
+            <section class="mt-0 pb-0"><!-- <section> begin ============================-->
+              <div class="container">
+                <div class="row">
+                  <div class="col-md-12 text-justify-left text-xl-start scrollspy-example-2"
+                     data-bs-spy="scroll" data-bs-target="#navbar-example3" data-bs-smooth-scroll="true"
+                     tabindex="0">
+                    <h1 class="display-6 fw-semi-bold">Using the tool</h1>
+                    <p>JiraTUI consists of two main components: a Textual User Interface (TUI) and a Command
+                      Line Interface (CLI). After setting up the necessary configuration, you can utilize
+                      the CLI tool to launch the TUI or execute basic commands to interact with your Jira
+                      instance. This allows you to efficiently manage issues, comments, and projects
+                      directly from the command line.</p>
+
+                    <p>The preferred way to use the tool is via its TUI.</p>
+
+                    <h2 id="using-the-tui">Using the Textual User Interface</h2>
+                    <p>To start the application's UI you can use the following command:</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock1">jiratui ui</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton1"
+                          onclick="copyCode('codeBlock1', 'copyButton1')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <p>If you are using a custom config file, run:</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock2">JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton2"
+                          onclick="copyCode('codeBlock2', 'copyButton2')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <p>If everything is fine you should be able to see a screen like the one below.</p>
+
+                    <figure class="figure">
+                      <img class="img-fluid img-thumbnail border-500 rounded-1" src="assets/img/gallery/jiratui-start.png" alt="The home screen of JiraTUI" />
+                      <figcaption class="figure-caption text-center">The home screen of the application after running the command above</figcaption>
+                    </figure>
+
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3>Passing Optional Arguments to the UI</h3>
+
+                    <p><code class="fs-0">jiratui ui</code> supports optional arguments that you can use to
+                      set options in the UI upon start up. You can view the list of supported arguments
+                      with the following command:</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui ui --help
+Usage: jiratui ui [OPTIONS]
+
+  Launches the Jira TUI application.
+
+Options:
+  -p, --project-key TEXT          A case-sensitive Jira project key.
+  -w, --work-item-key TEXT        A case-sensitive work item key.
+  -u, --assignee-account-id TEXT  A Jira user account ID. Typically this would be your Jira account ID so user-related
+                                  dropdowns can pre-select your user
+  -j, --jql-expression-id TEXT    The ID of a JQL expression as defined in the config.</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h4 id="select-project-on-startup">Select a Jira Project on Start Up</h4>
+                    <p>If you want your app to pre-select a project in the projects dropdown you can pass
+                      the project key with the argument
+                      <code class="fs-0">--project-key</code>. If the project exists the app will
+                      pre-select it.</p>
+
+                    <div class="alert alert-primary d-flex align-items-center" role="alert">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                         class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"
+                         role="img" aria-label="Warning:">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                      </svg>
+                      <div>
+                        You can configure the app to always do this by setting the variable <code
+                          class="fs-0">default_project_key_or_id</code> in the config file. That way
+                        you do not need to pass this argument when you start the app.
+                      </div>
+                    </div>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock3">jiratui ui --project-key PROJECT-1</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton3"
+                          onclick="copyCode('codeBlock3', 'copyButton3')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+
+                    <h4 id="select-user-on-startup">Select a Jira User on Start Up</h4>
+                    <p>If you want your app to pre-select a/your Jira user in the assignees dropdown you can
+                      pass the user account ID with
+                      the argument <code class="fs-0">--assignee-account-id</code>. If the user exists the
+                      app will pre-select it.</p>
+
+                    <div class="alert alert-primary d-flex align-items-center" role="alert">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                         class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"
+                         role="img" aria-label="Warning:">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                      </svg>
+                      <div>
+                        You can configure the app to always do this by setting the variable <code
+                          class="fs-0">jira_account_id</code> in the config file. That way you do not
+                        need to pass this argument when you start the app.
+                      </div>
+                    </div>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock4">jiratui ui --assignee-account-id 12345-67890</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton4"
+                          onclick="copyCode('codeBlock4', 'copyButton4')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h4 id="select-issue-on-startup">Select a Jira Work Item on Start Up</h4>
+                    <p>If you want your app to pre-select a Jira issue in the "work item key" field you can
+                      pass the work item key with
+                      the argument <code class="fs-0">--work-item-key</code>.</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock5">jiratui ui --work-item-key ISSUE-1</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton5"
+                          onclick="copyCode('codeBlock5', 'copyButton5')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h4 id="select-jql-on-startup">Select a JQL Expression on Start Up</h4>
+                    <p>If you defined JQL expressions via the config variable <code class="fs-0">pre_defined_jql_expressions</code>
+                      and you would like the app to use a specific expression to search work items when no
+                      other criteria is selected then you can pass the argument <code class="fs-0">--jql-expression-id</code>
+                      with the ID of the expression.</p>
+
+                    <div class="alert alert-primary d-flex align-items-center" role="alert">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                         class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16"
+                         role="img" aria-label="Warning:">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                      </svg>
+                      <div>
+                        You can configure the app to always do this by setting the variable <code
+                          class="fs-0">jql_expression_id_for_work_items_search</code> in the config
+                        file. That way you do not need to pass this argument when you start the app.
+                      </div>
+                    </div>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                      <pre><code id="codeBlock6">jiratui ui --jql-expression-id 1</code></pre>
+                      <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton6"
+                          onclick="copyCode('codeBlock6', 'copyButton6')">
+                        <i class="bi bi-clipboard"></i> Copy
+                      </button>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h2 id="cli-commands">CLI Commands</h2>
+                    <p>In addition to the <code class="fs-0">ui</code> command, the CLI tool offers several
+                      commands to help you manage issues, comments, and users.</p>
+
+                    <h3 id="search-issues">Search Issues</h3>
+                    <p>To search for work items in the project "SCRUM", use the issues search command and
+                      pass the <code class="fs-0">--project-key</code> argument with the (case-sensitive)
+                      project key.</p>
+
+                    <p>Example: searching for issues of the project identified by the key "SCRUM"</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui issues search --project-key SCRUM
+
+| Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
+|---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
+| SCRUM-1 | Bug  | 2025-07-31 15:55 | To Do (10000) | lisa@simpson.com  | bart@simpson.com  | Write 100 times "I will be a good student" |
+| SCRUM-2 | Task | 2025-06-30 15:56 | To Do (10000) | homer@simpson.com | homer@simpson.com | Eat donuts                                 |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <p>To search for a specific work item, use the issues search command with the <code
+                        class="fs-0">--key</code> argument and the (case-sensitive) issue key.</p>
+
+                    <p>Example: searching for the issue with key "SCRUM-1"</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui issues search --key SCRUM-1
+
+| Key     | Type | Created          | Status (ID)   | Reporter          | Assignee          | Summary                                    |
+|---------|------|------------------|---------------|-------------------|-------------------|--------------------------------------------|
+| SCRUM-1 | Bug  | 2025-07-31 15:55 | To Do (10000) | lisa@simpson.com  | bart@simpson.com  | Write 100 times "I will be a good student" |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+
+                    <h3 id="list-comments">List Comments</h3>
+                    <p>To list the comments of a work item use the <code class="fs-0">comments list</code>
+                      command and pass the (case-sensitive) key of the work item whose comments you want
+                      to list.</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui comments list SCRUM-1
+
+| ID | Issue Key | Author             | Created          | Updated          | Message      |
+|----|-----------|--------------------|------------------|------------------|--------------|
+| 1  | SCRUM-1   | maggie@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World! |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+                    <p>If you want to see the text of a specific comment use the <code class="fs-0">comments
+                      show</code> command and pass the (case-sensitive) key of the work item followed by
+                      the ID of the comment.</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui comments show SCRUM-1 1
+
+    Hello World!</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3 id="add-comments">Add Comments</h3>
+                    <p>To add a comment to a work item use the <code class="fs-0">comments add</code>
+                      command and pass the (case-sensitive) key of the work item and the comment string
+                      you want to add.</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui comments add SCRUM-1 'My new comment'
+
+| ID | Issue Key | Author             | Created          | Updated          | Message        |
+|----|-----------|--------------------|------------------|------------------|----------------|
+| 1  | SCRUM-1   | maggie@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World!   |
+| 2  | SCRUM-1   | maggie@simpson.com | 2025-12-31 16:29 | 2025-12-31 16:29 | My new comment |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3 id="delete-comments">Delete Comments</h3>
+                    <p>To delete a comment you can use the command <code class="fs-0">comments delete</code>
+                      and pass the ID fo the work item whose comment you want to delete and the ID of the
+                      comment.</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui comments delete SCRUM-1 2
+
+Comment deleted successfully.</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3 id="show-metadata">Show Metadata</h3>
+                    <p>The tool also provides a command to show metadata associated to a work item. This is
+                      useful when you need to update a work item; for example if you want to transition
+                      the state of the item and you need to know the ID of the state.</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui issues metadata SCRUM-1
+
+Valid work types for work item: SCRUM-1
+
+| ID     | Name | Current?  | Description                                 |
+|--------|------|-----------|---------------------------------------------|
+| 1      | Bug  | Yes       | Tasks track small, distinct pieces of work. |
+| 2      | Task |           | Bugs track problems or errors.              |
+
+Valid priority IDs for work item: SCRUM-1
+
+| ID     | Name | Current?  | Example   |
+|--------|------|-----------|-----------|
+| 1      | High  |          |           |
+
+Valid status transitions for work item: SCRUM-1
+
+| Transition ID  | Status ID | Status Name  | Current?   | Example                                      |
+|----------------|-----------|--------------|------------|----------------------------------------------|
+| 1              | 5         | To Do        | Yes        | <CLI> issues update <ITEM-KEY> --status-id 5 |
+| 2              | 6         | Done         |            | <CLI> issues update <ITEM-KEY> --status-id 6 |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3 id="search-users">Search Users</h3>
+                    <p>You can search users with the command <code class="fs-0">users search</code>
+                      providing (part of) the name or email address of the user. In the following example
+                      we are searching for any user whose name or email include the string "maggie".</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui users search maggie
+
+| Account ID | Active | Name           | Email Address      |
+|------------|--------|----------------|--------------------|
+| 1          | True   | maggie simpson | maggie@simpson.com |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <h3 id="search-users-groups">Search Users Groups</h3>
+
+                    <p>You can also search user groups. This is useful if you need to know the ID of a
+                      group. For example, if you need to set up the value of the configuration option
+                      <code class="fs-0">jira_user_group_id</code>.</p>
+
+                    <p>In order to list all the known user groups in your Jira instance you can use the
+                      command <code class="fs-0">users groups</code>. The command accepts 2 optional
+                      arguments to paginate results: <code class="fs-0">--offset</code> and <code
+                          class="fs-0">--limit</code>.</p>
+
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui users groups
+
+| ID   | Name         | Total users in group? |
+|------|--------------|-----------------------|
+| 1    | admin users  | 2                     |
+| 2    | developers   | 20                    |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                    <p>You can also search groups by the (exact) name. For example,</p>
+                    <div class="position-relative border rounded-1 border-700 p-1">
+                              <pre><code>jiratui users groups --group-names developers
+
+| ID   | Name         | Total users in group? |
+|------|--------------|-----------------------|
+| 2    | developers   | 20                    |</code></pre>
+                    </div>
+                    <hr class="mt-3 text-1000 opacity-0"/>
+
+                  </div>
+                </div>
+              </div>
+              <!-- end of .container-->
+            </section><!-- <section> close ============================-->
+          </div> <!-- left column close ============================-->
+
+          <div class="col col-lg-1"> <!-- right column begin ============================-->
+            <nav id="navbar-example3" class="h-100 flex-column align-items-stretch pe-4">
+              <nav class="nav nav-pills flex-column">
+                <a class="nav-link" href="#using-the-tui">Using the TUI</a>
+                <nav class="nav nav-pills flex-column">
+                  <a class="nav-link ms-3 my-1" href="#select-project-on-startup">Select Project on Start
+                    Up</a>
+                  <a class="nav-link ms-3 my-1" href="#select-user-on-startup">Select User on Start Up</a>
+                  <a class="nav-link ms-3 my-1" href="#select-issue-on-startup">Select Issue on Start Up</a>
+                </nav>
+                <a class="nav-link" href="#cli-commands">CLI Commands</a>
+                <nav class="nav nav-pills flex-column">
+                  <a class="nav-link ms-3 my-1" href="#list-comments">List Comments</a>
+                  <a class="nav-link ms-3 my-1" href="#add-comments">Add Comments</a>
+                  <a class="nav-link ms-3 my-1" href="#delete-comments">Delete Comments</a>
+                  <a class="nav-link ms-3 my-1" href="#show-metadata">Show Issues Metadata</a>
+                  <a class="nav-link ms-3 my-1" href="#search-users">Search Users</a>
+                  <a class="nav-link ms-3 my-1" href="#search-users-groups">Search Users Groups</a>
+                </nav>
+              </nav>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+        <section class="bg-secondary mt-0 pt-4 pb-4"><!-- <section> begin ============================-->
+        <div class="container">
+          <div class="row">
+            <div class="col-xl-1 text-center text-xl-start">
+              <a href="https://github.com/whyisdifficult/jiratui">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                   class="bi bi-github" viewBox="0 0 16 16">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                </svg>
+              </a>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0 text-center text-xl-start">
+              <p class="mb-0">&copy; 2025 Gaston Tagni.</p>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0">
+              <p class="mb-0 text-center text-xl-start">
+                <a class="text-300 text-decoration-none footer-link"
+                   href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE"
+                   target="_blank">Licence</a>
+                <a class="text-300 text-decoration-none footer-link ps-4"
+                   href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to
+                  Contribute</a>
+                <a class="text-300 text-decoration-none footer-link ps-4"
+                   href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
+              </p>
+            </div>
+            <div class="col-xl-3 pt-2 pt-xl-0 text-center text-xl-end">
+              <p class="mb-0">Template by <a class="text-300" href="https://themewagon.com/" target="_blank">ThemeWagon</a>
+              </p>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+        </section><!-- <section> close ============================-->
+    </main><!--    End of Main Content-->
+
+        <!--    JavaScripts-->
+        <script src="vendors/@popperjs/popper.min.js"></script>
+        <script src="vendors/bootstrap/bootstrap.min.js"></script>
+        <script src="vendors/is/is.min.js"></script>
+        <script src="vendors/swiper/swiper-bundle.min.js"></script>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet">
+        <script src="assets/js/theme.js"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400&amp;display=swap"
+        rel="stylesheet">
+    </body>
+</html>
