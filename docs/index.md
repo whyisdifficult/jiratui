@@ -7,6 +7,12 @@ A **Text User Interface (TUI)** for interacting with [Atlassian's Jira](https://
 directly from your shell. The documentation in this website contains information on how to install, configure and use
 the application's UI and CLI tools.
 
+```{figure} /_static/assets/images/jiratui_start.png
+:align: center
+
+The initial screen of the application
+```
+
 ```{toctree}
 :caption: Documentation for Users
 :maxdepth: 1
