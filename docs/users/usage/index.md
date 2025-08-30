@@ -14,6 +14,14 @@ If you are using a custom config file, run:
 JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
 ```
 
+If everything works fine you should see the screen shown in the image below
+
+```{figure} /_static/assets/images/jiratui_home.png
+:align: center
+
+The initial screen of the application
+```
+
 ### Passing Optional Arguments to the UI
 
 `jiratui ui` supports optional arguments that you can use to set options in the UI upon start up. You can view the list
