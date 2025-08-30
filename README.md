@@ -1,6 +1,8 @@
 # JiraTUI
 
-A **Text User Interface (TUI)** for interacting with Atlassian's Jira directly from your shell.
+A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
+
+![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
 
 ## Installation
 
@@ -141,7 +143,7 @@ $ jiratui comments list SCRUM-1
 
 | ID | Issue Key | Author             | Created          | Updated          | Message      |
 |----|-----------|--------------------|------------------|------------------|--------------|
-| 1  | SCRUM-1   | maggue@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World! |
+| 1  | SCRUM-1   | maggie@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World! |
 ```
 
 If you want to see the text of a specific comment use the `comments show` command and pass the (case-sensitive) key of
@@ -152,6 +154,10 @@ $ jiratui comments show SCRUM-1 1
 
 Hello World!
 ```
+
+# Documentation
+
+The full documentation is available at [https://jiratui.readthedocs.io](https://jiratui.readthedocs.io/en/latest/index.html)
 
 # Contributing
 
