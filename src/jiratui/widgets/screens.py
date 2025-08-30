@@ -323,8 +323,6 @@ class MainScreen(Screen):
                         yield IssueRemoteLinksWidget()
                     with TabPane(title='Subtasks'):
                         yield IssueChildWorkItemsWidget()
-            # with HorizontalGroup(id='information-container'):
-            #     yield Static('Hello')
         yield Footer()
 
     async def on_mount(self) -> None:

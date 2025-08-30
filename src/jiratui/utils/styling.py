@@ -13,8 +13,8 @@ WORK_ITEM_TYPE_STYLES = {
 
 
 def get_style_for_work_item_status(status_name: str) -> str:
-    return WORK_ITEM_STATUS_STYLES.get(status_name, '')
+    return WORK_ITEM_STATUS_STYLES.get(status_name, '') or ''
 
 
 def get_style_for_work_item_type(status_name: str) -> str:
-    return WORK_ITEM_TYPE_STYLES.get(status_name, '')
+    return WORK_ITEM_TYPE_STYLES.get(status_name, '') or ''

@@ -1,5 +1,5 @@
-from jiratui.utils.adf2md import markdown, nodes
-from jiratui.utils.adf2md.nodes import Node
+from jiratui.utils.adf2md import markdown
+from jiratui.utils.adf2md.nodes import Node, create_node_from_dict, create_nodes_from_list
 
 
 def adf2md(json_data: dict | list[dict]) -> str:
@@ -12,14 +12,14 @@ def adf2md(json_data: dict | list[dict]) -> str:
         json_data: the dictionary or list of dictionaries that should be converted to Markdown.
 
     Returns:
-        A Markdown string.
+        A string with Markdown content.
     """
     root_nodes: list[Node] = []
 
     if isinstance(json_data, list):
-        root_nodes = nodes.create_nodes_from_list(json_data)
+        root_nodes = create_nodes_from_list(json_data)
     elif isinstance(json_data, dict):
-        if root_node := nodes.create_node_from_dict(json_data):
+        if root_node := create_node_from_dict(json_data):
             root_nodes.append(root_node)
 
     md_text_list: list[str] = [markdown.gen_md_from_root_node(node) for node in root_nodes]

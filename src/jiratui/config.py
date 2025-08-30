@@ -90,6 +90,9 @@ class ApplicationConfiguration(BaseSettings):
     the value of the `tui_custom_title` setting above."""
     log_file: str = 'jiratui.log'
     """The name of the log file to use."""
+    attachments_source_directory: str = '/'
+    """The directory to start the search of files that a user wants to attach to work items. The user will be able to
+    navigate though the sub-directories."""
 
     model_config = SettingsConfigDict(
         env_file=os.getenv('JIRA_TUI_ENV_FILE', '.env.jiratui') or '.env.jiratui',

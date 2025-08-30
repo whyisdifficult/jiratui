@@ -21,12 +21,15 @@ install_pre_commit_hooks:
 
 .PHONY: lint
 lint:
+	mkdir -p /tmp/artifacts
 	ruff format .
 	ruff check . --fix
+	uv run mypy --version
+	uv run mypy --cache-dir /dev/null --junit-xml /tmp/artifacts/mypy.xml src
 
 .PHONY: test
 test:
-	pytest src
+	uv run --no-sync pytest src
 
 .PHONY: docs-live
 docs-live:
