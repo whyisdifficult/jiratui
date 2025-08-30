@@ -1,10 +1,314 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>JiraTUI</title>
-</head>
-<body>
-Hello World!
-</body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Gaston Tagni">
+
+    <!--    Document Title-->
+    <title>JiraTUI - Where Jira Meets the Command Line</title>
+
+    <!--    Favicons-->
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicons/favicon.png">
+
+    <!--    Stylesheets-->
+    <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==">
+    <link href="assets/css/theme.css" rel="stylesheet" />
+    <link href="vendors/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "JiraTUI",
+        "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
+        "url": "https://jiratui.sh",
+        "applicationCategory": "Developer Tools",
+        "operatingSystem": "Cross-platform",
+        "softwareVersion": "0.1.0",
+        "author": {
+          "@type": "Person",
+          "name": "Gaston Tagni",
+          "url": "https://github.com/whyisdifficult/jiratui"
+        }
+      }
+    </script>
+
+    <style>
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="main" id="top"><!--    Main Content-->
+      <nav class="navbar navbar-expand-lg sticky-top" data-navbar-darken-on-scroll="900">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html">JiraTUI</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link text-300 active" aria-current="page">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link link-info" href="getting-started.html">Getting Started</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link link-info" href="usage.html">Usage</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <section class="mt-0 pb-0"><!-- <section> begin ============================-->
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-md-9 col-lg-8 col-xl-5">
+              <h1 class="display-3 lh-sm">Where Jira Meets the Command Line</h1>
+            </div>
+            <div class="col-md-9 col-xl-6">
+              <p class="fs-2">JiraTUI revolutionizes task management for developers by enabling seamless interaction with Jira from the terminal. Create, update, and track tasks efficiently, all while maintaining focus on your code and workflow.</p>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+      </section><!-- <section> close ============================-->
+
+
+      <section class="mt-0 pb-0"><!-- <section> begin ============================-->
+        <div class="container">
+          <img class="img-fluid img-thumbnail border-700" src="assets/img/gallery/app-homepage.png" alt="The initial screen of the JiraTUI application"/>
+        </div><!-- end of .container-->
+      </section><!-- <section> close ============================-->
+
+      <section class="mt-1"><!-- <section> begin ============================-->
+        <div class="container">
+          <div class="text-center">
+            <h1 class="display-6 fw-semi-bold">Features</h1>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 order-md-1">
+              <div id="carouselSearchTasks" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-search-issues.png" alt="The screen of the JiraTUI after the user clicks the button to search work items"/>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-search-issue.png" alt="The screen of the JiraTUI after the user clicks the button to search a single work item"/>
+                  </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselSearchTasks" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselSearchTasks" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">Search Tasks</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2">Quickly locate your Jira tasks using the powerful search functionality in JiraTUI. With just a few commands, you can filter tasks by status, assignee, or priority. This feature saves time and enhances productivity, allowing you to focus on what matters most in your projects.</p>
+            </div>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 false">
+              <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-add-new-issue.png" alt="The screen of the JiraTUI that allow users to create work items"/>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">Create Tasks</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2"> Easily create new Jira tasks directly from the terminal with JiraTUI. This feature simplifies the task creation process, enabling you to specify details like title, description, and priority in a streamlined manner. Spend less time navigating interfaces and more time getting things done.</p>
+            </div>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 order-md-1">
+              <div id="carouselUpdateTasks" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-issue-details.png" alt="The screen of the JiraTUI that shows the details of a work item"/>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-issue-description.png" alt="The screen of the JiraTUI that shows the description of a work item"/>
+                  </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselUpdateTasks" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselUpdateTasks" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">Update Tasks</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2">Keep your tasks up to date effortlessly with JiraTUI's update feature. Modify task details such as status, assignee, summary, labels and due dates directly from the command line. This functionality ensures that your project remains organized and current, enhancing collaboration and workflow efficiency.</p>
+            </div>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 false">
+              <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-comments.png" alt="The screen of the JiraTUI that shows the comments of a work item"/>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">Comments</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2">Engage with your team by managing comments on tasks through JiraTUI. Add or delete comments directly from the terminal, fostering clear communication and collaboration. This feature helps keep discussions organized and accessible, ensuring everyone stays informed about task progress.</p>
+            </div>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 order-md-1">
+              <div id="carouselRelatedTasks" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-subtasks.png" alt="The screen of the JiraTUI that shows the related subtasks of a work item"/>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-issue-related-issues.png" alt="The screen of the JiraTUI that shows the related tasks of a work item"/>
+                  </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselRelatedTasks" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselRelatedTasks" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">Manage Related Tasks</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2">Easily manage related tasks with JiraTUI, allowing you to link and unlink tasks directly from the terminal. This feature helps you visualize dependencies and relationships between tasks, ensuring a more cohesive project management experience and improving overall workflow.</p>
+            </div>
+          </div>
+          <div class="row mt-6 flex-top justify-content-xl-evenly px-xl-5">
+            <div class="col-md-7 col-lg-6 false">
+              <div id="carouselJQLExpressions" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-jql-expression-editor.png" alt="The screen of the JiraTUI that shows a screen to edit JQL expressions for searching work item"/>
+                  </div>
+                  <div class="carousel-item">
+                    <img class="w-100 img-thumbnail border-500" src="assets/img/gallery/jiratui-jql-expression-editor-2.png" alt="The screen of the JiraTUI that shows the JQL expression editor"/>
+                  </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselJQLExpressions" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselJQLExpressions" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-5 col-lg-4">
+              <h3 class="fs-xl-7 fs-lg-4 fs-md-3 mt-5 mt-md-0">JQL Search</h3>
+              <p class="fs-xl-1 ls-3 pe-xl-2">Leverage the power of Jira Query Language (JQL) with JiraTUI to perform advanced searches. This feature allows you to create complex queries to filter tasks based on specific criteria, providing greater flexibility and precision in managing your projects and enhancing your productivity. Expressions can be saved to use at any time.</p>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+      </section><!-- <section> close ============================-->
+
+      <section><!-- <section> begin ============================-->
+        <div class="container">
+          <h1 class="display-6 fw-semi-bold">Advantages</h1>
+          <p class="fs-2">Discover the key advantages of JiraTUI that make it an essential tool for developers seeking efficient and effective task management.</p>
+          <div class="row mb-4 mt-6">
+            <div class="col-md-6">
+              <div class="border rounded-1 border-700 h-100 features-items">
+                <div class="p-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="76" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                  </svg>
+                  <h3 class="pt-3 lh-base">Configurable</h3>
+                  <p class="mb-0">JiraTUI is highly configurable, allowing users to tailor the tool to their specific needs. Customize command shortcuts, settings, and preferences to create a personalized experience that enhances productivity. This flexibility ensures that JiraTUI adapts to your workflow, making it a perfect fit for any development environment.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded-1 border-700 h-100 features-items">
+                <div class="p-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="76" fill="currentColor" class="bi bi-lightbulb" viewBox="0 0 16 16">
+  <path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a2 2 0 0 0-.453-.618A5.98 5.98 0 0 1 2 6m6-5a5 5 0 0 0-3.479 8.592c.263.254.514.564.676.941L5.83 12h4.342l.632-1.467c.162-.377.413-.687.676-.941A5 5 0 0 0 8 1"/>
+</svg>
+                  <h3 class="pt-3 lh-base">Simplicity</h3>
+                  <p class="mb-0">JiraTUI offers a straightforward command-line interface that simplifies task management. By eliminating unnecessary clicks and navigation, it allows developers to focus on their work. The intuitive commands make it easy to perform actions quickly, ensuring that managing Jira tasks is a seamless part of your development workflow.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="border rounded-1 border-700 h-100 features-items">
+                <div class="p-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="76" fill="currentColor" class="bi bi-speedometer2" viewBox="0 0 16 16">
+                    <path d="M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4M3.732 5.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707M2 10a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 10m9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5m.754-4.246a.39.39 0 0 0-.527-.02L7.547 9.31a.91.91 0 1 0 1.302 1.258l3.434-4.297a.39.39 0 0 0-.029-.518z"/>
+                    <path fill-rule="evenodd" d="M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A8 8 0 0 1 0 10m8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3"/>
+                  </svg>
+                  <h3 class="pt-3 lh-base">Speed</h3>
+                  <p class="mb-0">Experience unparalleled speed with JiraTUI, designed for efficiency in task management. The command-line interface allows for rapid execution of commands, enabling developers to create, update, and search tasks in seconds. This speed not only saves time but also enhances overall productivity, allowing you to focus on delivering quality work.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded-1 border-700 h-100 features-items">
+                <div class="p-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="76" height="76" fill="currentColor" class="bi bi-puzzle" viewBox="0 0 16 16">
+  <path d="M3.112 3.645A1.5 1.5 0 0 1 4.605 2H7a.5.5 0 0 1 .5.5v.382c0 .696-.497 1.182-.872 1.469a.5.5 0 0 0-.115.118l-.012.025L6.5 4.5v.003l.003.01q.005.015.036.053a.9.9 0 0 0 .27.194C7.09 4.9 7.51 5 8 5c.492 0 .912-.1 1.19-.24a.9.9 0 0 0 .271-.194.2.2 0 0 0 .039-.063v-.009l-.012-.025a.5.5 0 0 0-.115-.118c-.375-.287-.872-.773-.872-1.469V2.5A.5.5 0 0 1 9 2h2.395a1.5 1.5 0 0 1 1.493 1.645L12.645 6.5h.237c.195 0 .42-.147.675-.48.21-.274.528-.52.943-.52.568 0 .947.447 1.154.862C15.877 6.807 16 7.387 16 8s-.123 1.193-.346 1.638c-.207.415-.586.862-1.154.862-.415 0-.733-.246-.943-.52-.255-.333-.48-.48-.675-.48h-.237l.243 2.855A1.5 1.5 0 0 1 11.395 14H9a.5.5 0 0 1-.5-.5v-.382c0-.696.497-1.182.872-1.469a.5.5 0 0 0 .115-.118l.012-.025.001-.006v-.003a.2.2 0 0 0-.039-.064.9.9 0 0 0-.27-.193C8.91 11.1 8.49 11 8 11s-.912.1-1.19.24a.9.9 0 0 0-.271.194.2.2 0 0 0-.039.063v.003l.001.006.012.025c.016.027.05.068.115.118.375.287.872.773.872 1.469v.382a.5.5 0 0 1-.5.5H4.605a1.5 1.5 0 0 1-1.493-1.645L3.356 9.5h-.238c-.195 0-.42.147-.675.48-.21.274-.528.52-.943.52-.568 0-.947-.447-1.154-.862C.123 9.193 0 8.613 0 8s.123-1.193.346-1.638C.553 5.947.932 5.5 1.5 5.5c.415 0 .733.246.943.52.255.333.48.48.675.48h.238zM4.605 3a.5.5 0 0 0-.498.55l.001.007.29 3.4A.5.5 0 0 1 3.9 7.5h-.782c-.696 0-1.182-.497-1.469-.872a.5.5 0 0 0-.118-.115l-.025-.012L1.5 6.5h-.003a.2.2 0 0 0-.064.039.9.9 0 0 0-.193.27C1.1 7.09 1 7.51 1 8s.1.912.24 1.19c.07.14.14.225.194.271a.2.2 0 0 0 .063.039H1.5l.006-.001.025-.012a.5.5 0 0 0 .118-.115c.287-.375.773-.872 1.469-.872H3.9a.5.5 0 0 1 .498.542l-.29 3.408a.5.5 0 0 0 .497.55h1.878c-.048-.166-.195-.352-.463-.557-.274-.21-.52-.528-.52-.943 0-.568.447-.947.862-1.154C6.807 10.123 7.387 10 8 10s1.193.123 1.638.346c.415.207.862.586.862 1.154 0 .415-.246.733-.52.943-.268.205-.415.39-.463.557h1.878a.5.5 0 0 0 .498-.55l-.001-.007-.29-3.4A.5.5 0 0 1 12.1 8.5h.782c.696 0 1.182.497 1.469.872.05.065.091.099.118.115l.025.012.006.001h.003a.2.2 0 0 0 .064-.039.9.9 0 0 0 .193-.27c.14-.28.24-.7.24-1.191s-.1-.912-.24-1.19a.9.9 0 0 0-.194-.271.2.2 0 0 0-.063-.039H14.5l-.006.001-.025.012a.5.5 0 0 0-.118.115c-.287.375-.773.872-1.469.872H12.1a.5.5 0 0 1-.498-.543l.29-3.407a.5.5 0 0 0-.497-.55H9.517c.048.166.195.352.463.557.274.21.52.528.52.943 0 .568-.447.947-.862 1.154C9.193 5.877 8.613 6 8 6s-1.193-.123-1.638-.346C5.947 5.447 5.5 5.068 5.5 4.5c0-.415.246-.733.52-.943.268-.205.415-.39.463-.557z"/>
+</svg>
+                  <h3 class="pt-3 lh-base">Easy to Use</h3>
+                  <p class="mb-0">JiraTUI is designed with user-friendliness in mind, making it accessible for developers of all skill levels. The clear command structure and helpful prompts guide users through task management effortlessly. With minimal learning curve, you can quickly harness the power of JiraTUI and integrate it into your daily workflow.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+      </section><!-- <section> close ============================-->
+
+      <section class="bg-secondary mt-0 pt-4 pb-4"><!-- <section> begin ============================-->
+        <div class="container">
+          <div class="row">
+            <div class="col-xl-1 text-center text-xl-start">
+              <a href="https://github.com/whyisdifficult/jiratui">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                </svg>
+              </a>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0 text-center text-xl-start">
+              <p class="mb-0">&copy; 2025 Gaston Tagni.</p>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0">
+              <p class="mb-0 text-center text-xl-start">
+                <a class="text-300 text-decoration-none footer-link" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
+                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
+                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
+              </p>
+            </div>
+            <div class="col-xl-3 pt-2 pt-xl-0 text-center text-xl-end">
+              <p class="mb-0">Template by <a class="text-300" href="https://themewagon.com/" target="_blank">ThemeWagon</a></p>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+      </section><!-- <section> close ============================-->
+
+    </main><!--    End of Main Content-->
+
+    <!--    JavaScripts-->
+    <script src="vendors/@popperjs/popper.min.js"></script>
+    <script src="vendors/bootstrap/bootstrap.min.js"></script>
+    <script src="vendors/is/is.min.js"></script>
+    <script src="vendors/swiper/swiper-bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <script src="assets/js/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400&amp;display=swap" rel="stylesheet">
+  </body>
 </html>

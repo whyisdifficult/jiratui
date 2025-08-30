@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Gaston Tagni">
+
+    <!--    Document Title-->
+    <title>JiraTUI - Getting Started</title>
+
+    <!--    Favicons-->
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicons/favicon.png">
+
+    <!--    Stylesheets-->
+    <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==">
+    <link href="assets/css/theme.css" rel="stylesheet" />
+    <link href="vendors/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "JiraTUI",
+      "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
+      "url": "https://jiratui.sh",
+      "applicationCategory": "Developer Tools",
+      "operatingSystem": "Cross-platform",
+      "softwareVersion": "0.1.0",
+      "author": {
+        "@type": "Person",
+        "name": "Gaston Tagni",
+        "url": "https://github.com/whyisdifficult/jiratui"
+      }
+    }
+    </script>
+
+    <script>
+      function copyCode(elementId, copyBtnSelector) {
+          const codeBlock = document.getElementById(elementId);
+          const textArea = document.createElement('textarea');
+          textArea.value = codeBlock.textContent;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+
+          const copyBtn = document.getElementById(copyBtnSelector);
+          copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+          copyBtn.classList.remove('btn-outline-secondary');
+          copyBtn.classList.add('btn-success');
+
+          setTimeout(() => {
+              copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+              copyBtn.classList.remove('btn-success');
+              copyBtn.classList.add('btn-outline-secondary');
+          }, 2000);
+      }
+    </script>
+
+    <style>
+      pre {
+        background-color: #1f2937;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        position: relative;
+        font-size: 1rem;
+      }
+
+      .copy-btn {
+          color: #fff;
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+      }
+
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <!--    Main Content  -->
+    <main class="main" id="top">
+      <nav class="navbar navbar-expand-lg sticky-top" data-navbar-darken-on-scroll="900">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html">JiraTUI</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link link-info" href="index.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-300 active" aria-current="page" >Getting Started</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link link-info" href="usage.html">Usage</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-auto"> <!-- left column begin ============================-->
+
+              <!-- <section> begin ============================-->
+              <section class="mt-0 pb-0">
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-12 text-justify-left text-xl-start">
+                      <h2 id="installation" class="display-6 fw-semi-bold">Installation</h2>
+                        <p>The recommended way to install the application is via <a href="https://docs.astral.sh/uv/" target="_blank">uv</a></p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock1">uv add jiratui</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton1" onclick="copyCode('codeBlock1', 'copyButton1')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>Alternatively, you can install it using pip</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock2">pip install jiratui</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton2" onclick="copyCode('codeBlock2', 'copyButton2')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>After installing the package, you can run the CLI tool with the following command:</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock3">jiratui --help</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton3" onclick="copyCode('codeBlock3', 'copyButton3')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>This will show you the available commands for the CLI tool</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code>Usage: jiratui [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  comments  Use it to add, list or delete comments associated to work items.
+  issues    Use it to search, update or delete work items.
+  ui        Launches the Jira TUI application.
+  users     Use it to search users and user groups.</code></pre>
+                        </div>
+
+                        <hr class="mt-3 text-1000 opacity-0"/>
+                        <p>Before you can launch the UI or use the CLI's commands you need to configure a few things. Head over to the
+                        <a href="">configuration section</a> to see how to do that.</p>
+
+                    </div>
+                  </div>
+                </div>
+                <!-- end of .container-->
+              </section>
+              <!-- <section> close ============================-->
+
+              <!-- <section> begin ============================-->
+              <section class="pt-1">
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-12 text-justify-left text-xl-start">
+                        <h2 id="configuration" class="display-6 fw-semi-bold">Configuration</h2>
+                        <p>Before using the application, you need to configure a few settings.</p>
+                        <p>
+                          The application uses <a href="https://docs.pydantic.dev/latest/concepts/pydantic_settings/" target="_blank">Pydantic Settings</a>. This allows you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you want to define in a ENV variable called <code class="fs-0">JIRA_TUI_*</code>; where <code class="fs-0">*</code> is the name of the config variable.
+                        </p>
+
+                        <p>Example: to define the value of <code class="fs-0">jira_api_username</code> do this: <code class="fs-0">JIRA_TUI_JIRA_API_USERNAME=...</code></p>
+
+                        <h3>Setting Up the Jira's Instance API Credentials</h3>
+                        <p>You must provide the following values to connect to your Jira instance API:</p>
+
+                        <ul>
+                          <li><code class="fs-0">jira_api_username</code> - the username for connecting to your Jira's API.</li>
+                          <li><code class="fs-0">jira_api_token</code> - the token for connecting to your Jira's API.</li>
+                          <li><code class="fs-0">jira_api_base_url</code> - the base URL of your Jira instance API.</li>
+                        </ul>
+
+                        <p>You have a couple of options for setting these values.</p>
+
+                        <h4>Use a <code>.env</code> File</h4>
+                        <p>Create a <code>.env</code> file named <code class="fs-0">.env.jiratui</code> and add the following content:</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock4">JIRA_TUI_JIRA_API_USERNAME={your-jira-api-username}
+JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}
+JIRA_TUI_JIRA_API_BASE_URL=https://{your-jira-instance-hostname}.atlassian.net</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton4" onclick="copyCode('codeBlock4', 'copyButton4')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+                        <p>You can pass the variable <code class="fs-0">JIRA_TUI_ENV_FILE</code> and point to the location of your env file.</p>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <h4>Use a Config File</h4>
+
+                        <p>You can also use a combination of a <code>.env</code> file and a config file. For example, keep the API username and token in the <code>.env</code> file while placing the rest of the settings in a config file. The default config file expected by the application is <code class="fs-0">jiratui.yaml</code>, but you can name your config file anything you like and specify it using the environment variable <code class="fs-0">JIRA_TUI_CONFIG_FILE</code> when interacting with the CLI/app.</p>
+
+                        <p>Example: Create a file called <code class="fs-0">my-jiratui-config.yaml</code> and add the following:</p>
+
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock5">jira_api_base_url: 'https://{your-jira-instance-hostname}.atlassian.net'</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton5" onclick="copyCode('codeBlock5', 'copyButton5')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <div class="alert alert-primary d-flex align-items-center" role="alert">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                          </svg>
+                          <div>
+                            The application provides a sample config file called <code class="fs-0">jiratui.example.yaml</code> that you can use to define yours.
+                          </div>
+                        </div>
+
+                        <h4>Full Example</h4>
+
+                        <p><code class="fs-0">~/.env.jiratui</code></p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock6">JIRA_TUI_JIRA_API_USERNAME={your-jira-api-username}
+JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton6" onclick="copyCode('codeBlock6', 'copyButton6')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p><code class="fs-0">~/.jiratui.yaml</code></p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock7">jira_api_base_url: 'https://{your-jira-instance-hostname}.atlassian.net'</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton7" onclick="copyCode('codeBlock7', 'copyButton7')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>Now that you have the basic configuration you can <a href="usage.html">run the tool and its commands</a>.</p>
+
+                    </div>
+                  </div>
+                </div>
+                <!-- end of .container-->
+              </section>
+              <!-- <section> close ============================-->
+
+            </div> <!-- left column close ============================-->
+
+            <div class="col col-lg-1"> <!-- right column begin ============================-->
+              <nav id="navbar-example3" class="h-100 flex-column align-items-stretch pe-4">
+                <nav class="nav nav-pills flex-column">
+                  <a class="nav-link" href="#installation">Installation</a>
+                  <a class="nav-link" href="#configuration">Configuration</a>
+                </nav>
+              </nav>
+            </div> <!-- right column end ============================-->
+        </div>
+      </div>
+
+      <!-- <section> begin ============================-->
+      <section class="bg-secondary mt-0 pt-4 pb-4">
+        <div class="container">
+          <div class="row">
+            <div class="col-xl-1 text-center text-xl-start">
+              <a href="https://github.com/whyisdifficult/jiratui">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                </svg>
+              </a>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0 text-center text-xl-start">
+              <p class="mb-0">&copy; 2025 Gaston Tagni.</p>
+            </div>
+            <div class="col-xl-4 pt-2 pt-xl-0">
+              <p class="mb-0 text-center text-xl-start">
+                <a class="text-300 text-decoration-none footer-link" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
+                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
+                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
+              </p>
+            </div>
+            <div class="col-xl-3 pt-2 pt-xl-0 text-center text-xl-end">
+              <p class="mb-0">Template by <a class="text-300" href="https://themewagon.com/" target="_blank">ThemeWagon</a></p>
+            </div>
+          </div>
+        </div>
+        <!-- end of .container-->
+      </section>
+      <!-- <section> close ============================-->
+    </div>
+
+    </main>
+    <!-- ===============================================-->
+    <!--    End of Main Content-->
+    <!-- ===============================================-->
+
+    <!-- ===============================================-->
+    <!--    JavaScripts-->
+    <!-- ===============================================-->
+    <script src="vendors/@popperjs/popper.min.js"></script>
+    <script src="vendors/bootstrap/bootstrap.min.js"></script>
+    <script src="vendors/is/is.min.js"></script>
+    <script src="vendors/swiper/swiper-bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <script src="assets/js/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400&amp;display=swap" rel="stylesheet">
+  </body>
+</html>
