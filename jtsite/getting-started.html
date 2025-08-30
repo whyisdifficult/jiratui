@@ -24,7 +24,7 @@
       "@type": "SoftwareApplication",
       "name": "JiraTUI",
       "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
-      "url": "https://jiratui.sh",
+      "url": "https://whyisdifficult.github.io/jiratui/",
       "applicationCategory": "Developer Tools",
       "operatingSystem": "Cross-platform",
       "softwareVersion": "0.1.0",
@@ -116,7 +116,20 @@
                 <div class="container">
                   <div class="row">
                     <div class="col-md-12 text-justify-left text-xl-start">
-                      <h2 id="installation" class="display-6 fw-semi-bold">Installation</h2>
+                        <h2 id="installation" class="display-6 fw-semi-bold">Installation</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </symbol>
+                        </svg>
+
+                        <div class="alert alert-primary d-flex align-items-center" role="alert">
+                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                            <div>
+                                The full documentation is available at <a href="https://jiratui.readthedocs.io/en/latest/index.html" target="_blank">https://jiratui.readthedocs.io</a>
+                            </div>
+                        </div>
+
                         <p>The recommended way to install the application is via <a href="https://docs.astral.sh/uv/" target="_blank">uv</a></p>
                         <div class="position-relative border rounded-1 border-700 p-1">
                           <pre><code id="codeBlock1">uv add jiratui</code></pre>
@@ -289,9 +302,10 @@ JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
             </div>
             <div class="col-xl-4 pt-2 pt-xl-0">
               <p class="mb-0 text-center text-xl-start">
-                <a class="text-300 text-decoration-none footer-link" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
-                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
-                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://jiratui.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
               </p>
             </div>
             <div class="col-xl-3 pt-2 pt-xl-0 text-center text-xl-end">
