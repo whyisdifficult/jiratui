@@ -26,6 +26,7 @@ from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
+    ActiveSprintCheckbox,
     IssueSearchCreatedFromWidget,
     IssueSearchCreatedUntilWidget,
     IssueStatusSelectionInput,
@@ -107,6 +108,12 @@ class MainScreen(Screen):
             key='o',
             action='focus_widget("o")',
             description='Focus the "Order By" selection widget',
+            show=False,
+        ),
+        Binding(
+            key='v',
+            action='focus_widget("v")',
+            description='Focus the Active Sprint Checkbox',
             show=False,
         ),
         Binding(
@@ -274,6 +281,10 @@ class MainScreen(Screen):
         return self.query_one(OrderByWidget)
 
     @property
+    def active_sprint_checkbox(self) -> ActiveSprintCheckbox:
+        return self.query_one(ActiveSprintCheckbox)
+
+    @property
     def issue_date_from_input(self) -> IssueSearchCreatedFromWidget:
         return self.query_one('#input_date_from', expect_type=IssueSearchCreatedFromWidget)
 
@@ -300,6 +311,7 @@ class MainScreen(Screen):
                 yield IssueSearchCreatedFromWidget()
                 yield IssueSearchCreatedUntilWidget()
                 yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())
+                yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
                 yield Button('Search', id='run-button', variant='success', disabled=False)
             with Horizontal():
@@ -350,13 +362,23 @@ class MainScreen(Screen):
     async def fetch_projects(self) -> None:
         """Fetches the list of available projects.
 
-        If a list of projects exists then it will set the list of projects in projects dropdown widget and, pre-select
+        If the user pre-selects a project using the configuration setting `default_project_key_or_id` or by passing the
+        `--project-key` in the CLI command `jiratui ui --project-key` then the application will only fetch that
+        project. This speeds up the launching of the app because less API requests are needed.
+
+        If on the other hand, no project key is pre-selected then the application will fetch all available
+        projects. This may require multiple API requests; making the application launch slower.
+
+        If a project is pre-selected the application will pre-select the project from the dropdown list.
         a value if required.
+
+        If no project is found then the application will leave the dropdown empty.
 
         Returns:
             Nothing.
         """
-        response: APIControllerResponse = await self.api.search_projects()
+        project_keys = [self.initial_project_key] if self.initial_project_key else None
+        response: APIControllerResponse = await self.api.search_projects(keys=project_keys)
         if not response.success:
             self.notify(f'Failed to fetch the list of projects: {response.error}')
         projects = response.result or []
@@ -580,6 +602,7 @@ class MainScreen(Screen):
             status=search_field_status,
             assignee=search_field_assignee,
             issue_type=search_field_issue_type,
+            search_in_active_sprint=self.active_sprint_checkbox.value,
             jql_query=self.jql_expression_input.value,
             next_page_token=next_page_token,
             limit=CONFIGURATION.get().search_results_per_page,
@@ -715,6 +738,14 @@ class MainScreen(Screen):
         self.run_button.loading = False
 
     def action_focus_widget(self, key: str) -> None:
+        """Focuses a widget based on the key pressed by the user.
+
+        Args:
+            key: the key the user pressed in the UI.
+
+        Returns:
+            Nothing.
+        """
         if key == 'p':
             self.set_focus(self.project_selector)
         elif key == 't':
@@ -731,6 +762,8 @@ class MainScreen(Screen):
             self.set_focus(self.issue_date_until_input)
         elif key == 'o':
             self.set_focus(self.order_by_widget)
+        elif key == 'v':
+            self.set_focus(self.active_sprint_checkbox)
         elif key == 'j':
             self.set_focus(self.jql_expression_input)
         elif key == '2':

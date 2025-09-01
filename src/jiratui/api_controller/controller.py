@@ -693,8 +693,10 @@ class APIController:
 
             return {
                 'jql': None,
-                'updated_from': datetime.now().date()
-                - timedelta(days=self.config.search_issues_default_day_interval),
+                'updated_from': (
+                    datetime.now().date()
+                    - timedelta(days=self.config.search_issues_default_day_interval)
+                ),
             }
         elif jql_query:
             return {'jql': jql_query.strip(), 'updated_from': None}
@@ -708,6 +710,7 @@ class APIController:
         status: int | None = None,
         assignee: str | None = None,
         issue_type: int | None = None,
+        search_in_active_sprint: bool = False,
         jql_query: str | None = None,
         next_page_token: str | None = None,
         limit: int | None = None,
@@ -723,6 +726,8 @@ class APIController:
             status: search work items with this status.
             assignee: search work items assigned to this user's account ID.
             issue_type: search work items of this type.
+            search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+            retrieved.
             jql_query: search work items using this (additional) JQL query.
             next_page_token: the token that identifies the next page of results. This helps implements pagination of
             results.
@@ -755,6 +760,7 @@ class APIController:
                 status=status,
                 assignee=assignee,
                 issue_type=issue_type,
+                search_in_active_sprint=search_in_active_sprint,
                 jql_query=criteria.get('jql'),
                 fields=fields if fields else ['id', 'key', 'status', 'summary', 'issuetype'],
                 next_page_token=next_page_token,

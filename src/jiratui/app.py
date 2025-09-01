@@ -106,7 +106,6 @@ class JiraApp(App):
                 self.screen.set_focus(focused)
 
         self.set_focus(None)
-
         await self.push_screen(HelpScreen(focused.HELP), restore_focus)
 
     async def action_server_info(self) -> None:

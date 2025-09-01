@@ -363,6 +363,7 @@ class JiraAPI:
         assignee: str | None = None,
         issue_type: int | None = None,
         jql_query: str | None = None,
+        search_in_active_sprint: bool = False,
         fields: list[str] | None = None,
         next_page_token: str | None = None,
         limit: int | None = None,
@@ -384,6 +385,8 @@ class JiraAPI:
             assignee: search items assigned to this user (by account id).
             issue_type: search items with this type id.
             jql_query: a JQL expression to filter items.
+            search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+            retrieved.
             fields: retrieve these fields for every item found.
             next_page_token: an optional token to retrieve the next page of results.
             limit: retrieve this max number of results per page.
@@ -409,6 +412,7 @@ class JiraAPI:
             assignee=assignee,
             issue_type=issue_type,
             jql_query=jql_query,
+            search_in_active_sprint=search_in_active_sprint,
             order_by=order_by,
         )
         payload: dict[str, Any] = {
