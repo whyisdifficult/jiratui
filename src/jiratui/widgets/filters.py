@@ -1,6 +1,6 @@
 from textual import on
 from textual.reactive import Reactive, reactive
-from textual.widgets import Input, Select
+from textual.widgets import Checkbox, Input, Select
 
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.jql import JQLEditorScreen
@@ -205,14 +205,27 @@ class OrderByWidget(Select):
     def __init__(self, options: list):
         super().__init__(
             options=options,
-            prompt='Order By',
+            prompt='Sort By',
             id='issue-search-order-by-selector',
             type_to_search=False,
             compact=True,
             classes='jira-selector',
         )
-        self.border_title = 'Order By'
+        self.border_title = 'Sort'
         self.border_subtitle = '(o)'
+
+
+class ActiveSprintCheckbox(Checkbox):
+    HELP = """\
+# Search Work Items in the Active Sprint
+
+When this checkbox is checked the application will filter work items that correspond to the currently active
+sprint.
+    """
+
+    def __init__(self):
+        super().__init__(label='Active Sprint', value=False, classes='active-sprint-checkbox')
+        self.border_subtitle = '(v)'
 
 
 class JQLSearchWidget(Input):

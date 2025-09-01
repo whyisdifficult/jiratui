@@ -15,7 +15,7 @@
 
     <!--    Stylesheets-->
     <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==">
-    <link href="assets/css/theme.css" rel="stylesheet" />
+    <link href="assets/css/theme.min.css" rel="stylesheet"/>
     <link href="vendors/swiper/swiper-bundle.min.css" rel="stylesheet">
 
     <script type="application/ld+json">
@@ -24,7 +24,7 @@
       "@type": "SoftwareApplication",
       "name": "JiraTUI",
       "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
-      "url": "https://jiratui.sh",
+      "url": "https://whyisdifficult.github.io/jiratui/",
       "applicationCategory": "Developer Tools",
       "operatingSystem": "Cross-platform",
       "softwareVersion": "0.1.0",
@@ -87,23 +87,35 @@
     <main class="main" id="top">
       <nav class="navbar navbar-expand-lg sticky-top" data-navbar-darken-on-scroll="900">
         <div class="container-fluid">
-          <a class="navbar-brand" href="index.html">JiraTUI</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item">
-                <a class="nav-link link-info" href="index.html">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-300 active" aria-current="page" >Getting Started</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link link-info" href="usage.html">Usage</a>
-              </li>
-            </ul>
-          </div>
+            <a class="navbar-brand" href="index.html">JiraTUI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link link-info" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-300 active" aria-current="page" >Getting Started</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-info" href="usage.html">Usage</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="navbar-nav ms-auto">
+                <a href="https://jiratui.readthedocs.io/en/latest/index.html" class="btn btn-secondary btn-small me-1" title="View the documentation of JiraTUI at read the docs">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-book" viewBox="0 0 16 16">
+                    <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
+                  </svg>
+                </a>
+                <a href="https://github.com/whyisdifficult/jiratui" class="btn btn-secondary btn-small" title="View the source code of JiraTUI at Github">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                  </svg>
+                </a>
+            </div>
         </div>
       </nav>
 
@@ -116,7 +128,20 @@
                 <div class="container">
                   <div class="row">
                     <div class="col-md-12 text-justify-left text-xl-start">
-                      <h2 id="installation" class="display-6 fw-semi-bold">Installation</h2>
+                        <h2 id="installation" class="display-6 fw-semi-bold">Installation</h2>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </symbol>
+                        </svg>
+
+                        <div class="alert alert-primary d-flex align-items-center" role="alert">
+                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                            <div>
+                                The full documentation is available at <a href="https://jiratui.readthedocs.io/en/latest/index.html" target="_blank">https://jiratui.readthedocs.io</a>
+                            </div>
+                        </div>
+
                         <p>The recommended way to install the application is via <a href="https://docs.astral.sh/uv/" target="_blank">uv</a></p>
                         <div class="position-relative border rounded-1 border-700 p-1">
                           <pre><code id="codeBlock1">uv add jiratui</code></pre>
@@ -284,14 +309,15 @@ JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
                 </svg>
               </a>
             </div>
-            <div class="col-xl-4 pt-2 pt-xl-0 text-center text-xl-start">
+            <div class="col-xl-2 pt-2 pt-xl-0 text-center text-xl-start">
               <p class="mb-0">&copy; 2025 Gaston Tagni.</p>
             </div>
-            <div class="col-xl-4 pt-2 pt-xl-0">
+            <div class="col-xl-6 pt-2 pt-xl-0">
               <p class="mb-0 text-center text-xl-start">
-                <a class="text-300 text-decoration-none footer-link" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
-                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
-                <a class="text-300 text-decoration-none footer-link ps-4" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://jiratui.readthedocs.io/en/latest/index.html" target="_blank">Documentation</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/blob/main/LICENSE" target="_blank">Licence</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/blob/main/CONTRIBUTING.md">How to Contribute</a>
+                <a class="text-300 text-decoration-none footer-link ps-3" href="https://github.com/whyisdifficult/jiratui/issues" target="_blank">Issues</a>
               </p>
             </div>
             <div class="col-xl-3 pt-2 pt-xl-0 text-center text-xl-end">
@@ -318,7 +344,7 @@ JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
     <script src="vendors/swiper/swiper-bundle.min.js"></script>
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
-    <script src="assets/js/theme.js"></script>
+    <script src="assets/js/theme.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400&amp;display=swap" rel="stylesheet">
   </body>
 </html>

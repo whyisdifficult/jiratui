@@ -10,6 +10,7 @@ from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.filters import (
+    ActiveSprintCheckbox,
     IssueSearchCreatedFromWidget,
     IssueSearchCreatedUntilWidget,
     IssueStatusSelectionInput,
@@ -53,6 +54,7 @@ def app(config_for_testing, jira_api_controller) -> JiraApp:
         ('f', IssueSearchCreatedFromWidget),
         ('u', IssueSearchCreatedUntilWidget),
         ('o', OrderByWidget),
+        ('v', ActiveSprintCheckbox),
         ('j', JQLSearchWidget),
         ('1', IssuesSearchResultsTable),
         ('3', IssueDetailsWidget),

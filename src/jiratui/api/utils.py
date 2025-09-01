@@ -13,6 +13,7 @@ def build_issue_search_jql(
     assignee: str | None = None,
     issue_type: int | None = None,
     jql_query: str | None = None,
+    search_in_active_sprint: bool = False,
     order_by: WorkItemsSearchOrderBy | None = None,
 ) -> str:
     """Builds a JQL query expression to search issues based on different criteria.
@@ -28,6 +29,8 @@ def build_issue_search_jql(
         name of a user.
         issue_type: the type of issue.
         jql_query: a string with a JQL query expression.
+        search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+        retrieved.
         order_by: used to specify the fields by whose values the search results will be sorted. This requirement needs
         to be placed at the end of the JQL query, otherwise the JQL will be invalid.
 
@@ -55,6 +58,8 @@ def build_issue_search_jql(
         fields.append(f'assignee = "{assignee}"')
     if issue_type:
         fields.append(f'type = {issue_type}')
+    if search_in_active_sprint:
+        fields.append('sprint in openSprints()')
 
     jql: str = ''
     if fields:

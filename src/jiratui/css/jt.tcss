@@ -20,6 +20,7 @@
     box_sizing: content-box;
     border-top: blank $surface-lighten-1;
     border-bottom: blank $surface-lighten-1;
+    max-width: 10;
 }
 
 #search_results_container {
@@ -32,8 +33,8 @@
 }
 
 .bottom-search-bar {
-    grid-size: 6 1;
-    grid-columns: 15% 12% 12% 15% 36% 10%;
+    grid-size: 7 1;
+    grid-columns: 15% 12% 12% 12% 13% 30% 6%;
 }
 
 .cols-3 {
@@ -109,6 +110,21 @@
     &.required {
         border: round red;
     }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Active Sprint Checkbox */
+
+.active-sprint-checkbox {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
     &:focus {
         border: round $accent-lighten-3;
     }
