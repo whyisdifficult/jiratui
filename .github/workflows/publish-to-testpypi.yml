@@ -1,4 +1,4 @@
-name: Upload Python Package to Test PyPi
+name: Publish package to Test PyPi
 
 on: pull_request
 
@@ -32,7 +32,7 @@ jobs:
       - name: Build the package
         run: uv build
 
-      - name: Publish Package to Test PyPI
+      - name: Upload package to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./dist/

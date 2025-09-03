@@ -1,4 +1,4 @@
-name: Upload Python Package
+name: Publish package to PyPi
 
 on:
   release:
@@ -34,7 +34,7 @@ jobs:
       - name: Build the package
         run: uv build
 
-      - name: Publish Package to PyPI
+      - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./dist/
