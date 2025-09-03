@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Upload Python Package
 
 on:
   release:
@@ -6,15 +6,22 @@ on:
 
 jobs:
   publish:
-    environment: pypi
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/jiratui
+    permissions:
+      id-token: write
+    defaults:
+      run:
+        working-directory: .
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
 
@@ -27,10 +34,7 @@ jobs:
       - name: Build the package
         run: uv build
 
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          pip install twine
-          twine upload dist/*
+      - name: Publish Package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./dist/
