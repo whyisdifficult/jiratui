@@ -24,7 +24,7 @@
       "@type": "SoftwareApplication",
       "name": "JiraTUI",
       "description": "JiraTUI is a command-line tool that allows developers to manage their Jira tasks efficiently and effortlessly from the terminal using a textual user interface.",
-      "url": "https://whyisdifficult.github.io/jiratui/",
+      "url": "https://jiratui.sh",
       "applicationCategory": "Developer Tools",
       "operatingSystem": "Cross-platform",
       "softwareVersion": "0.1.0",
@@ -98,9 +98,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-300 active" aria-current="page" >Getting Started</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link link-info" href="usage.html">Usage</a>
                     </li>
                 </ul>
             </div>
@@ -199,7 +196,7 @@ Commands:
                 <div class="container">
                   <div class="row">
                     <div class="col-md-12 text-justify-left text-xl-start">
-                        <h2 id="configuration" class="display-6 fw-semi-bold">Configuration</h2>
+                        <h2 id="configuration" class="display-6 fw-semi-bold">Initial Configuration</h2>
                         <p>Before using the application, you need to configure a few settings.</p>
                         <p>
                           The application uses <a href="https://docs.pydantic.dev/latest/concepts/pydantic_settings/" target="_blank">Pydantic Settings</a>. This allows you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you want to define in a ENV variable called <code class="fs-0">JIRA_TUI_*</code>; where <code class="fs-0">*</code> is the name of the config variable.
@@ -276,8 +273,31 @@ JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
                         </div>
                         <hr class="mt-3 text-1000 opacity-0"/>
 
-                        <p>Now that you have the basic configuration you can <a href="usage.html">run the tool and its commands</a>.</p>
+                        <h2 id="launching-ui" class="display-6 fw-semi-bold">Launching the UI</h2>
 
+                        <p>Now that you have the basic configuration you can launch the UI with the following command</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock8">jiratui ui</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton8" onclick="copyCode('codeBlock8', 'copyButton8')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>If everything works fine you should be able to see a screen like the one below.</p>
+
+                        <figure class="figure">
+                          <img class="img-fluid img-thumbnail border-500 rounded-1" src="assets/img/gallery/jiratui-start.png" alt="The home screen of JiraTUI" />
+                          <figcaption class="figure-caption text-center">The home screen of the application after running the command above</figcaption>
+                        </figure>
+
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <h2 id="next-steps" class="display-6 fw-semi-bold">Next Steps</h2>
+                        <p>
+                            To learn how to use the CLI tool and set up other configuration options please refer to the
+                            documentation at <a href="https://jiratui.readthedocs.io/en/latest/index.html" target="_blank">https://jiratui.readthedocs.io</a>
+                        </p>
                     </div>
                   </div>
                 </div>
