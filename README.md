@@ -1,5 +1,11 @@
 # JiraTUI
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/whyisdifficult/jiratui/.github%2Fworkflows%2Ftest.yaml)
+![GitHub License](https://img.shields.io/github/license/whyisdifficult/jiratui)
+![GitHub Release](https://img.shields.io/github/v/release/whyisdifficult/jiratui)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/jiratui)
+
+
 A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
 
 ![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
