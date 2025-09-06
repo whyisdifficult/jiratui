@@ -1,6 +1,6 @@
 [project]
 name = "jiratui"
-version = "0.1.0"
+version = "0.1.1"
 description = "A TUI for interacting with Atlassian Jira from your terminal."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -11,7 +11,7 @@ authors = [
 maintainers = [
   {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
 ]
-keywords = ["tui", "jira", "cli"]
+keywords = ["tui", "jira", "cli", "terminal", "shell", "task-management"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -41,7 +41,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://jiratui.sh"
-Documentation = "https://jiratui.sh"
+Documentation = "https://jiratui.readthedocs.io/en/latest/index.html"
 Repository = "https://github.com/whyisdifficult/jiratui"
 Issues = "https://github.com/whyisdifficult/jiratui/issues"
 Changelog = "https://github.com/whyisdifficult/jiratui/blob/main/CHANGELOG.md"
