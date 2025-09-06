@@ -253,7 +253,7 @@ jiratui issues update SCRUM-1 -t 6
 ```
 
 This will allow you to transition the work item with key `SCRUM-1` from the current status to the status Done. See the
-[metadata command](#show-metadata) above for the context.
+[metadata command](index.md#show-metadata) above for the context.
 
 #### Update Priority
 
