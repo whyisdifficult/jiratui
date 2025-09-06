@@ -133,27 +133,8 @@ $ jiratui issues search --key SCRUM-1
 | SCRUM-1 | Bug  | 2025-07-31 15:55 | To Do (10000) | lisa@simpson.com  | bart@simpson.com  | Write 100 times "I will be a good student" |
 ```
 
-### Listing Comments
-
-To list the comments of a work item use the `comments list` command and pass the (case-sensitive) key of the work
-item whose comments you want to list.
-
-```shell
-$ jiratui comments list SCRUM-1
-
-| ID | Issue Key | Author             | Created          | Updated          | Message      |
-|----|-----------|--------------------|------------------|------------------|--------------|
-| 1  | SCRUM-1   | maggie@simpson.com | 2025-12-31 16:09 | 2025-12-31 16:09 | Hello World! |
-```
-
-If you want to see the text of a specific comment use the `comments show` command and pass the (case-sensitive) key of
-the work item followed by the ID of the comment.
-
-```shell
-$ jiratui comments show SCRUM-1 1
-
-Hello World!
-```
+The full list of commands you can use with the CLI and additional settings is available at
+[https://jiratui.readthedocs.io](https://jiratui.readthedocs.io/en/latest/index.html)
 
 # Documentation
 

@@ -1,6 +1,6 @@
-# Configuration
+# Basic Configuration
 
-Before using the application, you need to configure a few settings.
+Before using the application you need to configure a few settings.
 
 ```{tip}
 The application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
@@ -10,19 +10,22 @@ want to define in a ENV variable called `JIRA_TUI_*`; where `*` is the name of t
 **Example**: to define the value of `jira_api_username` do this: `JIRA_TUI_JIRA_API_USERNAME=...`
 ```
 
-## Setting Up the Jira's Instance API Credentials
+For a full list of all the configuration options available and how to use them please refer to
+[the settings reference guide](/users/configuration/reference.md).
 
-You must provide the following values to connect to your Jira instance API:
+## Jira API Credentials
+
+You must provide the following values to connect to your Jira API instance:
 
 - `jira_api_username`: the username for connecting to your Jira's API.
 - `jira_api_token`: the token for connecting to your Jira's API.
 - `jira_api_base_url`: the base URL of your Jira instance API.
 
-You have a couple of options for setting these values.
+As described in [the settings reference guide](/users/configuration/reference.md) you can do this in a couple of ways.
 
 ### Use a `.env` File
 
-Create a `.env` file named `.env.jiratui` and add the following content:
+Create a `.env` file and name it `.env.jiratui` and add the following content:
 
 ```yaml
 JIRA_TUI_JIRA_API_USERNAME=<your-jira-api-username>
@@ -30,7 +33,10 @@ JIRA_TUI_JIRA_API_TOKEN=<your-jira-api-token>
 JIRA_TUI_JIRA_API_BASE_URL=https://<your-jira-instance-hostname>.atlassian.net
 ```
 
-You can pass the variable `JIRA_TUI_ENV_FILE` and point to the location of your env file.
+```{tip}
+You can name your env file anyway you want and then use the env variable `JIRA_TUI_ENV_FILE` to point to it when
+launching the app.
+```
 
 ### Use a Config File
 

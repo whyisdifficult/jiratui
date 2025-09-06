@@ -1,15 +1,13 @@
-name: Publish package to PyPi
+name: Publish package to Test PyPi
 
-on:
-  release:
-    types: [published]
+on: pull_request
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment:
-      name: pypi
-      url: https://pypi.org/project/jiratui
+      name: testpypi
+      url: https://test.pypi.org/project/jiratui
     permissions:
       id-token: write
     defaults:
@@ -34,7 +32,8 @@ jobs:
       - name: Build the package
         run: uv build
 
-      - name: Upload package to PyPI
+      - name: Upload package to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./dist/
+          repository-url: https://test.pypi.org/project/jiratui/

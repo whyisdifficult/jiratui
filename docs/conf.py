@@ -17,6 +17,7 @@ project_copyright = f'{datetime.now().year}, Gaston Tagni'
 extensions = [
     'sphinx_markdown_builder',
     'myst_parser',
+    'sphinx_design',  # https://sphinx-design.readthedocs.io/en/rtd-theme/get_started.html
 ]
 
 templates_path = ['_templates']
