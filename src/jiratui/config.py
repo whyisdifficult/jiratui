@@ -26,6 +26,8 @@ class ApplicationConfiguration(BaseSettings):
     jira_api_base_url: str
     """The base URL of the Jira API."""
     jira_user_group_id: str | None = None
+    """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
+    as a fall back mechanism to fetch available users."""
     jira_base_url: str | None = None
     """This is the base URL of your Jira application. This is used for building the URLs of different web links in the
     Jira TUI application. Example: https://<hostname>.atlassian.net"""
@@ -36,6 +38,7 @@ class ApplicationConfiguration(BaseSettings):
     search_results_per_page: int = Field(default=ISSUE_SEARCH_DEFAULT_MAX_RESULTS)
     """The number of results to show in the search results. The default is 30."""
     search_issues_default_day_interval: int = Field(default=ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL)
+    """This controls how many days worth of issues to fetch when no other search criteria has been defined."""
     show_issue_web_links: bool = True
     """If True (default) then the application will retrieve the remote links related to a work item."""
     ignore_users_without_email: bool = True
@@ -86,8 +89,8 @@ class ApplicationConfiguration(BaseSettings):
     """An optional title for the application. This is displayed in the top bar."""
     tui_title_include_jira_server_title: bool = True
     """If `True` the application will fetch server information from the Jira API instance and use the server title or
-    server base URL to build the title of the application. If set to `False` the title will be the default or, if the
-    the value of the `tui_custom_title` setting above."""
+    server base URL to build the title of the application. If set to `False` the title will be the default or, to the
+    value of the `tui_custom_title` setting above; if defined."""
     log_file: str = 'jiratui.log'
     """The name of the log file to use."""
     attachments_source_directory: str = '/'
