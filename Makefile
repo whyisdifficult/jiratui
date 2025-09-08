@@ -22,10 +22,15 @@ install_pre_commit_hooks:
 .PHONY: lint
 lint:
 	mkdir -p /tmp/artifacts
-	ruff format .
-	ruff check . --fix
+	ruff format . --diff
+	ruff check .
 	uv run mypy --version
 	uv run mypy --cache-dir /dev/null --junit-xml /tmp/artifacts/mypy.xml src
+
+.PHONY: lint-fix
+lint-fix:
+	ruff format .
+	ruff check . --fix
 
 .PHONY: test
 test:
