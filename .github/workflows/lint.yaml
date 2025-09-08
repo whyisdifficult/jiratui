@@ -1,31 +1,22 @@
-# This workflow will install Python dependencies, run tests with a variety of Python versions
+# This workflow will install Python dependencies and lint the codebase with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: "Run Tests"
+name: "Run Static Analysis"
 
 permissions:
   contents: read
 
 on:
   pull_request:
-  push:
-    branches: [ "main" ]
 
 jobs:
-  test:
-    name: ${{ matrix.os }} - ${{ matrix.py }}
-    runs-on: ${{ matrix.os }}
+  lint:
+    name: Static Analysis
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - MacOs-latest
-        py:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -36,13 +27,13 @@ jobs:
         enable-cache: true
     - run: uv python install
     - name: Install Dependencies
-      run: uv sync --all-extras --group test
-    - name: Run Tests
+      run: uv sync --all-extras --group test --group lint
+    - name: Run Linters
       run: |
-          uv run make test
+          uv run make lint
     - name: Store snapshot report on failure
       uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: Snapshot Report ${{ matrix.os }} ${{ matrix.py }}
-        path: ./snapshot_report.html
+        path: ./snapshot_report_linters.html
