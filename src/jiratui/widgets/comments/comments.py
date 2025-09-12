@@ -157,6 +157,7 @@ pressing `d`. Comments can be added by pressing `n`.
         comment: IssueComment
         elements: list[CommentCollapsible] = []
         items.sort(key=lambda x: x.updated, reverse=True)
+        comment_text: Markdown | Static
         for comment in items:
             try:
                 content = adf2md(comment.body_as_dict())
