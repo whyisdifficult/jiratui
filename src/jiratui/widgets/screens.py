@@ -5,10 +5,10 @@ import logging
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical, VerticalScroll
+from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical
 from textual.events import Key
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Rule, Select, TabbedContent, TabPane
+from textual.widgets import Button, Footer, Header, Select, TabbedContent, TabPane
 from textual.worker import Worker
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -21,7 +21,6 @@ from jiratui.models import (
     JiraUser,
     WorkItemsSearchOrderBy,
 )
-from jiratui.utils.adf2md.adf2md import adf2md
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
@@ -41,8 +40,8 @@ from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidge
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
-from jiratui.widgets.summary import IssueDescriptionWidget, IssueSummaryWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
+from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 
 
 @dataclass
@@ -126,12 +125,6 @@ class MainScreen(Screen):
             key='1',
             action='focus_widget("1")',
             description='Focus the Search Results widget',
-            show=False,
-        ),
-        Binding(
-            key='2',
-            action='focus_widget("2")',
-            description='Focus the Description tab widget',
             show=False,
         ),
         Binding(
@@ -249,12 +242,8 @@ class MainScreen(Screen):
         return self.query_one(RelatedIssuesWidget)
 
     @property
-    def issue_summary_widget(self) -> IssueSummaryWidget:
-        return self.query_one(IssueSummaryWidget)
-
-    @property
-    def issue_description_widget(self) -> IssueDescriptionWidget:
-        return self.query_one(IssueDescriptionWidget)
+    def issue_info_container(self) -> WorkItemInfoContainer:
+        return self.query_one(WorkItemInfoContainer)
 
     @property
     def issue_remote_links_widget(self) -> IssueRemoteLinksWidget:
@@ -318,11 +307,8 @@ class MainScreen(Screen):
                 with SearchResultsContainer(id='search_results_container'):
                     yield IssuesSearchResultsTable()
                 with TabbedContent(id='tabs'):
-                    with TabPane(title='Description', classes='summary-description-container'):
-                        yield IssueSummaryWidget()
-                        yield Rule(classes='summary-description-rule')
-                        with VerticalScroll():
-                            yield IssueDescriptionWidget()
+                    with TabPane(title='Info', classes='summary-description-container'):
+                        yield WorkItemInfoContainer()
                     with TabPane(title='Details'):
                         yield IssueDetailsWidget()  # will contain a form to view and update some of the fields of the issue
                     with TabPane(title='Comments'):
@@ -710,9 +696,8 @@ class MainScreen(Screen):
     async def action_search(self) -> None:
         """Handles the event that happens when the user presses the "search" button or "ctrl+r"."""
         self.run_button.loading = True
-        # clear the description pane
-        await self.issue_description_widget.update('')
-        self.issue_summary_widget.update('')
+        # clear the information pane
+        self.issue_info_container.clear_information = True
         # clear the details pane
         self.issue_details_widget.clear_form = True
         # clear the comments
@@ -766,8 +751,6 @@ class MainScreen(Screen):
             self.set_focus(self.active_sprint_checkbox)
         elif key == 'j':
             self.set_focus(self.jql_expression_input)
-        elif key == '2':
-            self.set_focus(self.issue_description_widget)
         elif key == '3':
             self.set_focus(self.issue_details_widget)
         elif key == '4':
@@ -846,15 +829,6 @@ class MainScreen(Screen):
                 self.search_results_table.page -= 1
                 await self.search_issues(next_page_token)
 
-    async def _setup_work_item_description(self, description: dict | list) -> None:
-        if description:
-            try:
-                await self.issue_description_widget.update(adf2md(description))
-            except Exception:
-                await self.issue_description_widget.update('Unable to display the description.')
-        else:
-            await self.issue_description_widget.update('')
-
     async def retrieve_issue_subtasks(self, issue_key: str) -> None:
         if issue_key:
             self.issue_child_work_items_widget.issue_key = issue_key
@@ -908,9 +882,9 @@ class MainScreen(Screen):
 
         # step 1: fetch issue
         response: APIControllerResponse = await self.api.get_issue(
-            issue_id_or_key=selected_work_item_key
+            issue_id_or_key=selected_work_item_key,
         )
-        if not response.success:
+        if not response.success or not response.result:
             self.notify(
                 'Unable to find the selected work item', title='Find Work Item', severity='error'
             )
@@ -918,9 +892,9 @@ class MainScreen(Screen):
 
         result: JiraIssueSearchResponse = response.result
         work_item: JiraIssue = result.issues[0]
-        # step 2: populate description tab
-        self.issue_summary_widget.update(work_item.summary)
-        self.run_worker(self._setup_work_item_description(work_item.description))
+
+        # step 2: populate information tab
+        self.issue_info_container.issue = work_item
 
         # step 3: set up the details tab
         # set the assignable users for the selected work item

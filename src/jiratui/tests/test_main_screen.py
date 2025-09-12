@@ -6,6 +6,7 @@ from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
+from jiratui.config import ApplicationConfiguration
 from jiratui.models import IssueStatus, IssueType, JiraUser, Project
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
@@ -30,15 +31,28 @@ from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 @pytest.fixture()
 def jira_users() -> list[JiraUser]:
     return [
-        Mock(spec=JiraUser),
-        Mock(spec=JiraUser),
+        Mock(spec=JiraUser, display_name='Bart', account_id='1'),
+        Mock(spec=JiraUser, display_name='Lisa', account_id='2'),
     ]
 
 
 @pytest.fixture()
-def app(config_for_testing, jira_api_controller) -> JiraApp:
-    app = JiraApp(config_for_testing)
-    app.api = jira_api_controller
+def app() -> JiraApp:
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_mock.configure_mock(
+        jira_api_base_url='foo.bar',
+        jira_api_username='foo',
+        jira_api_token='bar',
+        ignore_users_without_email=True,
+        default_project_key_or_id=None,
+        jira_account_id=None,
+        jira_user_group_id='qwerty',
+        tui_title=None,
+        tui_title_include_jira_server_title=False,
+        on_start_up_only_fetch_projects=False,
+    )
+    app = JiraApp(config_mock)
+    app.api = APIController(config_mock)
     app._setup_logging = MagicMock()  # type:ignore[method-assign]
     return app
 
@@ -122,12 +136,11 @@ async def test_fetch_users_without_project_selection_without_jira_user_group_id(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.jira_user_group_id = None
+    app.config.jira_user_group_id = None
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
@@ -149,12 +162,11 @@ async def test_fetch_users_without_project_selection_with_jira_user_group_id(
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
     jira_users,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.jira_user_group_id = '1'
+    app.config.jira_user_group_id = '1'
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(result=jira_users)
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -162,7 +174,7 @@ async def test_fetch_users_without_project_selection_with_jira_user_group_id(
         result = await main_screen.fetch_users()
         # THEN
         assert main_screen.project_selector.selection is None
-        assert main_screen.available_users == []
+        assert main_screen.available_users == [('Bart', '1'), ('Lisa', '2')]
         assert result == jira_users
 
 
@@ -176,12 +188,11 @@ async def test_fetch_users_without_project_selection_with_jira_user_group_id_api
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.jira_user_group_id = '1'
+    app.config.jira_user_group_id = '1'
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -289,12 +300,10 @@ async def test_fetch_users_without_project_selection_with_users_group_id_without
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
-    config_for_testing.jira_user_group_id = '1'
-    config_for_testing.on_start_up_only_fetch_projects = False
+    # GIVEN
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(
         result=[
             JiraUser(
@@ -306,12 +315,13 @@ async def test_fetch_users_without_project_selection_with_users_group_id_without
         ]
     )
     async with app.run_test() as pilot:
+        # WHEN
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         await pilot.press('')
         # THEN
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
-        list_all_active_users_in_group_mock.assert_called_once_with(group_id='1')
+        list_all_active_users_in_group_mock.assert_called_once_with(group_id='qwerty')
         assert main_screen.available_users == [('Bart Simpson', '12345')]
         assert main_screen.users_selector.users == {
             'users': [
@@ -340,12 +350,11 @@ async def test_fetch_users_without_project_selection_with_users_group_id_using_p
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
-    config_for_testing.jira_user_group_id = '1'
-    config_for_testing.on_start_up_only_fetch_projects = True
+    app.config.jira_user_group_id = '1'
+    app.config.on_start_up_only_fetch_projects = True
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(
         result=[
             JiraUser(
@@ -380,12 +389,11 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
-    config_for_testing.jira_user_group_id = '1'
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.jira_user_group_id = '1'
+    app.config.on_start_up_only_fetch_projects = False
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test() as pilot:
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -409,12 +417,11 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     list_all_active_users_in_group_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
-    config_for_testing.jira_user_group_id = '1'
-    config_for_testing.on_start_up_only_fetch_projects = True
+    app.config.jira_user_group_id = '1'
+    app.config.on_start_up_only_fetch_projects = True
     list_all_active_users_in_group_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test() as pilot:
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -438,12 +445,11 @@ async def test_mount_fetch_statuses_without_initial_project_key_without_using_pr
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.on_start_up_only_fetch_projects = False
     status_mock.return_value = APIControllerResponse(
         result=[
             IssueStatus(id='2', name='To Do', description='A task to do'),
@@ -471,12 +477,11 @@ async def test_mount_fetch_statuses_without_initial_project_key_using_project_wo
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.on_start_up_only_fetch_projects = True
+    app.config.on_start_up_only_fetch_projects = True
     status_mock.return_value = APIControllerResponse(
         result=[
             IssueStatus(id='2', name='To Do', description='A task to do'),
@@ -504,13 +509,12 @@ async def test_mount_fetch_statuses_without_initial_project_key_status_error(
     fetch_issue_types_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     status_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
     status_mock.return_value = APIControllerResponse(success=False)
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.on_start_up_only_fetch_projects = False
     # WHEN
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -532,12 +536,11 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.on_start_up_only_fetch_projects = False
     get_issue_types_mock.return_value = APIControllerResponse(
         result=[
             IssueType(
@@ -567,12 +570,11 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
     get_issue_types_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.on_start_up_only_fetch_projects = False
     get_issue_types_mock.return_value = APIControllerResponse(success=False)
     # WHEN
     async with app.run_test():
@@ -595,7 +597,6 @@ async def test_mount_without_initial_project_key_set_jql_expression(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
-    config_for_testing,
     expression_id: int,
     expected_expression: str,
     jira_api_controller,
@@ -603,7 +604,7 @@ async def test_mount_without_initial_project_key_set_jql_expression(
 ):
     # GIVEN
     app.initial_jql_expression_id = expression_id
-    config_for_testing.pre_defined_jql_expressions = {1: {'expression': 'sprint=2'}}
+    app.config.pre_defined_jql_expressions = {1: {'expression': 'sprint=2'}}
     # WHEN
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -621,12 +622,11 @@ async def test_select_project(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     fetch_users_mock: AsyncMock,
-    config_for_testing,
     jira_api_controller,
     app,
 ):
     # GIVEN
-    config_for_testing.on_start_up_only_fetch_projects = False
+    app.config.on_start_up_only_fetch_projects = False
     search_projects_mock.return_value = APIControllerResponse(
         result=[
             Project(id='2', name='Project B', key='P2'),
@@ -706,10 +706,10 @@ async def test_click_search_button_resets_widgets(
         assert main_screen.issue_remote_links_widget.issue_key is None
         assert main_screen.issue_attachments_widget.attachments is None
         assert main_screen.issue_attachments_widget.issue_key is None
-        assert main_screen.issue_summary_widget.renderable == ''
-        assert main_screen.issue_description_widget._markdown == ''
         assert main_screen.search_results_table.token_by_page == {}
         assert main_screen.search_results_table.page == 1
+        assert main_screen.issue_info_container.issue_summary_widget.visible is False
+        assert main_screen.issue_info_container.issue_description_widget.visible is False
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')

@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from jiratui.utils.adf2md.nodes import Node, NodeType
@@ -73,6 +74,11 @@ class DatePresenter(NodePresenter):
         return str(self.node.date_value)  # type:ignore[attr-defined]
 
 
+class RulePresenter(NodePresenter):
+    def __str__(self) -> str:
+        return '\n---\n'
+
+
 class TextPresenter(NodePresenter):
     # _text_node: TextNode
 
@@ -89,6 +95,9 @@ class TextPresenter(NodePresenter):
 
         if self.node.is_italic:
             out = italic(out)
+
+        if self.node.is_code:
+            out = as_code(out)
 
         if self.node.link:
             out = link(out, self.node.link)
@@ -122,6 +131,35 @@ class BulletListPresenter(NodePresenter):
             bulleted_list.append(f'- {str(child_presenter)}')
 
         return '\n'.join(bulleted_list)
+
+
+class TaskListPresenter(NodePresenter):
+    def __init__(self, node: Node):
+        super().__init__(node)
+
+    def __str__(self):
+        bulleted_list = []
+        for child_presenter in self._child_presenters:
+            bulleted_list.append(f'- {str(child_presenter)}')
+
+        return '\n'.join(bulleted_list)
+
+
+class TaskItemPresenter(NodePresenter):
+    def __init__(self, node: Node):
+        super().__init__(node)
+
+    def __str__(self):
+        bulleted_list = []
+        for child_presenter in self._child_presenters:
+            bulleted_list.append(str(child_presenter))
+
+        if self._node.state and self._node.state.lower() == 'done':
+            t = '\n'.join(bulleted_list)
+            return f'[x] {t}'
+        else:
+            t = '\n'.join(bulleted_list)
+            return f'[ ] {t}'
 
 
 class ListItemPresenter(NodePresenter):
@@ -251,7 +289,15 @@ class CodeBlockPresenter(NodePresenter):
         else:
             quoted_list = ['```']
         for child_presenter in self._child_presenters:
-            quoted_list.append(str(child_presenter))
+            if self.node.language == 'json':
+                try:
+                    content = json.dumps(json.loads(str(child_presenter)), indent=3)
+                except Exception:
+                    quoted_list.append(str(child_presenter))
+                else:
+                    quoted_list.append(content)
+            else:
+                quoted_list.append(str(child_presenter))
 
         quoted_list.append('```')
         return '\n'.join(quoted_list)
@@ -277,12 +323,17 @@ class HeadingPresenter(NodePresenter):
 
 class MediaSinglePresenter(NodePresenter):
     def __str__(self):
-        return 'view-attachments'
+        return '[see-attachments]'
 
 
 class MediaPresenter(NodePresenter):
     def __str__(self):
-        return 'view-attachments'
+        return '[see-attachments]'
+
+
+class MediaInlinePresenter(NodePresenter):
+    def __str__(self):
+        return '[see-attachments]'
 
 
 class EmojiPresenter(NodePresenter):
@@ -343,6 +394,14 @@ def create_node_presenter_from_node(
         return EmojiPresenter(node)
     elif node.type == NodeType.DATE:
         return DatePresenter(node)
+    elif node.type == NodeType.RULE:
+        return RulePresenter(node)
+    elif node.type == NodeType.MEDIA_INLINE:
+        return MediaInlinePresenter(node)
+    elif node.type == NodeType.TASK_LIST:
+        return TaskListPresenter(node)
+    elif node.type == NodeType.TASK_ITEM:
+        return TaskItemPresenter(node)
     raise NotImplementedError(f"markdown presenter: unhandled node type '{node.type}'")
 
 
@@ -364,6 +423,10 @@ def bold(text: str) -> str:
 
 def italic(text: str) -> str:
     return _apply_formatting(text, '*')
+
+
+def as_code(text: str) -> str:
+    return _apply_formatting(text, '`')
 
 
 def link(text: str, url: str) -> str:

@@ -28,6 +28,11 @@ class NodeType(enum.Enum):
     MEDIA = (19, 'media')
     EMOJI = (20, 'emoji')
     DATE = (21, 'date')
+    RULE = (22, 'rule')
+    MEDIA_INLINE = (23, 'mediaInline')
+    TASK_ITEM = (24, 'taskItem')
+    BLOCK_TASK_ITEM = (25, 'blockTaskItem')
+    TASK_LIST = (26, 'taskList')
 
     def __str__(self):
         return self.value[1]
@@ -157,6 +162,10 @@ class MentionNode(Node):
         return self._text
 
 
+class RuleNode(Node):
+    pass
+
+
 class TextNode(Node):
     """Represents a text ADF node
 
@@ -169,6 +178,7 @@ class TextNode(Node):
     _link: Optional[str] = None
     _is_bold: bool = False
     _is_italic: bool = False
+    _is_code: bool = False
 
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
@@ -191,6 +201,9 @@ class TextNode(Node):
 
             if mark_type == 'em':
                 self._is_italic = True
+
+            if mark_type == 'code':
+                self._is_code = True
 
             if mark_type == 'link':
                 if 'attrs' not in mark:
@@ -218,6 +231,73 @@ class TextNode(Node):
     @property
     def is_italic(self) -> bool:
         return self._is_italic
+
+    @property
+    def is_code(self) -> bool:
+        return self._is_code
+
+
+class TaskListNode(Node):
+    _elements: list[Node]
+    _local_id: str
+
+    def __init__(self, node_dict: dict):
+        super().__init__(node_dict)
+
+        if 'localId' not in self._attrs:
+            raise ValueError("taskList node must contain 'localId' attribute")
+
+        self._local_id = self._attrs.get('localId', '')
+        self._elements = []
+        for child_node in self._child_nodes:
+            # make sure we have only taskItem, blockTaskItem or taskList as children of the node
+            if (
+                child_node.type != NodeType.TASK_ITEM
+                or child_node.type != NodeType.BLOCK_TASK_ITEM
+                or child_node.type != NodeType.TASK_LIST
+            ):
+                continue
+            self._elements.append(child_node)
+
+    @property
+    def elements(self) -> list[Node]:
+        return self._elements
+
+    @property
+    def local_id(self) -> str:
+        return self._local_id
+
+
+class TaskItemNode(Node):
+    _state: str
+    _local_id: str
+    _elements: list[Node]
+
+    def __init__(self, node_dict: dict):
+        super().__init__(node_dict)
+        if 'localId' not in self._attrs:
+            raise ValueError("taskItem node must contain 'localId' attribute")
+        if 'state' not in self._attrs:
+            raise ValueError("taskItem node must contain 'state' attribute")
+
+        self._state = self._attrs.get('state', '')
+        self._local_id = self._attrs.get('localId', '')
+
+        self._elements = []
+        for child_node in self._child_nodes:
+            self._elements.append(child_node)
+
+    @property
+    def local_id(self) -> str:
+        return self._local_id
+
+    @property
+    def state(self) -> str:
+        return self._state
+
+    @property
+    def elements(self) -> list[Node]:
+        return self._elements
 
 
 class BulletListNode(Node):
@@ -310,14 +390,13 @@ class CodeBlockNode(Node):
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
 
-        self._language = self._attrs.get('language', '')
+        self._language = self._attrs.get(
+            'language', 'json'
+        )  # if there is no language assume it is JSON
         self._elements = []
         for child_node in self._child_nodes:
             # make sure we have only text as children of the node
             if child_node.type != NodeType.TEXT:
-                # print(
-                #     f"WARNING '{NodeType.TEXT.value}' expected under orderedList; but '{child_node.type}' appeared"
-                # )
                 continue
             self._elements.append(child_node)
 
@@ -419,6 +498,116 @@ class MediaNode(Node):
     @property
     def media_type(self) -> str:
         return self._media_type
+
+
+class MediaInlineNode(Node):
+    """Represents a mediaInline node.
+
+    Schema:
+    {
+        "mediaInline_node":
+        {
+            "type": "object",
+            "properties":
+            {
+                "type":
+                {
+                    "enum":
+                    [
+                        "mediaInline"
+                    ]
+                },
+                "marks":
+                {
+                    "type": "array",
+                    "items":
+                    {
+                        "anyOf":
+                        [
+                            {
+                                "$ref": "#/definitions/link_mark"
+                            },
+                            {
+                                "$ref": "#/definitions/annotation_mark"
+                            },
+                            {
+                                "$ref": "#/definitions/border_mark"
+                            }
+                        ]
+                    }
+                },
+                "attrs":
+                {
+                    "type": "object",
+                    "properties":
+                    {
+                        "type":
+                        {
+                            "enum":
+                            [
+                                "link",
+                                "file",
+                                "image"
+                            ]
+                        },
+                        "localId":
+                        {
+                            "type": "string"
+                        },
+                        "id":
+                        {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "alt":
+                        {
+                            "type": "string"
+                        },
+                        "collection":
+                        {
+                            "type": "string"
+                        },
+                        "occurrenceKey":
+                        {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "width":
+                        {
+                            "type": "number"
+                        },
+                        "height":
+                        {
+                            "type": "number"
+                        },
+                        "data":
+                        {}
+                    },
+                    "required":
+                    [
+                        "id",
+                        "collection"
+                    ],
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false,
+            "required":
+            [
+                "type",
+                "attrs"
+            ]
+        }
+    }
+    """
+
+    def __init__(self, node_dict: dict):
+        super().__init__(node_dict)
+        self._text = node_dict.get('attrs', {}).get('type', '')
+
+    @property
+    def text(self) -> str:
+        return self._text
 
 
 class EmojiNode(Node):
@@ -634,6 +823,14 @@ def create_node_from_dict(node_dict: dict) -> Optional[Node]:
         return EmojiNode(node_dict)
     if node_type == NodeType.DATE:
         return DateNode(node_dict)
+    if node_type == NodeType.RULE:
+        return RuleNode(node_dict)
+    if node_type == NodeType.MEDIA_INLINE:
+        return MediaInlineNode(node_dict)
+    if node_type == NodeType.TASK_LIST:
+        return TaskListNode(node_dict)
+    if node_type == NodeType.TASK_ITEM:
+        return TaskItemNode(node_dict)
 
     raise RuntimeError(f"unhandled node type '{node_type}'")
 

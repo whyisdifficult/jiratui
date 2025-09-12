@@ -528,11 +528,11 @@ wheels = [
 
 [[package]]
 name = "identify"
-version = "2.6.13"
+version = "2.6.14"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/ca/ffbabe3635bb839aa36b3a893c91a9b0d368cb4d8073e03a12896970af82/identify-2.6.13.tar.gz", hash = "sha256:da8d6c828e773620e13bfa86ea601c5a5310ba4bcd65edf378198b56a1f9fb32", size = 99243, upload-time = "2025-08-09T19:35:00.6Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/c4/62963f25a678f6a050fb0505a65e9e726996171e6dbe1547f79619eefb15/identify-2.6.14.tar.gz", hash = "sha256:663494103b4f717cb26921c52f8751363dc89db64364cd836a9bf1535f53cd6a", size = 99283, upload-time = "2025-09-06T19:30:52.938Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/ce/461b60a3ee109518c055953729bf9ed089a04db895d47e95444071dcdef2/identify-2.6.13-py2.py3-none-any.whl", hash = "sha256:60381139b3ae39447482ecc406944190f690d4a2997f2584062089848361b33b", size = 99153, upload-time = "2025-08-09T19:34:59.1Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/ae/2ad30f4652712c82f1c23423d79136fbce338932ad166d70c1efb86a5998/identify-2.6.14-py2.py3-none-any.whl", hash = "sha256:11a073da82212c6646b1f39bb20d4483bfb9543bd5566fec60053c4bb309bf2e", size = 99172, upload-time = "2025-09-06T19:30:51.759Z" },
 ]
 
 [[package]]
@@ -581,15 +581,14 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "httpx" },
-    { name = "pre-commit" },
     { name = "pydantic-settings", extra = ["yaml"] },
     { name = "python-json-logger" },
     { name = "textual", extra = ["syntax"] },
-    { name = "tonalite" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pre-commit" },
     { name = "textual-dev" },
 ]
 docs = [
@@ -615,15 +614,16 @@ test = [
 requires-dist = [
     { name = "click", specifier = ">=8.2.1" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.10.1" },
     { name = "python-json-logger", specifier = ">=3.3.0" },
     { name = "textual", extras = ["syntax"], specifier = ">=5.3.0" },
-    { name = "tonalite", specifier = ">=1.8.4" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "textual-dev", specifier = ">=1.7.0" }]
+dev = [
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "textual-dev", specifier = ">=1.7.0" },
+]
 docs = [
     { name = "myst-parser", specifier = ">=4.0.1" },
     { name = "sphinx", specifier = ">=8.1.3" },
@@ -1736,15 +1736,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/b9/1ed31d167be802da0fc95020d04cd27b7d7065cc6fbefdd2f9186f60d7bd/tomli-2.2.1-cp313-cp313-win32.whl", hash = "sha256:d3f5614314d758649ab2ab3a62d4f2004c825922f9e370b29416484086b264ec", size = 98724, upload-time = "2024-11-27T22:38:32.837Z" },
     { url = "https://files.pythonhosted.org/packages/c7/32/b0963458706accd9afcfeb867c0f9175a741bf7b19cd424230714d722198/tomli-2.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:a38aa0308e754b0e3c67e344754dff64999ff9b513e691d0e786265c93583c69", size = 109383, upload-time = "2024-11-27T22:38:34.455Z" },
     { url = "https://files.pythonhosted.org/packages/6e/c2/61d3e0f47e2b74ef40a68b9e6ad5984f6241a942f7cd3bbfbdbd03861ea9/tomli-2.2.1-py3-none-any.whl", hash = "sha256:cb55c73c5f4408779d0cf3eef9f762b9c9f147a77de7b258bef0a5628adc85cc", size = 14257, upload-time = "2024-11-27T22:38:35.385Z" },
-]
-
-[[package]]
-name = "tonalite"
-version = "1.8.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/59/b6/713db83b21a4b7c60461766c9ee2111a4f7936096e601cfb6f72f632a7c3/tonalite-1.8.4.tar.gz", hash = "sha256:2a4b19326105f46dd6e0127c1ee96e55c4af9bba68d001aacd257de251e0d0bb", size = 18929, upload-time = "2024-08-28T21:04:54.883Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/98/d50a2757bb4950a7ecc6b8aef9077309db51e533ef044ef500ab1558f14b/tonalite-1.8.4-py3-none-any.whl", hash = "sha256:5a5457b9c8a0df5ab2f304adf4865aad2f0a4491c27f890a9355b847ba73fc06", size = 13752, upload-time = "2024-08-28T21:04:53.703Z" },
 ]
 
 [[package]]

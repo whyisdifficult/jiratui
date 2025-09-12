@@ -163,7 +163,8 @@ IssueCommentsWidget {
 /* Tab Pane - Description */
 
 .summary-description-container {
-    border: solid $primary;
+    height: 100;
+    margin: 0 0;
 }
 
 /* margin: top right bottom left*/
@@ -173,6 +174,7 @@ IssueCommentsWidget {
 
 IssueDescriptionWidget {
     background: transparent;
+    margin: 0 0;
 }
 
 /*  Work Item Details */
@@ -812,4 +814,41 @@ JQLEditorScreen > Vertical {
     &:focus {
         border: round $accent-lighten-3;
     }
+}
+
+/* Work Item Information (description, summary and custom fields) */
+
+#work-item-info-description-scroll-container {
+    border: solid $secondary-lighten-3;
+    padding: 0 0 0 0;
+    scrollbar-size-vertical: 1;
+}
+
+#work-item-info-extra-scroll-container {
+    border: solid $secondary;
+    scrollbar-size-vertical: 1;
+}
+
+.summary-description-container {
+    height: auto;
+    margin: 0 0;
+    padding: 0 0;
+}
+
+.work-item-info-custom-field-textarea {
+    border-top: solid $secondary-lighten-3;
+    margin: 0 0;
+    padding: 0 0;
+}
+
+MarkdownFence {
+    background: $surface;
+}
+
+WorkItemSummaryContainer {
+    border-left: solid $secondary-lighten-3;
+    height: auto;
+    margin-bottom: 1;
+    color: $text;
+    text-style: italic;
 }

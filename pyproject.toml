@@ -32,11 +32,9 @@ classifiers = [
 dependencies = [
     "click>=8.2.1",
     "httpx>=0.28.1",
-    "pre-commit>=4.3.0",
     "pydantic-settings[yaml]>=2.10.1",
     "python-json-logger>=3.3.0",
     "textual[syntax]>=5.3.0",
-    "tonalite>=1.8.4",
 ]
 
 [project.urls]
@@ -48,6 +46,7 @@ Changelog = "https://github.com/whyisdifficult/jiratui/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.3.0",
     "textual-dev>=1.7.0",
 ]
 docs = [

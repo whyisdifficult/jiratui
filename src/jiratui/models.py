@@ -5,10 +5,7 @@ from decimal import Decimal
 import enum
 from enum import Enum
 import json
-
-from tonalite import Config
-
-config = Config(type_hooks={datetime: datetime.fromisoformat})
+from typing import Any
 
 
 def custom_as_dict_factory(data) -> dict:
@@ -42,6 +39,10 @@ class WorkItemsSearchOrderBy(enum.Enum):
     @classmethod
     def to_choices(cls):
         return [(item.value.title(), item.value) for item in cls]
+
+
+class CustomFieldTypes(enum.Enum):
+    TEXTAREA = 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'
 
 
 @dataclass
@@ -252,7 +253,11 @@ class JiraIssue(JiraBaseIssue):
     labels: list[str] | None = None
     attachments: list[Attachment] | None = None
     sprint: JiraSprint | None = None
+    # a dictionary with all the fields that can be edited
     edit_meta: dict | None = None
+    # editable_custom_fields: a dictionary with the value of the custom fields associated to the issue that support
+    # editing.
+    editable_custom_fields: dict[str, Any] | None = None
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -334,6 +339,42 @@ class JiraIssue(JiraBaseIssue):
     @property
     def priority_name(self) -> str:
         return self.priority.name if self.priority else ''
+
+    def get_field_edit_metadata(self, name: str) -> dict | None:
+        """Retrieves the edit metadata for a field.
+
+        Args:
+            name: the name of a field.
+
+        Returns:
+            The metadata of the field; None if the metadata does not contain information of the field.
+        """
+        if not self.edit_meta:
+            return None
+        return self.edit_meta.get('fields', {}).get(name)
+
+    def get_edit_metadata(self) -> dict | None:
+        """Retrieves the edit metadata for all the fields of the issue.
+
+        Returns:
+            The metadata of the fields  associated to this issue that can be edited; None if no metadata is found.
+        """
+        if not self.edit_meta:
+            return None
+        return self.edit_meta.get('fields')
+
+    def get_editable_custom_field_value(self, name: str) -> dict | None:
+        """Retrieves the value of a custom field that supports editing.
+
+        Args:
+            name: the name of a field.
+
+        Returns:
+            The metadata of the field; None if the metadata does not contain information of the field.
+        """
+        if not self.editable_custom_fields:
+            return None
+        return self.editable_custom_fields.get(name)
 
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'

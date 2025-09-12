@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+from typing import Any
 
 from jiratui.config import CONFIGURATION
 from jiratui.models import (
@@ -30,6 +31,7 @@ def build_issue_instance(
     parent_issue_key: str | None = None,
     priority: dict | None = None,
     edit_meta: dict | None = None,
+    editable_custom_fields: dict[str, Any] | None = None,
 ) -> JiraIssue:
     """Builds an instance of `JiraIssue` with the details of a work item.
 
@@ -46,6 +48,8 @@ def build_issue_instance(
         parent_issue_key: the case-sensitive key of the parent issue.
         priority: a dictionary with the details of the item's priority.
         edit_meta: a dictionary with the details of the item's metadata for editing the item.
+        editable_custom_fields: a dictionary with the value of the custom fields associated to the issue that support
+        editing.
 
     Returns:
         An instance of `JiraIssue`.
@@ -151,6 +155,7 @@ def build_issue_instance(
         due_date=datetime.strptime(fields.get('duedate'), '%Y-%m-%d').date()
         if fields.get('duedate')
         else None,
+        editable_custom_fields=editable_custom_fields,
     )
 
 
