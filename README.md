@@ -14,7 +14,7 @@ A **Text User Interface (TUI)** for interacting with Atlassian Jira directly fro
 The recommended way to install the application is via [uv](https://docs.astral.sh/uv/):
 
 ```shell
-uv add jiratui
+uv tool install jiratui
 ```
 
 Alternatively, you can install it using `pip`:
