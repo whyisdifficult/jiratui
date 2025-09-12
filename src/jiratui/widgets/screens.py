@@ -600,7 +600,7 @@ class MainScreen(Screen):
                 severity='warning',
                 title='Work Item Search',
             )
-            WorkItemSearchResult(total=0, start=0, end=0)
+            return WorkItemSearchResult(total=0, start=0, end=0)
 
         result: JiraIssueSearchResponse = response.result
         estimated_total_issues: int | None = None
