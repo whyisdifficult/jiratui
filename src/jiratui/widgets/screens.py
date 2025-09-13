@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 import logging
 
+from dateutil.parser import isoparse  # type:ignore[import-untyped]
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -556,11 +557,11 @@ class MainScreen(Screen):
 
         search_field_created_from: date | None = None
         if value := self.issue_date_from_input.value:
-            search_field_created_from = datetime.fromisoformat(value).date()
+            search_field_created_from = isoparse(value).date()
 
         search_field_created_until: date | None = None
         if value := self.issue_date_until_input.value:
-            search_field_created_until = datetime.fromisoformat(value).date()
+            search_field_created_until = isoparse(value).date()
 
         search_field_assignee: str | None = None
         if value := self.users_selector.selection:
