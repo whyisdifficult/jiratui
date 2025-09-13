@@ -658,6 +658,29 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         return editable_fields
 
+    @staticmethod
+    def _generate_assignable_users_for_dropdown(
+        users: list[JiraUser] | None = None,
+        current_assignee: JiraUser | None = None,
+        default_assignable_users: list[tuple[str, str]] | None = None,
+    ) -> list[tuple[str, str]]:
+        assignable_users: set[str] = set()
+        selectable_users: list[tuple[str, str]] = []
+        for user in users or []:
+            if user.account_id:
+                selectable_users.append((user.display_name, user.account_id))
+                assignable_users.add(user.account_id)
+
+        if not selectable_users:
+            selectable_users = default_assignable_users
+            for selectable_user in selectable_users:
+                assignable_users.add(selectable_user[1])
+
+        if current_assignee and current_assignee.account_id not in assignable_users:
+            selectable_users.append((current_assignee.display_name, current_assignee.account_id))
+
+        return selectable_users
+
     async def retrieve_users_assignable_to_work_item(
         self,
         work_item_key: str,
@@ -678,15 +701,16 @@ To edit a field simply focus on it, change its value and then press `^s`.
             Nothing.
         """
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+        # fetch the list of users that can be assigned to the current issue
         response: APIControllerResponse = await application.api.search_users_assignable_to_issue(
             issue_key=work_item_key
         )
-        selectable_users: list[tuple[str, str]] = self.available_users or []
-        if response.result:
-            user: JiraUser
-            selectable_users = []
-            for user in response.result:
-                selectable_users.append((user.display_name, user.account_id))
+        # generate the list of users for the dropdown menu
+        selectable_users: list[tuple[str, str]] = self._generate_assignable_users_for_dropdown(
+            response.result,
+            current_assignee,
+            self.available_users,
+        )
 
         if selectable_users:
             self.assignee_selector.set_options(selectable_users)
