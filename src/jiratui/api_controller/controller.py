@@ -576,6 +576,18 @@ class APIController:
             result=sorted(users, key=lambda item: item.display_name or item.account_id)
         )
 
+    @staticmethod
+    def _extract_editable_custom_fields(
+        issue_fields: dict | None = None,
+        issue_editable_custom_fields: dict | None = None,
+    ) -> dict[str, Any]:
+        # extract the value of all the custom fields that can be edited
+        custom_fields: dict[str, Any] = {}
+        for custom_field_id, custom_field_data in issue_fields.items():
+            if custom_field_id in issue_editable_custom_fields:
+                custom_fields[custom_field_id] = custom_field_data
+        return custom_fields
+
     async def get_issue(
         self,
         issue_id_or_key: str,
@@ -639,20 +651,28 @@ class APIController:
             related_issues: list[RelatedJiraIssue] = build_related_work_items(
                 issue_fields.get('issuelinks', [])
             )
+            editable_custom_fields: dict[str, Any] | None = None
+            if issue_fields:
+                # extract the value of the custom fields that can be edited
+                editable_custom_fields = self._extract_editable_custom_fields(
+                    issue_fields, issue.get('editmeta', {}).get('fields')
+                )
+
             try:
                 instance: JiraIssue = build_issue_instance(
                     issue.get('id'),
                     issue.get('key'),
-                    issue_fields,
-                    issue_project,
-                    issue_reporter,
-                    issue_status,
-                    issue_assignee,
-                    comments,
-                    related_issues,
-                    parent_issue_key,
-                    issue_priority,
-                    issue.get('editmeta'),
+                    fields=issue_fields,
+                    project=issue_project,
+                    reporter=issue_reporter,
+                    status=issue_status,
+                    assignee=issue_assignee,
+                    comments=comments,
+                    related_issues=related_issues,
+                    parent_issue_key=parent_issue_key,
+                    priority=issue_priority,
+                    edit_meta=issue.get('editmeta'),
+                    editable_custom_fields=editable_custom_fields,
                 )
             except Exception as e:
                 self.logger.error(

@@ -949,6 +949,8 @@ def test_build_criteria_for_searching_work_items(
     expected_criteria,
     jira_api_controller: APIController,
 ):
+    # GIVEN
+    jira_api_controller.config.jql_expression_id_for_work_items_search = None
     # WHEN
     criteria = jira_api_controller._build_criteria_for_searching_work_items(
         project_key=project_key,

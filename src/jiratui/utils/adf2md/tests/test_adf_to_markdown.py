@@ -30,16 +30,20 @@ from jiratui.utils.adf2md.nodes import (
     HeadingNode,
     InlineCardNode,
     ListItemNode,
+    MediaInlineNode,
     MediaNode,
     MediaSingleNode,
     MentionNode,
     OrderedListNode,
     PanelNode,
     ParagraphNode,
+    RuleNode,
     TableCell,
     TableHeader,
     TableNode,
     TableRow,
+    TaskItemNode,
+    TaskListNode,
     TextNode,
     create_node_from_dict,
     create_nodes_from_list,
@@ -365,6 +369,49 @@ def test_create_node_from_dict_not_implemented_node_type():
         ),
         ({'type': 'emoji', 'attrs': {'shortName': ':grinning:', 'text': '😀'}}, EmojiNode),
         ({'type': 'date', 'attrs': {'timestamp': '1582152559'}}, DateNode),
+        ({'type': 'rule'}, RuleNode),
+        (
+            {'type': 'mediaInline', 'attrs': {'id': '1', 'collection': 'c', 'height': 12}},
+            MediaInlineNode,
+        ),
+        (
+            {
+                'type': 'taskList',
+                'content': [
+                    {
+                        'type': 'taskItem',
+                        'content': [{'type': 'text', 'text': 'Text 1'}],
+                        'attrs': {'localId': '75', 'state': 'DONE'},
+                    },
+                    {
+                        'type': 'taskItem',
+                        'content': [{'type': 'text', 'text': 'Another text“'}],
+                        'attrs': {'localId': '228', 'state': 'DONE'},
+                    },
+                    {
+                        'type': 'taskItem',
+                        'content': [
+                            {
+                                'type': 'text',
+                                'text': 'some text',
+                                'marks': [{'type': 'link', 'attrs': {'href': 'http://foo.bar'}}],
+                            }
+                        ],
+                        'attrs': {'localId': '522', 'state': 'DONE'},
+                    },
+                ],
+                'attrs': {'localId': 'bebd81b'},
+            },
+            TaskListNode,
+        ),
+        (
+            {
+                'type': 'taskItem',
+                'content': [{'type': 'text', 'text': 'Another text“'}],
+                'attrs': {'localId': '228', 'state': 'DONE'},
+            },
+            TaskItemNode,
+        ),
     ],
 )
 def test_create_node_from_dict(node_value, expected_node_type):
@@ -414,6 +461,368 @@ def test_create_node_presenter_without_children():
     assert str(np) == ''
     assert isinstance(np.node, DateNode)
     assert np.child_presenters == []
+
+
+@pytest.mark.parametrize(
+    'input_node, expected_result',
+    [
+        (DateNode({'type': 'date', 'attrs': {'timestamp': '1582152559'}}), '2020-02-19'),
+        (
+            ParagraphNode({'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello'}]}),
+            'hello',
+        ),
+        (TextNode({'type': 'text', 'text': 'hello'}), 'hello'),
+        (
+            HardBreakNode(
+                {
+                    'type': 'doc',
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'hello'}, {'type': 'hardBreak'}],
+                        }
+                    ],
+                }
+            ),
+            'hello  \n',
+        ),
+        (
+            BulletListNode(
+                {
+                    'type': 'bulletList',
+                    'content': [
+                        {
+                            'type': 'listItem',
+                            'content': [
+                                {
+                                    'type': 'paragraph',
+                                    'content': [{'type': 'text', 'text': 'hello'}],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ),
+            '- hello',
+        ),
+        (
+            ListItemNode(
+                {
+                    'type': 'listItem',
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello'}]}
+                    ],
+                }
+            ),
+            'hello',
+        ),
+        (
+            PanelNode(
+                {
+                    'type': 'panel',
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello'}]}
+                    ],
+                    'attrs': {'panelType': 'info'},
+                }
+            ),
+            '> hello',
+        ),
+        (
+            TableNode(
+                {
+                    'type': 'table',
+                    'content': [
+                        {
+                            'type': 'tableRow',
+                            'content': [
+                                {
+                                    'type': 'tableCell',
+                                    'attrs': {},
+                                    'content': [
+                                        {
+                                            'type': 'paragraph',
+                                            'content': [{'type': 'text', 'text': 'hello'}],
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ],
+                    'attrs': {
+                        'isNumberColumnEnabled': False,
+                        'layout': 'center',
+                        'width': 900,
+                        'displayMode': 'default',
+                    },
+                }
+            ),
+            '| hello |',
+        ),
+        (
+            TableRow(
+                {
+                    'type': 'tableRow',
+                    'content': [
+                        {
+                            'type': 'tableCell',
+                            'attrs': {},
+                            'content': [
+                                {
+                                    'type': 'paragraph',
+                                    'content': [{'type': 'text', 'text': 'hello'}],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ),
+            '| hello |',
+        ),
+        (
+            TableHeader(
+                {
+                    'type': 'tableHeader',
+                    'attrs': {},
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'Hello world header'}],
+                        }
+                    ],
+                }
+            ),
+            'Hello world header',
+        ),
+        (
+            TableCell(
+                {
+                    'type': 'tableCell',
+                    'attrs': {},
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                }
+            ),
+            'Hello world',
+        ),
+        (
+            DocNode(
+                {
+                    'version': 1,
+                    'type': 'doc',
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                }
+            ),
+            'Hello world',
+        ),
+        (
+            MentionNode(
+                {
+                    'type': 'mention',
+                    'attrs': {
+                        'id': 'ABCDE-ABCDE-ABCDE-ABCDE',
+                        'text': '@Bart Simpson',
+                        'userType': 'APP',
+                    },
+                }
+            ),
+            '@Bart Simpson',
+        ),
+        (
+            OrderedListNode(
+                {
+                    'type': 'orderedList',
+                    'attrs': {'order': 3},
+                    'content': [
+                        {
+                            'type': 'listItem',
+                            'content': [
+                                {
+                                    'type': 'paragraph',
+                                    'content': [{'type': 'text', 'text': 'Hello world'}],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ),
+            '3. Hello world',
+        ),
+        (
+            InlineCardNode({'type': 'inlineCard', 'attrs': {'url': 'https://foo.bar'}}),
+            'https://foo.bar',
+        ),
+        (
+            BlockQuoteNode(
+                {
+                    'type': 'blockquote',
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                }
+            ),
+            '> Hello world',
+        ),
+        (
+            CodeBlockNode(
+                {
+                    'type': 'codeBlock',
+                    'attrs': {'language': 'javascript'},
+                    'content': [{'type': 'text', 'text': 'var foo = {};\nvar bar = [];'}],
+                }
+            ),
+            '```javascript\nvar foo = {};\nvar bar = [];\n```',
+        ),
+        (
+            CodeBlockNode(
+                {
+                    'type': 'codeBlock',
+                    'attrs': {'language': 'json'},
+                    'content': [{'type': 'text', 'text': '{"a": 1}'}],
+                }
+            ),
+            '```json\n{\n   "a": 1\n}\n```',
+        ),
+        (
+            CodeBlockNode(
+                {
+                    'type': 'codeBlock',
+                    'attrs': {'language': ''},
+                    'content': [{'type': 'text', 'text': '{"a": 1}'}],
+                }
+            ),
+            '```\n{"a": 1}\n```',
+        ),
+        (
+            ExpandNode(
+                {
+                    'type': 'expand',
+                    'attrs': {'title': 'Hello Bart'},
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                }
+            ),
+            '<details>\n<summary>Hello Bart</summary>\n\nHello world\n</details>',
+        ),
+        (
+            HeadingNode(
+                {
+                    'type': 'heading',
+                    'attrs': {'level': 1},
+                    'content': [{'type': 'text', 'text': 'Heading 1'}],
+                }
+            ),
+            '# Heading 1',
+        ),
+        (
+            MediaSingleNode(
+                {
+                    'type': 'mediaSingle',
+                    'attrs': {'layout': 'center'},
+                    'content': [
+                        {
+                            'type': 'media',
+                            'attrs': {
+                                'id': '4478e39c-cf9b-41d1-ba92-68589487cd75',
+                                'type': 'file',
+                                'collection': 'MediaServicesSample',
+                                'alt': 'moon.jpeg',
+                                'width': 225,
+                                'height': 225,
+                            },
+                        }
+                    ],
+                }
+            ),
+            '[see-attachments]',
+        ),
+        (EmojiNode({'type': 'emoji', 'attrs': {'shortName': ':grinning:', 'text': '😀'}}), '😀'),
+        (
+            RuleNode(
+                {
+                    'version': 1,
+                    'type': 'doc',
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]},
+                        {'type': 'rule'},
+                    ],
+                }
+            ),
+            'Hello world\n\n---\n',
+        ),
+        (
+            MediaInlineNode(
+                {
+                    'type': 'mediaInline',
+                    'attrs': {'layout': 'center'},
+                    'content': [
+                        {
+                            'type': 'media',
+                            'attrs': {
+                                'id': '4478e39c-cf9b-41d1-ba92-68589487cd75',
+                                'type': 'file',
+                                'collection': 'MediaServicesSample',
+                                'alt': 'moon.jpeg',
+                                'width': 225,
+                                'height': 225,
+                            },
+                        }
+                    ],
+                }
+            ),
+            '[see-attachments]',
+        ),
+        (
+            TaskListNode(
+                {
+                    'type': 'taskList',
+                    'content': [
+                        {
+                            'type': 'taskItem',
+                            'content': [{'type': 'text', 'text': 'Text 1'}],
+                            'attrs': {'localId': '75', 'state': 'DONE'},
+                        },
+                        {
+                            'type': 'taskItem',
+                            'content': [
+                                {
+                                    'type': 'text',
+                                    'text': 'some text',
+                                    'marks': [
+                                        {'type': 'link', 'attrs': {'href': 'http://foo.bar'}}
+                                    ],
+                                }
+                            ],
+                            'attrs': {'localId': '522', 'state': 'DONE'},
+                        },
+                    ],
+                    'attrs': {'localId': 'bebd81b'},
+                }
+            ),
+            '- [x] Text 1\n- [x] [some text](http://foo.bar)',
+        ),
+        (
+            TaskItemNode(
+                {
+                    'type': 'taskItem',
+                    'content': [{'type': 'text', 'text': 'Text 1'}],
+                    'attrs': {'localId': '75', 'state': 'To Do'},
+                }
+            ),
+            '[ ] Text 1',
+        ),
+    ],
+)
+def test_gen_md_from_root_node_with_use_cases(input_node, expected_result):
+    # WHEN
+    result = gen_md_from_root_node(input_node)
+    # THEN
+    assert isinstance(result, str)
+    assert result == expected_result
 
 
 @pytest.mark.parametrize(

@@ -157,11 +157,18 @@ pressing `d`. Comments can be added by pressing `n`.
         comment: IssueComment
         elements: list[CommentCollapsible] = []
         items.sort(key=lambda x: x.updated, reverse=True)
+        comment_text: Markdown | Static
         for comment in items:
             try:
-                comment_text = adf2md(comment.body_as_dict())
+                content = adf2md(comment.body_as_dict())
+                comment_text = Markdown(content)
             except Exception:
-                comment_text = 'Unable to display the comment. Open the link above to view it.'
+                comment_text = Static(
+                    Text(
+                        'Unable to display the comment. Open the link above to view it.',
+                        style='bold orange',
+                    )
+                )
 
             url = (
                 build_external_url_for_comment(self.issue_key, comment.id) if self.issue_key else ''
@@ -172,7 +179,7 @@ pressing `d`. Comments can be added by pressing `n`.
                     Link('Open link', url=url, tooltip='view comment in the browser'),
                     Static(f'Last update: {comment.updated_on()}'),
                     Rule(),
-                    Markdown(comment_text),
+                    comment_text,
                     title=Text(comment.short_metadata()),
                     work_item_key=self.issue_key,
                     comment_id=comment.id,
