@@ -2,6 +2,8 @@ from datetime import datetime
 import json
 from typing import Any
 
+from dateutil.parser import isoparse  # type:ignore[import-untyped]
+
 from jiratui.config import CONFIGURATION
 from jiratui.models import (
     Attachment,
@@ -89,9 +91,7 @@ def build_issue_instance(
                 id=item.get('id'),
                 filename=item.get('filename'),
                 size=item.get('size'),
-                created=datetime.fromisoformat(item.get('created'))
-                if item.get('created')
-                else None,
+                created=isoparse(item.get('created')) if item.get('created') else None,
                 mime_type=item.get('mimeType'),
                 author=creator,
             )
@@ -109,8 +109,8 @@ def build_issue_instance(
         )
         if project
         else None,
-        created=datetime.fromisoformat(fields.get('created')) if fields.get('created') else None,
-        updated=datetime.fromisoformat(fields.get('updated')) if fields.get('updated') else None,
+        created=isoparse(fields.get('created')) if fields.get('created') else None,
+        updated=isoparse(fields.get('updated')) if fields.get('updated') else None,
         priority=IssuePriority(
             id=priority.get('id'),
             name=priority.get('name'),
@@ -143,7 +143,7 @@ def build_issue_instance(
         parent_issue_key=parent_issue_key,
         time_tracking=tracking,
         resolution=fields.get('resolution').get('name') if fields.get('resolution') else None,
-        resolution_date=datetime.fromisoformat(fields.get('resolutiondate'))
+        resolution_date=isoparse(fields.get('resolutiondate'))
         if fields.get('resolutiondate')
         else None,
         labels=[label.lower() for label in fields.get('labels', [])]
@@ -182,12 +182,8 @@ def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
                         active=author.get('active'),
                         email=author.get('emailAddress'),
                     ),
-                    created=datetime.fromisoformat(comment.get('created'))
-                    if comment.get('created')
-                    else None,
-                    updated=datetime.fromisoformat(comment.get('updated'))
-                    if comment.get('updated')
-                    else None,
+                    created=isoparse(comment.get('created')) if comment.get('created') else None,
+                    updated=isoparse(comment.get('updated')) if comment.get('updated') else None,
                     update_author=JiraUser(
                         account_id=update_author.get('accountId'),
                         display_name=update_author.get('displayName'),

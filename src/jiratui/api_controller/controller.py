@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from dateutil.parser import isoparse  # type:ignore[import-untyped]
+
 from jiratui.api.api import JiraAPI
 from jiratui.api_controller.constants import (
     MAXIMUM_PAGE_NUMBER_LIST_GROUPS,
@@ -1279,8 +1281,8 @@ class APIController:
                     active=author.get('active'),
                     email=author.get('emailAddress'),
                 ),
-                created=datetime.fromisoformat(comment.get('created')),
-                updated=datetime.fromisoformat(comment.get('updated')),
+                created=isoparse(comment.get('created')),
+                updated=isoparse(comment.get('updated')),
                 update_author=JiraUser(
                     account_id=update_author.get('accountId'),
                     display_name=update_author.get('displayName'),
@@ -1327,12 +1329,8 @@ class APIController:
             comments.append(
                 IssueComment(
                     id=record.get('id'),
-                    created=datetime.fromisoformat(record.get('created'))
-                    if record.get('created')
-                    else None,
-                    updated=datetime.fromisoformat(record.get('updated'))
-                    if record.get('updated')
-                    else None,
+                    created=isoparse(record.get('created')) if record.get('created') else None,
+                    updated=isoparse(record.get('updated')) if record.get('updated') else None,
                     author=JiraUser(
                         account_id=author.get('accountId'),
                         active=author.get('active'),
@@ -1376,12 +1374,8 @@ class APIController:
         update_author = response.get('updateAuthor')
         comment = IssueComment(
             id=response.get('id'),
-            created=datetime.fromisoformat(response.get('created'))
-            if response.get('created')
-            else None,
-            updated=datetime.fromisoformat(response.get('updated'))
-            if response.get('updated')
-            else None,
+            created=isoparse(response.get('created')) if response.get('created') else None,
+            updated=isoparse(response.get('updated')) if response.get('updated') else None,
             author=JiraUser(
                 account_id=author.get('accountId'),
                 active=author.get('active'),
@@ -1691,7 +1685,7 @@ class APIController:
                 filename=response[0].get('filename'),
                 size=response[0].get('size'),
                 mime_type=response[0].get('mimeType'),
-                created=datetime.fromisoformat(response[0].get('created'))
+                created=isoparse(response[0].get('created'))
                 if response[0].get('created')
                 else None,
                 author=creator,
@@ -1761,12 +1755,8 @@ class APIController:
                 JiraWorklog(
                     id=work_log.get('id'),
                     issue_id=work_log.get('issueId'),
-                    started=datetime.fromisoformat(work_log.get('started'))
-                    if work_log.get('started')
-                    else None,
-                    updated=datetime.fromisoformat(work_log.get('updated'))
-                    if work_log.get('updated')
-                    else None,
+                    started=isoparse(work_log.get('started')) if work_log.get('started') else None,
+                    updated=isoparse(work_log.get('updated')) if work_log.get('updated') else None,
                     time_spent=work_log.get('timeSpent'),
                     time_spent_seconds=work_log.get('timeSpentSeconds'),
                     author=author,
