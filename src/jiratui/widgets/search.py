@@ -9,6 +9,7 @@ from textual.widgets import DataTable
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
+from jiratui.utils.urls import build_external_url_for_issue
 
 
 class IssuesSearchResultsTable(DataTable):
@@ -29,6 +30,13 @@ class IssuesSearchResultsTable(DataTable):
             show=True,
             key_display='alt+right',
         ),
+        Binding(
+            key='ctrl+o',
+            action='open_issue_in_browser',
+            description='Open in Browser',
+            show=True,
+            key_display='^o',
+        ),
     ]
 
     def __init__(self):
@@ -40,6 +48,7 @@ class IssuesSearchResultsTable(DataTable):
         #   2: we need to use the token 'token-b'
         self.token_by_page: dict[int, str] = {}
         self.page: int = 0
+        self.current_work_item_key: str | None = None
 
     def watch_search_results(self, response: JiraIssueSearchResponse | None = None) -> None:
         if response is None:
@@ -74,18 +83,31 @@ class IssuesSearchResultsTable(DataTable):
                     Text(issue.work_item_type_name, style=style_work_type),
                     Text(issue_summary),
                 ],
-                key=str(issue.id),
+                key=f'{issue.id}#{issue.key}',
             )
 
         # focus the table with the current results page
         self.focus()
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Fetches the details of the currently-selected item."""
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+        _, work_item_key = event.row_key.value.split('#')
+        self.current_work_item_key = work_item_key
         # use exclusive=True to make sure that if the user selects another work item before the worker finishes
         # retrieving the data of the previously selected the correct data is fetched
         # the exclusive flag tells Textual to cancel all previous workers before starting the new one.
-        self.run_worker(screen.fetch_issue(event.row_key.value), exclusive=True)
+        self.run_worker(screen.fetch_issue(work_item_key), exclusive=True)
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Stores the key of the currently-selected item."""
+        _, self.current_work_item_key = event.row_key.value.split('#')
+
+    def action_open_issue_in_browser(self) -> None:
+        """Opens the currently-selected item in the default browser."""
+        if self.current_work_item_key:
+            self.notify('Opening Work Item in the browser...')
+            self.app.open_url(build_external_url_for_issue(self.current_work_item_key))
 
 
 class SearchResultsContainer(Container):
