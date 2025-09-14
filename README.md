@@ -23,6 +23,18 @@ Alternatively, you can install it using `pip`:
 pip install jiratui
 ```
 
+or `pipx`:
+
+```shell
+pipx install jiratui
+```
+
+For Arch Linux (btw) the package is available in [AUR](https://aur.archlinux.org/packages/jiratui-git)
+
+```shell
+yay -S jiratui-git
+```
+
 ## Usage
 
 After installing the package, you can run the CLI tool with the following command:
