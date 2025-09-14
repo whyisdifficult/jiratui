@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 import sys
 
 from pythonjsonlogger.json import JsonFormatter
@@ -8,6 +10,7 @@ from textual.binding import Binding
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
+from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screens import MainScreen
@@ -137,13 +140,21 @@ class JiraApp(App):
 
     def _setup_logging(self) -> None:
         self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.setLevel(logging.WARNING)
+        self.logger.setLevel(CONFIGURATION.get().log_level or logging.WARNING)
+
+        if jira_tui_log_file := os.getenv('JIRA_TUI_LOG_FILE'):
+            log_file = Path(jira_tui_log_file).resolve()
+        elif config_log_file := CONFIGURATION.get().log_file:
+            log_file = Path(config_log_file).resolve()
+        else:
+            log_file = get_log_file()
+
         try:
-            fh = logging.FileHandler(CONFIGURATION.get().log_file)
+            fh = logging.FileHandler(log_file)
         except Exception:
             pass
         else:
-            fh.setLevel(logging.WARNING)
+            fh.setLevel(CONFIGURATION.get().log_level or logging.WARNING)
             fh.setFormatter(JsonFormatter())
             self.logger.addHandler(fh)
 

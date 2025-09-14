@@ -5,3 +5,4 @@ ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES = 10485760  # 10MB
 """The maximum size of files that can be attached to work items. This is a restriction imposed by this tool and not by
 Jira."""
 LOGGER_NAME = 'jiratui'
+LOG_FILE_FILE_NAME = 'jiratui.log'

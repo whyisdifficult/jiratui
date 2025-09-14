@@ -2,7 +2,6 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 
-from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -14,8 +13,7 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL,
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
-
-DEFAULT_YAML_CONFIG_FILE_NAME = 'jiratui.yaml'
+from jiratui.files import get_config_file
 
 
 class ApplicationConfiguration(BaseSettings):
@@ -35,9 +33,9 @@ class ApplicationConfiguration(BaseSettings):
     """The ID of the Jira user using the application. This is useful if you want the user selection dropdown widgets to
     automatically select your user from the options. It is also used as the default reporter of any new work item that
     is created in the application."""
-    search_results_per_page: int = Field(default=ISSUE_SEARCH_DEFAULT_MAX_RESULTS)
+    search_results_per_page: int = ISSUE_SEARCH_DEFAULT_MAX_RESULTS
     """The number of results to show in the search results. The default is 30."""
-    search_issues_default_day_interval: int = Field(default=ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL)
+    search_issues_default_day_interval: int = ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL
     """This controls how many days worth of issues to fetch when no other search criteria has been defined."""
     show_issue_web_links: bool = True
     """If True (default) then the application will retrieve the remote links related to a work item."""
@@ -91,17 +89,16 @@ class ApplicationConfiguration(BaseSettings):
     """If `True` the application will fetch server information from the Jira API instance and use the server title or
     server base URL to build the title of the application. If set to `False` the title will be the default or, to the
     value of the `tui_custom_title` setting above; if defined."""
-    log_file: str = 'jiratui.log'
-    """The name of the log file to use."""
+    log_file: str | None = None
+    """The filename of the log file to use."""
+    log_level: str = 'WARNING'
+    """The log level to use. Use Python's `logging` names: `CRITICAL`, `FATAL`, `ERROR`, `WARN`, `WARNING`, `INFO`,
+    `DEBUG` and `NOTSET`."""
     attachments_source_directory: str = '/'
     """The directory to start the search of files that a user wants to attach to work items. The user will be able to
     navigate though the sub-directories."""
 
     model_config = SettingsConfigDict(
-        env_file=os.getenv('JIRA_TUI_ENV_FILE', '.env.jiratui') or '.env.jiratui',
-        env_file_encoding='utf-8',
-        env_prefix='JIRA_TUI_',
-        yaml_file=DEFAULT_YAML_CONFIG_FILE_NAME,
         extra='allow',
     )
 
@@ -114,12 +111,13 @@ class ApplicationConfiguration(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        config_file = Path(DEFAULT_YAML_CONFIG_FILE_NAME)
         if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
-            config_file = Path(jira_tui_config_file).resolve()
+            conf_file = Path(jira_tui_config_file).resolve()
+        else:
+            conf_file = get_config_file()
 
         return (
-            YamlConfigSettingsSource(settings_cls, yaml_file=config_file),
+            YamlConfigSettingsSource(settings_cls, yaml_file=conf_file),
             env_settings,
             dotenv_settings,
             init_settings,
