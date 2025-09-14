@@ -3,6 +3,7 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/whyisdifficult/jiratui/.github%2Fworkflows%2Ftest.yaml)
 ![GitHub Release](https://img.shields.io/github/v/release/whyisdifficult/jiratui)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/jiratui)
+[![AUR package](https://repology.org/badge/version-for-repo/aur/jiratui.svg)](https://repology.org/project/jiratui/versions)
 
 
 A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
@@ -60,15 +61,23 @@ Commands:
 
 ## Settings
 
-Before using the application, you need to configure a few settings.
+Before using the application, you need to provide the basic configuration. All the settings can be provided in a `yaml`
+file.
 
-**Tip**: the application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
-you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you
-want to define in a ENV variable called `JIRA_TUI_*`; where `*` is the name of the config variable.
+The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
+config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
+config file via the env variable `JIRA_TUI_CONFIG_FILE`. The application will attempt to load the config
+file in the following way:
 
-**Example**: to define the value of `jira_api_username` do this: `JIRA_TUI_JIRA_API_USERNAME=...`
+1. If the variable `JIRA_TUI_CONFIG_FILE` is set it wil use the file specified by it.
+2. If not, if `XDG_CONFIG_HOME` is set then it will load the file `$XDG_CONFIG_HOME/jiratui/config.yaml`.
+3. If not, it will attempt to load the file from `$HOME/.config/jiratui/config.yaml`.
 
-## Setting Up the Jira's Instance API
+**WARNING**: Starting with version `v1.0.0` the application no longer supports using the env variable
+`JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
+config file as described above.
+
+### Setting Up the Jira's Instance API
 
 You must provide the following values to connect to your Jira instance API:
 
@@ -76,28 +85,11 @@ You must provide the following values to connect to your Jira instance API:
 - `jira_api_token`: the token for connecting to your Jira's API.
 - `jira_api_base_url`: the base URL of your Jira instance API.
 
-You have a couple of options for setting these values.
-
-### Use a `.env` File
-
-Create a `.env` file named `.env.jiratui` and add the following content:
+Example: Update the file called `$XDG_CONFIG_HOME/jiratui/config.yaml` and add the following:
 
 ```yaml
-JIRA_TUI_JIRA_API_USERNAME=<your-jira-api-username>
-JIRA_TUI_JIRA_API_TOKEN=<your-jira-api-token>
-JIRA_TUI_JIRA_API_BASE_URL=https://<your-jira-instance-hostname>.atlassian.net
-```
-
-### Use a Config File
-
-You can also use a combination of a `.env` file and a config file. For example, keep the API username and token in the
-`.env` file while placing the rest of the settings in a config file. The default config file expected by the application
-is `jiratui.yaml`, but you can name your config file anything you like and specify it using the environment variable
-`JIRA_TUI_CONFIG_FILE` when interacting with the CLI/app.
-
-Example: Create a file called `my-jiratui-config.yaml` and add the following:
-
-```yaml
+jira_api_username: 'bart@simpson.com'
+jira_api_token: '12345'
 jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 ```
 
@@ -114,7 +106,7 @@ jiratui ui
 If you are using a custom config file, run:
 
 ```shell
-JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
+JIRA_TUI_CONFIG_FILE=/path/to/cutom-file/my-file.yaml jiratui ui
 ```
 
 ## CLI Interface
