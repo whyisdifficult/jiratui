@@ -116,6 +116,9 @@ class ApplicationConfiguration(BaseSettings):
         else:
             conf_file = get_config_file()
 
+        if not conf_file.exists():
+            raise FileNotFoundError(f'Unable to find the config file you provided: {conf_file}')
+
         return (
             YamlConfigSettingsSource(settings_cls, yaml_file=conf_file),
             env_settings,

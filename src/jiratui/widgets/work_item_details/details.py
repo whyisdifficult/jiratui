@@ -567,6 +567,10 @@ To edit a field simply focus on it, change its value and then press `^s`.
         Returns:
             Nothing.
         """
+        if not self.issue:
+            self.notify('You must select a work item before saving changes')
+            return
+
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
         if payload := self._build_payload_for_update():
             try:

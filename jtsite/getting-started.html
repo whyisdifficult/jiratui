@@ -11,7 +11,7 @@
     <title>JiraTUI - Getting Started</title>
 
     <!--    Favicons-->
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicons/favicon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="assets/img/gallery/favicon.png">
 
     <!--    Stylesheets-->
     <link rel="stylesheet" crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==">
@@ -27,7 +27,7 @@
       "url": "https://jiratui.sh",
       "applicationCategory": "Developer Tools",
       "operatingSystem": "Cross-platform",
-      "softwareVersion": "0.1.0",
+      "softwareVersion": "0.2.0",
       "author": {
         "@type": "Person",
         "name": "Gaston Tagni",
@@ -148,7 +148,7 @@
                             </div>
                         </div>
 
-                        <p>The recommended way to install the application is via <a href="https://docs.astral.sh/uv/" target="_blank">uv</a></p>
+                        <p>The recommended way to install the application is via <a href="https://docs.astral.sh/uv/" target="_blank" title="Follow the link to view the documentation of Astral uv">uv</a></p>
                         <div class="position-relative border rounded-1 border-700 p-1">
                           <pre><code id="codeBlock1">uv tool install jiratui</code></pre>
                           <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton1" onclick="copyCode('codeBlock1', 'copyButton1')">
@@ -161,6 +161,24 @@
                         <div class="position-relative border rounded-1 border-700 p-1">
                           <pre><code id="codeBlock2">pip install jiratui</code></pre>
                           <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton2" onclick="copyCode('codeBlock2', 'copyButton2')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>or using pipx,</p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock9">pipx install jiratui</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton9" onclick="copyCode('codeBlock9', 'copyButton9')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <p>For Arch Linux (btw) the package is available in <a href="https://aur.archlinux.org/packages/jiratui-git" target="_blank" title="Link to the jiratui AUR package for ArchLinux">AUR</a></p>
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock10">yay -S jiratui-git</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton10" onclick="copyCode('codeBlock10', 'copyButton10')">
                             <i class="bi bi-clipboard"></i> Copy
                           </button>
                         </div>
@@ -206,12 +224,32 @@ Commands:
                   <div class="row">
                     <div class="col-md-12 text-justify-left text-xl-start">
                         <h2 id="configuration" class="display-6 fw-semi-bold">Initial Configuration</h2>
-                        <p>Before using the application, you need to configure a few settings.</p>
+                        <p>Before using the application, you need to provide the basic configuration. All the settings can be provided in a <code class="fs-0">yaml</code> file.</p>
                         <p>
-                          The application uses <a href="https://docs.pydantic.dev/latest/concepts/pydantic_settings/" target="_blank">Pydantic Settings</a>. This allows you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you want to define in a ENV variable called <code class="fs-0">JIRA_TUI_*</code>; where <code class="fs-0">*</code> is the name of the config variable.
+                          The application uses the
+                            <a href="https://specifications.freedesktop.org/basedir-spec/latest/" target="_blank">XDG specification</a>
+                            to locate config (and log) files. The default name of the config file is
+                            <code class="fs-0">config.yaml</code>. You can override the location of the config file via
+                            the env variable <code class="fs-0">JIRA_TUI_CONFIG_FILE</code>. The application will
+                            attempt to load the config file in the following way:
                         </p>
+                        <ol>
+                            <li>If the variable <code class="fs-0">JIRA_TUI_CONFIG_FILE</code> is set it wil use the file specified by it.</li>
+                            <li>If not, if <code class="fs-0">XDG_CONFIG_HOME</code> is set then it will load the file <code class="fs-0">$XDG_CONFIG_HOME/jiratui/config.yaml</code>.</li>
+                            <li>If not, it will attempt to load the file from <code class="fs-0">$HOME/.config/jiratui/config.yaml</code>.</li>
+                        </ol>
 
-                        <p>Example: to define the value of <code class="fs-0">jira_api_username</code> do this: <code class="fs-0">JIRA_TUI_JIRA_API_USERNAME=...</code></p>
+                        <div class="alert alert-primary d-flex align-items-center" role="alert">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                          </svg>
+                          <div>
+                            Starting with version <code class="fs-0">v1.0.0</code> the application no longer supports
+                              using the env variable <code class="fs-0">JIRA_TUI_ENV_FILE</code> to define the
+                              <code class="fs-0">.env</code> file with configuration settings. Instead, all settings
+                              must be defined in the config file as described above.
+                          </div>
+                        </div>
 
                         <h3>Setting Up the Jira's Instance API Credentials</h3>
                         <p>You must provide the following values to connect to your Jira instance API:</p>
@@ -222,31 +260,12 @@ Commands:
                           <li><code class="fs-0">jira_api_base_url</code> - the base URL of your Jira instance API.</li>
                         </ul>
 
-                        <p>You have a couple of options for setting these values.</p>
-
-                        <h4>Use a <code>.env</code> File</h4>
-                        <p>Create a <code>.env</code> file named <code class="fs-0">.env.jiratui</code> and add the following content:</p>
+                        <p>Example: Update the file called <code class="fs-0">$XDG_CONFIG_HOME/jiratui/config.yaml</code> and add the following:</p>
                         <div class="position-relative border rounded-1 border-700 p-1">
-                          <pre><code id="codeBlock4">JIRA_TUI_JIRA_API_USERNAME={your-jira-api-username}
-JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}
-JIRA_TUI_JIRA_API_BASE_URL=https://{your-jira-instance-hostname}.atlassian.net</code></pre>
+                          <pre><code id="codeBlock4">jira_api_username: 'bart@simpson.com'
+jira_api_token: '12345'
+jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'</code></pre>
                           <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton4" onclick="copyCode('codeBlock4', 'copyButton4')">
-                            <i class="bi bi-clipboard"></i> Copy
-                          </button>
-                        </div>
-                        <hr class="mt-3 text-1000 opacity-0"/>
-                        <p>You can pass the variable <code class="fs-0">JIRA_TUI_ENV_FILE</code> and point to the location of your env file.</p>
-                        <hr class="mt-3 text-1000 opacity-0"/>
-
-                        <h4>Use a Config File</h4>
-
-                        <p>You can also use a combination of a <code>.env</code> file and a config file. For example, keep the API username and token in the <code>.env</code> file while placing the rest of the settings in a config file. The default config file expected by the application is <code class="fs-0">jiratui.yaml</code>, but you can name your config file anything you like and specify it using the environment variable <code class="fs-0">JIRA_TUI_CONFIG_FILE</code> when interacting with the CLI/app.</p>
-
-                        <p>Example: Create a file called <code class="fs-0">my-jiratui-config.yaml</code> and add the following:</p>
-
-                        <div class="position-relative border rounded-1 border-700 p-1">
-                          <pre><code id="codeBlock5">jira_api_base_url: 'https://{your-jira-instance-hostname}.atlassian.net'</code></pre>
-                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton5" onclick="copyCode('codeBlock5', 'copyButton5')">
                             <i class="bi bi-clipboard"></i> Copy
                           </button>
                         </div>
@@ -260,27 +279,6 @@ JIRA_TUI_JIRA_API_BASE_URL=https://{your-jira-instance-hostname}.atlassian.net</
                             The application provides a sample config file called <code class="fs-0">jiratui.example.yaml</code> that you can use to define yours.
                           </div>
                         </div>
-
-                        <h4>Full Example</h4>
-
-                        <p><code class="fs-0">~/.env.jiratui</code></p>
-                        <div class="position-relative border rounded-1 border-700 p-1">
-                          <pre><code id="codeBlock6">JIRA_TUI_JIRA_API_USERNAME={your-jira-api-username}
-JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
-                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton6" onclick="copyCode('codeBlock6', 'copyButton6')">
-                            <i class="bi bi-clipboard"></i> Copy
-                          </button>
-                        </div>
-                        <hr class="mt-3 text-1000 opacity-0"/>
-
-                        <p><code class="fs-0">~/.jiratui.yaml</code></p>
-                        <div class="position-relative border rounded-1 border-700 p-1">
-                          <pre><code id="codeBlock7">jira_api_base_url: 'https://{your-jira-instance-hostname}.atlassian.net'</code></pre>
-                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton7" onclick="copyCode('codeBlock7', 'copyButton7')">
-                            <i class="bi bi-clipboard"></i> Copy
-                          </button>
-                        </div>
-                        <hr class="mt-3 text-1000 opacity-0"/>
 
                         <h2 id="launching-ui" class="display-6 fw-semi-bold">Launching the UI</h2>
 
@@ -321,6 +319,7 @@ JIRA_TUI_JIRA_API_TOKEN={your-jira-api-token}</code></pre>
                 <nav class="nav nav-pills flex-column">
                   <a class="nav-link" href="#installation">Installation</a>
                   <a class="nav-link" href="#configuration">Configuration</a>
+                  <a class="nav-link" href="#launching-ui">Launching the UI</a>
                 </nav>
               </nav>
             </div> <!-- right column end ============================-->
