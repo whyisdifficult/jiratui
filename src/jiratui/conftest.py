@@ -21,7 +21,7 @@ def config_for_testing() -> ApplicationConfiguration:
         tui_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
-        log_file='test.log',
+        log_file='',  # empty filename disables logging to a text file
         log_level='ERROR',
     )
     return config_mock

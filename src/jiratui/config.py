@@ -90,7 +90,7 @@ class ApplicationConfiguration(BaseSettings):
     server base URL to build the title of the application. If set to `False` the title will be the default or, to the
     value of the `tui_custom_title` setting above; if defined."""
     log_file: str | None = None
-    """The filename of the log file to use."""
+    """The filename of the log file to use. If you set an empty string logging to a file is disabled."""
     log_level: str = 'WARNING'
     """The log level to use. Use Python's `logging` names: `CRITICAL`, `FATAL`, `ERROR`, `WARN`, `WARNING`, `INFO`,
     `DEBUG` and `NOTSET`."""
