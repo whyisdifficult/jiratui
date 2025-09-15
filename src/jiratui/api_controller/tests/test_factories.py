@@ -26,15 +26,23 @@ from jiratui.utils.test_utilities import load_json_response
 
 @pytest.fixture
 def config_for_testing() -> ApplicationConfiguration:
-    return ApplicationConfiguration(
-        jira_api_username='foo',
-        jira_api_token='12345',
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_mock.configure_mock(
         jira_api_base_url='foo.bar',
+        jira_api_username='foo',
+        jira_api_token='bar',
+        ignore_users_without_email=True,
+        default_project_key_or_id=None,
+        jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
         tui_title_include_jira_server_title=False,
-        custom_field_id_sprint='123',
+        on_start_up_only_fetch_projects=False,
+        log_file='',
+        log_level='ERROR',
+        search_issues_default_day_interval=15,
     )
+    return config_mock
 
 
 @pytest.fixture
