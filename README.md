@@ -153,3 +153,16 @@ The full documentation is available at [https://jiratui.readthedocs.io](https://
 
 If you would like to contribute to the project make sure you are familiar with the
 [contribution guidelines](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+# Acknowledgements
+
+This project was inspired by the work of [Textualize](https://www.textualize.io/) and their remarkable frameworks
+[Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/).
+
+I also want to say thanks to the teams behind [Posting](https://posting.sh/),
+[Lazygit](https://github.com/jesseduffield/lazygit) and [Harlequin](https://harlequin.sh/) for making these awesome
+tools. These have become the must-have tools for my development workflow.
+
+Last but not least to my colleagues [Tomasz](https://github.com/trojkat),
+[Ilyes](https://github.com/ilyeshammadi) and [Giorgos](https://github.com/giorgosT) for their
+support, encouragement and for reminding me how cool is to work from your terminal (something I have forgotten).
