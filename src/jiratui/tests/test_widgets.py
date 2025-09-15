@@ -1,16 +1,15 @@
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
+from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.widgets.work_item_details.details import IssueSummaryField
 
 
 @pytest.fixture()
-@patch('jiratui.files.get_log_file')
-def app(get_log_file_mock, jira_api_controller) -> JiraApp:
+def app() -> JiraApp:
     config_mock = Mock(spec=ApplicationConfiguration)
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
@@ -26,9 +25,8 @@ def app(get_log_file_mock, jira_api_controller) -> JiraApp:
         log_file='',
         log_level='ERROR',
     )
-    get_log_file_mock.return_value = Mock(spec=Path)
     app = JiraApp(config_mock)
-    app.api = jira_api_controller
+    app.api = APIController(config_mock)
     app._setup_logging = MagicMock()  # type:ignore[method-assign]
     return app
 
