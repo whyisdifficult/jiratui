@@ -44,6 +44,13 @@ def users():
     pass
 
 
+@cli.command('version', help='Shows the version of the tool.')
+def version():
+    from importlib.metadata import version
+
+    console.print(version('jiratui'))
+
+
 # -- WORK ITEMS --
 
 
