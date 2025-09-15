@@ -1,14 +1,30 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 from jiratui.app import JiraApp
+from jiratui.config import ApplicationConfiguration
 from jiratui.widgets.work_item_details.details import IssueSummaryField
 
 
 @pytest.fixture()
-def app(config_for_testing, jira_api_controller) -> JiraApp:
-    app = JiraApp(config_for_testing)
+def app(jira_api_controller) -> JiraApp:
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_mock.configure_mock(
+        jira_api_base_url='foo.bar',
+        jira_api_username='foo',
+        jira_api_token='bar',
+        ignore_users_without_email=True,
+        default_project_key_or_id=None,
+        jira_account_id=None,
+        jira_user_group_id='qwerty',
+        tui_title=None,
+        tui_title_include_jira_server_title=False,
+        on_start_up_only_fetch_projects=False,
+        log_file='test.log',
+        log_level='ERROR',
+    )
+    app = JiraApp(config_mock)
     app.api = jira_api_controller
     app._setup_logging = MagicMock()  # type:ignore[method-assign]
     return app
