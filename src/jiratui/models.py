@@ -92,6 +92,8 @@ class IssueStatus(BaseModel):
 class IssueType(BaseModel):
     id: str
     name: str
+    hierarchy_level: int | None = None
+    """Hierarchy level of the issue type."""
     scope_project: Project | None = None
 
 

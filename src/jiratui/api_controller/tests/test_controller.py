@@ -1120,7 +1120,10 @@ async def test_get_issue(
         email='bart@simpson.com',
     )
     assert response.result.issues[0].issue_type == IssueType(
-        id='10003', name='Task', scope_project=None
+        id='10003',
+        name='Task',
+        scope_project=None,
+        hierarchy_level=0,
     )
     assert response.result.issues[0].description == {
         'type': 'doc',
@@ -1429,7 +1432,10 @@ async def test_search_issues(
         email='bart@simpson.com',
     )
     assert response.result.issues[0].issue_type == IssueType(
-        id='10003', name='Task', scope_project=None
+        id='10003',
+        name='Task',
+        scope_project=None,
+        hierarchy_level=0,
     )
     assert response.result.issues[0].description == {
         'type': 'doc',

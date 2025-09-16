@@ -185,7 +185,7 @@ IssueDescriptionWidget {
     grid-rows: auto;
 }
 
-#jira-users-selector-edit {
+#jira-users-assignee-selector-edit {
     border: round $accent;
     padding: 0 1;
 }

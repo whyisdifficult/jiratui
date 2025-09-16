@@ -137,6 +137,7 @@ def build_issue_instance(
         issue_type=IssueType(
             id=fields.get('issuetype', {}).get('id'),
             name=fields.get('issuetype', {}).get('name'),
+            hierarchy_level=fields.get('issuetype', {}).get('hierarchyLevel'),
         ),
         comments=comments,
         related_issues=related_issues,

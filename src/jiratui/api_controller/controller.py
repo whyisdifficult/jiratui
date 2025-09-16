@@ -1059,6 +1059,7 @@ class APIController:
         - Priority
         - Due Date
         - Labels
+        - Parent
 
         Args:
             issue: the work item we want to update.
@@ -1136,6 +1137,21 @@ class APIController:
             else:
                 raise UpdateWorkItemException(
                     'The field "priority" can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+
+        if 'parent' in updates:
+            # the issue's parent has changed
+            if meta_parent := fields.get('parent', {}):
+                if 'set' not in meta_parent.get('operations', {}):
+                    raise UpdateWorkItemException(
+                        'The field "parent" can not be updated for the selected work item.',
+                        extra={'work_item_key': issue.key},
+                    )
+                fields_to_update[meta_parent.get('key')] = [{'set': {'key': updates.get('parent')}}]
+            else:
+                raise UpdateWorkItemException(
+                    'The field "parent" can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
