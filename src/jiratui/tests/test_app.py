@@ -24,6 +24,8 @@ def app(jira_api_controller) -> JiraApp:
         tui_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
+        log_file='',
+        log_level='WARNING',
     )
     app = JiraApp(config_mock)
     app.api = jira_api_controller
