@@ -192,7 +192,7 @@ def test_build_issue_instance(configuration_mock: Mock, config_for_testing):
             display_name='Bart',
             email='bart@simpson.com',
         ),
-        issue_type=IssueType(id='10003', name='Task', scope_project=None),
+        issue_type=IssueType(id='10003', name='Task', scope_project=None, hierarchy_level=0),
         description={
             'type': 'doc',
             'version': 1,
@@ -302,7 +302,7 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
             display_name='Bart',
             email='bart@simpson.com',
         ),
-        issue_type=IssueType(id='10003', name='Task', scope_project=None),
+        issue_type=IssueType(id='10003', name='Task', scope_project=None, hierarchy_level=0),
         description={
             'type': 'doc',
             'version': 1,

@@ -13,6 +13,8 @@ from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
+    work_item_due_date_has_changed,
+    work_item_parent_has_changed,
     work_item_priority_has_changed,
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
@@ -21,7 +23,7 @@ from jiratui.widgets.work_item_details.work_log import WorkItemWorkLogScreen
 
 
 class IssueDetailsAssigneeSelection(UserSelectionInput):
-    WIDGET_ID = 'jira-users-selector-edit'
+    WIDGET_ID = 'jira-users-assignee-selector-edit'
     update_enabled: Reactive[bool | None] = reactive(True)
 
     def __init__(self, users: list):
@@ -99,11 +101,30 @@ class IssueKeyField(ReadOnlyField):
         self.add_class(*['issue_details_input_field', 'work-item-key'])
 
 
-class IssueParentField(ReadOnlyField):
+class IssueParentField(Input):
+    update_enabled: Reactive[bool | None] = reactive(True)
+
     def __init__(self):
         super().__init__()
         self.border_title = 'Parent'
         self.add_class(*['issue_details_input_field', 'work-item-key'])
+        self.jira_field_key = 'parent'
+        """The key to used by Jira to identify this field in the edit-metadata."""
+        self.update_is_enabled: bool = True
+        """Indicates whether the work item allows editing/updating this field."""
+
+    def watch_update_enabled(self, enabled: bool = True) -> None:
+        self.update_is_enabled = enabled
+        self.disabled = not enabled
+
+    @on(Input.Blurred)
+    def clean_value(self, event: Input.Blurred) -> None:
+        if event.value is not None:
+            self.value = event.value.strip()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.value:
+            self.value = event.value.strip()
 
 
 class IssueSummaryField(Input):
@@ -521,11 +542,8 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         if self.issue_due_date_field.update_enabled:
             # check if the due date has changed
-            if (
-                cleaned_value := self.issue_due_date_field.value.strip()
-            ) != '' or self.issue.due_date is not None:
-                if cleaned_value != self.issue.due_date:
-                    payload['due_date'] = cleaned_value
+            if work_item_due_date_has_changed(self.issue.due_date, self.issue_due_date_field.value):
+                payload['due_date'] = self.issue_due_date_field.value.strip()
 
         if self.priority_selector.update_enabled:
             if work_item_priority_has_changed(
@@ -539,6 +557,12 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     )
                 else:
                     payload['priority'] = self.priority_selector.selection
+
+        if self.issue_parent_field.update_enabled:
+            if work_item_parent_has_changed(
+                self.issue.parent_issue_key, self.issue_parent_field.value
+            ):
+                payload['parent'] = self.issue_parent_field.value
 
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed
@@ -629,14 +653,18 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     'Successfully transitioned the work item to a different status.',
                     title='Update Work Item',
                 )
+        elif not payload:
+            self.notify('Nothing to update.', title='Update Work Item')
 
     @staticmethod
-    def _determine_editable_fields(metadata: dict | None = None) -> dict:
-        if not metadata:
+    def _determine_editable_fields(work_item: JiraIssue) -> dict:
+        work_item_edit_metadata: dict | None = work_item.edit_meta
+        if not work_item_edit_metadata:
             return {}
-        if not (fields := metadata.get('fields', {})):
+        if not (fields := work_item_edit_metadata.get('fields', {})):
             return {}
 
+        # if a field does nto have edit metadata then we assume we can not edit its value
         editable_fields: dict[str, bool] = {}
 
         if field_summary := fields.get('summary', {}):
@@ -651,6 +679,16 @@ To edit a field simply focus on it, change its value and then press `^s`.
             editable_fields[field_priority.get('key')] = 'set' in field_priority.get(
                 'operations', {}
             )
+
+        if field_parent := fields.get('parent', {}):
+            if work_item.issue_type.hierarchy_level == 1:
+                # we assume that this is work item whose type is at the top of the issue types hierarchy thus it
+                # can not have parent items
+                editable_fields[field_parent.get('key')] = False
+            else:
+                editable_fields[field_parent.get('key')] = 'set' in field_parent.get(
+                    'operations', {}
+                )
 
         if field_assignee := fields.get('assignee', {}):
             editable_fields[field_assignee.get('key')] = 'set' in field_assignee.get(
@@ -685,7 +723,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         return selectable_users
 
-    async def retrieve_users_assignable_to_work_item(
+    async def _retrieve_users_assignable_to_work_item(
         self,
         work_item_key: str,
         current_assignee: JiraUser | None = None,
@@ -731,7 +769,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
             else:
                 self.assignee_selector.update_enabled = False
 
-    async def retrieve_applicable_status_codes(
+    async def _retrieve_applicable_status_codes(
         self,
         project_key: str,
         work_item_type_id: str,
@@ -770,16 +808,16 @@ To edit a field simply focus on it, change its value and then press `^s`.
 
         # fetch the list of status codes applicable for this work item and its type
         self.run_worker(
-            self.retrieve_applicable_status_codes(
+            self._retrieve_applicable_status_codes(
                 response.project.key, response.issue_type.id, str(response.status.id)
             )
         )
 
-        editable_fields = self._determine_editable_fields(response.edit_meta)
+        editable_fields = self._determine_editable_fields(response)
 
         # fetch the list of assignable users for the work item
         self.run_worker(
-            self.retrieve_users_assignable_to_work_item(
+            self._retrieve_users_assignable_to_work_item(
                 response.key,
                 response.assignee,
                 editable_fields.get(self.assignee_selector.jira_field_key),
@@ -804,7 +842,12 @@ To edit a field simply focus on it, change its value and then press `^s`.
         self.issue_key_field.value = response.key
         self.project_id_field.value = f'({response.project.key}) {response.project.name}'
         self.issue_type_field.value = response.work_item_type_name
+        # set the value of the parent field and determine if it can be edited
         self.issue_parent_field.value = response.parent_key
+        self.issue_parent_field.update_enabled = editable_fields.get(
+            self.issue_parent_field.jira_field_key
+        )
+
         self.issue_sprint_field.value = response.sprint_name
 
         self.issue_summary_field.value = response.summary
