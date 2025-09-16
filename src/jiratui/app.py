@@ -117,7 +117,10 @@ class JiraApp(App):
 
     async def action_quit(self) -> None:
         """Handles the event to quit the application."""
-        await self.push_screen(QuitScreen())
+        if CONFIGURATION.get().confirm_before_quit:
+            await self.push_screen(QuitScreen())
+        else:
+            self.app.exit()
 
     async def _set_application_title_using_server_info(self) -> None:
         response_server_info: APIControllerResponse = await self.api.server_info()
