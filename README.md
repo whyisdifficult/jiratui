@@ -57,11 +57,12 @@ Commands:
   issues    Use it to search, update or delete work items.
   ui        Launches the Jira TUI application.
   users     Use it to search users and user groups.
+  version   Shows the version of the tool.
 ```
 
 ## Settings
 
-Before using the application, you need to provide the basic configuration. All the settings can be provided in a `yaml`
+Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
 file.
 
 The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
@@ -69,13 +70,13 @@ config (and log) files. The default name of the config file is `config.yaml`. Yo
 config file via the env variable `JIRA_TUI_CONFIG_FILE`. The application will attempt to load the config
 file in the following way:
 
-1. If the variable `JIRA_TUI_CONFIG_FILE` is set it wil use the file specified by it.
+1. If the variable `JIRA_TUI_CONFIG_FILE` is set it will use the file specified by it.
 2. If not, if `XDG_CONFIG_HOME` is set then it will load the file `$XDG_CONFIG_HOME/jiratui/config.yaml`.
 3. If not, it will attempt to load the file from `$HOME/.config/jiratui/config.yaml`.
 
 **WARNING**: Starting with version `v1.0.0` the application no longer supports using the env variable
 `JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
-config file as described above.
+config file as described below.
 
 ### Setting Up the Jira's Instance API
 
@@ -85,7 +86,7 @@ You must provide the following values to connect to your Jira instance API:
 - `jira_api_token`: the token for connecting to your Jira's API.
 - `jira_api_base_url`: the base URL of your Jira instance API.
 
-Example: Update the file called `$XDG_CONFIG_HOME/jiratui/config.yaml` and add the following:
+Example: Assuming that your config file is located at `$XDG_CONFIG_HOME/jiratui/config.yaml` you can add the following:
 
 ```yaml
 jira_api_username: 'bart@simpson.com'
