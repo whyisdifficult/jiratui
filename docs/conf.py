@@ -10,6 +10,7 @@ from datetime import datetime
 project = 'JiraTUI'
 author = 'Gaston Tagni'
 project_copyright = f'{datetime.now().year}, Gaston Tagni'
+html_logo = '_static/assets/images/jiratui-logo.png'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
