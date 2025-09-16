@@ -8,9 +8,14 @@ using env variables with the format `JIRA_TUI_<name>`, where `<name>` is the nam
 
 Example: these are equivalent `JIRA_TUI_JIRA_API_USERNAME=foo@bar`, `jira_api_username=foo@bar`
 
-These configuration options can be defined in a `yaml` config file. By default the application expects a config file
-named `jiratui.yaml` but, you can name your config file anything you like and specify it using the environment variable
-`JIRA_TUI_CONFIG_FILE` when interacting with the CLI/app.
+The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
+config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
+config file via the env variable `JIRA_TUI_CONFIG_FILE`. The application will attempt to load the config
+file in the following way:
+
+1. If the variable `JIRA_TUI_CONFIG_FILE` is set it will use the file specified by it.
+2. If not, if `XDG_CONFIG_HOME` is set then it will load the file `$XDG_CONFIG_HOME/jiratui/config.yaml`.
+3. If not, it will attempt to load the file from `$HOME/.config/jiratui/config.yaml`.
 
 | Name                                        | Type | Required          | Default Value | Description                                                                                                                                                                                                                                                                      |
 |---------------------------------------------|------|-------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

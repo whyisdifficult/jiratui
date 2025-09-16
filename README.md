@@ -82,8 +82,8 @@ config file as described below.
 
 You must provide the following values to connect to your Jira instance API:
 
-- `jira_api_username`: the username for connecting to your Jira's API.
-- `jira_api_token`: the token for connecting to your Jira's API.
+- `jira_api_username`: the username for connecting to your Jira API.
+- `jira_api_token`: the token for connecting to your Jira API. This can be your Personal Access Token (PAT).
 - `jira_api_base_url`: the base URL of your Jira instance API.
 
 Example: Assuming that your config file is located at `$XDG_CONFIG_HOME/jiratui/config.yaml` you can add the following:
