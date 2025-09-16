@@ -44,6 +44,13 @@ def users():
     pass
 
 
+@cli.command('version', help='Shows the version of the tool.')
+def version():
+    from importlib.metadata import version
+
+    console.print(version('jiratui'))
+
+
 # -- WORK ITEMS --
 
 
@@ -397,6 +404,9 @@ def ui(
     """Launches the Jira TUI application."""
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
+    except FileNotFoundError as e:
+        console.print(e)
+        sys.exit(1)
     except ValidationError as e:
         console.print(
             'There are undefined configuration values. Make sure your config file is correct.'
