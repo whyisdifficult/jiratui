@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-09-16
+
+### Breaking Changes
+
+- Add support for the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/) to
+make it easier to configure the application. The application will no longer use the environment variable
+`JIRA_TUI_ENV_FILE`. Instead, all the configuration variables *MUST* be defined in the config file; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/52
+
+### Added
+
+- Use python-dateutil to parse date/times from the Jira API; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/47
+- Add hot key to open an item in the browser when the item is selected/highlighted in the search results; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/48
+- Documentation for AUR package; by [@trojkat](https://github.com/trojkat) in https://github.com/whyisdifficult/jiratui/pull/49
+- Add support for updating the parent of a work item; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/55
+- Add configuration variable to make confirming quitting optional; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/56
+
+### Bug Fixes
+
+- Fix bug in users selection dropdown when editing a work item by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/46
+
+
+### Documentation
+
+- Add tool logo and update installation instructions; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/51
+- Update logos for the website and add logo for the read-the-docs website; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/57
+
+## New Contributors
+
+- [@trojkat](https://github.com/trojkat) made their first contribution in https://github.com/whyisdifficult/jiratui/pull/49
+
 ## [0.2.0] - 2025-09-13
 
 ### Added
