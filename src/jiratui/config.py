@@ -97,6 +97,9 @@ class ApplicationConfiguration(BaseSettings):
     attachments_source_directory: str = '/'
     """The directory to start the search of files that a user wants to attach to work items. The user will be able to
     navigate though the sub-directories."""
+    confirm_before_quit: bool = False
+    """If this is set to `True` then the application will show a pop-up screen so the user can confirm whether or not
+    to quit the app. The default is `False` and the app simply exits."""
 
     model_config = SettingsConfigDict(
         extra='allow',
