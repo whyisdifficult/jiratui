@@ -43,6 +43,7 @@ Commands:
   issues    Use it to search, update or delete work items.
   ui        Launches the Jira TUI application.
   users     Use it to search users and user groups.
+  version   Shows the version of the tool.
 ```
 
 Before you can launch the UI or use the CLI's commands you need to configure a few things. Head over to the

@@ -1,71 +1,44 @@
 # Basic Configuration
 
-Before using the application you need to configure a few settings.
+Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
+file.
 
-```{tip}
-The application uses [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). This allows
-you to define the configuration variables as ENV variables. To do that simply set the value of the config variable you
-want to define in a ENV variable called `JIRA_TUI_*`; where `*` is the name of the config variable.
+The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
+config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
+config file via the env variable `JIRA_TUI_CONFIG_FILE`. The application will attempt to load the config
+file in the following way:
 
-**Example**: to define the value of `jira_api_username` do this: `JIRA_TUI_JIRA_API_USERNAME=...`
-```
+1. If the variable `JIRA_TUI_CONFIG_FILE` is set it will use the file specified by it.
+2. If not, if `XDG_CONFIG_HOME` is set then it will load the file `$XDG_CONFIG_HOME/jiratui/config.yaml`.
+3. If not, it will attempt to load the file from `$HOME/.config/jiratui/config.yaml`.
+
+**WARNING**: Starting with version `v1.0.0` the application no longer supports using the env variable
+`JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
+config file as described below.
 
 For a full list of all the configuration options available and how to use them please refer to
 [the settings reference guide](/users/configuration/reference.md).
 
 ## Jira API Credentials
 
-You must provide the following values to connect to your Jira API instance:
+You must provide the following values to connect to your Jira instance API:
 
-- `jira_api_username`: the username for connecting to your Jira's API.
-- `jira_api_token`: the token for connecting to your Jira's API.
-- `jira_api_base_url`: the base URL of your Jira instance API.
+- `jira_api_username`: the username for connecting to your Jira API.
+- `jira_api_token`: the token for connecting to your Jira API. This can be your Personal Access Token (PAT).
+- `jira_api_base_url`: the base URL of your Jira API.
 
-As described in [the settings reference guide](/users/configuration/reference.md) you can do this in a couple of ways.
-
-### Use a `.env` File
-
-Create a `.env` file and name it `.env.jiratui` and add the following content:
+Example: Assuming that your config file is located at `$XDG_CONFIG_HOME/jiratui/config.yaml` you can add the following:
 
 ```yaml
-JIRA_TUI_JIRA_API_USERNAME=<your-jira-api-username>
-JIRA_TUI_JIRA_API_TOKEN=<your-jira-api-token>
-JIRA_TUI_JIRA_API_BASE_URL=https://<your-jira-instance-hostname>.atlassian.net
-```
-
-```{tip}
-You can name your env file anyway you want and then use the env variable `JIRA_TUI_ENV_FILE` to point to it when
-launching the app.
-```
-
-### Use a Config File
-
-You can also use a combination of a `.env` file and a config file. For example, keep the API username and token in the
-`.env` file while placing the rest of the settings in a config file. The default config file expected by the application
-is `jiratui.yaml`, but you can name your config file anything you like and specify it using the environment variable
-`JIRA_TUI_CONFIG_FILE` when interacting with the CLI/app.
-
-Example: Create a file called `my-jiratui-config.yaml` and add the following:
-
-```yaml
+jira_api_username: 'bart@simpson.com'
+jira_api_token: '12345'
 jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 ```
+
+**Tip**: The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 
 ```{tip}
 The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
-```
-
-### Full Example
-
-```shell
-# ~/.env.jiratui
-JIRA_TUI_JIRA_API_USERNAME=<your-jira-api-username>
-JIRA_TUI_JIRA_API_TOKEN=<your-jira-api-token>
-```
-
-```shell
-# ~/jiratui.yaml
-jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 ```
 
 Now that you have the basic configuration you can [run the tool and its commands](/users/usage/index).
