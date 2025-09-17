@@ -48,7 +48,7 @@ async def test_application_title(
     app.config.tui_title = ''
     app.config.tui_title_include_jira_server_title = False
     async with app.run_test() as pilot:
-        assert pilot.app.title == 'Jira TUI'
+        assert pilot.app.title == 'JiraTUI'
 
 
 @patch('jiratui.widgets.screens.MainScreen.get_users')
@@ -102,7 +102,7 @@ async def test_application_title_without_custom_title_with_server_info(
         )
     )
     async with app.run_test() as pilot:
-        assert pilot.app.title == 'Jira TUI - my title'
+        assert pilot.app.title == 'JiraTUI - my title'
 
 
 @patch('jiratui.widgets.screens.APIController.server_info')

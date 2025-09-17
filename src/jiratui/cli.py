@@ -5,6 +5,7 @@ import sys
 import click
 from pydantic import ValidationError
 from rich.console import Console
+from textual.theme import BUILTIN_THEMES
 
 from jiratui.app import JiraApp
 from jiratui.commands.handler import CommandHandler
@@ -49,6 +50,15 @@ def version():
     from importlib.metadata import version
 
     console.print(version('jiratui'))
+
+
+@cli.command(
+    'themes', help='List the available built-in themes. Using a theme: jiratui ui --theme <NAME>'
+)
+def themes():
+    console.print('Available built-in themes')
+    for name in BUILTIN_THEMES.keys():
+        console.print(name)
 
 
 # -- WORK ITEMS --
@@ -395,13 +405,19 @@ def delete_comment(work_item_key: str, comment_id: str):
     default=None,
     help='The ID of a JQL expression as defined in the config.',
 )
+@click.option('--theme', '-t', default=None, help='The name of the theme to use.')
 def ui(
     project_key: str | None = None,
     work_item_key: str | None = None,
     assignee_account_id: str | None = None,
     jql_expression_id: int | None = None,
+    theme: str | None = None,
 ):
-    """Launches the Jira TUI application."""
+    """Launches the JiraTUI application."""
+    if theme and theme not in BUILTIN_THEMES:
+        console.print('The name of the theme you provided is not supported.')
+        console.print('To see the list of supported themes run: jiratui themes')
+        sys.exit(1)
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
     except FileNotFoundError as e:
@@ -421,6 +437,7 @@ def ui(
         user_account_id=assignee_account_id,
         jql_expression_id=jql_expression_id,
         work_item_key=work_item_key,
+        user_theme=theme,
     ).run()
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 from pythonjsonlogger.json import JsonFormatter
-from textual.app import App
+from textual.app import App, InvalidThemeError
 from textual.binding import Binding
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -23,7 +23,7 @@ class JiraApp(App):
     CSS_PATH = 'css/jt.tcss'
     """The path to the file with the TCSS (Textual CSS) definitions."""
 
-    TITLE = 'Jira TUI'
+    TITLE = 'JiraTUI'
     BINDINGS = [
         Binding(key='f1,ctrl+question_mark,ctrl+shift+slash', action='help', description='Help'),
         Binding(key='f2', action='server_info', description='Server Info'),
@@ -45,6 +45,7 @@ class JiraApp(App):
         user_account_id: str | None = None,
         jql_expression_id: int | None = None,
         work_item_key: str | None = None,
+        user_theme: str | None = None,
     ):
         """Initializes the application.
 
@@ -82,9 +83,16 @@ class JiraApp(App):
         self.initial_jql_expression_id: int | None = jql_expression_id
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
+        if user_theme:
+            try:
+                self.theme = user_theme
+            except InvalidThemeError:
+                self.logger.warning(f'Unknown theme {user_theme}')
+                self.theme = self.DEFAULT_THEME
+        else:
+            self.theme = self.DEFAULT_THEME
 
     async def on_mount(self) -> None:
-        self.theme = self.DEFAULT_THEME
         self._set_application_title()
 
         await self.push_screen(
