@@ -31,7 +31,7 @@ of supported arguments with the following command:
 jiratui ui --help
 Usage: jiratui ui [OPTIONS]
 
-  Launches the Jira TUI application.
+  Launches the JiraTUI application.
 
 Options:
   -p, --project-key TEXT          A case-sensitive Jira project key.
@@ -39,6 +39,41 @@ Options:
   -u, --assignee-account-id TEXT  A Jira user account ID. Typically this would be your Jira account ID so user-related
                                   dropdowns can pre-select your user
   -j, --jql-expression-id TEXT    The ID of a JQL expression as defined in the config.
+  -t, --theme TEXT                The name of the theme to use.
+```
+
+#### Selecting a Theme
+
+JiraTUI allows you to set the theme of the UI when you launch it. Currently, the application supports the themes
+pre-defined by the [underlying framework](https://textual.textualize.io/guide/design/#themes).
+
+You can list the supported themes with the `jiratui themes` command:
+
+```shell
+$ jiratui themes
+
+Available built-in themes
+textual-dark
+textual-light
+nord
+gruvbox
+catppuccin-mocha
+textual-ansi
+dracula
+tokyo-night
+monokai
+flexoki
+catppuccin-latte
+solarized-light
+```
+
+The default theme is `textual-dark`.
+
+To start the UI with a different theme you can pass the name of the theme to the `ui` command. For example, the
+following command will start the UI with the theme `dracula`.
+
+```shell
+jirayui ui --theme dracula
 ```
 
 #### Select a Jira Project on Start Up

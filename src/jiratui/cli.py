@@ -413,7 +413,7 @@ def ui(
     jql_expression_id: int | None = None,
     theme: str | None = None,
 ):
-    """Launches the Jira TUI application."""
+    """Launches the JiraTUI application."""
     if theme and theme not in BUILTIN_THEMES:
         console.print('The name of the theme you provided is not supported.')
         console.print('To see the list of supported themes run: jiratui themes')
