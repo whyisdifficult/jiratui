@@ -595,6 +595,9 @@ To edit a field simply focus on it, change its value and then press `^s`.
             self.notify('You must select a work item before saving changes')
             return
 
+        issue_was_updated: bool = False
+
+        # attempt to update the issue
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
         if payload := self._build_payload_for_update():
             try:
@@ -622,6 +625,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
             else:
                 if response.success:
                     self.notify('Work item updated successfully.', title='Update Work Item')
+                    issue_was_updated = True
                 else:
                     self.notify(
                         'The work item was not updated.',
@@ -635,10 +639,15 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     )
 
         # check if we need to transition the issue and move it to the new status if needed
-        if (
+        issue_requires_transition = (
             self.issue_status_selector.selection is not None
             and self.issue_status_selector.selection != self.issue.status.id
-        ):
+        )
+
+        if not payload and not issue_requires_transition:
+            self.notify('Nothing to update.', title='Update Work Item')
+            return
+        else:
             response = await application.api.transition_issue_status(
                 self.issue.key, self.issue_status_selector.selection
             )
@@ -649,12 +658,17 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     title='Update Work Item',
                 )
             else:
+                issue_was_updated = True
                 self.notify(
                     'Successfully transitioned the work item to a different status.',
                     title='Update Work Item',
                 )
-        elif not payload:
-            self.notify('Nothing to update.', title='Update Work Item')
+
+        if issue_was_updated:
+            # fetch the issue again to retrieve the latest changes and update the form
+            response = await application.api.get_issue(issue_id_or_key=self.issue.key)
+            if response.success and response.result:
+                self.issue = response.result.issues[0]
 
     @staticmethod
     def _determine_editable_fields(work_item: JiraIssue) -> dict:
