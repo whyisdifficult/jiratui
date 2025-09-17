@@ -241,24 +241,38 @@ class IssueDetailsWidget(VerticalScroll):
     - Priority
     - Due Date
     - Labels
+    - Parent
 
     Whether these fields can be updated depends on the work item's edit metadata. Some work items disallow editing
     certain fields. For example, work items of type "subtask" typically do not allow the user to update the due date.
     """
 
     HELP = """\
-# Work Item Details
+# Viewing and Updating Details
 
-This contains the details of the selected work item. Some of these detail scan be edited. Currently, the fields that
-can be edited are:
+This contains the details of the selected work item. Some of these details can be edited/updated. Currently, the
+fields that can be updated are:
 - Summary
 - Assignee
 - Status
 - Priority
 - Due Date
 - Labels
+- Parent
 
-To edit a field simply focus on it, change its value and then press `^s`.
+To edit a field simply focus on it, change its value and then press `^s` to save the changes.
+
+## Updating the parent of an issue
+
+Jira arranges the type sof issues into a hierarchy. This hierarchy is used to determine whether an issue can have
+another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
+Subtask do accept parents.
+
+Jiratui disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
+
+## Updating priorities
+
+Once an issue has a priority set up it can not be unset.
     """
 
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
@@ -595,8 +609,22 @@ To edit a field simply focus on it, change its value and then press `^s`.
             self.notify('You must select a work item before saving changes')
             return
 
+        issue_was_updated: bool = False
+        # the payload with the fields that will be updated
+        payload = self._build_payload_for_update()
+        # check if we need to transition the issue and move it to the new status if needed
+        issue_requires_transition = (
+            self.issue_status_selector.selection is not None
+            and self.issue_status_selector.selection != self.issue.status.id
+        )
+
+        if not payload and not issue_requires_transition:
+            self.notify('Nothing to update.', title='Update Work Item')
+            return
+
+        # attempt to update the issue
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
-        if payload := self._build_payload_for_update():
+        if payload:
             try:
                 response: APIControllerResponse = await application.api.update_issue(
                     self.issue, payload
@@ -622,6 +650,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
             else:
                 if response.success:
                     self.notify('Work item updated successfully.', title='Update Work Item')
+                    issue_was_updated = True
                 else:
                     self.notify(
                         'The work item was not updated.',
@@ -634,11 +663,7 @@ To edit a field simply focus on it, change its value and then press `^s`.
                         title='Update Work Item',
                     )
 
-        # check if we need to transition the issue and move it to the new status if needed
-        if (
-            self.issue_status_selector.selection is not None
-            and self.issue_status_selector.selection != self.issue.status.id
-        ):
+        if issue_requires_transition:
             response = await application.api.transition_issue_status(
                 self.issue.key, self.issue_status_selector.selection
             )
@@ -649,12 +674,17 @@ To edit a field simply focus on it, change its value and then press `^s`.
                     title='Update Work Item',
                 )
             else:
+                issue_was_updated = True
                 self.notify(
                     'Successfully transitioned the work item to a different status.',
                     title='Update Work Item',
                 )
-        elif not payload:
-            self.notify('Nothing to update.', title='Update Work Item')
+
+        if issue_was_updated:
+            # fetch the issue again to retrieve the latest changes and update the form
+            response = await application.api.get_issue(issue_id_or_key=self.issue.key)
+            if response.success and response.result:
+                self.issue = response.result.issues[0]
 
     @staticmethod
     def _determine_editable_fields(work_item: JiraIssue) -> dict:
