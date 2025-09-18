@@ -231,3 +231,24 @@ class JiraIssueMetadataRenderer(Renderer):
                 f'<CLI> issues update <ITEM-KEY> --status-id {transition.get("to_state").get("id")}',
             )
         console.print(table)
+
+
+class ThemesRenderer(Renderer):
+    def render(self, console: Console, content: list, **kwargs) -> None:
+        console.print(Rule())
+        if not content:
+            console.print(Text.assemble(('No issues to show', 'bold red')))
+            return
+
+        table = Table(title='Supported Themes')
+        table.add_column('Name')
+        table.add_column('Usage via CLI')
+        table.add_column('Usage via Config')
+
+        for theme in content:
+            table.add_row(
+                theme,
+                f'jiratui ui --theme {theme}',
+                f'config.theme: "{theme}"',
+            )
+        console.print(table)

@@ -1,5 +1,7 @@
 import asyncio
 from datetime import datetime
+import os
+from pathlib import Path
 import sys
 
 import click
@@ -18,9 +20,11 @@ from jiratui.commands.render import (
     JiraIssueSearchRenderer,
     JiraUserGroupRenderer,
     JiraUserRenderer,
+    ThemesRenderer,
 )
 from jiratui.config import ApplicationConfiguration
 from jiratui.exceptions import CLIException
+from jiratui.files import get_config_file
 
 console = Console()
 
@@ -56,9 +60,19 @@ def version():
     'themes', help='List the available built-in themes. Using a theme: jiratui ui --theme <NAME>'
 )
 def themes():
-    console.print('Available built-in themes')
-    for name in BUILTIN_THEMES.keys():
-        console.print(name)
+    console.print('Available built-in themes\n')
+    renderer = ThemesRenderer()
+    renderer.render(console, list(BUILTIN_THEMES.keys()))
+
+
+@cli.command('config', help='Shows the location of the configuration file.')
+def config():
+    if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
+        conf_file = Path(jira_tui_config_file).resolve()
+        console.print(f'Using JIRA_TUI_CONFIG_FILE: {conf_file}')
+    else:
+        conf_file = get_config_file()
+        console.print(f'Using: {conf_file}')
 
 
 # -- WORK ITEMS --

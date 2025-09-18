@@ -56,6 +56,8 @@ class JiraApp(App):
             jql_expression_id: the ID of a JQL expression defined in the config file to use as the default expression
             for searching work items when the user does not select any criteria in the UI.
             work_item_key: a work item key to set the work item widget.
+            user_theme: the name of a Textual theme to use as the theme of the app. If this value is provided it will
+            override the value set in the config variable `theme`.
         """
         super().__init__()
         self.config = settings
@@ -83,11 +85,16 @@ class JiraApp(App):
         self.initial_jql_expression_id: int | None = jql_expression_id
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
-        if user_theme:
+        self._setup_theme(user_theme)
+
+    def _setup_theme(self, user_theme: str | None = None) -> None:
+        if input_theme := (user_theme or CONFIGURATION.get().theme):
             try:
-                self.theme = user_theme
+                self.theme = input_theme
             except InvalidThemeError:
-                self.logger.warning(f'Unknown theme {user_theme}')
+                self.logger.warning(
+                    f'Unknown theme {input_theme}. Using the default theme: {self.DEFAULT_THEME}'
+                )
                 self.theme = self.DEFAULT_THEME
         else:
             self.theme = self.DEFAULT_THEME

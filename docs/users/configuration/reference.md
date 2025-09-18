@@ -33,46 +33,16 @@ file in the following way:
 | `custom_field_id_sprint`                    | str  | No                | None          | The name of the custom field used by your Jira application to identify the sprints. Example: `customfield_12345`                                                                                                                                                                 |
 | `fetch_attachments_on_delete`               | bool | No                | True          | When this is `True` the application will fetch the attachments of a work item after an attachment is deleted from the list of attachments. This makes the data more accurate but slower due to the extra request. When this is False the list of attachments is updated in place |
 | `fetch_comments_on_delete`                  | bool | No                | True          | When this is `True` the application will fetch the comments of a work item after a comment is deleted from the list of comments. This makes the data more accurate but slower due to the extra request. When this is False the list of comments is updated in place              |
-| `pre_defined_jql_expressions`               | dict | No                | None          | [See below](#configuring-pre-defined-jql-expressions)                                                                                                                                                                                                                            |
+| `pre_defined_jql_expressions`               | dict | No                | None          | [See Configuring Pre-defined JQL Expressions](configuration.md#configuring-pre-defined-jql-expressions)                                                                                                                                                                          |
 | `jql_expression_id_for_work_items_search`   | int  | No                | None          | If set to one of the expression IDs defined in `pre_defined_jql_expressions` then the app will use this expression to retrieve work items when not criteria and JQL query is provided by the user.                                                                               |
 | `search_results_truncate_work_item_summary` | int  | No                | None          | When this is defined the summary of a work item will be truncated to the specified length when it is displayed in the search results                                                                                                                                             |
 | `search_results_style_work_item_status`     | bool | No                | True          | If `True` the status of a work item will be styled when it is displayed in the search results                                                                                                                                                                                    |
 | `search_results_style_work_item_type`       | bool | No                | True          | If `True` the type of a work item will be styled when it is displayed in the search results                                                                                                                                                                                      |
-| `on_start_up_only_fetch_projects`           | bool | No                | True          | [See below](#fetching-only-projects-on-startup)                                                                                                                                                                                                                                  |
+| `on_start_up_only_fetch_projects`           | bool | No                | True          | [See Fetching Only Projects on Startup](configuration.md#fetching-only-projects-on-startup)                                                                                                                                                                                      |
 | `tui_title`                                 | str  | No                | None          | An optional title for the application. This is displayed in the top bar                                                                                                                                                                                                          |
-| `tui_title_include_jira_server_title`       | bool | No                | True          | [See below](#include-jira-server-title-in-the-ui-title)                                                                                                                                                                                                                          |
+| `tui_title_include_jira_server_title`       | bool | No                | True          | [See Include Jira Server Title in the UI Title](configuration.md#include-jira-server-title-in-the-ui-title)                                                                                                                                                                      |
 | `attachments_source_directory`              | str  | No                | `/`           | The directory to start the search of files that a user wants to attach to work items. The user will be able to navigate though the sub-directories                                                                                                                               |
-| `log_file`                                  | str  | No                | `jiratui.log` | The name of the log file to use                                                                                                                                                                                                                                                  |
-
-
-## Configuring Pre-defined JQL Expressions
-
-To define your own JQL expressions you can use the setting `pre_defined_jql_expressions`. These expressions will be
-accessible via the JQL Expression Editor. You can open the editor by going to the JQL Expression input and pressing
-`^e`. The setting accepts a dictionary of user-defined IDs whose values are the details of an expression. This includes a
-label and, a string with the JQL expression value. The label wil be used as the label of the dropdown selector. Example:
-
-```yaml
-pre_defined_jql_expressions:
-    1:  {
-            "label": "Find work created by John and sort it by created date asc",
-            "expression": "creator = 'john' order by created asc"
-    }
-    2:  {
-          "label": "Find work due on 2100-12-31 and for the production environment",
-          "expression": "dueDate = '2100-12-31' AND environment = 'production'"
-    }
-```
-
-## Fetching Only Projects on Startup
-
-When this setting is `True` the application will only load the list of available projects at startup. The list of
-status codes, users and work items types will be loaded when the user selects a project. On the other hand, if this is
-`False` then the application fill load (i.e. fetch from the API) available status codes, users and work items types in
-addition to the available projects. This may make the startup a bit slower.
-
-## Include Jira Server Title in the UI Title
-
-If the setting `tui_title_include_jira_server_title = True` the application will fetch server information from the Jira
-API instance and use the server's title or server base URL to build the title of the application. If this is set to
-`False` the title will set to the default, or to the value of the `tui_custom_title` setting above; if defined.
+| `log_file`                                  | str  | No                | None          | The name of the log file to use                                                                                                                                                                                                                                                  |
+| `log_level`                                 | str  | No                | WARNING       | The Python's `logging` level to use                                                                                                                                                                                                                                              |
+| `confirm_before_quit`                       | bool | No                | False         | If this is `True` then the app will ask for confirmation before quitting                                                                                                                                                                                                         |
+| `theme`                                     | str  | No                | None          | The name of the Textual theme to use for the app. [See Choosing a Theme](configuration.md#choosing-a-theme)                                                                                                                                                                                                       |
