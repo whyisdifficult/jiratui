@@ -65,10 +65,19 @@ Options:
 
 Commands:
   comments  Use it to add, list or delete comments associated to work items.
+  config    Shows the location of the configuration file.
   issues    Use it to search, update or delete work items.
   ui        Launches the Jira TUI application.
   users     Use it to search users and user groups.
   version   Shows the version of the tool.
+  themes    List the available built-in themes.
+```
+
+You can check the installed version with
+
+```shell
+jiratui version
+1.0.0
 ```
 
 ## Settings
