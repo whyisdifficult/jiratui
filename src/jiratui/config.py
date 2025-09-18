@@ -100,6 +100,8 @@ class ApplicationConfiguration(BaseSettings):
     confirm_before_quit: bool = False
     """If this is set to `True` then the application will show a pop-up screen so the user can confirm whether or not
     to quit the app. The default is `False` and the app simply exits."""
+    theme: str | None = None
+    """The name of the theme to use for the UI. Accept Textual themes."""
 
     model_config = SettingsConfigDict(
         extra='allow',

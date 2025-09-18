@@ -5,13 +5,13 @@
 Once you have provided the necessary settings, you can run the application's UI with the following command:
 
 ```shell
-jiratui ui
+$ jiratui ui
 ```
 
 If you are using a custom config file, run:
 
 ```shell
-JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
+$ JIRA_TUI_CONFIG_FILE=my-file.yaml jiratui ui
 ```
 
 If everything works fine you should see the screen shown in the image below
@@ -28,7 +28,7 @@ The initial screen of the application
 of supported arguments with the following command:
 
 ```shell
-jiratui ui --help
+$ jiratui ui --help
 Usage: jiratui ui [OPTIONS]
 
   Launches the JiraTUI application.
@@ -52,19 +52,22 @@ You can list the supported themes with the `jiratui themes` command:
 ```shell
 $ jiratui themes
 
-Available built-in themes
-textual-dark
-textual-light
-nord
-gruvbox
-catppuccin-mocha
-textual-ansi
-dracula
-tokyo-night
-monokai
-flexoki
-catppuccin-latte
-solarized-light
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Name             ┃ Usage via CLI                       ┃ Usage via Config                 ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ textual-dark     │ jiratui ui --theme textual-dark     │ config.theme: "textual-dark"     │
+│ textual-light    │ jiratui ui --theme textual-light    │ config.theme: "textual-light"    │
+│ nord             │ jiratui ui --theme nord             │ config.theme: "nord"             │
+│ gruvbox          │ jiratui ui --theme gruvbox          │ config.theme: "gruvbox"          │
+│ catppuccin-mocha │ jiratui ui --theme catppuccin-mocha │ config.theme: "catppuccin-mocha" │
+│ textual-ansi     │ jiratui ui --theme textual-ansi     │ config.theme: "textual-ansi"     │
+│ dracula          │ jiratui ui --theme dracula          │ config.theme: "dracula"          │
+│ tokyo-night      │ jiratui ui --theme tokyo-night      │ config.theme: "tokyo-night"      │
+│ monokai          │ jiratui ui --theme monokai          │ config.theme: "monokai"          │
+│ flexoki          │ jiratui ui --theme flexoki          │ config.theme: "flexoki"          │
+│ catppuccin-latte │ jiratui ui --theme catppuccin-latte │ config.theme: "catppuccin-latte" │
+│ solarized-light  │ jiratui ui --theme solarized-light  │ config.theme: "solarized-light"  │
+└──────────────────┴─────────────────────────────────────┴──────────────────────────────────┘
 ```
 
 The default theme is `textual-dark`.
@@ -73,8 +76,10 @@ To start the UI with a different theme you can pass the name of the theme to the
 following command will start the UI with the theme `dracula`.
 
 ```shell
-jirayui ui --theme dracula
+$ jiratui ui --theme dracula
 ```
+
+For more details refer to [Choosing a Theme](../configuration/configuration.md#choosing-a-theme)
 
 #### Select a Jira Project on Start Up
 
@@ -87,7 +92,7 @@ file. That way you do not need to pass this argument when you start the app.
 ```
 
 ```shell
-jiratui ui --project-key PROJECT-1
+$ jiratui ui --project-key PROJECT-1
 ```
 
 #### Select a Jira User on Start Up
@@ -101,7 +106,7 @@ file. That way you do not need to pass this argument when you start the app.
 ```
 
 ```shell
-jiratui ui --assignee-account-id 12345-67890
+$ jiratui ui --assignee-account-id 12345-67890
 ```
 
 #### Select a Jira Work Item on Start Up
@@ -110,7 +115,7 @@ If you want your app to pre-select a Jira issue in the "work item key" field you
 the argument `--work-item-key`.
 
 ```shell
-jiratui ui --work-item-key ISSUE-1
+$ jiratui ui --work-item-key ISSUE-1
 ```
 
 #### Select a JIra JQL Expression on Start Up
@@ -125,7 +130,7 @@ config file. That way you do not need to pass this argument when you start the a
 ```
 
 ```shell
-jiratui ui --jql-expression-id 1
+$ jiratui ui --jql-expression-id 1
 ```
 
 ## CLI Interface
@@ -248,7 +253,7 @@ Options:
 To update the summary of a work item you can pass the `-s` argument with the summary you want to set. For example,
 
 ```shell
-jiratui issues update SCRUM-1 -s "Update the payment method"
+$ jiratui issues update SCRUM-1 -s "Update the payment method"
 ```
 
 #### Update Due Date
@@ -256,7 +261,7 @@ jiratui issues update SCRUM-1 -s "Update the payment method"
 To update the due date of a work item you can pass the `-d` argument with the date value you want to set. For example,
 
 ```shell
-jiratui issues update SCRUM-1 -d 2025-12-31
+$ jiratui issues update SCRUM-1 -d 2025-12-31
 ```
 
 #### Update Assignee
@@ -265,7 +270,7 @@ To update the assignee of a work item you can pass the `-u` argument with the ID
 set. For example,
 
 ```shell
-jiratui issues update SCRUM-1 -u 12345
+$ jiratui issues update SCRUM-1 -u 12345
 ```
 
 ```{tip}
@@ -275,7 +280,7 @@ If you do not know the ID of a user you can use the [search users command](#sear
 If you want to unassign an issue yu can do so by passing an empty string to the argument `-u` or, `-u null`.
 
 ```shell
-jiratui issues update SCRUM-1 -u ""
+$ jiratui issues update SCRUM-1 -u ""
 ```
 
 #### Update Status
@@ -284,7 +289,7 @@ To update the status of a work item you can pass the `-t` argument with the ID o
 example,
 
 ```shell
-jiratui issues update SCRUM-1 -t 6
+$ jiratui issues update SCRUM-1 -t 6
 ```
 
 This will allow you to transition the work item with key `SCRUM-1` from the current status to the status Done. See the
@@ -296,11 +301,11 @@ To update the priority of a work item you can pass the `-p` argument with the ID
 example,
 
 ```shell
-jiratui issues update SCRUM-1 -p 1
+$ jiratui issues update SCRUM-1 -p 1
 ```
 
 This will allow you to set the priority of the work item with key `SCRUM-1` to High. See the
-[metadata command](#show-metadata) above for the context.
+[metadata command](show-metadata) above for the context.
 
 ### Listing Comments
 

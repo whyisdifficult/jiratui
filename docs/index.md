@@ -19,5 +19,5 @@ The initial screen of the application
 users/install/index.md
 users/configuration/index.md
 users/usage/index.md
-users/configuration/reference.md
+users/configuration/configuration.md
 ```
