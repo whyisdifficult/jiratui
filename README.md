@@ -1,14 +1,25 @@
 # JiraTUI
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/whyisdifficult/jiratui/.github%2Fworkflows%2Ftest.yaml)
-![GitHub Release](https://img.shields.io/github/v/release/whyisdifficult/jiratui)
+[![CodeQL](https://github.com/whyisdifficult/jiratui/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/whyisdifficult/jiratui/actions/workflows/github-code-scanning/codeql)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/jiratui)
+![GitHub Release](https://img.shields.io/github/v/release/whyisdifficult/jiratui)
+[![PyPI version](https://badge.fury.io/py/jiratui.svg)](https://badge.fury.io/py/jiratui)
 [![AUR package](https://repology.org/badge/version-for-repo/aur/jiratui.svg)](https://repology.org/project/jiratui/versions)
-
+![Static Badge](https://img.shields.io/badge/OS-Linux%20MacOS%20Windows-orange)
 
 A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
 
 ![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
+
+## Introduction
+
+JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/)
+frameworks.
+
+It supports the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/). Support for v2
+of the API is currently not supported. This means that JiraTUI may not be able to connect to on-premises installations
+of Jira.
 
 ## Installation
 
