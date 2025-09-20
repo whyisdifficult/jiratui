@@ -43,6 +43,7 @@ def app() -> JiraApp:
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
         jira_api_token='bar',
+        jira_api_version=3,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,

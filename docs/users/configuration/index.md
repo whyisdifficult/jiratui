@@ -41,4 +41,21 @@ jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 ```
 
+## Choosing the API version
+
+JiraTUI supports the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/). However,
+starting with v1.1.0 JiraTUI supports [Jira REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/) as
+well.
+
+By default, JiraTUI uses the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
+This is good when your Jira instance runs in the cloud. However, Jira also offers an on-premises installation mode and
+in these cases the version of the API may not be v3 but v2 instead. To address this JiraTUI lets you choose which
+version of the API you can use.
+
+To set the version of the API update your config file to include:
+
+```yaml
+jira_api_version: 2
+```
+
 Now that you have the basic configuration you can [run the tool and its commands](/users/usage/index).

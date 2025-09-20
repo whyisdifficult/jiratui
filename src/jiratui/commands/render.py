@@ -6,7 +6,6 @@ from rich.table import Table
 from rich.text import Text
 
 from jiratui.models import IssueComment, JiraIssueSearchResponse, JiraUser, JiraUserGroup
-from jiratui.utils.adf2md.adf2md import adf2md
 
 
 class Renderer:
@@ -77,10 +76,10 @@ class JiraIssueCommentRenderer(Renderer):
             console.print(Text.assemble(('No comment to show', 'bold red')))
             return
 
-        try:
-            comment_text = adf2md(content.body_as_dict())
-        except Exception:
-            comment_text = 'Unable to display the comment.'
+        comment_text = ''
+        if content.body:
+            if not (comment_text := content.get_body()):
+                comment_text = 'Unable to display the comment.'
 
         table = Table(title=f'Comment for Issue: {kwargs.get("issue_key")}')
         table.add_column('ID', style='cyan')
@@ -107,11 +106,10 @@ class JiraIssueCommentTextRenderer(Renderer):
         if not content:
             console.print(Text.assemble(('No comment to show', 'bold red')))
             return
-        try:
-            comment_text = adf2md(content.body_as_dict())
-        except Exception:
-            comment_text = 'Unable to display the comment.'
-
+        comment_text = ''
+        if content.body:
+            if not (comment_text := content.get_body()):
+                comment_text = 'Unable to display the comment.'
         console.print(comment_text)
         console.print(Rule())
 
@@ -133,10 +131,10 @@ class JiraIssueCommentsRenderer(Renderer):
 
         console.print(f'Total Comments: {content.get("total")}')
         for comment in content.get('comments', []):
-            try:
-                comment_text = adf2md(comment.body_as_dict())
-            except Exception:
-                comment_text = 'Unable to display the comment.'
+            comment_text = ''
+            if comment.body:
+                if not (comment_text := comment.get_body()):
+                    comment_text = 'Unable to display the comment.'
             table.add_row(
                 comment.id,
                 kwargs.get('issue_key'),

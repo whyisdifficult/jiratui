@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from jiratui.api.api import JiraAPI
+from jiratui.api.api import JiraAPI, JiraAPIv2
 from jiratui.api_controller.controller import APIController
 from jiratui.config import ApplicationConfiguration
 
@@ -14,6 +14,7 @@ def config_for_testing() -> ApplicationConfiguration:
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
         jira_api_token='bar',
+        jira_api_version=3,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -34,6 +35,7 @@ def jira_api_controller() -> APIController:
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
         jira_api_token='bar',
+        jira_api_version=3,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -51,3 +53,8 @@ def jira_api_controller() -> APIController:
 @pytest.fixture
 def jira_api() -> JiraAPI:
     return JiraAPI('https://foo.bar', 'foo', 'bar')
+
+
+@pytest.fixture
+def jira_api_v2() -> JiraAPIv2:
+    return JiraAPIv2('https://foo.bar', 'foo', 'bar')

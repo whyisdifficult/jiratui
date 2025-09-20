@@ -5,6 +5,8 @@ from textual.screen import ModalScreen
 from textual.widgets import DataTable
 
 from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.config import CONFIGURATION
+from jiratui.constants import DEFAULT_JIRA_API_VERSION
 from jiratui.models import JiraMyselfInfo, JiraServerInfo
 from jiratui.widgets.base import CustomTitle
 
@@ -27,8 +29,14 @@ class ServerInfoScreen(ModalScreen):
     def datatable_user_info(self) -> DataTable:
         return self.query_one('#user-details', expect_type=DataTable)
 
+    @property
+    def datatable_config_info(self) -> DataTable:
+        return self.query_one('#config-details', expect_type=DataTable)
+
     def compose(self) -> ComposeResult:
         with VerticalScroll():
+            yield CustomTitle('Config')
+            yield DataTable(cursor_type='row', show_header=False, id='config-details')
             yield CustomTitle(self.TITLE)
             yield DataTable(cursor_type='row', show_header=False, id='server-details')
             yield CustomTitle('User Account Details')
@@ -137,3 +145,17 @@ class ServerInfoScreen(ModalScreen):
                     ),
                 ]
             )
+
+        table = self.datatable_config_info
+        table.add_columns(*['Property', 'Value'])
+        table.add_rows(
+            [
+                (
+                    Text('API Version', justify='right', style='yellow'),
+                    Text(
+                        str(CONFIGURATION.get().jira_api_version) or str(DEFAULT_JIRA_API_VERSION),
+                        justify='left',
+                    ),
+                ),
+            ]
+        )

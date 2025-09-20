@@ -244,24 +244,7 @@
         "components":
         [],
         "timeoriginalestimate": null,
-        "description":
-        {
-            "type": "doc",
-            "version": 1,
-            "content":
-            [
-                {
-                    "type": "paragraph",
-                    "content":
-                    [
-                        {
-                            "type": "text",
-                            "text": "Create a logging system to store payment transaction metadata."
-                        }
-                    ]
-                }
-            ]
-        },
+        "description": "Create a logging system to store payment transaction metadata.",
         "timetracking": {
             "originalEstimate": "2 minutes",
             "remainingEstimate": "1 minute",
@@ -340,17 +323,7 @@
                     "body": {
                         "type":"doc",
                         "version": 1,
-                        "content":[
-                            {
-                                "type":"paragraph",
-                                "content": [
-                                    {
-                                        "type":"text",
-                                        "text": "hello world"
-                                    }
-                                ]
-                            }
-                        ]
+                        "content": "hello world 1"
                     },
                     "created":"2025-12-30T18:00:00.000",
                     "id":"1",

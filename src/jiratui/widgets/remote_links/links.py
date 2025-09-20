@@ -90,7 +90,7 @@ To delete a link simply focus on the title of the collapsible whose link you wan
         Binding(
             key='n',
             action='add_remote_link',
-            description='Add Link',
+            description='New Link',
             key_display='n',
         )
     ]

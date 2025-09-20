@@ -4,8 +4,8 @@ from unittest.mock import Mock, patch
 import pytest
 
 from jiratui.api_controller.factories import (
+    WorkItemFactory,
     build_comments,
-    build_issue_instance,
     build_related_work_items,
 )
 from jiratui.config import ApplicationConfiguration
@@ -31,6 +31,7 @@ def config_for_testing() -> ApplicationConfiguration:
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
         jira_api_token='bar',
+        jira_api_version=3,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -64,7 +65,13 @@ def raw_comments() -> list[dict]:
                 'active': True,
                 'emailAddress': 'lisa@simpson.com',
             },
-            'body': {'text': 'hello world'},
+            'body': {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world 1'}]}
+                ],
+            },
         },
         {
             'id': '2',
@@ -82,8 +89,38 @@ def raw_comments() -> list[dict]:
                 'active': True,
                 'emailAddress': 'maggie@simpson.com',
             },
-            'body': {'text': 'hello'},
+            'body': {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world'}]}
+                ],
+            },
         },
+    ]
+
+
+@pytest.fixture
+def raw_comments_without_adf() -> list[dict]:
+    return [
+        {
+            'id': '1',
+            'created': '2025-12-30T18:00:00',
+            'updated': '2025-12-30T18:01:00',
+            'author': {
+                'displayName': 'Bart Simpson',
+                'accountId': '1',
+                'active': True,
+                'emailAddress': 'bart@simpson.com',
+            },
+            'updateAuthor': {
+                'displayName': 'Lisa Simpson',
+                'accountId': '2',
+                'active': True,
+                'emailAddress': 'lisa@simpson.com',
+            },
+            'body': {'type': 'doc', 'version': 1, 'content': 'hello world 1'},
+        }
     ]
 
 
@@ -108,7 +145,13 @@ def test_build_comments(raw_comments):
                 display_name='Lisa Simpson',
                 email='lisa@simpson.com',
             ),
-            body='{"text": "hello world"}',
+            body={
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world 1'}]}
+                ],
+            },
         ),
         IssueComment(
             id='2',
@@ -126,8 +169,40 @@ def test_build_comments(raw_comments):
                 display_name='Maggie Simpson',
                 email='maggie@simpson.com',
             ),
-            body='{"text": "hello"}',
+            body={
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world'}]}
+                ],
+            },
         ),
+    ]
+
+
+def test_build_comments_no_adf(raw_comments_without_adf):
+    # WHEN
+    comments = build_comments(raw_comments_without_adf)
+    # THEN
+    assert comments == [
+        IssueComment(
+            id='1',
+            author=JiraUser(
+                account_id='1',
+                active=True,
+                display_name='Bart Simpson',
+                email='bart@simpson.com',
+            ),
+            created=datetime(2025, 12, 30, 18, 0, 00),
+            updated=datetime(2025, 12, 30, 18, 1, 00),
+            update_author=JiraUser(
+                account_id='2',
+                active=True,
+                display_name='Lisa Simpson',
+                email='lisa@simpson.com',
+            ),
+            body={'type': 'doc', 'version': 1, 'content': 'hello world 1'},
+        )
     ]
 
 
@@ -154,7 +229,13 @@ def test_build_comments_with_error(raw_comments: list[dict]):
                 display_name='Maggie Simpson',
                 email='maggie@simpson.com',
             ),
-            body='{"text": "hello"}',
+            body={
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world'}]}
+                ],
+            },
         ),
     ]
 
@@ -164,73 +245,66 @@ def test_build_issue_instance(configuration_mock: Mock, config_for_testing):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
     # WHEN
-    issue = build_issue_instance(
-        issue_id=work_item.get('id'),
-        issue_key=work_item.get('key'),
-        fields=work_item.get('fields'),
-        project=work_item.get('fields').get('project'),
-        reporter=work_item.get('fields').get('reporter'),
-        status=work_item.get('fields').get('status'),
-    )
+    issue = WorkItemFactory.create_work_item(work_item)
     # THEN
     assert isinstance(issue, JiraIssue)
-    assert issue == JiraIssue(
-        id='10002',
-        key='SCRUM-10',
-        summary='(Sample) Set Up Payment Logging',
-        status=IssueStatus(
-            name='In Progress',
-            id='10001',
-        ),
-        project=Project(id='10000', name='Test Project', key='SCRUM'),
-        created=datetime(2025, 7, 5, 14, 34, 59),
-        updated=datetime(2025, 7, 14, 22, 33, 38),
-        due_date=datetime(2025, 12, 31).date(),
-        reporter=JiraUser(
-            account_id='abe10be',
-            active=True,
-            display_name='Bart',
-            email='bart@simpson.com',
-        ),
-        issue_type=IssueType(id='10003', name='Task', scope_project=None, hierarchy_level=0),
-        description={
-            'type': 'doc',
-            'version': 1,
-            'content': [
-                {
-                    'type': 'paragraph',
-                    'content': [
-                        {
-                            'type': 'text',
-                            'text': 'Create a logging system to store payment transaction metadata.',
-                        }
-                    ],
-                }
-            ],
-        },
-        attachments=[
-            Attachment(
-                id='2',
-                filename='foo.txt',
-                size=1000,
-                created=datetime(2025, 12, 31),
-                mime_type='text',
-                author=JiraUser(
-                    account_id='1',
-                    active=True,
-                    display_name='John Doe',
-                    email='foo@bar',
-                ),
-            )
+    assert issue.id == '10002'
+    assert issue.key == 'SCRUM-10'
+    assert issue.summary == '(Sample) Set Up Payment Logging'
+    assert issue.status == IssueStatus(
+        name='In Progress',
+        id='10001',
+    )
+    assert issue.project == Project(id='10000', name='Test Project', key='SCRUM')
+    assert issue.created == datetime(2025, 7, 5, 14, 34, 59)
+    assert issue.updated == datetime(2025, 7, 14, 22, 33, 38)
+    assert issue.due_date == datetime(2025, 12, 31).date()
+    assert issue.reporter == JiraUser(
+        account_id='abe10be',
+        active=True,
+        display_name='Bart',
+        email='bart@simpson.com',
+    )
+    assert issue.issue_type == IssueType(
+        id='10003', name='Task', scope_project=None, hierarchy_level=0
+    )
+    assert issue.description == {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [
+                    {
+                        'type': 'text',
+                        'text': 'Create a logging system to store payment transaction metadata.',
+                    }
+                ],
+            }
         ],
-        time_tracking=TimeTracking(
-            original_estimate='2 minutes',
-            remaining_estimate='1 minute',
-            time_spent='1 minute',
-            original_estimate_seconds=120,
-            remaining_estimate_seconds=60,
-            time_spent_seconds=60,
-        ),
+    }
+    assert issue.attachments == [
+        Attachment(
+            id='2',
+            filename='foo.txt',
+            size=1000,
+            created=datetime(2025, 12, 31),
+            mime_type='text',
+            author=JiraUser(
+                account_id='1',
+                active=True,
+                display_name='John Doe',
+                email='foo@bar',
+            ),
+        )
+    ]
+    assert issue.time_tracking == TimeTracking(
+        original_estimate='2 minutes',
+        remaining_estimate='1 minute',
+        time_spent='1 minute',
+        original_estimate_seconds=120,
+        remaining_estimate_seconds=60,
+        time_spent_seconds=60,
     )
 
 
@@ -239,49 +313,7 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
     # WHEN
-    issue = build_issue_instance(
-        issue_id=work_item.get('id'),
-        issue_key=work_item.get('key'),
-        fields=work_item.get('fields'),
-        project=work_item.get('fields').get('project'),
-        reporter=work_item.get('fields').get('reporter'),
-        status=work_item.get('fields').get('status'),
-        priority=work_item.get('fields').get('priority'),
-        assignee=work_item.get('fields').get('assignee'),
-        comments=[
-            IssueComment(
-                id='1',
-                author=JiraUser(
-                    account_id='1',
-                    active=True,
-                    display_name='Bart Simpson',
-                    email='bart@simpson.com',
-                ),
-                created=datetime(2025, 12, 30, 18, 0, 00),
-                updated=datetime(2025, 12, 30, 18, 1, 00),
-                update_author=JiraUser(
-                    account_id='2',
-                    active=True,
-                    display_name='Lisa Simpson',
-                    email='lisa@simpson.com',
-                ),
-                body='{"text": "hello world"}',
-            )
-        ],
-        related_issues=[],
-        parent_issue_key=work_item.get('fields').get('parent').get('key'),
-        edit_meta={
-            'fields': {
-                'summary': {
-                    'required': True,
-                    'schema': {'type': 'string', 'system': 'summary'},
-                    'name': 'Summary',
-                    'key': 'summary',
-                    'operations': ['set'],
-                }
-            }
-        },
-    )
+    issue = WorkItemFactory.create_work_item(work_item)
     # THEN
     assert isinstance(issue, JiraIssue)
     assert issue == JiraIssue(
@@ -351,7 +383,52 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
             email='bart@simpson.com',
         ),
         parent_issue_key='SCRUM-1',
-        related_issues=[],
+        related_issues=[
+            RelatedJiraIssue(
+                id='10033',
+                key='SCRUM-9',
+                summary='(Sample) Add Login Rate Limiting',
+                status=IssueStatus(
+                    id='10001',
+                    name='In Progress',
+                    description=None,
+                ),
+                issue_type=IssueType(
+                    id='10003',
+                    name='Task',
+                    hierarchy_level=None,
+                    scope_project=None,
+                ),
+                link_type='relates to',
+                relation_type='outward',
+                priority=IssuePriority(
+                    id='1',
+                    name='Highest',
+                ),
+            ),
+            RelatedJiraIssue(
+                id='10075',
+                key='SCRUM-1',
+                summary='(Sample) Payment Processing with Async',
+                status=IssueStatus(
+                    id='10001',
+                    name='In Progress',
+                    description=None,
+                ),
+                issue_type=IssueType(
+                    id='10001',
+                    name='Epic',
+                    hierarchy_level=None,
+                    scope_project=None,
+                ),
+                link_type='is cloned by',
+                relation_type='inward',
+                priority=IssuePriority(
+                    id='3',
+                    name='Medium',
+                ),
+            ),
+        ],
         comments=[
             IssueComment(
                 id='1',
@@ -369,7 +446,154 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
                     display_name='Lisa Simpson',
                     email='lisa@simpson.com',
                 ),
-                body='{"text": "hello world"}',
+                body={
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'hello world'}]}
+                    ],
+                },
+            )
+        ],
+        time_tracking=TimeTracking(
+            original_estimate='2 minutes',
+            remaining_estimate='1 minute',
+            time_spent='1 minute',
+            original_estimate_seconds=120,
+            remaining_estimate_seconds=60,
+            time_spent_seconds=60,
+        ),
+    )
+
+
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+def test_build_issue_instance_with_more_details_no_adf(
+    configuration_mock: Mock, config_for_testing
+):
+    # comments and description do not use ADF
+    # GIVEN
+    work_item = load_json_response(__file__, 'issue_no_adf.json')
+    # WHEN
+    issue = WorkItemFactory.create_work_item(work_item)
+    # THEN
+    assert isinstance(issue, JiraIssue)
+    assert issue == JiraIssue(
+        id='10002',
+        key='SCRUM-10',
+        summary='(Sample) Set Up Payment Logging',
+        status=IssueStatus(
+            name='In Progress',
+            id='10001',
+        ),
+        project=Project(id='10000', name='Test Project', key='SCRUM'),
+        created=datetime(2025, 7, 5, 14, 34, 59),
+        updated=datetime(2025, 7, 14, 22, 33, 38),
+        due_date=datetime(2025, 12, 31).date(),
+        reporter=JiraUser(
+            account_id='abe10be',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+        ),
+        issue_type=IssueType(id='10003', name='Task', scope_project=None, hierarchy_level=0),
+        description='Create a logging system to store payment transaction metadata.',
+        attachments=[
+            Attachment(
+                id='2',
+                filename='foo.txt',
+                size=1000,
+                created=datetime(2025, 12, 31),
+                mime_type='text',
+                author=JiraUser(
+                    account_id='1',
+                    active=True,
+                    display_name='John Doe',
+                    email='foo@bar',
+                ),
+            )
+        ],
+        edit_meta={
+            'fields': {
+                'summary': {
+                    'required': True,
+                    'schema': {'type': 'string', 'system': 'summary'},
+                    'name': 'Summary',
+                    'key': 'summary',
+                    'operations': ['set'],
+                }
+            }
+        },
+        assignee=JiraUser(
+            account_id='abe10be',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+        ),
+        parent_issue_key='SCRUM-1',
+        related_issues=[
+            RelatedJiraIssue(
+                id='10033',
+                key='SCRUM-9',
+                summary='(Sample) Add Login Rate Limiting',
+                status=IssueStatus(
+                    id='10001',
+                    name='In Progress',
+                    description=None,
+                ),
+                issue_type=IssueType(
+                    id='10003',
+                    name='Task',
+                    hierarchy_level=None,
+                    scope_project=None,
+                ),
+                link_type='relates to',
+                relation_type='outward',
+                priority=IssuePriority(
+                    id='1',
+                    name='Highest',
+                ),
+            ),
+            RelatedJiraIssue(
+                id='10075',
+                key='SCRUM-1',
+                summary='(Sample) Payment Processing with Async',
+                status=IssueStatus(
+                    id='10001',
+                    name='In Progress',
+                    description=None,
+                ),
+                issue_type=IssueType(
+                    id='10001',
+                    name='Epic',
+                    hierarchy_level=None,
+                    scope_project=None,
+                ),
+                link_type='is cloned by',
+                relation_type='inward',
+                priority=IssuePriority(
+                    id='3',
+                    name='Medium',
+                ),
+            ),
+        ],
+        comments=[
+            IssueComment(
+                id='1',
+                author=JiraUser(
+                    account_id='1',
+                    active=True,
+                    display_name='Bart Simpson',
+                    email='bart@simpson.com',
+                ),
+                created=datetime(2025, 12, 30, 18, 0, 00),
+                updated=datetime(2025, 12, 30, 18, 1, 00),
+                update_author=JiraUser(
+                    account_id='2',
+                    active=True,
+                    display_name='Lisa Simpson',
+                    email='lisa@simpson.com',
+                ),
+                body={'type': 'doc', 'version': 1, 'content': 'hello world 1'},
             )
         ],
         time_tracking=TimeTracking(

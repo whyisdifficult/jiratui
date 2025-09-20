@@ -13,7 +13,23 @@ from jiratui.models import WorkItemsSearchOrderBy
 class JiraAPI:
     """Implements methods to connect to the Jira REST API.
 
-    Supported version: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+    **Supported Versions**
+
+    - https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
+    - https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version
+
+    **Versions**
+
+    [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
+    [version 3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) of the API offer the same collection of
+    operations. However, version 3 provides support for the
+    [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
+
+    - body in comments, including where comments are used in issue, issue link, and transition resources.
+    - comment in work-logs.
+    - description and environment fields in issues.
+    - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a
+    string and don't handle Atlassian Document Format content.
     """
 
     API_PATH_PREFIX = '/rest/api/3/'
@@ -664,18 +680,22 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the comment.
         """
-        payload = {
+        payload = self._build_payload_to_add_comment(message)
+        return await self.client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.post,
+            url=f'issue/{issue_id_or_key}/comment',
+            data=json.dumps(payload),
+        )
+
+    @staticmethod
+    def _build_payload_to_add_comment(message: str) -> dict:
+        return {
             'body': {
                 'content': [{'content': [{'text': message, 'type': 'text'}], 'type': 'paragraph'}],
                 'type': 'doc',
                 'version': 1,
             }
         }
-        return await self.client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.post,
-            url=f'issue/{issue_id_or_key}/comment',
-            data=json.dumps(payload),
-        )
 
     async def get_comment(self, issue_id_or_key: str, comment_id: str) -> dict:
         """Retrieves the detail sof a comment.
@@ -781,6 +801,10 @@ class JiraAPI:
     async def create_work_item(self, fields: dict) -> dict:
         """Creates a work item.
 
+        The current version of this method does not implement support for setting the value of the environment field.
+        If we want to change this then we would need to take care of the difference in the format of the
+        environment field for API v2 (does nto support ADF) and v3 (supports ADF).
+
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
 
@@ -841,6 +865,10 @@ class JiraAPI:
     ) -> None:
         """Creates a link between two issues. Use this operation to indicate a relationship between two issues and
         optionally add a comment to the "from" (outward) issue
+
+        The current version of this method does not implement support for adding a comment in the link between the 2
+        work items. If we want to change this then we would need to take care of the difference in the format of the
+        comment field for API v2 (does nto support ADF) and v3 (supports ADF).
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/#api-rest-api-3-issuelink-post
@@ -988,3 +1016,13 @@ class JiraAPI:
             url=f'issue/{issue_id_or_key}/worklog',
             params=params,
         )
+
+
+class JiraAPIv2(JiraAPI):
+    """Implements methods to connect to the Jira REST API v2."""
+
+    API_PATH_PREFIX = '/rest/api/2/'
+
+    @staticmethod
+    def _build_payload_to_add_comment(message: str) -> dict:
+        return {'body': message}

@@ -56,10 +56,11 @@ class WorkItemInfoContainer(VerticalGroup):
                 yield IssueDescriptionWidget()
             yield VerticalScroll(id='work-item-info-extra-scroll-container')
 
-    async def _setup_work_item_description(self, description: dict | list) -> None:
-        if description:
-            if content := self._extract_adf(description):
-                await self.issue_description_widget.update(content.strip())
+    async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
+        if work_item.description:
+            content: str = work_item.get_description()
+            if content:
+                await self.issue_description_widget.update(content)
             else:
                 await self.issue_description_widget.update('Unable to display the description.')
             self.issue_description_widget.visible = True
@@ -83,7 +84,7 @@ class WorkItemInfoContainer(VerticalGroup):
         self.summary_container_widget.visible = True
 
         # set the description of the work item and make the widget visible
-        self.run_worker(self._setup_work_item_description(work_item.description))
+        self.run_worker(self._setup_work_item_description(work_item))
 
         # display all the editable custom fields with whose type is string-textarea
         self._has_extra_custom_fields = False
@@ -93,23 +94,28 @@ class WorkItemInfoContainer(VerticalGroup):
                     'customfield_'
                 ):
                     if field_schema := field_data.get('schema'):
-                        schema_custom = field_schema.get('custom')
-                        schema_type = field_schema.get('type')
+                        # only extract abd process editable custom fields of type textarea
                         if (
-                            schema_type == 'string'
-                            and schema_custom == CustomFieldTypes.TEXTAREA.value
+                            field_schema.get('type') == 'string'
+                            and field_schema.get('custom') == CustomFieldTypes.TEXTAREA.value
                         ):
-                            # get the value of the extra field
+                            # get the value of the custom field
                             if custom_field_value := work_item.get_editable_custom_field_value(
                                 field_key
                             ):
-                                if content := self._extract_adf(custom_field_value):
+                                if isinstance(custom_field_value, str):
+                                    content = custom_field_value.strip()
+                                else:
+                                    content = self._extract_adf(custom_field_value)
+
+                                if content:
                                     extra_field_markdown = Markdown(
                                         content, classes='work-item-info-custom-field-textarea'
                                     )
                                     extra_field_markdown.border_title = field_data.get('name')
                                     self.extra_fields_container.mount(extra_field_markdown)
                                     self._has_extra_custom_fields = True
+
         if self._has_extra_custom_fields:
             self.extra_fields_container.visible = True
             self.description_container.styles.height = '50%'
