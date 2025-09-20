@@ -24,7 +24,8 @@ class ApplicationConfiguration(BaseSettings):
     jira_api_base_url: str
     """The base URL of the Jira API."""
     jira_api_version: int = 3
-    """..."""
+    """The version of the JiraAPI that JiraTUI wil use. The default is 3 but you can set to 2 if your Jira installation
+    provides an older version of the API."""
     jira_user_group_id: str | None = None
     """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
     as a fall back mechanism to fetch available users."""

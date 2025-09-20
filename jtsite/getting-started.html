@@ -197,8 +197,11 @@ Options:
 Commands:
   comments  Use it to add, list or delete comments associated to work items.
   issues    Use it to search, update or delete work items.
+  config    Shows the location of the configuration file.
+  themes    Lists the available built-in themes.
   ui        Launches the Jira TUI application.
-  users     Use it to search users and user groups.</code></pre>
+  users     Use it to search users and user groups.
+  version   Shows the version of the tool.</code></pre>
                         </div>
 
                         <hr class="mt-3 text-1000 opacity-0"/>
@@ -245,7 +248,7 @@ Commands:
                           </div>
                         </div>
 
-                        <h3>Setting Up the Jira's Instance API Credentials</h3>
+                        <h3>Setting Up the Jira Instance API Credentials</h3>
                         <p>You must provide the following values to connect to your Jira instance API:</p>
 
                         <ul>
@@ -260,6 +263,30 @@ Commands:
 jira_api_token: '12345'
 jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'</code></pre>
                           <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton4" onclick="copyCode('codeBlock4', 'copyButton4')">
+                            <i class="bi bi-clipboard"></i> Copy
+                          </button>
+                        </div>
+                        <hr class="mt-3 text-1000 opacity-0"/>
+
+                        <h3>Choosing the API version</h3>
+                        <p>
+                            JiraTUI supports the <a href="https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/" target="_blank">Jira REST API v3</a>. However,
+                            starting with v1.1.0 JiraTUI supports <a href="https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/" target="_blank">Jira REST API v2</a>
+                            as well.
+                        </p>
+
+                        <p>
+                            By default, JiraTUI uses the <a href="https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/" target="_blank">Jira REST API v3</a>.
+                            This is good when your Jira instance runs in the cloud. However, Jira also offers an
+                            on-premises installation mode and in these cases the version of the API may not be v3 but
+                            v2 instead. To address this JiraTUI lets you choose which version of the API you can use.
+                        </p>
+
+                        <p>To set the version of the API update your config file to include:</p>
+
+                        <div class="position-relative border rounded-1 border-700 p-1">
+                          <pre><code id="codeBlock11">jira_api_version: 2</code></pre>
+                          <button class="btn btn-sm btn-outline-secondary copy-btn" id="copyButton11" onclick="copyCode('codeBlock11', 'copyButton11')">
                             <i class="bi bi-clipboard"></i> Copy
                           </button>
                         </div>
