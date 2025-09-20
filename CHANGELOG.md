@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-09-20
+
+### Added
+
+- Support for Jira API v2
+- Fetch the details of an issue after updating its details; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/62
+- Add support for setting the theme of the UI on start up; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/63
+- Support theme configuration in the config file; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/68
+
+### Documentation
+
+- Update the documentation to reflect the support for Jira API v2
+
 ## [1.0.0] - 2025-09-16
 
 ### Breaking Changes
