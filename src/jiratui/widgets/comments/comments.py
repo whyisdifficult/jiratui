@@ -96,7 +96,7 @@ pressing `d`. Comments can be added by pressing `n`.
         Binding(
             key='n',
             action='add_comment',
-            description='Add Comment',
+            description='New Comment',
             key_display='n',
         )
     ]

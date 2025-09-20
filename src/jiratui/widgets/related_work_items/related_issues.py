@@ -108,7 +108,7 @@ To view the details of a related item simply focus on the item and then press `v
         Binding(
             key='n',
             action='link_work_item',
-            description='Link Work Item',
+            description='New Related',
             key_display='n',
         )
     ]

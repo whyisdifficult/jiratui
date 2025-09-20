@@ -10,6 +10,7 @@ from pydantic_settings import (
 )
 
 from jiratui.constants import (
+    DEFAULT_JIRA_API_VERSION,
     ISSUE_SEARCH_DEFAULT_DAYS_INTERVAL,
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
@@ -23,7 +24,7 @@ class ApplicationConfiguration(BaseSettings):
     """The token to use for connecting to the Jira API."""
     jira_api_base_url: str
     """The base URL of the Jira API."""
-    jira_api_version: int = 3
+    jira_api_version: int = DEFAULT_JIRA_API_VERSION
     """The version of the JiraAPI that JiraTUI wil use. The default is 3 but you can set to 2 if your Jira installation
     provides an older version of the API."""
     jira_user_group_id: str | None = None

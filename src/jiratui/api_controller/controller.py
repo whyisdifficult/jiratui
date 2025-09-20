@@ -22,7 +22,11 @@ from jiratui.api_controller.constants import (
 )
 from jiratui.api_controller.factories import WorkItemFactory
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
-from jiratui.constants import ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES, LOGGER_NAME
+from jiratui.constants import (
+    ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES,
+    DEFAULT_JIRA_API_VERSION,
+    LOGGER_NAME,
+)
 from jiratui.exceptions import (
     ServiceInvalidResponseException,
     ServiceUnavailableException,
@@ -67,11 +71,9 @@ class APIControllerResponse(BaseModel):
 class APIController:
     """A controller for the JirAPI to provide some additional functionality and integration of multiple endpoints."""
 
-    DEFAULT_JIRA_API_VERSION: int = 3
-
     def __init__(self, configuration: ApplicationConfiguration | None = None):
         self.config = CONFIGURATION.get() if not configuration else configuration
-        self.api_version: int = self.config.jira_api_version or self.DEFAULT_JIRA_API_VERSION
+        self.api_version: int = self.config.jira_api_version or DEFAULT_JIRA_API_VERSION
         self.api: JiraAPI | JiraAPIv2
         if self.api_version == 2:
             self.api = JiraAPIv2(
