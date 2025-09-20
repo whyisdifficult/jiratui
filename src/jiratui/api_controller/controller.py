@@ -2,7 +2,6 @@ from collections import defaultdict
 import dataclasses
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-import json
 import logging
 import mimetypes
 import os
@@ -11,7 +10,7 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 
-from jiratui.api.api import JiraAPI
+from jiratui.api.api import JiraAPI, JiraAPIv2
 from jiratui.api_controller.constants import (
     MAXIMUM_PAGE_NUMBER_LIST_GROUPS,
     MAXIMUM_PAGE_NUMBER_SEARCH_PROJECTS,
@@ -21,11 +20,7 @@ from jiratui.api_controller.constants import (
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_PROJECTS,
 )
-from jiratui.api_controller.factories import (
-    build_comments,
-    build_issue_instance,
-    build_related_work_items,
-)
+from jiratui.api_controller.factories import WorkItemFactory
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES, LOGGER_NAME
 from jiratui.exceptions import (
@@ -54,7 +49,6 @@ from jiratui.models import (
     LinkIssueType,
     PaginatedJiraWorklog,
     Project,
-    RelatedJiraIssue,
     UpdateWorkItemResponse,
     WorkItemsSearchOrderBy,
 )
@@ -73,13 +67,24 @@ class APIControllerResponse(BaseModel):
 class APIController:
     """A controller for the JirAPI to provide some additional functionality and integration of multiple endpoints."""
 
+    DEFAULT_JIRA_API_VERSION: int = 3
+
     def __init__(self, configuration: ApplicationConfiguration | None = None):
         self.config = CONFIGURATION.get() if not configuration else configuration
-        self.api = JiraAPI(
-            base_url=self.config.jira_api_base_url,
-            api_username=self.config.jira_api_username,
-            api_token=self.config.jira_api_token,
-        )
+        self.api_version: int = self.config.jira_api_version or self.DEFAULT_JIRA_API_VERSION
+        self.api: JiraAPI | JiraAPIv2
+        if self.api_version == 2:
+            self.api = JiraAPIv2(
+                base_url=self.config.jira_api_base_url,
+                api_username=self.config.jira_api_username,
+                api_token=self.config.jira_api_token,
+            )
+        else:
+            self.api = JiraAPI(
+                base_url=self.config.jira_api_base_url,
+                api_username=self.config.jira_api_username,
+                api_token=self.config.jira_api_token,
+            )
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)
 
@@ -637,44 +642,16 @@ class APIController:
                 error=f'Failed to retrieve the work item {issue_id_or_key}: {str(e)}.',
             )
         else:
-            issue_fields = issue.get('fields', {})
-            issue_project = issue_fields.get('project', {})
-            issue_status = issue_fields.get('status', {})
-            issue_assignee: dict | None = issue_fields.get('assignee')
-            issue_reporter: dict | None = issue_fields.get('reporter')
-            issue_priority = issue_fields.get('priority')
-            parent_issue_key = None
-            if parent_issue := issue_fields.get('parent'):
-                parent_issue_key = parent_issue.get('key')
-
-            comments: list[IssueComment] = build_comments(
-                issue_fields.get('comment', {}).get('comments', [])
-            )
-            related_issues: list[RelatedJiraIssue] = build_related_work_items(
-                issue_fields.get('issuelinks', [])
-            )
             editable_custom_fields: dict[str, Any] | None = None
-            if issue_fields:
+            if issue.get('fields', {}):
                 # extract the value of the custom fields that can be edited
                 editable_custom_fields = self._extract_editable_custom_fields(
-                    issue_fields, issue.get('editmeta', {}).get('fields')
+                    issue.get('fields', {}), issue.get('editmeta', {}).get('fields')
                 )
 
             try:
-                instance: JiraIssue = build_issue_instance(
-                    issue.get('id'),
-                    issue.get('key'),
-                    fields=issue_fields,
-                    project=issue_project,
-                    reporter=issue_reporter,
-                    status=issue_status,
-                    assignee=issue_assignee,
-                    comments=comments,
-                    related_issues=related_issues,
-                    parent_issue_key=parent_issue_key,
-                    priority=issue_priority,
-                    edit_meta=issue.get('editmeta'),
-                    editable_custom_fields=editable_custom_fields,
+                instance: JiraIssue = WorkItemFactory.create_work_item(
+                    issue, editable_custom_fields
                 )
             except Exception as e:
                 self.logger.error(
@@ -804,38 +781,10 @@ class APIController:
             )
 
         issues: list[JiraIssue] = []
+        work_item: JiraIssue
         for issue in response.get('issues', []):
-            issue_fields = issue.get('fields', {})
-            issue_project = issue_fields.get('project', {})
-            issue_status = issue_fields.get('status', {})
-            issue_assignee: dict | None = issue_fields.get('assignee')
-            issue_reporter: dict | None = issue_fields.get('reporter')
-            issue_priority = issue_fields.get('priority')
-            parent_issue_key = None
-            if parent_issue := issue_fields.get('parent'):
-                parent_issue_key = parent_issue.get('key')
-
-            comments: list[IssueComment] = build_comments(
-                issue_fields.get('comment', {}).get('comments', [])
-            )
-            related_issues: list[RelatedJiraIssue] = build_related_work_items(
-                issue_fields.get('issuelinks', [])
-            )
-
             try:
-                work_item = build_issue_instance(
-                    issue.get('id'),
-                    issue.get('key'),
-                    issue_fields,
-                    issue_project,
-                    issue_reporter,
-                    issue_status,
-                    issue_assignee,
-                    comments,
-                    related_issues,
-                    parent_issue_key,
-                    issue_priority,
-                )
+                work_item = WorkItemFactory.create_work_item(issue)
                 issues.append(work_item)
             except Exception:
                 continue
@@ -1307,7 +1256,7 @@ class APIController:
                 )
                 if update_author
                 else None,
-                body=json.dumps(comment.get('body')) if comment.get('body') else None,
+                body=comment.get('body'),
             )
         )
 
@@ -1361,7 +1310,7 @@ class APIController:
                     )
                     if update_author
                     else None,
-                    body=json.dumps(record.get('body')) if record.get('body') else None,
+                    body=record.get('body'),
                 )
             )
         return APIControllerResponse(result=comments)
@@ -1406,6 +1355,7 @@ class APIController:
             )
             if update_author
             else None,
+            body=response.get('body'),
         )
         return APIControllerResponse(result=comment)
 
@@ -1551,6 +1501,13 @@ class APIController:
     async def create_work_item(self, data: dict) -> APIControllerResponse:
         """Creates a work item.
 
+        The description field of a work item may be an ADF document or, if API v2 is used then a simple string. This
+        method generates the proposer payload format for the description field based on the api version in use.
+
+        The current version of this method does not implement support for setting the value of the environment field.
+        If we want to change this then we would need to take care of the difference in the format of the
+        environment field for API v2 (does nto support ADF) and v3 (supports ADF).
+
         Args:
             data: the data that includes the fields and values to create the work item.
 
@@ -1586,21 +1543,24 @@ class APIController:
             fields['priority'] = {'id': priority_id}
 
         if description := data.get('description'):
-            fields['description'] = {
-                'content': [
-                    {
-                        'content': [
-                            {
-                                'type': 'text',
-                                'text': description,
-                            }
-                        ],
-                        'type': 'paragraph',
-                    }
-                ],
-                'type': 'doc',
-                'version': 1,
-            }
+            if self.api_version == 2:
+                fields['description'] = description
+            else:
+                fields['description'] = {
+                    'content': [
+                        {
+                            'content': [
+                                {
+                                    'type': 'text',
+                                    'text': description,
+                                }
+                            ],
+                            'type': 'paragraph',
+                        }
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                }
 
         if not fields:
             return APIControllerResponse(

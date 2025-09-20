@@ -23,6 +23,8 @@ class ApplicationConfiguration(BaseSettings):
     """The token to use for connecting to the Jira API."""
     jira_api_base_url: str
     """The base URL of the Jira API."""
+    jira_api_version: int = 3
+    """..."""
     jira_user_group_id: str | None = None
     """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
     as a fall back mechanism to fetch available users."""

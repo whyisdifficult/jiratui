@@ -4,8 +4,9 @@ from datetime import date, datetime
 from decimal import Decimal
 import enum
 from enum import Enum
-import json
 from typing import Any
+
+from jiratui.utils.adf2md.adf2md import adf2md
 
 
 def custom_as_dict_factory(data) -> dict:
@@ -126,7 +127,7 @@ class IssueComment(BaseModel):
     created: datetime | None = None
     updated: datetime | None = None
     update_author: JiraUser | None = None
-    body: str | None = None
+    body: dict | str | None = None
 
     def short_metadata(self) -> str:
         if self.update_author:
@@ -143,10 +144,15 @@ class IssueComment(BaseModel):
     def created_on(self) -> str:
         return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
 
-    def body_as_dict(self) -> dict | None:
+    def get_body(self) -> str:
         if not self.body:
-            return None
-        return json.loads(self.body)
+            return ''
+        if isinstance(self.body, str):
+            return self.body.strip()
+        try:
+            return adf2md(self.body)
+        except Exception:
+            return ''
 
 
 @dataclass
@@ -245,7 +251,7 @@ class JiraIssue(JiraBaseIssue):
     issue_type: IssueType | None = None
     resolution_date: datetime | None = None
     resolution: str | None = None
-    description: dict | None = None
+    description: dict | str | None = None
     priority: IssuePriority | None = None
     assignee: JiraUser | None = None
     comments: list[IssueComment] | None = None
@@ -378,6 +384,16 @@ class JiraIssue(JiraBaseIssue):
             return None
         return self.editable_custom_fields.get(name)
 
+    def get_description(self) -> str:
+        if not self.description:
+            return ''
+        if isinstance(self.description, str):
+            return self.description.strip()
+        try:
+            return adf2md(self.description)
+        except Exception:
+            return ''
+
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'
 
@@ -500,7 +516,7 @@ class JiraWorklog(BaseModel):
     time_spent_seconds: int | None = None
     author: JiraUser | None = None
     update_author: JiraUser | None = None
-    comment: dict | None = None
+    comment: dict | str | None = None
 
     def updated_on(self) -> str:
         if self.update_author:
@@ -529,6 +545,16 @@ class JiraWorklog(BaseModel):
                 return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(self.updated, "%Y-%m-%d %H:%M")}'
             else:
                 return f'{self.author.display_user} logged {self.time_spent}'
+
+    def get_comment(self) -> str:
+        if not self.comment:
+            return ''
+        if isinstance(self.comment, str):
+            return self.comment.strip()
+        try:
+            return adf2md(self.comment)
+        except Exception:
+            return ''
 
 
 @dataclass

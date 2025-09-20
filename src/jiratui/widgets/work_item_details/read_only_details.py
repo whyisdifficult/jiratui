@@ -9,7 +9,6 @@ from textual.widgets import DataTable, Rule
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraIssueSearchResponse
-from jiratui.utils.adf2md.adf2md import adf2md
 from jiratui.widgets.base import CustomTitle
 from jiratui.widgets.summary import IssueDescriptionWidget
 
@@ -117,13 +116,12 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                     ]
                 )
 
-                # set the description
-                if issue_description := issue.description:
-                    try:
-                        await self.issue_description_widget.update(adf2md(issue_description))
-                    except Exception as e:
+                if issue.description:
+                    if content := issue.get_description():
+                        await self.issue_description_widget.update(content)
+                    else:
                         log.error(
-                            f'Failed to parse the description for work item with key: {self._work_item_key}: {str(e)}'
+                            f'Failed to parse the description for work item with key: {self._work_item_key}'
                         )
                         await self.issue_description_widget.update(
                             'Unable to display the description.'

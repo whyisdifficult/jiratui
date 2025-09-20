@@ -5,6 +5,7 @@ import pytest
 
 from jiratui.api.api import JiraAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.api_controller.factories import WorkItemFactory
 from jiratui.exceptions import (
     ServiceInvalidResponseException,
     ServiceUnavailableException,
@@ -30,6 +31,56 @@ from jiratui.models import (
     UpdateWorkItemResponse,
 )
 from jiratui.utils.test_utilities import load_json_response
+
+
+@pytest.fixture
+def comment_response() -> dict:
+    return {
+        'author': {
+            'accountId': '1',
+            'emailAddress': 'bart@foo.com',
+            'active': True,
+            'displayName': 'Bart',
+        },
+        'updateAuthor': {
+            'accountId': '2',
+            'emailAddress': 'homer@foo.com',
+            'active': True,
+            'displayName': 'Homer',
+        },
+        'created': '2025-12-31T10:20:00',
+        'updated': '2025-12-31T10:20:00',
+        'id': '1',
+        'body': {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    }
+
+
+@pytest.fixture
+def comment_response_without_adf() -> dict:
+    return {
+        'author': {
+            'accountId': '1',
+            'emailAddress': 'bart@foo.com',
+            'active': True,
+            'displayName': 'Bart',
+        },
+        'updateAuthor': {
+            'accountId': '2',
+            'emailAddress': 'homer@foo.com',
+            'active': True,
+            'displayName': 'Homer',
+        },
+        'created': '2025-12-31T10:20:00',
+        'updated': '2025-12-31T10:20:00',
+        'id': '1',
+        'body': 'Hello World!',
+    }
 
 
 @pytest.fixture
@@ -1180,18 +1231,18 @@ async def test_get_issue_with_api_error(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.controller.build_issue_instance')
+@patch.object(WorkItemFactory, 'create_work_item')
 @patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_issue')
 async def test_get_issue_with_instance_building_error(
     get_issue_mock: Mock,
     configuration_mock: Mock,
-    build_issue_instance_mock: Mock,
+    create_work_item_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
     get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
-    build_issue_instance_mock.side_effect = ValueError('another error')
+    create_work_item_mock.side_effect = ValueError('another error')
     # WHEN
     response = await jira_api_controller.get_issue('10002')
     # THEN
@@ -1499,13 +1550,13 @@ async def test_search_issues_with_next_page(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.controller.build_issue_instance')
+@patch.object(WorkItemFactory, 'create_work_item')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'search_issues')
 async def test_search_issues_with_missing_issues(
     search_issues_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    build_issue_instance_mock: Mock,
+    create_work_item_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
@@ -1515,7 +1566,7 @@ async def test_search_issues_with_missing_issues(
         'nextPageToken': 't1',
         'isLast': False,
     }
-    build_issue_instance_mock.side_effect = ValueError('some error')
+    create_work_item_mock.side_effect = ValueError('some error')
     # WHEN
     response = await jira_api_controller.search_issues()
     # THEN
@@ -2207,28 +2258,6 @@ async def test_transition_issue_status_with_api_error(
     transitions_mock.assert_called_once_with('1')
 
 
-@pytest.fixture
-def comment_response() -> dict:
-    return {
-        'author': {
-            'accountId': '1',
-            'emailAddress': 'bart@foo.com',
-            'active': True,
-            'displayName': 'Bart',
-        },
-        'updateAuthor': {
-            'accountId': '2',
-            'emailAddress': 'homer@foo.com',
-            'active': True,
-            'displayName': 'Homer',
-        },
-        'created': '2025-12-31T10:20:00',
-        'updated': '2025-12-31T10:20:00',
-        'id': '1',
-        'body': {},
-    }
-
-
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_comment')
 async def test_get_comment(
@@ -2260,7 +2289,49 @@ async def test_get_comment(
             active=True,
             email='homer@foo.com',
         ),
-        body=None,
+        body={
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
+    get_comment_mock.assert_called_once_with('1', '2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comment')
+async def test_get_comment_without_adf(
+    get_comment_mock: Mock,
+    comment_response_without_adf: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_comment_mock.return_value = comment_response_without_adf
+    # WHEN
+    response = await jira_api_controller.get_comment('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body='Hello World!',
     )
     get_comment_mock.assert_called_once_with('1', '2')
 
@@ -2314,7 +2385,51 @@ async def test_get_comments(
                 active=True,
                 email='homer@foo.com',
             ),
-            body=None,
+            body={
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+                ],
+            },
+        )
+    ]
+    get_comments_mock.assert_called_once_with('1', 0, 10)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_comments')
+async def test_get_comments_without_adf(
+    get_comments_mock: Mock,
+    comment_response_without_adf: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_comments_mock.return_value = {'comments': [comment_response_without_adf]}
+    # WHEN
+    response = await jira_api_controller.get_comments('1', 0, 10)
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [
+        IssueComment(
+            id='1',
+            author=JiraUser(
+                account_id='1',
+                display_name='Bart',
+                active=True,
+                email='bart@foo.com',
+            ),
+            created=datetime(2025, 12, 31, 10, 20, 0),
+            updated=datetime(2025, 12, 31, 10, 20, 0),
+            update_author=JiraUser(
+                account_id='2',
+                display_name='Homer',
+                active=True,
+                email='homer@foo.com',
+            ),
+            body='Hello World!',
         )
     ]
     get_comments_mock.assert_called_once_with('1', 0, 10)
@@ -2366,7 +2481,47 @@ async def test_add_comment(
             active=True,
             email='homer@foo.com',
         ),
-        body=None,
+        body={
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
+    add_comment_mock.assert_called_once_with('1', 'text')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_comment')
+async def test_add_comment_without_adf(
+    add_comment_mock: Mock, comment_response_without_adf: dict, jira_api_controller: APIController
+):
+    # GIVEN
+    add_comment_mock.return_value = comment_response_without_adf
+    # WHEN
+    response = await jira_api_controller.add_comment('1', 'text')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body='Hello World!',
     )
     add_comment_mock.assert_called_once_with('1', 'text')
 

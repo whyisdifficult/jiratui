@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
@@ -20,144 +19,121 @@ from jiratui.models import (
 )
 
 
-def build_issue_instance(
-    issue_id: str,
-    issue_key: str,
-    fields: dict,
-    project: dict,
-    reporter: dict,
-    status: dict,
-    assignee: dict | None = None,
-    comments: list[IssueComment] | None = None,
-    related_issues: list[RelatedJiraIssue] | None = None,
-    parent_issue_key: str | None = None,
-    priority: dict | None = None,
-    edit_meta: dict | None = None,
-    editable_custom_fields: dict[str, Any] | None = None,
-) -> JiraIssue:
-    """Builds an instance of `JiraIssue` with the details of a work item.
+class WorkItemFactory:
+    @staticmethod
+    def create_work_item(
+        data: dict, editable_custom_fields: dict[str, Any] | None = None
+    ) -> JiraIssue:
+        fields = data.get('fields', {})
+        project = fields.get('project', {})
+        status = fields.get('status', {})
+        assignee: dict | None = fields.get('assignee')
+        reporter: dict | None = fields.get('reporter')
+        priority = fields.get('priority')
+        parent_issue_key = fields.get('parent').get('key') if fields.get('parent') else None
 
-    Args:
-        issue_id: the ID of the work item.
-        issue_key: the case-sensitive key of the item.
-        fields: a dictionary with the details of different fields associated to the item.
-        project: a dictionary with the details of the item's project.
-        reporter: a dictionary with the details of the item's reporter.
-        status: a dictionary with the details of the item's status.
-        assignee: a dictionary with the details of the item's assignee.
-        comments: a list of comments associated to the item.
-        related_issues: a list of related issues.
-        parent_issue_key: the case-sensitive key of the parent issue.
-        priority: a dictionary with the details of the item's priority.
-        edit_meta: a dictionary with the details of the item's metadata for editing the item.
-        editable_custom_fields: a dictionary with the value of the custom fields associated to the issue that support
-        editing.
-
-    Returns:
-        An instance of `JiraIssue`.
-    """
-    tracking = None
-    if time_tracking := fields.get('timetracking'):
-        tracking = TimeTracking(
-            original_estimate=time_tracking.get('originalEstimate'),
-            remaining_estimate=time_tracking.get('remainingEstimate'),
-            time_spent=time_tracking.get('timeSpent'),
-            original_estimate_seconds=time_tracking.get('originalEstimateSeconds'),
-            remaining_estimate_seconds=time_tracking.get('remainingEstimateSeconds'),
-            time_spent_seconds=time_tracking.get('timeSpentSeconds'),
-        )
-
-    sprint: JiraSprint | None = None
-    if sprint_custom_field_id := CONFIGURATION.get().custom_field_id_sprint:
-        if sprint_ids := fields.get(sprint_custom_field_id):
-            sprint = JiraSprint(
-                id=sprint_ids[0].get('id'),
-                name=sprint_ids[0].get('name'),
-                active=sprint_ids[0].get('active'),
+        tracking = None
+        if time_tracking := fields.get('timetracking'):
+            tracking = TimeTracking(
+                original_estimate=time_tracking.get('originalEstimate'),
+                remaining_estimate=time_tracking.get('remainingEstimate'),
+                time_spent=time_tracking.get('timeSpent'),
+                original_estimate_seconds=time_tracking.get('originalEstimateSeconds'),
+                remaining_estimate_seconds=time_tracking.get('remainingEstimateSeconds'),
+                time_spent_seconds=time_tracking.get('timeSpentSeconds'),
             )
 
-    attachments: list[Attachment] = []
-    for item in fields.get('attachment', []):
-        creator = None
-        if author := item.get('author'):
-            creator = JiraUser(
-                account_id=author.get('accountId'),
-                active=author.get('active'),
-                display_name=author.get('displayName'),
-                email=author.get('emailAddress'),
-            )
-        attachments.append(
-            Attachment(
-                id=item.get('id'),
-                filename=item.get('filename'),
-                size=item.get('size'),
-                created=isoparse(item.get('created')) if item.get('created') else None,
-                mime_type=item.get('mimeType'),
-                author=creator,
-            )
-        )
+        sprint: JiraSprint | None = None
+        if sprint_custom_field_id := CONFIGURATION.get().custom_field_id_sprint:
+            if sprint_ids := fields.get(sprint_custom_field_id):
+                sprint = JiraSprint(
+                    id=sprint_ids[0].get('id'),
+                    name=sprint_ids[0].get('name'),
+                    active=sprint_ids[0].get('active'),
+                )
 
-    return JiraIssue(
-        id=issue_id,
-        key=issue_key,
-        summary=fields.get('summary', ''),
-        description=fields.get('description'),
-        project=Project(
-            id=project.get('id'),
-            name=project.get('name'),
-            key=project.get('key'),
+        attachments: list[Attachment] = []
+        for item in fields.get('attachment', []):
+            creator = None
+            if author := item.get('author'):
+                creator = JiraUser(
+                    account_id=author.get('accountId'),
+                    active=author.get('active'),
+                    display_name=author.get('displayName'),
+                    email=author.get('emailAddress'),
+                )
+            attachments.append(
+                Attachment(
+                    id=item.get('id'),
+                    filename=item.get('filename'),
+                    size=item.get('size'),
+                    created=isoparse(item.get('created')) if item.get('created') else None,
+                    mime_type=item.get('mimeType'),
+                    author=creator,
+                )
+            )
+
+        return JiraIssue(
+            id=data.get('id'),
+            key=data.get('key'),
+            summary=fields.get('summary', ''),
+            description=fields.get('description'),
+            project=Project(
+                id=project.get('id'),
+                name=project.get('name'),
+                key=project.get('key'),
+            )
+            if project
+            else None,
+            created=isoparse(fields.get('created')) if fields.get('created') else None,
+            updated=isoparse(fields.get('updated')) if fields.get('updated') else None,
+            priority=IssuePriority(
+                id=priority.get('id'),
+                name=priority.get('name'),
+            )
+            if priority
+            else None,
+            status=IssueStatus(id=str(status.get('id')), name=status.get('name')),
+            assignee=JiraUser(
+                account_id=assignee.get('accountId'),
+                active=assignee.get('active'),
+                display_name=assignee.get('displayName'),
+                email=assignee.get('emailAddress'),
+            )
+            if assignee
+            else None,
+            reporter=JiraUser(
+                account_id=reporter.get('accountId'),
+                active=reporter.get('active'),
+                display_name=reporter.get('displayName'),
+                email=reporter.get('emailAddress'),
+            )
+            if reporter
+            else None,
+            issue_type=IssueType(
+                id=fields.get('issuetype', {}).get('id'),
+                name=fields.get('issuetype', {}).get('name'),
+                hierarchy_level=fields.get('issuetype', {}).get('hierarchyLevel'),
+            ),
+            comments=build_comments(fields.get('comment', {}).get('comments', [])),
+            related_issues=build_related_work_items(fields.get('issuelinks', [])),
+            parent_issue_key=parent_issue_key,
+            time_tracking=tracking,
+            resolution=fields.get('resolution').get('name') if fields.get('resolution') else None,
+            resolution_date=isoparse(fields.get('resolutiondate'))
+            if fields.get('resolutiondate')
+            else None,
+            labels=[label.lower() for label in fields.get('labels', [])]
+            if fields.get('labels')
+            else None,
+            attachments=attachments,
+            sprint=sprint,
+            edit_meta=data.get('editmeta'),
+            due_date=datetime.strptime(fields.get('duedate'), '%Y-%m-%d').date()
+            if fields.get('duedate')
+            else None,
+            editable_custom_fields=editable_custom_fields,
         )
-        if project
-        else None,
-        created=isoparse(fields.get('created')) if fields.get('created') else None,
-        updated=isoparse(fields.get('updated')) if fields.get('updated') else None,
-        priority=IssuePriority(
-            id=priority.get('id'),
-            name=priority.get('name'),
-        )
-        if priority
-        else None,
-        status=IssueStatus(id=str(status.get('id')), name=status.get('name')),
-        assignee=JiraUser(
-            account_id=assignee.get('accountId'),
-            active=assignee.get('active'),
-            display_name=assignee.get('displayName'),
-            email=assignee.get('emailAddress'),
-        )
-        if assignee
-        else None,
-        reporter=JiraUser(
-            account_id=reporter.get('accountId'),
-            active=reporter.get('active'),
-            display_name=reporter.get('displayName'),
-            email=reporter.get('emailAddress'),
-        )
-        if reporter
-        else None,
-        issue_type=IssueType(
-            id=fields.get('issuetype', {}).get('id'),
-            name=fields.get('issuetype', {}).get('name'),
-            hierarchy_level=fields.get('issuetype', {}).get('hierarchyLevel'),
-        ),
-        comments=comments,
-        related_issues=related_issues,
-        parent_issue_key=parent_issue_key,
-        time_tracking=tracking,
-        resolution=fields.get('resolution').get('name') if fields.get('resolution') else None,
-        resolution_date=isoparse(fields.get('resolutiondate'))
-        if fields.get('resolutiondate')
-        else None,
-        labels=[label.lower() for label in fields.get('labels', [])]
-        if fields.get('labels')
-        else None,
-        attachments=attachments,
-        sprint=sprint,
-        edit_meta=edit_meta,
-        due_date=datetime.strptime(fields.get('duedate'), '%Y-%m-%d').date()
-        if fields.get('duedate')
-        else None,
-        editable_custom_fields=editable_custom_fields,
-    )
 
 
 def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
@@ -193,7 +169,7 @@ def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
                     )
                     if update_author
                     else None,
-                    body=json.dumps(comment.get('body')) if comment.get('body') else None,
+                    body=comment.get('body'),
                 )
             )
         except Exception:

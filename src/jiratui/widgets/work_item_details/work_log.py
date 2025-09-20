@@ -7,7 +7,6 @@ from textual.widgets import Collapsible, Footer, Link, Markdown
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorklog
-from jiratui.utils.adf2md.adf2md import adf2md
 from jiratui.utils.urls import build_external_url_for_work_log
 from jiratui.widgets.base import CustomTitle
 
@@ -43,7 +42,7 @@ class WorkItemWorkLogScreen(Screen):
             self.run_worker(self.fetch_work_log())
 
     async def fetch_work_log(self) -> None:
-        """Retrieves the work log data associated to a work item and updates the details ijn the screen.
+        """Retrieves the work log data associated to a work item and updates the details in the screen.
 
         Returns:
             Nothing.
@@ -58,10 +57,9 @@ class WorkItemWorkLogScreen(Screen):
             for work_log in response.result.logs:
                 comment_text = ''
                 if work_log.comment:
-                    try:
-                        comment_text = adf2md(work_log.comment)
-                    except Exception:
+                    if not (comment_text := work_log.get_comment()):
                         comment_text = 'Unable to display the comment associated to the log.'
+
                 url = build_external_url_for_work_log(self._work_item_key, work_log.id)
                 elements.append(
                     WorkLogCollapsible(

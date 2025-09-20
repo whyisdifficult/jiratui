@@ -9,7 +9,6 @@ from textual.widgets import Collapsible, Link, Markdown, Rule, Static
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import IssueComment
-from jiratui.utils.adf2md.adf2md import adf2md
 from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
@@ -26,8 +25,8 @@ class CommentCollapsible(Collapsible):
     ]
 
     def __init__(self, *args, **kwargs):
-        self._work_item_key: str | None = kwargs.pop('work_item_key', None)
-        self._comment_id: str | None = kwargs.pop('comment_id', None)
+        self._work_item_key: str | None = kwargs.pop('work_item_key', None)  # type:ignore[annotation-unchecked]
+        self._comment_id: str | None = kwargs.pop('comment_id', None)  # type:ignore[annotation-unchecked]
         super().__init__(*args, **kwargs)
 
     async def action_delete_comment(self) -> None:
@@ -159,10 +158,9 @@ pressing `d`. Comments can be added by pressing `n`.
         items.sort(key=lambda x: x.updated, reverse=True)
         comment_text: Markdown | Static
         for comment in items:
-            try:
-                content = adf2md(comment.body_as_dict())
+            if content := comment.get_body():
                 comment_text = Markdown(content)
-            except Exception:
+            else:
                 comment_text = Static(
                     Text(
                         'Unable to display the comment. Open the link above to view it.',
