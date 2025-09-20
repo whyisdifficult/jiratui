@@ -1,0 +1,63 @@
+import json
+
+from rich.text import Text
+from textual.app import ComposeResult
+from textual.containers import Vertical
+from textual.screen import ModalScreen
+from textual.widgets import DataTable, TextArea
+
+from jiratui.config import CONFIGURATION
+from jiratui.widgets.base import CustomTitle
+
+
+class ConfigFileScreen(ModalScreen):
+    """The screen that displays the configuration settings."""
+
+    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
+    TITLE = 'JiraTUI Configuration File'
+
+    @property
+    def datatable_config_info(self) -> DataTable:
+        return self.query_one('#config-details', expect_type=DataTable)
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield CustomTitle(self.TITLE)
+            yield DataTable(cursor_type='row', show_header=False, id='config-details')
+            if CONFIGURATION.get().pre_defined_jql_expressions:
+                jql_expressions_textarea = TextArea.code_editor(
+                    language='json',
+                    read_only=True,
+                    classes='config-file-textarea',
+                    show_line_numbers=False,
+                    compact=True,
+                )
+                jql_expressions_textarea.border_title = 'pre_defined_jql_expressions'
+                yield jql_expressions_textarea
+
+    async def on_mount(self) -> None:
+        table = self.datatable_config_info
+        table.add_columns(*['Property', 'Value'])
+        rows = []
+        data = CONFIGURATION.get().model_dump(
+            exclude={'pre_defined_jql_expressions', 'jira_api_token'}
+        )
+        for key, value in data.items():
+            rows.append(
+                (
+                    Text(key, justify='right', style='yellow'),
+                    Text(str(value), justify='left'),
+                )
+            )
+        rows.append(
+            (
+                Text('jira_api_token', justify='right', style='yellow'),
+                Text('<redacted>', justify='left'),
+            )
+        )
+
+        if CONFIGURATION.get().pre_defined_jql_expressions:
+            ta = self.query_one(TextArea)
+            ta.text = json.dumps(CONFIGURATION.get().pre_defined_jql_expressions, indent=3)
+
+        table.add_rows(rows)

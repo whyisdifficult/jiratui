@@ -724,6 +724,32 @@ ServerInfoScreen > VerticalScroll > DataTable {
     background: transparent;
 }
 
+/* Configuration Settings Screen */
+
+ConfigFileScreen {
+    align: center middle;
+}
+
+ConfigFileScreen > Vertical {
+    width: 60%;
+    height: 100%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+}
+ConfigFileScreen > Vertical > DataTable {
+    background: transparent;
+    height: 50%;
+    scrollbar-size-vertical: 1;
+}
+
+.config-file-textarea {
+    margin-top: 1;
+    background: $background;
+    scrollbar-size-vertical: 1;
+    border: solid $accent;
+}
+
 /* Subtasks */
 
 ChildWorkItemCollapsible {

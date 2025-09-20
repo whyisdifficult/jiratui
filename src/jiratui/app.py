@@ -12,6 +12,7 @@ from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
+from jiratui.widgets.config_info import ConfigFileScreen
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screens import MainScreen
 from jiratui.widgets.server_info import ServerInfoScreen
@@ -26,7 +27,18 @@ class JiraApp(App):
     TITLE = 'JiraTUI'
     BINDINGS = [
         Binding(key='f1,ctrl+question_mark,ctrl+shift+slash', action='help', description='Help'),
-        Binding(key='f2', action='server_info', description='Server Info'),
+        Binding(
+            key='f2',
+            action='server_info',
+            description='Server Info',
+            tooltip='Show details of the Jira server.',
+        ),
+        Binding(
+            key='f3',
+            action='config_info',
+            description='Config',
+            tooltip='Show the settings in the configuration file.',
+        ),
         Binding(
             key='ctrl+q',
             action='quit',
@@ -129,6 +141,10 @@ class JiraApp(App):
     async def action_server_info(self) -> None:
         """Handles the event to show the information of the Jira server instance."""
         await self.push_screen(ServerInfoScreen(server_info=self.server_info))
+
+    async def action_config_info(self) -> None:
+        """Handles the event to show the config file"""
+        await self.push_screen(ConfigFileScreen())
 
     async def action_quit(self) -> None:
         """Handles the event to quit the application."""
