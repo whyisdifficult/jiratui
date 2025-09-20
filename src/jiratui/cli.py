@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 import click
@@ -402,6 +403,25 @@ def delete_comment(work_item_key: str, comment_id: str):
 
 
 # -- APPLICATION --
+
+
+@cli.command('completions', help='Generate shell completion script.')
+@click.argument('shell', type=click.Choice(['bash', 'zsh', 'fish']))
+def completions(shell):
+    """Generate shell completion script for the specified shell (bash, zsh, fish)."""
+    env = os.environ.copy()
+    env['_JIRATUI_COMPLETE'] = f'{shell}_source'
+    try:
+        result = subprocess.run(
+            ['jiratui'], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        if result.returncode != 0:
+            console.print(f'Error generating completions: {result.stderr}')
+            sys.exit(result.returncode)
+        console.print(result.stdout)
+    except Exception as e:
+        console.print(f'Failed to generate completions: {str(e)}')
+        sys.exit(1)
 
 
 @cli.command('ui')

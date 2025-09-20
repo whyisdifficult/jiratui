@@ -1,5 +1,21 @@
 # Usage
 
+## Shell Completions
+
+JiraTUI supports shell completion scripts for bash, zsh, and fish. To generate a completion script, use:
+
+```shell
+$ jiratui completions [bash|zsh|fish]
+```
+
+For example, to generate a completion script for zsh:
+
+```shell
+$ jiratui completions zsh
+```
+
+You can then follow your shell's instructions to enable completions. For more details, see the [Click documentation on shell completion](https://click.palletsprojects.com/en/latest/shell-completion/).
+
 ## Launching the UI
 
 Once you have provided the necessary settings, you can run the application's UI with the following command:
