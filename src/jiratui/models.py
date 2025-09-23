@@ -272,7 +272,10 @@ class JiraIssue(JiraBaseIssue):
 
     def cleaned_summary(self, max_length: int | None = None) -> str:
         if max_length is not None:
-            return f'{self.summary.strip()[:max_length]}...'
+            if (stripped_summary := self.summary.strip()) and len(
+                stripped_summary
+            ) > max_length - 3:
+                return f'{stripped_summary[: max_length - 3]}...'
         return self.summary.strip()
 
     def display_status(self) -> str:

@@ -39,6 +39,8 @@ class IssuesSearchResultsTable(DataTable):
         ),
     ]
 
+    SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN = 30
+
     def __init__(self):
         super().__init__(id='search_results', cursor_type='row')
         # stores the Jira's next page's token by page number
@@ -54,6 +56,11 @@ class IssuesSearchResultsTable(DataTable):
         if response is None:
             return
 
+        maximum_summary_column_width = max(
+            self.SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN,
+            self.parent.container_size.width - 42,  # type:ignore[attr-defined]
+        )
+
         # update next search tokens
         if response.next_page_token:
             # there is a token to fetch the next page
@@ -65,6 +72,7 @@ class IssuesSearchResultsTable(DataTable):
         for index, issue in enumerate(response.issues):
             issue_summary = issue.cleaned_summary(
                 CONFIGURATION.get().search_results_truncate_work_item_summary
+                or maximum_summary_column_width
             )
 
             style_status = ''
