@@ -54,6 +54,7 @@ def app() -> JiraApp:
         log_file='',
         log_level='ERROR',
         theme=None,
+        search_results_page_filtering_enabled=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
