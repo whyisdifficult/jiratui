@@ -22,6 +22,8 @@ class DataTableSearchInput(Input):
     - `search_results_page_filtering_minimum_term_length`
     """
 
+    BINDINGS = [Binding('escape', 'hide', 'Hide search input', show=False)]
+
     total: Reactive[int | None] = reactive(None)
     """Keeps track of the total number of records after filtering them based on the input value."""
 
@@ -35,8 +37,6 @@ class DataTableSearchInput(Input):
         self.placeholder = placeholder or 'Type to filter items in the current page...'
         self.border_title = border_title or 'Filter'
         self.styles.display = 'none' if hide else 'block'
-        if CONFIGURATION.get().search_results_page_filtering_enabled:
-            self.BINDINGS.append(Binding('escape', 'hide', 'Hide search input', show=False))
 
     def action_hide(self) -> None:
         # hide the input widget
@@ -48,6 +48,12 @@ class DataTableSearchInput(Input):
         )
         # give focus back to the data table
         screen.search_results_table.focus()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action may run."""
+        if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+            return False
+        return True
 
     def watch_total(self, value: int | None = None) -> None:
         if value is not None:
@@ -87,6 +93,13 @@ class IssuesSearchResultsTable(DataTable):
 
     BINDINGS = [
         Binding(
+            key='/',
+            action='filter',
+            description='Filter in Page',
+            tooltip='Filter the results of the current page',
+        ),
+        Binding('escape', 'hide', 'Hide search input', show=False),
+        Binding(
             key='alt+left',
             action='previous_issues_page',
             description='Previous Page',
@@ -120,16 +133,6 @@ class IssuesSearchResultsTable(DataTable):
         self.page: int = 0
         self.current_work_item_key: str | None = None
         self._initial_results_set: JiraIssueSearchResponse | None = None
-        if CONFIGURATION.get().search_results_page_filtering_enabled:
-            self.BINDINGS.append(
-                Binding(
-                    key='/',
-                    action='filter',
-                    description='Filter in Page',
-                    tooltip='Filter the results of the current page',
-                ),
-            )
-            self.BINDINGS.append(Binding('escape', 'hide', 'Hide search input', show=False))
 
     def set_initial_results_set(self, data: JiraIssueSearchResponse | None = None):
         self._initial_results_set = data
@@ -217,6 +220,14 @@ class IssuesSearchResultsTable(DataTable):
         self.search_results = self.get_initial_results_set()
         # give focus back to the data table
         self.focus()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action may run."""
+        if action == 'filter' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+            return False
+        if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+            return False
+        return True
 
 
 class SearchResultsContainer(Container):
