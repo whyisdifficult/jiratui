@@ -878,3 +878,10 @@ WorkItemSummaryContainer {
     color: $text;
     text-style: italic;
 }
+
+DataTableSearchInput {
+    border: solid $primary;
+    background: transparent;
+    padding: 0 1 0 1;
+    box_sizing: border-box;
+}

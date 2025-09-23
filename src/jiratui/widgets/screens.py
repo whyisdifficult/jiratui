@@ -39,7 +39,11 @@ from jiratui.widgets.filters import (
 )
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
-from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
+from jiratui.widgets.search import (
+    DataTableSearchInput,
+    IssuesSearchResultsTable,
+    SearchResultsContainer,
+)
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
@@ -167,7 +171,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+n',
             action='create_work_item',
-            description='New Work Item',
+            description='New Issue',
             show=True,
             key_display='^n',
         ),
@@ -225,6 +229,10 @@ class MainScreen(Screen):
     @property
     def search_results_table(self) -> IssuesSearchResultsTable:
         return self.query_one(IssuesSearchResultsTable)
+
+    @property
+    def search_results_filter_input(self) -> DataTableSearchInput:
+        return self.query_one(DataTableSearchInput)
 
     @property
     def search_results_container(self) -> SearchResultsContainer:
@@ -306,6 +314,7 @@ class MainScreen(Screen):
                 yield Button('Search', id='run-button', variant='success', disabled=False)
             with Horizontal():
                 with SearchResultsContainer(id='search_results_container'):
+                    yield DataTableSearchInput()
                     yield IssuesSearchResultsTable()
                 with TabbedContent(id='tabs'):
                     with TabPane(title='Info', classes='summary-description-container'):
@@ -670,19 +679,20 @@ class MainScreen(Screen):
             Nothing.
         """
 
-        # clear current results page
-        table = self.search_results_table
-        table.clear(columns=True)
-
         results: WorkItemSearchResult
-        # search single issue
         if (value := self.issue_key_input.value) and value.strip():
+            # search single issue
             results = await self._search_single_issue(value.strip())
         else:
             results = await self._search_work_items(next_page_token)
 
+        # set the data in the results table
+        table = self.search_results_table
+        # store the initial results set in the table to handle local searches
+        table.set_initial_results_set(results.response)
         # update the result set in the table
         table.search_results = results.response
+        table.focus()
 
         # update results count for the table's container
         self.search_results_container.pagination = {
