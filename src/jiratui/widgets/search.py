@@ -57,7 +57,8 @@ class IssuesSearchResultsTable(DataTable):
             return
 
         maximum_summary_column_width = max(
-            self.SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN, self.parent.container_size.width - 42
+            self.SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN,
+            self.parent.container_size.width - 42,  # type:ignore[attr-defined]
         )
 
         # update next search tokens
