@@ -55,7 +55,7 @@ class JiraApp(App):
         settings: ApplicationConfiguration,
         project_key: str | None = None,
         user_account_id: str | None = None,
-        jql_expression_id: int | None = None,
+        jql_expression_id: str | None = None,
         work_item_key: str | None = None,
         user_theme: str | None = None,
     ):
@@ -94,7 +94,12 @@ class JiraApp(App):
         ):
             self.initial_user_account_id = cleaned_selected_assignee_account_id
 
-        self.initial_jql_expression_id: int | None = jql_expression_id
+        try:
+            self.initial_jql_expression_id: int | None = (
+                int(jql_expression_id) if jql_expression_id else None
+            )
+        except ValueError:
+            self.initial_jql_expression_id = None
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
         self._setup_theme(user_theme)
