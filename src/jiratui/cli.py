@@ -437,6 +437,7 @@ def completions(shell):
     '--jql-expression-id',
     '-j',
     default=None,
+    type=int,
     help='The ID of a JQL expression as defined in the config.',
 )
 @click.option('--theme', '-t', default=None, help='The name of the theme to use.')
@@ -469,7 +470,7 @@ def ui(
         settings,
         project_key=project_key,
         user_account_id=assignee_account_id,
-        jql_expression_id=str(jql_expression_id),
+        jql_expression_id=jql_expression_id,
         work_item_key=work_item_key,
         user_theme=theme,
     ).run()
