@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New feature to allow users to filter search results in the current page. The feature can be controlled via the
 settings `search_results_page_filtering_enabled` and `search_results_page_filtering_minimum_term_length`.
 - Use `flat` buttons for search and for confirming quitting the app.
+- Refactor the logic to navigate search result pages to use dynamic actions.
 
 ## [1.1.0] - 2025-09-20
 
