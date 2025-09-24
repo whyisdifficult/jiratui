@@ -311,7 +311,9 @@ class MainScreen(Screen):
                 yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
-                yield Button('Search', id='run-button', variant='success', disabled=False)
+                yield Button(
+                    'Search', id='run-button', variant='warning', disabled=False, flat=True
+                )
             with Horizontal():
                 with SearchResultsContainer(id='search_results_container'):
                     yield DataTableSearchInput()
