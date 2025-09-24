@@ -94,7 +94,9 @@ class JiraApp(App):
         ):
             self.initial_user_account_id = cleaned_selected_assignee_account_id
 
-        self.initial_jql_expression_id: int | None = jql_expression_id
+        self.initial_jql_expression_id: int | None = (
+            int(jql_expression_id) if jql_expression_id is not None else None
+        )
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
         self._setup_theme(user_theme)

@@ -437,6 +437,7 @@ def completions(shell):
     '--jql-expression-id',
     '-j',
     default=None,
+    type=int,
     help='The ID of a JQL expression as defined in the config.',
 )
 @click.option('--theme', '-t', default=None, help='The name of the theme to use.')
