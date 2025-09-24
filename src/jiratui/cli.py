@@ -469,7 +469,7 @@ def ui(
         settings,
         project_key=project_key,
         user_account_id=assignee_account_id,
-        jql_expression_id=jql_expression_id,
+        jql_expression_id=str(jql_expression_id),
         work_item_key=work_item_key,
         user_theme=theme,
     ).run()
