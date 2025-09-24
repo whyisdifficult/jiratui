@@ -7,7 +7,6 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical
-from textual.events import Key
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Select, TabbedContent, TabPane
 from textual.worker import Worker
@@ -814,33 +813,6 @@ class MainScreen(Screen):
                     severity='error',
                     title='Create Work Item',
                 )
-
-    async def on_key(self, event: Key) -> None:
-        """Handles events triggered every time the user presses a key.
-
-        The only events being handled are the keystrokes related to the pagination of search results.
-
-        Args:
-            event: the event with the details of the key pressed.
-
-        Returns:
-            Nothing.
-        """
-        if event.key in ['alt+right']:
-            # fetch contents of page self.page + 1
-            if next_page_token := self.search_results_table.token_by_page.get(
-                self.search_results_table.page + 1
-            ):
-                self.search_results_table.page += 1
-                await self.search_issues(next_page_token)
-        elif event.key in ['alt+left']:
-            if self.search_results_table.page > 1:
-                # fetch contents of page self.page - 1
-                next_page_token = self.search_results_table.token_by_page.get(
-                    self.search_results_table.page - 1
-                )
-                self.search_results_table.page -= 1
-                await self.search_issues(next_page_token)
 
     async def retrieve_issue_subtasks(self, issue_key: str) -> None:
         if issue_key:

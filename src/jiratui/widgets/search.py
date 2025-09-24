@@ -95,21 +95,21 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='/',
             action='filter',
-            description='Filter in Page',
+            description='Filter',
             tooltip='Filter the results of the current page',
         ),
         Binding('escape', 'hide', 'Hide search input', show=False),
         Binding(
             key='alt+left',
             action='previous_issues_page',
-            description='Previous Page',
+            description='Previous',
             show=True,
             key_display='alt+left',
         ),
         Binding(
             key='alt+right',
             action='next_issues_page',
-            description='Next Page',
+            description='Next',
             show=True,
             key_display='alt+right',
         ),
@@ -130,7 +130,7 @@ class IssuesSearchResultsTable(DataTable):
         #   1: we need to use the token 'token-a'
         #   2: we need to use the token 'token-b'
         self.token_by_page: dict[int, str] = {}
-        self.page: int = 0
+        self.page: int = 1
         self.current_work_item_key: str | None = None
         self._initial_results_set: JiraIssueSearchResponse | None = None
 
@@ -227,7 +227,30 @@ class IssuesSearchResultsTable(DataTable):
             return False
         if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
             return False
+        if action == 'previous_issues_page':
+            if self.page > 1:
+                return True
+            return False
+        if action == 'next_issues_page':
+            if self.token_by_page.get(self.page + 1):
+                return True
+            return False
         return True
+
+    async def action_previous_issues_page(self):
+        if self.page > 1:
+            next_page_token = self.token_by_page.get(self.page - 1)
+            self.page -= 1
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            await screen.search_issues(next_page_token)
+            self.refresh_bindings()
+
+    async def action_next_issues_page(self):
+        if next_page_token := self.token_by_page.get(self.page + 1):
+            self.page += 1
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            await screen.search_issues(next_page_token)
+            self.refresh_bindings()
 
 
 class SearchResultsContainer(Container):
