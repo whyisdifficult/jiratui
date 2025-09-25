@@ -5,6 +5,7 @@ import pytest
 from jiratui.api.api import JiraAPI, JiraAPIv2
 from jiratui.api_controller.controller import APIController
 from jiratui.config import ApplicationConfiguration
+from jiratui.models import IssueStatus, IssueType, JiraIssue
 
 
 @pytest.fixture
@@ -58,3 +59,23 @@ def jira_api() -> JiraAPI:
 @pytest.fixture
 def jira_api_v2() -> JiraAPIv2:
     return JiraAPIv2('https://foo.bar', 'foo', 'bar')
+
+
+@pytest.fixture
+def jira_issues() -> list[JiraIssue]:
+    return [
+        JiraIssue(
+            id='1',
+            key='key-1',
+            summary='abcd',
+            status=IssueStatus(name='Done', id='1'),
+            issue_type=IssueType(id='1', name='Task'),
+        ),
+        JiraIssue(
+            id='2',
+            key='key-2',
+            summary='qwerty',
+            status=IssueStatus(name='Done', id='3'),
+            issue_type=IssueType(id='2', name='Bug'),
+        ),
+    ]

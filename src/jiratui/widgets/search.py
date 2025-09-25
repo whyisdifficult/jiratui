@@ -221,9 +221,8 @@ class IssuesSearchResultsTable(DataTable):
         if not CONFIGURATION.get().search_results_page_filtering_enabled:
             return
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-        widget = screen.search_results_filter_input
         # hide the input widget
-        widget.styles.display = 'none'
+        screen.search_results_filter_input.styles.display = 'none'
         # reset the results to the initial result set
         self.search_results = self.get_initial_results_set()
         # give focus back to the data table
