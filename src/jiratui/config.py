@@ -106,7 +106,7 @@ class ApplicationConfiguration(BaseSettings):
     to quit the app. The default is `False` and the app simply exits."""
     theme: str | None = None
     """The name of the theme to use for the UI. Accept Textual themes."""
-    search_results_page_filtering_enabled: bool = False
+    search_results_page_filtering_enabled: bool = True
     """When this is True users will be able to filter search results by summary in the currently active results page
     using an input field."""
     search_results_page_filtering_minimum_term_length: int = 3
