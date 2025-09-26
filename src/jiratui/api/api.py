@@ -6,6 +6,7 @@ import httpx
 
 from jiratui.api.client import AsyncJiraClient, JiraClient
 from jiratui.api.utils import build_issue_search_jql
+from jiratui.config import ApplicationConfiguration
 from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
 from jiratui.models import WorkItemsSearchOrderBy
 
@@ -34,17 +35,25 @@ class JiraAPI:
 
     API_PATH_PREFIX = '/rest/api/3/'
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
         self.authentication = httpx.BasicAuth(api_username, api_token)
         self.client = AsyncJiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
             api_token=api_token,
+            configuration=configuration,
         )
         self.sync_client = JiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
             api_token=api_token,
+            configuration=configuration,
         )
         self._base_url = base_url
 

@@ -4,7 +4,7 @@ from typing import Callable, cast
 
 import httpx
 
-from jiratui.config import CONFIGURATION
+from jiratui.config import ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.exceptions import (
     AuthorizationException,
@@ -22,11 +22,11 @@ class SSLCertificateSettings:
     verify_ssl: str | bool = True
 
 
-def _setup_ssl_certificates() -> SSLCertificateSettings:
+def _setup_ssl_certificates(configuration: ApplicationConfiguration) -> SSLCertificateSettings:
     cert: str | tuple[str, str] | tuple[str, str, str] | None = None
     verify_ssl: str | bool = True
 
-    if ssl_certificate_configuration := CONFIGURATION.get().ssl:
+    if ssl_certificate_configuration := configuration.ssl:
         verify_ssl = ssl_certificate_configuration.verify_ssl
         httpx_certificate_configuration: list[str] = []
         if certificate_path := ssl_certificate_configuration.certificate_file:
@@ -53,8 +53,14 @@ def _setup_ssl_certificates() -> SSLCertificateSettings:
 class JiraClient:
     """A sync HTTP client for the Jira REST API."""
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
-        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates()
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
+        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.Client = httpx.Client(
             verify=ssl_certificate_settings.verify_ssl,
@@ -131,8 +137,14 @@ class JiraClient:
 class AsyncJiraClient:
     """Async HTTP client for the Jira REST API."""
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
-        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates()
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
+        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         self.client: httpx.AsyncClient = httpx.AsyncClient(
             verify=ssl_certificate_settings.verify_ssl,
