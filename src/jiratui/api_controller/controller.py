@@ -79,13 +79,13 @@ class APIController:
             self.api = JiraAPIv2(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
-                api_token=self.config.jira_api_token,
+                api_token=self.config.jira_api_token.get_secret_value(),
             )
         else:
             self.api = JiraAPI(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
-                api_token=self.config.jira_api_token,
+                api_token=self.config.jira_api_token.get_secret_value(),
             )
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)

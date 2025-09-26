@@ -2,6 +2,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 
+from pydantic import Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -15,12 +16,30 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 from jiratui.files import get_config_file
+from jiratui.models import BaseModel
+
+
+class SSLConfiguration(BaseModel):
+    """Configuration for SSL CA bundles and client-side certificates."""
+
+    verify_ssl: bool = True
+    """Indicates whether HTTP requests should use SSL validation."""
+    ca_bundle: str | None = None
+    """Path to the CA bundle file."""
+    certificate_file: str = None
+    """Path to the a client-side certificate file, e.g. cert.pem"""
+    key_file: str = None
+    """Path to the key file."""
+    password: SecretStr = None
+    """The password for the key file."""
 
 
 class ApplicationConfiguration(BaseSettings):
+    """The configuration for the JiraTUI application and CLI tool."""
+
     jira_api_username: str
     """The username to use for connecting to the Jira API."""
-    jira_api_token: str
+    jira_api_token: SecretStr
     """The token to use for connecting to the Jira API."""
     jira_api_base_url: str
     """The base URL of the Jira API."""
@@ -112,6 +131,8 @@ class ApplicationConfiguration(BaseSettings):
     search_results_page_filtering_minimum_term_length: int = 3
     """When search_results_page_filtering_enabled is True this value controls the minimum number of characters that the
     user needs to type in on order to filter results."""
+    ssl: SSLConfiguration | None = Field(default_factory=SSLConfiguration)
+    """SSL configuration for client-side certificates and CA bundle."""
 
     model_config = SettingsConfigDict(
         extra='allow',
