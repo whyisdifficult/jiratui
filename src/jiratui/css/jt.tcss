@@ -9,6 +9,12 @@
     margin: 1 50 1 50;
 }
 
+.rule-horizontal-compact-70 {
+    height: 1;
+    margin: 0 0;
+    width: 70%;
+}
+
 /* Application - Layout */
 
 #main-container {
@@ -16,10 +22,6 @@
 }
 
 #run-button {
-    padding: 0 0;
-    box_sizing: content-box;
-    border-top: blank $surface-lighten-1;
-    border-bottom: blank $surface-lighten-1;
     max-width: 10;
 }
 
@@ -755,6 +757,10 @@ ConfigFileScreen > Vertical > DataTable {
 ChildWorkItemCollapsible {
     border: round $accent;
     background: transparent;
+    padding-bottom: 0;
+    & > Contents {
+        padding: 1 0 0 3;
+    }
 }
 
 /* Related Work Items */
@@ -790,6 +796,10 @@ RelatedIssueCollapsible {
 CommentCollapsible {
     border: round $accent;
     background: transparent;
+    padding-bottom: 0;
+    & > Contents {
+        padding: 1 0 0 3;
+    }
 }
 
 /* Remote Links */
@@ -797,6 +807,10 @@ CommentCollapsible {
 IssueRemoteLinkCollapsible {
     border: round $accent;
     background: transparent;
+    padding-bottom: 0;
+    & > Contents {
+        padding: 1 0 0 3;
+    }
 }
 
 /* Work Log Screen */
@@ -877,4 +891,11 @@ WorkItemSummaryContainer {
     margin-bottom: 1;
     color: $text;
     text-style: italic;
+}
+
+DataTableSearchInput {
+    border: solid $primary;
+    background: transparent;
+    padding: 0 1 0 1;
+    box_sizing: border-box;
 }

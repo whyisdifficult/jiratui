@@ -7,10 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New feature to allow users to filter search results in the current page. The feature can be controlled via the
+settings `search_results_page_filtering_enabled` and `search_results_page_filtering_minimum_term_length`.
+- Use `flat` buttons for search and for confirming quitting the app.
+- Refactor the logic to navigate search result pages to use dynamic actions.
+
 ### Bug Fixes
 
 - Fix handling of the argument `ui --jql-expression-id` because it was not picking up the given expression id. Reported
 in https://github.com/whyisdifficult/jiratui/issues/69
+
+### Documentation
+
+- Update docs to add details on how to enable/disable the search results filtering feature
+
+### Misc
+
+- Upgrade `textual` to `v6.1.0`
 
 ## [1.1.0] - 2025-09-20
 

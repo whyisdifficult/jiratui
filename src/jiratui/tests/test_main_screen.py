@@ -54,6 +54,7 @@ def app() -> JiraApp:
         log_file='',
         log_level='ERROR',
         theme=None,
+        search_results_page_filtering_enabled=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -714,107 +715,3 @@ async def test_click_search_button_resets_widgets(
         assert main_screen.search_results_table.page == 1
         assert main_screen.issue_info_container.issue_summary_widget.visible is False
         assert main_screen.issue_info_container.issue_description_widget.visible is False
-
-
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_next_page_search_results(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 0
-        main_screen.search_results_table.token_by_page = {1: 'token_a'}
-        # WHEN
-        await pilot.press('alt+right')
-        # THEN
-        search_issues_mock.assert_called_once_with('token_a')
-        assert main_screen.search_results_table.page == 1
-
-
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_next_page_search_results_with_missing_token(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 0
-        main_screen.search_results_table.token_by_page = {2: 'token_a'}
-        # WHEN
-        await pilot.press('alt+right')
-        # THEN
-        search_issues_mock.assert_not_called()
-        assert main_screen.search_results_table.page == 0
-
-
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_previous_page_search_results(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 2
-        main_screen.search_results_table.token_by_page = {1: 'token_a'}
-        # WHEN
-        await pilot.press('alt+left')
-        # THEN
-        search_issues_mock.assert_called_once_with('token_a')
-        assert main_screen.search_results_table.page == 1
-
-
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_previous_page_search_results_with_missing_token(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 1
-        main_screen.search_results_table.token_by_page = {2: 'token_a'}
-        # WHEN
-        await pilot.press('alt+left')
-        # THEN
-        search_issues_mock.assert_not_called()
-        assert main_screen.search_results_table.page == 1

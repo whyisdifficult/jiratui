@@ -2,7 +2,7 @@ from typing import cast
 
 from rich.text import Text
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import HorizontalGroup, VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Markdown, Rule, Static
 
@@ -172,11 +172,14 @@ pressing `d`. Comments can be added by pressing `n`.
                 build_external_url_for_comment(self.issue_key, comment.id) if self.issue_key else ''
             )
 
+            hg = HorizontalGroup()
+            hg.compose_add_child(Link('Open Link', url=url, tooltip='view comment in the browser'))
+            hg.compose_add_child(Static(f' | Last Update: {comment.updated_on()}'))
+
             elements.append(
                 CommentCollapsible(
-                    Link('Open link', url=url, tooltip='view comment in the browser'),
-                    Static(f'Last update: {comment.updated_on()}'),
-                    Rule(),
+                    hg,
+                    Rule(classes='rule-horizontal-compact-70'),
                     comment_text,
                     title=Text(comment.short_metadata()),
                     work_item_key=self.issue_key,

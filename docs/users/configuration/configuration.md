@@ -88,3 +88,17 @@ addition to the available projects. This may make the startup a bit slower.
 If the setting `tui_title_include_jira_server_title = True` the application will fetch server information from the Jira
 API instance and use the server's title or server base URL to build the title of the application. If this is set to
 `False` the title will set to the default, or to the value of the `tui_custom_title` setting above; if defined.
+
+
+## Enable Filtering Search Results
+
+JiraTUI allows you to further refine the search results by filtering work items based on their summary. This feature
+is controlled by 2 configuration variables.
+
+The variable `search_results_page_filtering_enabled` controls whether this feature is enabled or not. The default is to
+be enabled. When this feature is enabled, the user can press `/` while the focus is on the search results table. Doing
+so will show an input field that the user can use to refine the search results by filtering items whose summary field
+do not match the filtering criteria.
+
+In addition, the variable `search_results_page_filtering_minimum_term_length` defines the minimum number of
+characters requires to start filtering results. The default is 3 but can be set to any value >= 1.

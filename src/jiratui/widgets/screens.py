@@ -7,7 +7,6 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical
-from textual.events import Key
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Select, TabbedContent, TabPane
 from textual.worker import Worker
@@ -39,7 +38,11 @@ from jiratui.widgets.filters import (
 )
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
-from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
+from jiratui.widgets.search import (
+    DataTableSearchInput,
+    IssuesSearchResultsTable,
+    SearchResultsContainer,
+)
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
@@ -167,7 +170,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+n',
             action='create_work_item',
-            description='New Work Item',
+            description='New Issue',
             show=True,
             key_display='^n',
         ),
@@ -226,6 +229,10 @@ class MainScreen(Screen):
     @property
     def search_results_table(self) -> IssuesSearchResultsTable:
         return self.query_one(IssuesSearchResultsTable)
+
+    @property
+    def search_results_filter_input(self) -> DataTableSearchInput:
+        return self.query_one(DataTableSearchInput)
 
     @property
     def search_results_container(self) -> SearchResultsContainer:
@@ -304,9 +311,12 @@ class MainScreen(Screen):
                 yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
-                yield Button('Search', id='run-button', variant='success', disabled=False)
+                yield Button(
+                    'Search', id='run-button', variant='warning', disabled=False, flat=True
+                )
             with Horizontal():
                 with SearchResultsContainer(id='search_results_container'):
+                    yield DataTableSearchInput()
                     yield IssuesSearchResultsTable()
                 with TabbedContent(id='tabs'):
                     with TabPane(title='Info', classes='summary-description-container'):
@@ -671,19 +681,20 @@ class MainScreen(Screen):
             Nothing.
         """
 
-        # clear current results page
-        table = self.search_results_table
-        table.clear(columns=True)
-
         results: WorkItemSearchResult
-        # search single issue
         if (value := self.issue_key_input.value) and value.strip():
+            # search single issue
             results = await self._search_single_issue(value.strip())
         else:
             results = await self._search_work_items(next_page_token)
 
+        # set the data in the results table
+        table = self.search_results_table
+        # store the initial results set in the table to handle local searches
+        table.set_initial_results_set(results.response)
         # update the result set in the table
         table.search_results = results.response
+        table.focus()
 
         # update results count for the table's container
         self.search_results_container.pagination = {
@@ -803,33 +814,6 @@ class MainScreen(Screen):
                     severity='error',
                     title='Create Work Item',
                 )
-
-    async def on_key(self, event: Key) -> None:
-        """Handles events triggered every time the user presses a key.
-
-        The only events being handled are the keystrokes related to the pagination of search results.
-
-        Args:
-            event: the event with the details of the key pressed.
-
-        Returns:
-            Nothing.
-        """
-        if event.key in ['alt+right']:
-            # fetch contents of page self.page + 1
-            if next_page_token := self.search_results_table.token_by_page.get(
-                self.search_results_table.page + 1
-            ):
-                self.search_results_table.page += 1
-                await self.search_issues(next_page_token)
-        elif event.key in ['alt+left']:
-            if self.search_results_table.page > 1:
-                # fetch contents of page self.page - 1
-                next_page_token = self.search_results_table.token_by_page.get(
-                    self.search_results_table.page - 1
-                )
-                self.search_results_table.page -= 1
-                await self.search_issues(next_page_token)
 
     async def retrieve_issue_subtasks(self, issue_key: str) -> None:
         if issue_key:
