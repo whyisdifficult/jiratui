@@ -19,6 +19,14 @@ settings `search_results_page_filtering_enabled` and `search_results_page_filter
 - Fix handling of the argument `ui --jql-expression-id` because it was not picking up the given expression id. Reported
 in https://github.com/whyisdifficult/jiratui/issues/69
 
+### Documentation
+
+- Update docs to add details on how to enable/disable the search results filtering feature
+
+### Misc
+
+- Upgrade `textual` to `v6.1.0`
+
 ## [1.1.0] - 2025-09-20
 
 ### Added
