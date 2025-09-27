@@ -72,7 +72,7 @@ class JiraClient:
         ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         if configuration.use_bearer_authentication:
-            self.authentication = JiraTUIBearerAuth(api_token, api_username)
+            self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
         else:
             self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.Client = httpx.Client(
@@ -159,7 +159,7 @@ class AsyncJiraClient:
         ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         if configuration.use_bearer_authentication:
-            self.authentication = JiraTUIBearerAuth(api_token, api_username)
+            self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
         else:
             self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.AsyncClient = httpx.AsyncClient(
