@@ -35,18 +35,19 @@ class ServerInfoScreen(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
-            yield CustomTitle('Config')
+            yield CustomTitle('JiraTUI API Configuration')
             yield DataTable(cursor_type='row', show_header=False, id='config-details')
             yield CustomTitle(self.TITLE)
             yield DataTable(cursor_type='row', show_header=False, id='server-details')
             yield CustomTitle('User Account Details')
             yield DataTable(cursor_type='row', show_header=False, id='user-details')
 
+    def _get_server_info(self) -> JiraServerInfo | None:
+        return self._server_info
+
     async def on_mount(self) -> None:
-        server_info: JiraServerInfo | None = None
-        if self._server_info:
-            server_info = self._server_info
-        else:
+        server_info: JiraServerInfo | None
+        if not (server_info := self._get_server_info()):
             response_server_info: APIControllerResponse = await self.app.api.server_info()  # type:ignore[attr-defined]
             if not response_server_info.success or not (server_info := response_server_info.result):
                 pass

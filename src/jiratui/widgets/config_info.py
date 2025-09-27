@@ -14,7 +14,7 @@ class ConfigFileScreen(ModalScreen):
     """The screen that displays the configuration settings."""
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
-    TITLE = 'JiraTUI Configuration File'
+    TITLE = 'JiraTUI Configuration'
 
     @property
     def datatable_config_info(self) -> DataTable:
@@ -35,13 +35,17 @@ class ConfigFileScreen(ModalScreen):
                 jql_expressions_textarea.border_title = 'pre_defined_jql_expressions'
                 yield jql_expressions_textarea
 
+    @staticmethod
+    def _get_data():
+        return CONFIGURATION.get().model_dump(
+            exclude={'pre_defined_jql_expressions', 'jira_api_token'}
+        )
+
     async def on_mount(self) -> None:
         table = self.datatable_config_info
         table.add_columns(*['Property', 'Value'])
         rows = []
-        data = CONFIGURATION.get().model_dump(
-            exclude={'pre_defined_jql_expressions', 'jira_api_token'}
-        )
+        data = self._get_data()
         for key, value in data.items():
             rows.append(
                 (

@@ -112,6 +112,10 @@ class ApplicationConfiguration(BaseSettings):
     search_results_page_filtering_minimum_term_length: int = 3
     """When search_results_page_filtering_enabled is True this value controls the minimum number of characters that the
     user needs to type in on order to filter results."""
+    enable_advanced_full_text_search: bool = True
+    """When this is True JiraTUI will use Jira ability to do full-text search not only in summary and description
+    fields but in any text-based field, including comments. This may be slower. If this is False JiraTUI will only
+    search items by summary and description fields."""
 
     model_config = SettingsConfigDict(
         extra='allow',
