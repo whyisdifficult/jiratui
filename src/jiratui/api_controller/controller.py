@@ -680,28 +680,31 @@ class APIController:
         criteria_defined = any(
             [project_key, created_from, created_until, status, assignee, issue_type]
         )
-        if not criteria_defined and not jql_query:
-            if (expression_id := self.config.jql_expression_id_for_work_items_search) and (
-                pre_defined_jql_expressions := self.config.pre_defined_jql_expressions
-            ):
-                if (expression_data := pre_defined_jql_expressions.get(expression_id)) and (
-                    expression := expression_data.get('expression')
-                ):
-                    if (
-                        cleaned_expression := expression.replace('\n', ' ').replace('\t', ' ')
-                    ) and (jql_expression := cleaned_expression.strip()):
-                        return {'jql': jql_expression, 'updated_from': None}
 
-            return {
-                'jql': None,
-                'updated_from': (
-                    datetime.now().date()
-                    - timedelta(days=self.config.search_issues_default_day_interval)
-                ),
-            }
-        elif jql_query:
+        if jql_query:
             return {'jql': jql_query.strip(), 'updated_from': None}
-        return search_criteria
+
+        if criteria_defined:
+            return search_criteria
+
+        if (expression_id := self.config.jql_expression_id_for_work_items_search) and (
+            pre_defined_jql_expressions := self.config.pre_defined_jql_expressions
+        ):
+            if (expression_data := pre_defined_jql_expressions.get(expression_id)) and (
+                expression := expression_data.get('expression')
+            ):
+                if (cleaned_expression := expression.replace('\n', ' ').replace('\t', ' ')) and (
+                    jql_expression := cleaned_expression.strip()
+                ):
+                    return {'jql': jql_expression, 'updated_from': None}
+
+        return {
+            'jql': None,
+            'updated_from': (
+                datetime.now().date()
+                - timedelta(days=self.config.search_issues_default_day_interval)
+            ),
+        }
 
     async def search_issues(
         self,

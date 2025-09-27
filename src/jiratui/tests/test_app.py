@@ -6,8 +6,11 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraServerInfo
+from jiratui.widgets.config_info import ConfigFileScreen
+from jiratui.widgets.help import HelpScreen
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.server_info import ServerInfoScreen
 
 
 @pytest.fixture()
@@ -241,6 +244,164 @@ async def test_application_title_with_custom_title_with_server_info(
     )
     async with app.run_test() as pilot:
         assert pilot.app.title == 'Hello World! - my title'
+
+
+@patch.object(ServerInfoScreen, '_get_server_info')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_server_info_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    get_server_info_mock: Mock,
+    app,
+):
+    # GIVEN
+    get_server_info_mock.return_value = JiraServerInfo(
+        base_url='foo.bar',
+        display_url_servicedesk_help_center='',
+        display_url_confluence='',
+        version='',
+        deployment_type='',
+        build_number=1,
+        build_date='',
+        scm_info='',
+        server_title='',
+        default_locale='',
+        server_time_zone='',
+    )
+    # WHEN
+    async with app.run_test() as pilot:
+        await pilot.press('f2')
+        # THEN
+        assert isinstance(app.screen, ServerInfoScreen)
+
+
+@patch.object(ServerInfoScreen, '_get_server_info')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_close_server_info_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    get_server_info_mock: Mock,
+    app,
+):
+    # GIVEN
+    get_server_info_mock.return_value = JiraServerInfo(
+        base_url='foo.bar',
+        display_url_servicedesk_help_center='',
+        display_url_confluence='',
+        version='',
+        deployment_type='',
+        build_number=1,
+        build_date='',
+        scm_info='',
+        server_title='',
+        default_locale='',
+        server_time_zone='',
+    )
+    # WHEN
+    async with app.run_test() as pilot:
+        await pilot.press('f2')
+        # THEN
+        assert isinstance(app.screen, ServerInfoScreen)
+        await pilot.press('escape')
+        assert isinstance(app.screen, MainScreen)
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_config_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    get_data_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.pre_defined_jql_expressions = None
+    get_data_mock.return_value = {}
+    # WHEN
+    async with app.run_test() as pilot:
+        await pilot.press('f3')
+        # THEN
+        assert isinstance(app.screen, ConfigFileScreen)
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_close_config_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    get_data_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.pre_defined_jql_expressions = None
+    get_data_mock.return_value = {}
+    # WHEN
+    async with app.run_test() as pilot:
+        await pilot.press('f3')
+        # THEN
+        assert isinstance(app.screen, ConfigFileScreen)
+        await pilot.press('escape')
+        assert isinstance(app.screen, MainScreen)
+
+
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_help_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        await pilot.press('f1')
+        assert isinstance(app.screen, HelpScreen)
+
+
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_close_help_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        await pilot.press('f1')
+        assert isinstance(app.screen, HelpScreen)
+        await pilot.press('escape')
+        assert isinstance(app.screen, MainScreen)
 
 
 @patch('jiratui.widgets.screens.MainScreen.get_users')

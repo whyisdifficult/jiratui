@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 settings `search_results_page_filtering_enabled` and `search_results_page_filtering_minimum_term_length`.
 - Use `flat` buttons for search and for confirming quitting the app.
 - Refactor the logic to navigate search result pages to use dynamic actions.
+- Add support for full-text search.
 
 ### Bug Fixes
 
