@@ -202,7 +202,7 @@ within the last 15 days. The number of days can be specified by the configuratio
 
 
 class OrderByWidget(Select):
-    def __init__(self, options: list):
+    def __init__(self, options: list, initial_value: str | None = None):
         super().__init__(
             options=options,
             prompt='Sort By',
@@ -210,6 +210,7 @@ class OrderByWidget(Select):
             type_to_search=False,
             compact=True,
             classes='jira-selector',
+            value=initial_value,
         )
         self.border_title = 'Sort'
         self.border_subtitle = '(o)'
