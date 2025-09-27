@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, Mock
 
+from pydantic import SecretStr
 import pytest
 
 from jiratui.api_controller.controller import APIController
@@ -14,8 +15,10 @@ def app() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -26,6 +29,7 @@ def app() -> JiraApp:
         log_file='',
         log_level='ERROR',
         theme=None,
+        ssl=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

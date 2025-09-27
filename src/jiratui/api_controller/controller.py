@@ -79,13 +79,15 @@ class APIController:
             self.api = JiraAPIv2(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
-                api_token=self.config.jira_api_token,
+                api_token=self.config.jira_api_token.get_secret_value(),
+                configuration=self.config,
             )
         else:
             self.api = JiraAPI(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
-                api_token=self.config.jira_api_token,
+                api_token=self.config.jira_api_token.get_secret_value(),
+                configuration=self.config,
             )
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)
@@ -1114,9 +1116,14 @@ class APIController:
                         'The field "assignee" can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_assignee.get('key')] = [
-                    {'set': {'accountId': updates.get('assignee_account_id')}}
-                ]
+                if self.config.cloud:
+                    fields_to_update[meta_assignee.get('key')] = [
+                        {'set': {'accountId': updates.get('assignee_account_id')}}
+                    ]
+                else:
+                    fields_to_update[meta_assignee.get('key')] = [
+                        {'set': {'name': updates.get('assignee_account_id')}}
+                    ]
             else:
                 raise UpdateWorkItemException(
                     'The field "assignee_account_id" can not be updated for the selected work item.',

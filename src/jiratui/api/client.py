@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 import logging
-from typing import Callable
+from typing import Callable, cast
 
 import httpx
 
+from jiratui.config import ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.exceptions import (
     AuthorizationException,
@@ -14,13 +16,70 @@ from jiratui.exceptions import (
 )
 
 
+class JiraTUIBearerAuth(httpx.Auth):
+    def __init__(self, token: str, username: str | None = None):
+        self.token = token
+
+    def auth_flow(self, request):
+        request.headers['Authorization'] = f'Bearer {self.token.strip()}'
+        yield request
+
+
+@dataclass
+class SSLCertificateSettings:
+    cert: str | tuple[str, str] | tuple[str, str, str] | None = None
+    verify_ssl: str | bool = True
+
+
+def _setup_ssl_certificates(configuration: ApplicationConfiguration) -> SSLCertificateSettings:
+    cert: str | tuple[str, str] | tuple[str, str, str] | None = None
+    verify_ssl: str | bool = True
+
+    if ssl_certificate_configuration := configuration.ssl:
+        verify_ssl = ssl_certificate_configuration.verify_ssl
+        httpx_certificate_configuration: list[str] = []
+        if certificate_path := ssl_certificate_configuration.certificate_file:
+            httpx_certificate_configuration.append(certificate_path)
+        if key_file := ssl_certificate_configuration.key_file:
+            httpx_certificate_configuration.append(key_file)
+        if password := ssl_certificate_configuration.password:
+            httpx_certificate_configuration.append(password.get_secret_value())
+
+        if verify_ssl and ssl_certificate_configuration.ca_bundle:
+            verify_ssl = ssl_certificate_configuration.ca_bundle
+
+        # expects:
+        # (certificate file) or,
+        # (certificate file, key file) or,
+        # (certificate file, key file, password)
+        cert = cast(
+            str | tuple[str, str] | tuple[str, str, str], tuple(httpx_certificate_configuration)
+        )
+
+    return SSLCertificateSettings(cert=cert, verify_ssl=verify_ssl)
+
+
 class JiraClient:
     """A sync HTTP client for the Jira REST API."""
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
+        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
-        self.client: httpx.Client = httpx.Client(timeout=None)
-        self.authentication = httpx.BasicAuth(api_username, api_token)
+        if configuration.use_bearer_authentication:
+            self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
+        else:
+            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
+        self.client: httpx.Client = httpx.Client(
+            verify=ssl_certificate_settings.verify_ssl,
+            cert=ssl_certificate_settings.cert,
+            timeout=None,
+        )
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
@@ -90,10 +149,24 @@ class JiraClient:
 class AsyncJiraClient:
     """Async HTTP client for the Jira REST API."""
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
+        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
-        self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=None)
-        self.authentication = httpx.BasicAuth(api_username, api_token)
+        if configuration.use_bearer_authentication:
+            self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
+        else:
+            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
+        self.client: httpx.AsyncClient = httpx.AsyncClient(
+            verify=ssl_certificate_settings.verify_ssl,
+            cert=ssl_certificate_settings.cert,
+            timeout=None,
+        )
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
@@ -125,10 +198,11 @@ class AsyncJiraClient:
         headers = self.set_headers(headers)
         url = self.get_resource_url(url)
 
+        # make the request
         try:
             response: httpx.Response = await method(
                 self.client,
-                url,
+                url=url,
                 headers=headers,
                 timeout=timeout,
                 auth=self.authentication,
