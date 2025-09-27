@@ -7,7 +7,7 @@ from textual.widgets import Select
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
-from jiratui.models import IssueStatus, IssueType, JiraUser, Project
+from jiratui.models import IssueStatus, IssueType, JiraUser, Project, WorkItemsSearchOrderBy
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.filters import (
@@ -55,6 +55,7 @@ def app() -> JiraApp:
         log_level='ERROR',
         theme=None,
         search_results_page_filtering_enabled=False,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
