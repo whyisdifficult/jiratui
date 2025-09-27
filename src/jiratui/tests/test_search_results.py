@@ -20,6 +20,8 @@ def app() -> JiraApp:
         jira_api_username='foo',
         jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,

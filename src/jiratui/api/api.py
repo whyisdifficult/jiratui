@@ -42,20 +42,22 @@ class JiraAPI:
         api_token: str,
         configuration: ApplicationConfiguration,
     ):
-        self.authentication = httpx.BasicAuth(api_username, api_token)
         self.client = AsyncJiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
-            api_token=api_token,
+            api_token=api_token.strip(),
             configuration=configuration,
         )
         self.sync_client = JiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
-            api_token=api_token,
+            api_token=api_token.strip(),
             configuration=configuration,
         )
         self._base_url = base_url
+        # this allows us to issue requests to different endpoints depending on whether Jira runs on the cloud (default)
+        # or on-premises
+        self.cloud = configuration.cloud if configuration.cloud is False else True
 
     @property
     def base_url(self) -> str:
@@ -98,8 +100,9 @@ class JiraAPI:
         if keys:
             params['keys'] = ','.join(keys[:50])
 
+        url = 'project/search' if self.cloud else 'project'
         return await self.client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.get, url='project/search', params=params
+            method=httpx.AsyncClient.get, url=url, params=params
         )
 
     async def get_project_statuses(self, project_key: str) -> list[dict]:
@@ -448,8 +451,10 @@ class JiraAPI:
             payload['fields'] = fields
         if next_page_token:
             payload['nextPageToken'] = next_page_token
+
+        url = 'search/jql' if self.cloud else 'search'
         return await self.client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.post, url='search/jql', data=json.dumps(payload)
+            method=httpx.AsyncClient.post, url=url, data=json.dumps(payload)
         )
 
     async def work_items_search_approximate_count(
@@ -468,6 +473,9 @@ class JiraAPI:
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
+
+        TODO: this is only available for the Jira cloud platform. For on-premises we need another way or to disable
+        the feature.
 
         Args:
             project_key: search items that belong to the project with this (case-sensitive) key.

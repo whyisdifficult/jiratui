@@ -46,6 +46,10 @@ class ApplicationConfiguration(BaseSettings):
     jira_api_version: int = DEFAULT_JIRA_API_VERSION
     """The version of the JiraAPI that JiraTUI wil use. The default is 3 but you can set to 2 if your Jira installation
     provides an older version of the API."""
+    cloud: bool = True
+    """Set this to False if your Jira instance run on-premises."""
+    use_bearer_authentication: bool = False
+    """Set this to True if your Jira instance uses Bearer authentication instead of Basic authentication."""
     jira_user_group_id: str | None = None
     """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
     as a fall back mechanism to fetch available users."""

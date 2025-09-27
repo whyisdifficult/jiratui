@@ -1116,9 +1116,14 @@ class APIController:
                         'The field "assignee" can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_assignee.get('key')] = [
-                    {'set': {'accountId': updates.get('assignee_account_id')}}
-                ]
+                if self.config.cloud:
+                    fields_to_update[meta_assignee.get('key')] = [
+                        {'set': {'accountId': updates.get('assignee_account_id')}}
+                    ]
+                else:
+                    fields_to_update[meta_assignee.get('key')] = [
+                        {'set': {'name': updates.get('assignee_account_id')}}
+                    ]
             else:
                 raise UpdateWorkItemException(
                     'The field "assignee_account_id" can not be updated for the selected work item.',

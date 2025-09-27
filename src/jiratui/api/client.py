@@ -16,6 +16,15 @@ from jiratui.exceptions import (
 )
 
 
+class JiraTUIBearerAuth(httpx.Auth):
+    def __init__(self, token: str, username: str | None = None):
+        self.token = token
+
+    def auth_flow(self, request):
+        request.headers['Authorization'] = f'Bearer {self.token.strip()}'
+        yield request
+
+
 @dataclass
 class SSLCertificateSettings:
     cert: str | tuple[str, str] | tuple[str, str, str] | None = None
@@ -62,12 +71,15 @@ class JiraClient:
     ):
         ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
+        if configuration.use_bearer_authentication:
+            self.authentication = JiraTUIBearerAuth(api_token, api_username)
+        else:
+            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.Client = httpx.Client(
             verify=ssl_certificate_settings.verify_ssl,
             cert=ssl_certificate_settings.cert,
             timeout=None,
         )
-        self.authentication = httpx.BasicAuth(api_username, api_token)
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
@@ -146,12 +158,15 @@ class AsyncJiraClient:
     ):
         ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
+        if configuration.use_bearer_authentication:
+            self.authentication = JiraTUIBearerAuth(api_token, api_username)
+        else:
+            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.AsyncClient = httpx.AsyncClient(
             verify=ssl_certificate_settings.verify_ssl,
             cert=ssl_certificate_settings.cert,
             timeout=None,
         )
-        self.authentication = httpx.BasicAuth(api_username, api_token)
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
