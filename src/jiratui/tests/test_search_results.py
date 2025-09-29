@@ -65,7 +65,7 @@ async def test_click_next_page_search_results(
         await pilot.press('alt+right')
         # THEN
         assert main_screen.search_results_table.page == 2
-        search_issues_mock.assert_called_once_with('token_a')
+        search_issues_mock.assert_called_once_with('token_a', page=2)
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
@@ -118,7 +118,7 @@ async def test_click_previous_page_search_results(
         # WHEN
         await pilot.press('alt+left')
         # THEN
-        search_issues_mock.assert_called_once_with('token_a')
+        search_issues_mock.assert_called_once_with('token_a', page=1)
         assert main_screen.search_results_table.page == 1
 
 

@@ -419,6 +419,8 @@ class JiraIssueSearchResponse(BaseModel):
     issues: list[JiraIssue]
     next_page_token: str | None = None
     is_last: bool | None = None
+    total: int | None = None
+    offset: int | None = None
 
 
 @dataclass

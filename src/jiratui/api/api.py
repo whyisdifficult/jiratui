@@ -12,7 +12,7 @@ from jiratui.models import WorkItemsSearchOrderBy
 
 
 class JiraAPI:
-    """Implements methods to connect to the Jira REST API.
+    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
 
     **Supported Versions**
 
@@ -100,9 +100,8 @@ class JiraAPI:
         if keys:
             params['keys'] = ','.join(keys[:50])
 
-        url = 'project/search' if self.cloud else 'project'
         return await self.client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.get, url=url, params=params
+            method=httpx.AsyncClient.get, url='project/search', params=params
         )
 
     async def get_project_statuses(self, project_key: str) -> list[dict]:
@@ -394,6 +393,7 @@ class JiraAPI:
         search_in_active_sprint: bool = False,
         fields: list[str] | None = None,
         next_page_token: str | None = None,
+        offset: int | None = None,
         limit: int | None = None,
         order_by: WorkItemsSearchOrderBy | None = None,
     ) -> dict:
@@ -417,6 +417,7 @@ class JiraAPI:
             retrieved.
             fields: retrieve these fields for every item found.
             next_page_token: an optional token to retrieve the next page of results.
+            offset: N/A
             limit: retrieve this max number of results per page.
             order_by: sort the items according to these criteria. This requirement needs to be placed at the end of
             the JQL query, otherwise the JQL will be invalid. Possible values are:
@@ -452,9 +453,8 @@ class JiraAPI:
         if next_page_token:
             payload['nextPageToken'] = next_page_token
 
-        url = 'search/jql' if self.cloud else 'search'
         return await self.client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.post, url=url, data=json.dumps(payload)
+            method=httpx.AsyncClient.post, url='search/jql', data=json.dumps(payload)
         )
 
     async def work_items_search_approximate_count(
@@ -1036,10 +1036,132 @@ class JiraAPI:
 
 
 class JiraAPIv2(JiraAPI):
-    """Implements methods to connect to the Jira REST API v2."""
+    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
+
+    This class implement methods for connecting to Jira REST API v2.
+    """
 
     API_PATH_PREFIX = '/rest/api/2/'
 
     @staticmethod
     def _build_payload_to_add_comment(message: str) -> dict:
         return {'body': message}
+
+
+class JiraDataCenterAPI(JiraAPI):
+    """Implements the Jira API provide by Jira Data Center (aka. on-premises) installations.
+
+    **API Docs**:
+        - https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
+    """
+
+    # see: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure
+    API_PATH_PREFIX = '/rest/api/2/'
+
+    async def search_projects(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+        query: str | None = None,
+        order_by: str | None = None,
+        keys: list[str] = None,
+    ) -> dict:
+        """Retrieves all projects visible for the currently logged-in user, i.e. all the projects the user has either
+        'Browse projects' or 'Administer projects' permission. If no user is logged in, it returns all projects that
+        are visible for anonymous users.
+
+        See Also:
+            - https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-project/#api-api-2-project-get
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/project-getAllProjects
+
+        Args:
+            offset: N/A
+            limit: N/A
+            order_by: N/A
+            keys: N/A
+            query: N/A
+
+        Returns:
+            A dictionary with the details of the projects.
+        """
+        data = await self.client.make_request(method=httpx.AsyncClient.get, url='project')  # type:ignore[return-value]
+        return {'values': data, 'isLast': True}
+
+    async def search_issues(
+        self,
+        project_key: str | None = None,
+        created_from: date | None = None,
+        created_until: date | None = None,
+        updated_from: date | None = None,
+        updated_until: date | None = None,
+        status: int | None = None,
+        assignee: str | None = None,
+        issue_type: int | None = None,
+        jql_query: str | None = None,
+        search_in_active_sprint: bool = False,
+        fields: list[str] | None = None,
+        next_page_token: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        order_by: WorkItemsSearchOrderBy | None = None,
+    ) -> dict:
+        """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
+        results.
+
+        See Also:
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-search/#api-api-2-search-post
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/search-search
+
+        Args:
+            project_key: search items that belong to the project with this (case-sensitive) key.
+            created_from: search items created from this date forward.
+            created_until: search items created until this date.
+            updated_from: search items updated from this date forward.
+            updated_until: search items updated until this date
+            status: search items with this status id.
+            assignee: search items assigned to this user (by account id).
+            issue_type: search items with this type id.
+            jql_query: a JQL expression to filter items.
+            search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+            retrieved.
+            fields: retrieve these fields for every item found.
+            next_page_token: N/A
+            offset: the index of the first issue to return (0-based)
+            limit: retrieve this max number of results per page.
+            order_by: sort the items according to these criteria. This requirement needs to be placed at the end of
+            the JQL query, otherwise the JQL will be invalid. Possible values are:
+            - order by created asc
+            - order by created desc
+            - order by priority asc
+            - order by priority desc
+            - order by key asc
+            - order by key desc
+
+        Returns:
+            A dictionary with the results.
+        """
+        jql: str = build_issue_search_jql(
+            project_key=project_key,
+            created_from=created_from,
+            created_until=created_until,
+            updated_from=updated_from,
+            updated_until=updated_until,
+            status=status,
+            assignee=assignee,
+            issue_type=issue_type,
+            jql_query=jql_query,
+            search_in_active_sprint=search_in_active_sprint,
+            order_by=order_by,
+        )
+        payload: dict[str, Any] = {
+            'jql': jql,
+            'maxResults': limit or ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
+        }
+        if fields:
+            payload['fields'] = fields
+        if offset:
+            payload['startAt'] = offset
+
+        return await self.client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.post, url='search', data=json.dumps(payload)
+        )

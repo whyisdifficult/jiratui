@@ -10,7 +10,7 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 
-from jiratui.api.api import JiraAPI, JiraAPIv2
+from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI
 from jiratui.api_controller.constants import (
     MAXIMUM_PAGE_NUMBER_LIST_GROUPS,
     MAXIMUM_PAGE_NUMBER_SEARCH_PROJECTS,
@@ -25,6 +25,7 @@ from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import (
     ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES,
     DEFAULT_JIRA_API_VERSION,
+    ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
     LOGGER_NAME,
 )
 from jiratui.exceptions import (
@@ -74,16 +75,25 @@ class APIController:
     def __init__(self, configuration: ApplicationConfiguration | None = None):
         self.config = CONFIGURATION.get() if not configuration else configuration
         self.api_version: int = self.config.jira_api_version or DEFAULT_JIRA_API_VERSION
-        self.api: JiraAPI | JiraAPIv2
-        if self.api_version == 2:
-            self.api = JiraAPIv2(
-                base_url=self.config.jira_api_base_url,
-                api_username=self.config.jira_api_username,
-                api_token=self.config.jira_api_token.get_secret_value(),
-                configuration=self.config,
-            )
+        self.api: JiraAPI | JiraAPIv2 | JiraDataCenterAPI
+
+        if self.config.cloud:
+            if self.api_version == 2:
+                self.api = JiraAPIv2(
+                    base_url=self.config.jira_api_base_url,
+                    api_username=self.config.jira_api_username,
+                    api_token=self.config.jira_api_token.get_secret_value(),
+                    configuration=self.config,
+                )
+            else:
+                self.api = JiraAPI(
+                    base_url=self.config.jira_api_base_url,
+                    api_username=self.config.jira_api_username,
+                    api_token=self.config.jira_api_token.get_secret_value(),
+                    configuration=self.config,
+                )
         else:
-            self.api = JiraAPI(
+            self.api = JiraDataCenterAPI(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
                 api_token=self.config.jira_api_token.get_secret_value(),
@@ -798,6 +808,113 @@ class APIController:
                 issues=issues,
                 next_page_token=response.get('nextPageToken'),
                 is_last=response.get('isLast'),
+            )
+        )
+
+    async def search_issues_by_page_number(
+        self,
+        project_key: str | None = None,
+        created_from: date | None = None,
+        created_until: date | None = None,
+        status: int | None = None,
+        assignee: str | None = None,
+        issue_type: int | None = None,
+        search_in_active_sprint: bool = False,
+        jql_query: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+        order_by: WorkItemsSearchOrderBy | None = None,
+        fields: list[str] | None = None,
+    ) -> APIControllerResponse:
+        """Searches for issues matching specified JQL query and other criteria.
+
+        This method implements issue search for the Jira Data Center Platform API. In contrast with the API offered by
+        the Jira Cloud Platform the former does not use the concept of `next_page_token` to fetch pages of
+        results. Instead, pagination is implemented using `offset` and `limit` variables. To address this difference
+        the controller provides this method that fetches results based on a page number.
+
+        Args:
+            project_key: the case-sensitive key of the project whose work items we want to search.
+            created_from: search work items created from this date forward (inclusive).
+            created_until: search work items created until this date (inclusive).
+            status: search work items with this status.
+            assignee: search work items assigned to this user's account ID.
+            issue_type: search work items of this type.
+            search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+            retrieved.
+            jql_query: search work items using this (additional) JQL query.
+            page: the page of results to retrieve.
+            limit: the maximum number of items to retrieve.
+            order_by: an instance of `WorkItemsSearchOrderBy` to sort the results.
+            fields: the fields to retrieve for every work item. It defaults to: `'id', 'key', 'status', 'summary',
+            'issuetype'`
+
+        Returns:
+            An instance of `APIControllerResponse` with the work items found or, en error if the search can not be
+            performed.
+        """
+
+        criteria: dict = self._build_criteria_for_searching_work_items(
+            project_key=project_key,
+            created_from=created_from,
+            created_until=created_until,
+            status=status,
+            assignee=assignee,
+            issue_type=issue_type,
+            jql_query=jql_query,
+        )
+
+        if page is None or page <= 0:
+            offset = 0
+        else:
+            offset = (page - 1) * ISSUE_SEARCH_DEFAULT_MAX_RESULTS
+
+        try:
+            response: dict = await self.api.search_issues(
+                project_key=project_key,
+                created_from=created_from,
+                created_until=created_until,
+                updated_from=criteria.get('updated_from'),
+                status=status,
+                assignee=assignee,
+                issue_type=issue_type,
+                search_in_active_sprint=search_in_active_sprint,
+                jql_query=criteria.get('jql'),
+                fields=fields if fields else ['id', 'key', 'status', 'summary', 'issuetype'],
+                offset=offset,
+                limit=limit,
+                order_by=order_by,
+            )
+        except ServiceUnavailableException:
+            return APIControllerResponse(
+                success=False, error='Unable to connect to the Jira server.'
+            )
+        except ServiceInvalidResponseException:
+            return APIControllerResponse(
+                success=False, error='The response from the server contains errors.'
+            )
+        except Exception as e:
+            return APIControllerResponse(
+                success=False,
+                error=f'There was an unknown error while searching for work items: {str(e)}',
+            )
+
+        issues: list[JiraIssue] = []
+        work_item: JiraIssue
+        for issue in response.get('issues', []):
+            try:
+                work_item = WorkItemFactory.create_work_item(issue)
+                issues.append(work_item)
+            except Exception:
+                continue
+
+        return APIControllerResponse(
+            result=JiraIssueSearchResponse(
+                issues=issues,
+                next_page_token=response.get('nextPageToken'),
+                is_last=response.get('isLast'),
+                total=response.get('total'),
+                offset=response.get('offset'),
             )
         )
 
