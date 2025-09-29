@@ -17,6 +17,8 @@ settings `search_results_page_filtering_enabled` and `search_results_page_filter
 - Add support for Bearer authentication
 - Add support for configuring bearer authentication via config variable `use_bearer_authentication`.
 - Add configuration variable `cloud` to distinguish between on-premises and cloud platform.
+- Add an option to define the default value of the `order by` widget.
+- Update README and docs with instructions on how to install the tool via Homebrew.
 
 ### Bug Fixes
 
