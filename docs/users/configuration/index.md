@@ -35,8 +35,6 @@ jira_api_token: '12345'
 jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 ```
 
-**Tip**: The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
-
 ```{tip}
 The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 ```
