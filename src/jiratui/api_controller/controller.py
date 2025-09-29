@@ -76,7 +76,6 @@ class APIController:
         self.config = CONFIGURATION.get() if not configuration else configuration
         self.api_version: int = self.config.jira_api_version or DEFAULT_JIRA_API_VERSION
         self.api: JiraAPI | JiraAPIv2 | JiraDataCenterAPI
-
         if self.config.cloud:
             if self.api_version == 2:
                 self.api = JiraAPIv2(
@@ -914,7 +913,7 @@ class APIController:
                 next_page_token=response.get('nextPageToken'),
                 is_last=response.get('isLast'),
                 total=response.get('total'),
-                offset=response.get('offset'),
+                offset=response.get('startAt'),
             )
         )
 
@@ -965,6 +964,8 @@ class APIController:
                 issue_type=issue_type,
                 jql_query=criteria.get('jql'),
             )
+        except NotImplementedError:
+            return APIControllerResponse(result=0)
         except Exception as e:
             return APIControllerResponse(
                 success=False, error=f'Failed to count the number of work items: {str(e)}'

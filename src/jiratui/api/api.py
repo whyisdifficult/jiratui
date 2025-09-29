@@ -474,7 +474,7 @@ class JiraAPI:
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
 
-        TODO: this is only available for the Jira cloud platform. For on-premises we need another way or to disable
+        Important: this is only available for the Jira cloud platform. For on-premises we need another way or to disable
         the feature.
 
         Args:
@@ -1049,7 +1049,7 @@ class JiraAPIv2(JiraAPI):
 
 
 class JiraDataCenterAPI(JiraAPI):
-    """Implements the Jira API provide by Jira Data Center (aka. on-premises) installations.
+    """Implements the Jira API provides by Jira Data Center (aka. on-premises) installations.
 
     **API Docs**:
         - https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
@@ -1165,3 +1165,17 @@ class JiraDataCenterAPI(JiraAPI):
         return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='search', data=json.dumps(payload)
         )
+
+    async def work_items_search_approximate_count(
+        self,
+        project_key: str | None = None,
+        created_from: date | None = None,
+        created_until: date | None = None,
+        updated_from: date | None = None,
+        status: int | None = None,
+        assignee: str | None = None,
+        issue_type: int | None = None,
+        jql_query: str | None = None,
+    ) -> dict:
+        # not supported in Jira DC
+        raise NotImplementedError('This feature is not implemented in Jira Data Center platform.')

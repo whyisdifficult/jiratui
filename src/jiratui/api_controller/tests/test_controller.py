@@ -3,7 +3,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from jiratui.api.api import JiraAPI
+from jiratui.api.api import JiraAPI, JiraDataCenterAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.api_controller.factories import WorkItemFactory
 from jiratui.exceptions import (
@@ -1578,6 +1578,66 @@ async def test_search_issues_with_missing_issues(
     assert response.result.issues == []
     build_criteria_for_searching_work_items_mock.assert_called_once()
     search_issues_mock.assert_called_once()
+
+
+@pytest.mark.parametrize('page, expected_offset', [(0, 0), (1, 0), (2, 30), (None, 0)])
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraDataCenterAPI, 'search_issues')
+async def test_search_issues_for_jira_dc(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    configuration_mock: Mock,
+    jira_api_controller_for_jira_dc: APIController,
+    page,
+    expected_offset,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {
+        'expand': 'names,schema',
+        'startAt': 0,
+        'maxResults': 50,
+        'total': 1,
+        'issues': [
+            {
+                'expand': '',
+                'id': '10001',
+                'self': 'http://www.example.com/jira/rest/api/2/issue/10001',
+                'key': 'HSP-1',
+                'fields': {'summary': '(Sample) Set Up Payment Logging'},
+            }
+        ],
+        'warningMessages': ["The value 'splat' does not exist for the field 'Foo'."],
+    }
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.search_issues_by_page_number(page=page)
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    assert response.result.is_last is None
+    assert response.result.next_page_token is None
+    assert response.result.issues[0].id == '10001'
+    assert response.result.issues[0].key == 'HSP-1'
+    assert response.result.issues[0].summary == '(Sample) Set Up Payment Logging'
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=None,
+        status=None,
+        assignee=None,
+        issue_type=None,
+        search_in_active_sprint=False,
+        jql_query=None,
+        offset=expected_offset,
+        fields=['id', 'key', 'status', 'summary', 'issuetype'],
+        limit=None,
+        order_by=None,
+    )
 
 
 @pytest.mark.asyncio
