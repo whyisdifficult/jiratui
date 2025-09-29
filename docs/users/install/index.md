@@ -24,6 +24,12 @@ For Arch Linux (btw) the package is available in [AUR](https://aur.archlinux.org
 yay -S jiratui-git
 ```
 
+You can also install using homebrew
+
+```shell
+brew install jiratui
+```
+
 After installing the package, you can run the CLI tool with the following command:
 
 ```shell

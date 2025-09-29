@@ -6,6 +6,7 @@ import pytest
 from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
+from jiratui.models import WorkItemsSearchOrderBy
 from jiratui.widgets.work_item_details.details import IssueSummaryField
 
 
@@ -30,6 +31,7 @@ def app() -> JiraApp:
         log_level='ERROR',
         theme=None,
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

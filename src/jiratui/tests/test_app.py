@@ -6,7 +6,7 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
-from jiratui.models import JiraServerInfo
+from jiratui.models import JiraServerInfo, WorkItemsSearchOrderBy
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screens import MainScreen
 
@@ -32,6 +32,7 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         log_level='WARNING',
         theme='foo',
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -60,6 +61,7 @@ def app_with_input_and_config_theme() -> JiraApp:
         log_level='WARNING',
         theme='flexoki',
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -88,6 +90,7 @@ def app_with_input_theme() -> JiraApp:
         log_level='WARNING',
         theme=None,
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -116,6 +119,7 @@ def app_without_config_theme() -> JiraApp:
         log_level='WARNING',
         theme=None,
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -144,6 +148,7 @@ def app() -> JiraApp:
         log_level='WARNING',
         theme='dracula',
         ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

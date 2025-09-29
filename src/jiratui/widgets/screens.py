@@ -308,7 +308,10 @@ class MainScreen(Screen):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
                 yield IssueSearchCreatedUntilWidget()
-                yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())
+                yield OrderByWidget(
+                    WorkItemsSearchOrderBy.to_choices(),
+                    initial_value=CONFIGURATION.get().search_results_default_order.value,
+                )
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
                 yield Button(
