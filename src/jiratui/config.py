@@ -15,6 +15,7 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 from jiratui.files import get_config_file
+from jiratui.models import WorkItemsSearchOrderBy
 
 
 class ApplicationConfiguration(BaseSettings):
@@ -112,6 +113,8 @@ class ApplicationConfiguration(BaseSettings):
     search_results_page_filtering_minimum_term_length: int = 3
     """When search_results_page_filtering_enabled is True this value controls the minimum number of characters that the
     user needs to type in on order to filter results."""
+    search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
+    """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC, CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
 
     model_config = SettingsConfigDict(
         extra='allow',
