@@ -16,9 +16,8 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 from jiratui.files import get_config_file
+from jiratui.models import BaseModel, WorkItemsSearchOrderBy
 
-from jiratui.models import BaseModel
-from jiratui.models import WorkItemsSearchOrderBy
 
 class SSLConfiguration(BaseModel):
     """Configuration for SSL CA bundles and client-side certificates."""
@@ -140,7 +139,6 @@ class ApplicationConfiguration(BaseSettings):
     """SSL configuration for client-side certificates and CA bundle."""
     search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
     """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC, CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
-
 
     model_config = SettingsConfigDict(
         extra='allow',
