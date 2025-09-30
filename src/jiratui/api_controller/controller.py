@@ -365,9 +365,12 @@ class APIController:
                     users.append(
                         JiraUser(
                             email=user.get('emailAddress'),
-                            account_id=user.get('accountId'),
+                            account_id=user.get('accountId')
+                            if self.config.cloud is True
+                            else user.get('name'),
                             active=user.get('active'),
                             display_name=user.get('displayName'),
+                            username=user.get('name') if not self.config.cloud else None,
                         )
                     )
                 is_last = response.get('isLast')
@@ -471,7 +474,9 @@ class APIController:
             users.append(
                 JiraUser(
                     email=email,
-                    account_id=user.get('accountId'),
+                    account_id=user.get('accountId')
+                    if self.config.cloud is True
+                    else user.get('name'),
                     active=user.get('active'),
                     display_name=user.get('displayName'),
                     username=user.get('name') if not self.config.cloud else None,
@@ -588,9 +593,12 @@ class APIController:
             users.append(
                 JiraUser(
                     email=email,
-                    account_id=user.get('accountId'),
+                    account_id=user.get('accountId')
+                    if self.config.cloud is True
+                    else user.get('name'),
                     active=user.get('active'),
                     display_name=user.get('displayName'),
+                    username=user.get('name') if not self.config.cloud else None,
                 )
             )
         return APIControllerResponse(

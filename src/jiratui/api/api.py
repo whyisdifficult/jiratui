@@ -1227,3 +1227,38 @@ class JiraDataCenterAPI(JiraAPI):
             A list of dictionaries with the details of the users.
         """
         return await super().user_search(username=query or username, offset=offset, limit=limit)
+
+    async def user_assignable_multi_projects(
+        self,
+        project_keys: list[str] = None,
+        query: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> list[dict]:
+        """Retrieves the users who can be assigned issues in one or more projects.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get
+
+        Args:
+            project_keys: a list of project keys (case-sensitive). This parameter accepts a comma-separated list.
+            offset: N/A
+            limit: the maximum number of items to return per page. Default is `50`.
+            query: expects a username.
+            Required, unless `username` or `accountId` is specified.
+
+        Returns:
+            A list of dictionaries with the details of the users.
+        """
+        params: dict[str, Any] = {}
+        if limit is not None:
+            params['maxResults'] = limit
+        if project_keys:
+            params['projectKeys'] = ','.join(project_keys)
+        if query:
+            params['username'] = query
+        return await self.client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url='user/assignable/multiProjectSearch',
+            params=params,
+        )

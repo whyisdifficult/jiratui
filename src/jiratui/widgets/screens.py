@@ -199,7 +199,7 @@ class MainScreen(Screen):
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
-        be used for searhcing issues when the user does not select any filter/criteria in the UI. """
+        be used for searching issues when the user does not select any filter/criteria in the UI. """
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @property
