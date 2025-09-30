@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+from pydantic import SecretStr
 import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -16,8 +17,10 @@ def app_with_unrecognized_config_theme() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -28,6 +31,7 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         log_file='',
         log_level='WARNING',
         theme='foo',
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
@@ -42,8 +46,10 @@ def app_with_input_and_config_theme() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -54,6 +60,7 @@ def app_with_input_and_config_theme() -> JiraApp:
         log_file='',
         log_level='WARNING',
         theme='flexoki',
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock, user_theme='monokai')
@@ -68,8 +75,10 @@ def app_with_input_theme() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -80,6 +89,7 @@ def app_with_input_theme() -> JiraApp:
         log_file='',
         log_level='WARNING',
         theme=None,
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock, user_theme='monokai')
@@ -94,8 +104,10 @@ def app_without_config_theme() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -106,6 +118,7 @@ def app_without_config_theme() -> JiraApp:
         log_file='',
         log_level='WARNING',
         theme=None,
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
@@ -120,8 +133,10 @@ def app() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -132,6 +147,7 @@ def app() -> JiraApp:
         log_file='',
         log_level='WARNING',
         theme='dracula',
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)

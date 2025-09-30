@@ -15,8 +15,12 @@ class QuitScreen(ModalScreen[str]):
             id='dialog',
         )
 
+    async def close_connections(self):
+        await self.app.api.api.client.close_async_client()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == 'button-quit':
+            self.run_worker(self.close_connections)
             self.app.exit()
         else:
             self.app.pop_screen()

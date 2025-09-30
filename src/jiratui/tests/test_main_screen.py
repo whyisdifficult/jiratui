@@ -1,6 +1,7 @@
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+from pydantic import SecretStr
 import pytest
 from textual.widgets import Select
 
@@ -42,8 +43,10 @@ def app() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -55,6 +58,7 @@ def app() -> JiraApp:
         log_level='ERROR',
         theme=None,
         search_results_page_filtering_enabled=False,
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)

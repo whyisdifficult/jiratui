@@ -1,6 +1,7 @@
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
+from pydantic import SecretStr
 import pytest
 
 from jiratui.api_controller.controller import APIController
@@ -17,8 +18,10 @@ def app() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -30,6 +33,7 @@ def app() -> JiraApp:
         log_level='ERROR',
         theme=None,
         search_results_page_filtering_enabled=False,
+        ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
@@ -62,7 +66,7 @@ async def test_click_next_page_search_results(
         await pilot.press('alt+right')
         # THEN
         assert main_screen.search_results_table.page == 2
-        search_issues_mock.assert_called_once_with('token_a')
+        search_issues_mock.assert_called_once_with('token_a', page=2)
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
@@ -115,7 +119,7 @@ async def test_click_previous_page_search_results(
         # WHEN
         await pilot.press('alt+left')
         # THEN
-        search_issues_mock.assert_called_once_with('token_a')
+        search_issues_mock.assert_called_once_with('token_a', page=1)
         assert main_screen.search_results_table.page == 1
 
 

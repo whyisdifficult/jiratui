@@ -5,7 +5,7 @@ import httpx
 import pytest
 import respx
 
-from jiratui.api.api import JiraAPI
+from jiratui.api.api import JiraAPI, JiraDataCenterAPI
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.models import WorkItemsSearchOrderBy
 from jiratui.utils.test_utilities import get_url_pattern, load_json_response
@@ -2067,6 +2067,57 @@ async def test_search_issues(build_issue_search_jql_mock: Mock, jira_api: JiraAP
 @patch('jiratui.api.api.build_issue_search_jql')
 @pytest.mark.asyncio
 @respx.mock
+async def test_search_issues_with_jira_dc(
+    build_issue_search_jql_mock: Mock, jira_api_dc: JiraDataCenterAPI
+):
+    # GIVEN
+    build_issue_search_jql_mock.return_value = ''
+    route = respx.post(get_url_pattern('search'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'expand': 'names,schema',
+                'startAt': 0,
+                'maxResults': 50,
+                'total': 1,
+                'issues': [
+                    {
+                        'expand': '',
+                        'id': '10001',
+                        'self': 'http://www.example.com/jira/rest/api/2/issue/10001',
+                        'key': 'HSP-1',
+                    }
+                ],
+                'warningMessages': ["The value 'splat' does not exist for the field 'Foo'."],
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api_dc.search_issues()
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/search'
+    assert json.loads(route.calls.last.request.content) == {'jql': '', 'maxResults': 30}
+    assert result == {
+        'expand': 'names,schema',
+        'startAt': 0,
+        'maxResults': 50,
+        'total': 1,
+        'issues': [
+            {
+                'expand': '',
+                'id': '10001',
+                'self': 'http://www.example.com/jira/rest/api/2/issue/10001',
+                'key': 'HSP-1',
+            }
+        ],
+        'warningMessages': ["The value 'splat' does not exist for the field 'Foo'."],
+    }
+
+
+@patch('jiratui.api.api.build_issue_search_jql')
+@pytest.mark.asyncio
+@respx.mock
 async def test_search_issues_with_parameters(build_issue_search_jql_mock: Mock, jira_api: JiraAPI):
     # GIVEN
     build_issue_search_jql_mock.return_value = 'query'
@@ -2212,6 +2263,87 @@ async def test_search_projects_with_parameters(jira_api: JiraAPI):
     assert 'orderBy=id' in request_url
     assert 'query=query-value' in request_url
     assert 'keys=k1%2Ck2' in request_url
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_search_projects_with_jira_data_center(jira_api_dc: JiraDataCenterAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('project'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json=[
+                {
+                    'self': 'http://www.example.com/jira/rest/api/2/project/EX',
+                    'id': '10000',
+                    'key': 'EX',
+                    'name': 'Example',
+                    'projectCategory': {
+                        'self': 'http://www.example.com/jira/rest/api/2/projectCategory/10000',
+                        'id': '10000',
+                        'name': 'FIRST',
+                        'description': 'First Project Category',
+                    },
+                    'simplified': False,
+                },
+                {
+                    'self': 'http://www.example.com/jira/rest/api/2/project/ABC',
+                    'id': '10001',
+                    'key': 'ABC',
+                    'name': 'Alphabetical',
+                    'projectCategory': {
+                        'self': 'http://www.example.com/jira/rest/api/2/projectCategory/10000',
+                        'id': '10000',
+                        'name': 'FIRST',
+                        'description': 'First Project Category',
+                    },
+                    'simplified': False,
+                },
+            ],
+        )
+    )
+    # WHEN
+    result = await jira_api_dc.search_projects()
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/project'
+    request_url = str(route.calls.last.request.url)
+    assert 'startAt=' not in request_url
+    assert 'maxResults=' not in request_url
+    assert 'orderBy=' not in request_url
+    assert 'query=' not in request_url
+    assert 'keys=' not in request_url
+    assert result == {
+        'isLast': True,
+        'values': [
+            {
+                'self': 'http://www.example.com/jira/rest/api/2/project/EX',
+                'id': '10000',
+                'key': 'EX',
+                'name': 'Example',
+                'projectCategory': {
+                    'self': 'http://www.example.com/jira/rest/api/2/projectCategory/10000',
+                    'id': '10000',
+                    'name': 'FIRST',
+                    'description': 'First Project Category',
+                },
+                'simplified': False,
+            },
+            {
+                'self': 'http://www.example.com/jira/rest/api/2/project/ABC',
+                'id': '10001',
+                'key': 'ABC',
+                'name': 'Alphabetical',
+                'projectCategory': {
+                    'self': 'http://www.example.com/jira/rest/api/2/projectCategory/10000',
+                    'id': '10000',
+                    'name': 'FIRST',
+                    'description': 'First Project Category',
+                },
+                'simplified': False,
+            },
+        ],
+    }
 
 
 def test_build_issue_search_jql():

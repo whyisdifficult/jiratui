@@ -64,11 +64,11 @@ class ServerInfoScreen(ModalScreen):
                         Text(
                             'Display URL Servicedesk Help Center', justify='right', style='yellow'
                         ),
-                        Text(server_info.display_url_servicedesk_help_center, justify='left'),
+                        Text(server_info.get_display_url_servicedesk_help_center(), justify='left'),
                     ),
                     (
                         Text('Display URL Confluence', justify='right', style='yellow'),
-                        Text(server_info.display_url_confluence, justify='left'),
+                        Text(server_info.get_display_url_confluence(), justify='left'),
                     ),
                     (
                         Text('Version', justify='right', style='yellow'),
@@ -76,7 +76,7 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Deployment Type', justify='right', style='yellow'),
-                        Text(server_info.deployment_type, justify='left'),
+                        Text(server_info.get_deployment_type(), justify='left'),
                     ),
                     (
                         Text('Build Number', justify='right', style='yellow'),
@@ -88,7 +88,7 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Server Time', justify='right', style='yellow'),
-                        Text(server_info.server_time or '', justify='left'),
+                        Text(server_info.get_server_time(), justify='left'),
                     ),
                     (
                         Text('SCM Info', justify='right', style='yellow'),
@@ -100,11 +100,11 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Default Locale', justify='right', style='yellow'),
-                        Text(server_info.default_locale, justify='left'),
+                        Text(server_info.get_default_locale(), justify='left'),
                     ),
                     (
                         Text('Server Time Zone', justify='right', style='yellow'),
-                        Text(server_info.server_time_zone, justify='left'),
+                        Text(server_info.get_server_time_zone(), justify='left'),
                     ),
                 ]
             )
@@ -121,7 +121,11 @@ class ServerInfoScreen(ModalScreen):
                 [
                     (
                         Text('Account ID', justify='right', style='yellow'),
-                        Text(user_info.account_id, justify='left'),
+                        Text(user_info.get_account_id(), justify='left'),
+                    ),
+                    (
+                        Text('Username', justify='right', style='yellow'),
+                        Text(user_info.get_username(), justify='left'),
                     ),
                     (
                         Text('Account Type', justify='right', style='yellow'),
