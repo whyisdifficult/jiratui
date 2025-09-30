@@ -208,7 +208,7 @@ class MainScreen(Screen):
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
-        be used for searhcing issues when the user does not select any filter/criteria in the UI. """
+        be used for searching issues when the user does not select any filter/criteria in the UI. """
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @property
@@ -317,7 +317,10 @@ class MainScreen(Screen):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
                 yield IssueSearchCreatedUntilWidget()
-                yield OrderByWidget(WorkItemsSearchOrderBy.to_choices())
+                yield OrderByWidget(
+                    WorkItemsSearchOrderBy.to_choices(),
+                    initial_value=CONFIGURATION.get().search_results_default_order.value,
+                )
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
                 yield Button(
@@ -570,6 +573,7 @@ class MainScreen(Screen):
         next_page_token: str | None = None,
         calculate_total: bool = True,
         search_term: str | None = None,
+        page: int | None = None,
     ) -> WorkItemSearchResult:
         # search work items based on search criteria selected by the user
         search_field_status: int | None = None
@@ -610,26 +614,46 @@ class MainScreen(Screen):
         )
 
         # search work items by different criteria
-        response: APIControllerResponse = await self.api.search_issues(
-            project_key=project_key,
-            created_from=search_field_created_from,
-            created_until=search_field_created_until,
-            status=search_field_status,
-            assignee=search_field_assignee,
-            issue_type=search_field_issue_type,
-            search_in_active_sprint=self.active_sprint_checkbox.value,
-            jql_query=jql_query,
-            next_page_token=next_page_token,
-            limit=CONFIGURATION.get().search_results_per_page,
-            order_by=order_by,
-        )
-        if not response.success:
+        response: APIControllerResponse
+        if CONFIGURATION.get().cloud:
+            response = await self.api.search_issues(
+                project_key=project_key,
+                created_from=search_field_created_from,
+                created_until=search_field_created_until,
+                status=search_field_status,
+                assignee=search_field_assignee,
+                issue_type=search_field_issue_type,
+                search_in_active_sprint=self.active_sprint_checkbox.value,
+                jql_query=self.jql_expression_input.value,
+                next_page_token=next_page_token,
+                limit=CONFIGURATION.get().search_results_per_page,
+                order_by=order_by,
+            )
+        else:
+            response = await self.api.search_issues_by_page_number(
+                project_key=project_key,
+                created_from=search_field_created_from,
+                created_until=search_field_created_until,
+                status=search_field_status,
+                assignee=search_field_assignee,
+                issue_type=search_field_issue_type,
+                search_in_active_sprint=self.active_sprint_checkbox.value,
+                jql_query=self.jql_expression_input.value,
+                page=page,
+                limit=CONFIGURATION.get().search_results_per_page,
+                order_by=order_by,
+            )
+
+        if not response.success or response.result is None:
             self.notify(
                 'There was an error while performing the search',
                 severity='warning',
                 title='Work Item Search',
             )
             return WorkItemSearchResult(total=0, start=0, end=0)
+
+        if not CONFIGURATION.get().cloud:
+            calculate_total = False
 
         result: JiraIssueSearchResponse = response.result
         estimated_total_issues: int | None = None
@@ -701,6 +725,7 @@ class MainScreen(Screen):
         self,
         next_page_token: str | None = None,
         search_term: str | None = None,
+        page: int | None = None,
     ) -> None:
         """Searches work items.
 
@@ -713,6 +738,7 @@ class MainScreen(Screen):
         Args:
             next_page_token: a token that identifies the next page of results.
             search_term: TODO
+            page: the page number to fetch results; this is only supported for Jira Data Center (aka. on-premises)
 
         Returns:
             Nothing.
@@ -724,7 +750,7 @@ class MainScreen(Screen):
             results = await self._search_single_issue(value.strip())
         else:
             results = await self._search_work_items(
-                next_page_token=next_page_token, search_term=search_term
+                next_page_token=next_page_token, search_term=search_term, page=page
             )
 
         # set the data in the results table
@@ -768,11 +794,13 @@ class MainScreen(Screen):
         self.search_results_table.page = 1
         # clear the token-based pagination control
         self.search_results_table.token_by_page = {}
+        # Jira Cloud supports pagination based on a next page token; Jira Data Center (aka. on-premises) uses offset
+        # to fetch pages.
         next_page_token: str | None = self.search_results_table.token_by_page.get(
             self.search_results_table.page
         )
         # search the work items that match the criteria
-        self.run_worker(self.search_issues(next_page_token, search_term), exclusive=True)
+        self.run_worker(self.search_issues(next_page_token, search_term, self.search_results_table.page), exclusive=True)
         self.run_button.loading = False
 
     def action_focus_widget(self, key: str) -> None:

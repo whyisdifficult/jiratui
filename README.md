@@ -47,6 +47,12 @@ For Arch Linux (btw) the package is available in [AUR](https://aur.archlinux.org
 yay -S jiratui-git
 ```
 
+You can also install using homebrew
+
+```shell
+brew install jiratui
+```
+
 ## Usage
 
 After installing the package, you can run the CLI tool with the following command:
@@ -98,7 +104,7 @@ file in the following way:
 `JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
 config file as described below.
 
-### Setting Up the Jira's Instance API
+### Setting API Credentials
 
 You must provide the following values to connect to your Jira instance API:
 
@@ -116,6 +122,20 @@ jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 
 **Tip**: The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 
+### Choosing the Jira Platform
+
+Jira is available via the [Jira Cloud Platform's API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about)
+and via the [Jira Data Center's API (aka. Jira on-premises)](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted).
+JiraTUI can connect to both platforms, although the support for Jira Data Center's API is limited.
+
+By default, JiraTUI tries to connect to Jira Cloud Platform's API. However, if you want to use JiraTUI with your
+organization's on-premises installation you will need to configure this via the config file. To do this simply set the
+following:
+
+```yaml
+cloud: False
+```
+
 ### Choosing the API version
 
 By default, JiraTUI uses the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
@@ -128,6 +148,9 @@ To set the version of the API update your config file to include:
 ```yaml
 jira_api_version: 2
 ```
+
+**Important**: when `cloud: False` JiraTUI will use the correct version for the API and ignore the value of
+`jira_api_version`. In other words, `jira_api_version` is only applicable when `cloud: True`.
 
 ## Running the Application UI
 

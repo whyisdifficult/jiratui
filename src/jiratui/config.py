@@ -2,6 +2,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 
+from pydantic import Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -15,18 +16,40 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 from jiratui.files import get_config_file
+from jiratui.models import BaseModel, WorkItemsSearchOrderBy
+
+
+class SSLConfiguration(BaseModel):
+    """Configuration for SSL CA bundles and client-side certificates."""
+
+    verify_ssl: bool = True
+    """Indicates whether HTTP requests should use SSL validation."""
+    ca_bundle: str | None = None
+    """Path to the CA bundle file."""
+    certificate_file: str = None
+    """Path to the a client-side certificate file, e.g. cert.pem"""
+    key_file: str = None
+    """Path to the key file."""
+    password: SecretStr = None
+    """The password for the key file."""
 
 
 class ApplicationConfiguration(BaseSettings):
+    """The configuration for the JiraTUI application and CLI tool."""
+
     jira_api_username: str
     """The username to use for connecting to the Jira API."""
-    jira_api_token: str
+    jira_api_token: SecretStr
     """The token to use for connecting to the Jira API."""
     jira_api_base_url: str
     """The base URL of the Jira API."""
     jira_api_version: int = DEFAULT_JIRA_API_VERSION
     """The version of the JiraAPI that JiraTUI wil use. The default is 3 but you can set to 2 if your Jira installation
     provides an older version of the API."""
+    cloud: bool = True
+    """Set this to False if your Jira instance run on-premises."""
+    use_bearer_authentication: bool = False
+    """Set this to True if your Jira instance uses Bearer authentication instead of Basic authentication."""
     jira_user_group_id: str | None = None
     """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
     as a fall back mechanism to fetch available users."""
@@ -116,6 +139,10 @@ class ApplicationConfiguration(BaseSettings):
     """When this is True JiraTUI will use Jira ability to do full-text search not only in summary and description
     fields but in any text-based field, including comments. This may be slower. If this is False JiraTUI will only
     search items by summary and description fields."""
+    ssl: SSLConfiguration | None = Field(default_factory=SSLConfiguration)
+    """SSL configuration for client-side certificates and CA bundle."""
+    search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
+    """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC, CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
 
     model_config = SettingsConfigDict(
         extra='allow',

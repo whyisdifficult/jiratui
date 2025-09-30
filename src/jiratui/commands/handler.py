@@ -15,7 +15,6 @@ from jiratui.models import (
     JiraIssueSearchResponse,
     JiraUser,
     JiraUserGroup,
-    WorkItemsSearchOrderBy,
 )
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
@@ -333,7 +332,7 @@ class CommandHandler:
                 limit=limit,
                 created_from=created_from or (datetime.now().date() - timedelta(days=15)),
                 created_until=created_until,
-                order_by=WorkItemsSearchOrderBy.CREATED_DESC,
+                order_by=CONFIGURATION.get().search_results_default_order,
             )
         )
         if response.success:

@@ -102,3 +102,24 @@ do not match the filtering criteria.
 
 In addition, the variable `search_results_page_filtering_minimum_term_length` defines the minimum number of
 characters requires to start filtering results. The default is 3 but can be set to any value >= 1.
+
+## Setting the Default Order for Search Results
+
+You can control the default sort order for search results using the `search_results_default_order` configuration option. This determines how issues are ordered when you perform a search in JiraTUI.
+
+**Accepted values:**
+- `created asc`
+- `created desc`
+- `priority asc`
+- `priority desc`
+- `key asc`
+- `key desc`
+
+These correspond to the available sort orders in JiraTUI. The value you set must match one of the above exactly.
+
+**Example:**
+```yaml
+search_results_default_order: 'created desc'
+```
+
+You can still change the order interactively in the UI; this setting only controls the initial/default value.

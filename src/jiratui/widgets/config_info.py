@@ -53,12 +53,38 @@ class ConfigFileScreen(ModalScreen):
                     Text(str(value), justify='left'),
                 )
             )
-        rows.append(
-            (
-                Text('jira_api_token', justify='right', style='yellow'),
-                Text('<redacted>', justify='left'),
+
+        if ssl_config := CONFIGURATION.get().ssl:
+            rows.append(
+                (
+                    Text('ssl_config.verify_ssl', justify='right', style='yellow'),
+                    Text(str(ssl_config.verify_ssl), justify='left'),
+                )
             )
-        )
+            rows.append(
+                (
+                    Text('ssl_config.ca_bundle', justify='right', style='yellow'),
+                    Text(str(ssl_config.ca_bundle), justify='left'),
+                )
+            )
+            rows.append(
+                (
+                    Text('ssl_config.certificate_file', justify='right', style='yellow'),
+                    Text(str(ssl_config.certificate_file), justify='left'),
+                )
+            )
+            rows.append(
+                (
+                    Text('ssl_config.key_file', justify='right', style='yellow'),
+                    Text(str(ssl_config.key_file), justify='left'),
+                )
+            )
+            rows.append(
+                (
+                    Text('ssl_config.password', justify='right', style='yellow'),
+                    Text(str(ssl_config.password), justify='left'),
+                )
+            )
 
         if CONFIGURATION.get().pre_defined_jql_expressions:
             ta = self.query_one(TextArea)

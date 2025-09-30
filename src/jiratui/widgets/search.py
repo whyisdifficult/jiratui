@@ -241,6 +241,8 @@ class IssuesSearchResultsTable(DataTable):
         if action == 'next_issues_page':
             if self.token_by_page.get(self.page + 1):
                 return True
+            if self.page > 0:
+                return True
             return False
         return True
 
@@ -249,15 +251,15 @@ class IssuesSearchResultsTable(DataTable):
             next_page_token = self.token_by_page.get(self.page - 1)
             self.page -= 1
             screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            await screen.search_issues(next_page_token)
+            await screen.search_issues(next_page_token, page=self.page)
             self.refresh_bindings()
 
     async def action_next_issues_page(self):
-        if next_page_token := self.token_by_page.get(self.page + 1):
-            self.page += 1
-            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            await screen.search_issues(next_page_token)
-            self.refresh_bindings()
+        next_page_token = self.token_by_page.get(self.page + 1)
+        self.page += 1
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+        await screen.search_issues(next_page_token, page=self.page)
+        self.refresh_bindings()
 
 
 class SearchResultsContainer(Container):
@@ -270,11 +272,13 @@ class SearchResultsContainer(Container):
 
     def watch_pagination(self, response: dict) -> None:
         if response:
-            total_results = response.get('total', 0)
-            total_pages = total_results // self.config.search_results_per_page
-            if (total_results % self.config.search_results_per_page) > 0:
-                total_pages += 1
             current_page_number = max(1, response.get('current_page_number'))
-            self.border_subtitle = (
-                f'Page {current_page_number} of {total_pages} (total: {total_results})'
-            )
+            if (total_results := response.get('total', 0)) is not None:
+                total_pages = total_results // self.config.search_results_per_page
+                if (total_results % self.config.search_results_per_page) > 0:
+                    total_pages += 1
+                self.border_subtitle = (
+                    f'Page {current_page_number} of {total_pages} (total: {total_results})'
+                )
+            else:
+                self.border_subtitle = f'Page {current_page_number}'

@@ -1,10 +1,12 @@
 from unittest.mock import MagicMock, Mock
 
+from pydantic import SecretStr
 import pytest
 
 from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
+from jiratui.models import WorkItemsSearchOrderBy
 from jiratui.widgets.work_item_details.details import IssueSummaryField
 
 
@@ -14,8 +16,10 @@ def app() -> JiraApp:
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
         jira_api_username='foo',
-        jira_api_token='bar',
+        jira_api_token=SecretStr('bar'),
         jira_api_version=3,
+        use_bearer_authentication=False,
+        cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
         jira_account_id=None,
@@ -26,6 +30,8 @@ def app() -> JiraApp:
         log_file='',
         log_level='ERROR',
         theme=None,
+        ssl=None,
+        search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

@@ -6,12 +6,13 @@ import httpx
 
 from jiratui.api.client import AsyncJiraClient, JiraClient
 from jiratui.api.utils import build_issue_search_jql
+from jiratui.config import ApplicationConfiguration
 from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
 from jiratui.models import WorkItemsSearchOrderBy
 
 
 class JiraAPI:
-    """Implements methods to connect to the Jira REST API.
+    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
 
     **Supported Versions**
 
@@ -34,19 +35,29 @@ class JiraAPI:
 
     API_PATH_PREFIX = '/rest/api/3/'
 
-    def __init__(self, base_url: str, api_username: str, api_token: str):
-        self.authentication = httpx.BasicAuth(api_username, api_token)
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
         self.client = AsyncJiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
-            api_token=api_token,
+            api_token=api_token.strip(),
+            configuration=configuration,
         )
         self.sync_client = JiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
-            api_token=api_token,
+            api_token=api_token.strip(),
+            configuration=configuration,
         )
         self._base_url = base_url
+        # this allows us to issue requests to different endpoints depending on whether Jira runs on the cloud (default)
+        # or on-premises
+        self.cloud = configuration.cloud if configuration.cloud is False else True
 
     @property
     def base_url(self) -> str:
@@ -382,6 +393,7 @@ class JiraAPI:
         search_in_active_sprint: bool = False,
         fields: list[str] | None = None,
         next_page_token: str | None = None,
+        offset: int | None = None,
         limit: int | None = None,
         order_by: WorkItemsSearchOrderBy | None = None,
     ) -> dict:
@@ -405,6 +417,7 @@ class JiraAPI:
             retrieved.
             fields: retrieve these fields for every item found.
             next_page_token: an optional token to retrieve the next page of results.
+            offset: N/A
             limit: retrieve this max number of results per page.
             order_by: sort the items according to these criteria. This requirement needs to be placed at the end of
             the JQL query, otherwise the JQL will be invalid. Possible values are:
@@ -439,6 +452,7 @@ class JiraAPI:
             payload['fields'] = fields
         if next_page_token:
             payload['nextPageToken'] = next_page_token
+
         return await self.client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='search/jql', data=json.dumps(payload)
         )
@@ -459,6 +473,9 @@ class JiraAPI:
 
         See Also:
             https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
+
+        Important: this is only available for the Jira cloud platform. For on-premises we need another way or to disable
+        the feature.
 
         Args:
             project_key: search items that belong to the project with this (case-sensitive) key.
@@ -1019,10 +1036,229 @@ class JiraAPI:
 
 
 class JiraAPIv2(JiraAPI):
-    """Implements methods to connect to the Jira REST API v2."""
+    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
+
+    This class implement methods for connecting to Jira REST API v2.
+    """
 
     API_PATH_PREFIX = '/rest/api/2/'
 
     @staticmethod
     def _build_payload_to_add_comment(message: str) -> dict:
         return {'body': message}
+
+
+class JiraDataCenterAPI(JiraAPI):
+    """Implements the Jira API provides by Jira Data Center (aka. on-premises) installations.
+
+    **API Docs**:
+        - https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
+    """
+
+    # see: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure
+    API_PATH_PREFIX = '/rest/api/2/'
+
+    async def search_projects(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+        query: str | None = None,
+        order_by: str | None = None,
+        keys: list[str] = None,
+    ) -> dict:
+        """Retrieves all projects visible for the currently logged-in user, i.e. all the projects the user has either
+        'Browse projects' or 'Administer projects' permission. If no user is logged in, it returns all projects that
+        are visible for anonymous users.
+
+        See Also:
+            - https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-project/#api-api-2-project-get
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/project-getAllProjects
+
+        Args:
+            offset: N/A
+            limit: N/A
+            order_by: N/A
+            keys: N/A
+            query: N/A
+
+        Returns:
+            A dictionary with the details of the projects.
+        """
+        data = await self.client.make_request(method=httpx.AsyncClient.get, url='project')  # type:ignore[return-value]
+        return {'values': data, 'isLast': True}
+
+    async def search_issues(
+        self,
+        project_key: str | None = None,
+        created_from: date | None = None,
+        created_until: date | None = None,
+        updated_from: date | None = None,
+        updated_until: date | None = None,
+        status: int | None = None,
+        assignee: str | None = None,
+        issue_type: int | None = None,
+        jql_query: str | None = None,
+        search_in_active_sprint: bool = False,
+        fields: list[str] | None = None,
+        next_page_token: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+        order_by: WorkItemsSearchOrderBy | None = None,
+    ) -> dict:
+        """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
+        results.
+
+        See Also:
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-search/#api-api-2-search-post
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/search-search
+
+        Args:
+            project_key: search items that belong to the project with this (case-sensitive) key.
+            created_from: search items created from this date forward.
+            created_until: search items created until this date.
+            updated_from: search items updated from this date forward.
+            updated_until: search items updated until this date
+            status: search items with this status id.
+            assignee: search items assigned to this user (by account id).
+            issue_type: search items with this type id.
+            jql_query: a JQL expression to filter items.
+            search_in_active_sprint: if `True` only work items that belong to the currently active sprint will be
+            retrieved.
+            fields: retrieve these fields for every item found.
+            next_page_token: N/A
+            offset: the index of the first issue to return (0-based)
+            limit: retrieve this max number of results per page.
+            order_by: sort the items according to these criteria. This requirement needs to be placed at the end of
+            the JQL query, otherwise the JQL will be invalid. Possible values are:
+            - order by created asc
+            - order by created desc
+            - order by priority asc
+            - order by priority desc
+            - order by key asc
+            - order by key desc
+
+        Returns:
+            A dictionary with the results.
+        """
+        jql: str = build_issue_search_jql(
+            project_key=project_key,
+            created_from=created_from,
+            created_until=created_until,
+            updated_from=updated_from,
+            updated_until=updated_until,
+            status=status,
+            assignee=assignee,
+            issue_type=issue_type,
+            jql_query=jql_query,
+            search_in_active_sprint=search_in_active_sprint,
+            order_by=order_by,
+        )
+        payload: dict[str, Any] = {
+            'jql': jql,
+            'maxResults': limit or ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
+        }
+        if fields:
+            payload['fields'] = fields
+        if offset:
+            payload['startAt'] = offset
+
+        return await self.client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.post, url='search', data=json.dumps(payload)
+        )
+
+    async def work_items_search_approximate_count(
+        self,
+        project_key: str | None = None,
+        created_from: date | None = None,
+        created_until: date | None = None,
+        updated_from: date | None = None,
+        status: int | None = None,
+        assignee: str | None = None,
+        issue_type: int | None = None,
+        jql_query: str | None = None,
+    ) -> dict:
+        # not supported in Jira DC
+        raise NotImplementedError('This feature is not implemented in Jira Data Center platform.')
+
+    async def server_info(self) -> dict:
+        """Retrieves information of the Jira server.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/serverInfo-getServerInfo
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-serverinfo/#api-api-2-serverinfo-get
+
+        Returns:
+            A dictionary with the details.
+        """
+        return await super().server_info()
+
+    async def myself(self) -> dict:
+        """Retrieves information of the Jira user connecting to the Jira server.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/myself-getUser
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-myself/#api-group-myself
+
+        Returns:
+            A dictionary with the details.
+        """
+        return await super().myself()
+
+    async def user_search(
+        self,
+        username: str | None = None,
+        query: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> list[dict]:
+        """Retrieves a list of active users that match the search string and property.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/9.17.0/#api/2/user-findUsers
+            -
+
+        Args:
+            username: A query string used to search username, name or e-mail address.
+            query: N/A.
+            offset: the index of the first item to return.
+            limit: the maximum number of items to return (limited to 1000).
+
+        Returns:
+            A list of dictionaries with the details of the users.
+        """
+        return await super().user_search(username=query or username, offset=offset, limit=limit)
+
+    async def user_assignable_multi_projects(
+        self,
+        project_keys: list[str] = None,
+        query: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> list[dict]:
+        """Retrieves the users who can be assigned issues in one or more projects.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get
+
+        Args:
+            project_keys: a list of project keys (case-sensitive). This parameter accepts a comma-separated list.
+            offset: N/A
+            limit: the maximum number of items to return per page. Default is `50`.
+            query: expects a username.
+            Required, unless `username` or `accountId` is specified.
+
+        Returns:
+            A list of dictionaries with the details of the users.
+        """
+        params: dict[str, Any] = {}
+        if limit is not None:
+            params['maxResults'] = limit
+        if project_keys:
+            params['projectKeys'] = ','.join(project_keys)
+        if query:
+            params['username'] = query
+        return await self.client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url='user/assignable/multiProjectSearch',
+            params=params,
+        )
