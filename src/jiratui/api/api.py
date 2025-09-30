@@ -1179,3 +1179,51 @@ class JiraDataCenterAPI(JiraAPI):
     ) -> dict:
         # not supported in Jira DC
         raise NotImplementedError('This feature is not implemented in Jira Data Center platform.')
+
+    async def server_info(self) -> dict:
+        """Retrieves information of the Jira server.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/serverInfo-getServerInfo
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-serverinfo/#api-api-2-serverinfo-get
+
+        Returns:
+            A dictionary with the details.
+        """
+        return await super().server_info()
+
+    async def myself(self) -> dict:
+        """Retrieves information of the Jira user connecting to the Jira server.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/myself-getUser
+            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-myself/#api-group-myself
+
+        Returns:
+            A dictionary with the details.
+        """
+        return await super().myself()
+
+    async def user_search(
+        self,
+        username: str | None = None,
+        query: str | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> list[dict]:
+        """Retrieves a list of active users that match the search string and property.
+
+        See Also:
+            - https://docs.atlassian.com/software/jira/docs/api/REST/9.17.0/#api/2/user-findUsers
+            -
+
+        Args:
+            username: A query string used to search username, name or e-mail address.
+            query: N/A.
+            offset: the index of the first item to return.
+            limit: the maximum number of items to return (limited to 1000).
+
+        Returns:
+            A list of dictionaries with the details of the users.
+        """
+        return await super().user_search(username=query or username, offset=offset, limit=limit)

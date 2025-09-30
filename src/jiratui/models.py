@@ -104,6 +104,7 @@ class JiraUser(BaseModel):
     active: bool
     display_name: str
     email: str | None = None
+    username: str | None = None  # only applicable for Jira DC API
 
     @property
     def display_user(self) -> str:
@@ -111,7 +112,10 @@ class JiraUser(BaseModel):
             return email
         elif name := self.display_name:
             return name
-        return self.account_id
+        return self.get_account_id()
+
+    def get_account_id(self) -> str:
+        return self.account_id or ''
 
 
 @dataclass
@@ -426,23 +430,41 @@ class JiraIssueSearchResponse(BaseModel):
 @dataclass
 class JiraServerInfo(BaseModel):
     base_url: str
-    display_url_servicedesk_help_center: str
-    display_url_confluence: str
     version: str
-    deployment_type: str
     build_number: int
     build_date: str
     scm_info: str
     server_title: str
-    default_locale: str
-    server_time_zone: str
+    deployment_type: str | None = None
+    default_locale: str | None = None
+    server_time_zone: str | None = None
     server_time: str | None = None
+    display_url_servicedesk_help_center: str | None = None
+    display_url_confluence: str | None = None
 
     @property
     def base_url_or_server_title(self) -> str:
         if self.server_title:
             return self.server_title
         return self.base_url
+
+    def get_display_url_servicedesk_help_center(self) -> str:
+        return self.display_url_servicedesk_help_center or ''
+
+    def get_display_url_confluence(self) -> str:
+        return self.display_url_confluence or ''
+
+    def get_server_time(self) -> str:
+        return self.server_time or ''
+
+    def get_server_time_zone(self) -> str:
+        return self.server_time_zone or ''
+
+    def get_deployment_type(self) -> str:
+        return self.deployment_type or ''
+
+    def get_default_locale(self) -> str:
+        return self.default_locale or ''
 
 
 @dataclass
@@ -459,6 +481,9 @@ class JiraMyselfInfo(BaseModel):
     display_name: str
     email: str | None = None
     groups: list[JiraUserGroup] | None = None
+    username: str | None = (
+        None  # Jira DC does not support accountId; instead it uses the username to identify users
+    )
 
     @property
     def display_user(self) -> str:
@@ -473,6 +498,12 @@ class JiraMyselfInfo(BaseModel):
         if not self.groups:
             return None
         return ','.join([g.name for g in self.groups])
+
+    def get_account_id(self) -> str:
+        return self.account_id or ''
+
+    def get_username(self) -> str:
+        return self.username or ''
 
 
 @dataclass

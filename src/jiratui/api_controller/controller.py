@@ -474,6 +474,7 @@ class APIController:
                     account_id=user.get('accountId'),
                     active=user.get('active'),
                     display_name=user.get('displayName'),
+                    username=user.get('name') if not self.config.cloud else None,
                 )
             )
         return APIControllerResponse(result=users)
@@ -1088,13 +1089,29 @@ class APIController:
                 extra={'error': str(e)},
             )
             return APIControllerResponse(success=False, error=str(e))
+        if self.config.cloud:
+            return APIControllerResponse(
+                result=JiraMyselfInfo(
+                    account_id=response.get('accountId'),
+                    account_type=response.get('accountType'),
+                    active=response.get('active'),
+                    display_name=response.get('displayName'),
+                    email=response.get('emailAddress'),
+                    groups=[
+                        JiraUserGroup(id=g.get('id'), name=g.get('name'))
+                        for g in response.get('groups', {}).get('items', [])
+                    ],
+                )
+            )
+        # Jira DC uses a different response schema
         return APIControllerResponse(
             result=JiraMyselfInfo(
-                account_id=response.get('accountId'),
+                account_id=response.get('accountId') or '',
                 account_type=response.get('accountType'),
                 active=response.get('active'),
                 display_name=response.get('displayName'),
                 email=response.get('emailAddress'),
+                username=response.get('name'),
                 groups=[
                     JiraUserGroup(id=g.get('id'), name=g.get('name'))
                     for g in response.get('groups', {}).get('items', [])
