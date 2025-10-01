@@ -57,31 +57,31 @@ class ConfigFileScreen(ModalScreen):
         if ssl_config := CONFIGURATION.get().ssl:
             rows.append(
                 (
-                    Text('ssl_config.verify_ssl', justify='right', style='yellow'),
+                    Text('ssl.verify_ssl', justify='right', style='yellow'),
                     Text(str(ssl_config.verify_ssl), justify='left'),
                 )
             )
             rows.append(
                 (
-                    Text('ssl_config.ca_bundle', justify='right', style='yellow'),
+                    Text('ssl.ca_bundle', justify='right', style='yellow'),
                     Text(str(ssl_config.ca_bundle), justify='left'),
                 )
             )
             rows.append(
                 (
-                    Text('ssl_config.certificate_file', justify='right', style='yellow'),
+                    Text('ssl.certificate_file', justify='right', style='yellow'),
                     Text(str(ssl_config.certificate_file), justify='left'),
                 )
             )
             rows.append(
                 (
-                    Text('ssl_config.key_file', justify='right', style='yellow'),
+                    Text('ssl.key_file', justify='right', style='yellow'),
                     Text(str(ssl_config.key_file), justify='left'),
                 )
             )
             rows.append(
                 (
-                    Text('ssl_config.password', justify='right', style='yellow'),
+                    Text('ssl.password', justify='right', style='yellow'),
                     Text(str(ssl_config.password), justify='left'),
                 )
             )
