@@ -6,10 +6,9 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
-from jiratui.models import JiraServerInfo
+from jiratui.models import JiraServerInfo, WorkItemsSearchOrderBy
 from jiratui.widgets.config_info import ConfigFileScreen
 from jiratui.widgets.help import HelpScreen
-from jiratui.models import JiraServerInfo, WorkItemsSearchOrderBy
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screens import MainScreen
 from jiratui.widgets.server_info import ServerInfoScreen

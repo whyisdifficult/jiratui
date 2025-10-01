@@ -13,7 +13,7 @@ from textual.worker import Worker
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.constants import LOGGER_NAME
+from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
 from jiratui.models import (
     IssueType,
     JiraIssue,
@@ -62,10 +62,10 @@ class MainScreen(Screen):
 
     BINDINGS = [
         Binding(
-            key='.',
+            key='/',
             action='find_by_text',
             description='Find',
-            key_display='.',
+            key_display='/',
             tooltip='Find items using full-text search',
             show=True,
         ),
@@ -575,7 +575,20 @@ class MainScreen(Screen):
         search_term: str | None = None,
         page: int | None = None,
     ) -> WorkItemSearchResult:
-        # search work items based on search criteria selected by the user
+        """Searches work items.
+
+        Args:
+            next_page_token: if provided then the results page with this token wil be retrieved. This is used for
+            pagination of results in Jira Cloud Platform.
+            calculate_total: if `True` the method will attempt to estimate the total number of results that match the
+            search query.
+            search_term: this is the search term used for ull-text search.
+            page: if provided, then the results page with this number wil/ be retrieved. This is used for
+            pagination of results in Jira Data Center Platform.
+
+        Returns:
+            An instance of `WorkItemSearchResult` with the results of the search.
+        """
         search_field_status: int | None = None
         if value := self.issue_status_selector.selection:
             search_field_status = int(value)
@@ -606,7 +619,7 @@ class MainScreen(Screen):
             else None
         )
 
-        # set the user-defined query
+        # build the JQL query to search items based on a user-provided JQL query expression or a search term.
         jql_query: str | None = self._build_jql_query(
             search_term=search_term,
             jql_expression=self.jql_expression_input.value,
@@ -624,7 +637,7 @@ class MainScreen(Screen):
                 assignee=search_field_assignee,
                 issue_type=search_field_issue_type,
                 search_in_active_sprint=self.active_sprint_checkbox.value,
-                jql_query=self.jql_expression_input.value,
+                jql_query=jql_query,
                 next_page_token=next_page_token,
                 limit=CONFIGURATION.get().search_results_per_page,
                 order_by=order_by,
@@ -638,7 +651,7 @@ class MainScreen(Screen):
                 assignee=search_field_assignee,
                 issue_type=search_field_issue_type,
                 search_in_active_sprint=self.active_sprint_checkbox.value,
-                jql_query=self.jql_expression_input.value,
+                jql_query=jql_query,
                 page=page,
                 limit=CONFIGURATION.get().search_results_per_page,
                 order_by=order_by,
@@ -652,6 +665,7 @@ class MainScreen(Screen):
             )
             return WorkItemSearchResult(total=0, start=0, end=0)
 
+        # estimation of search results count is only available in Jira Cloud
         if not CONFIGURATION.get().cloud:
             calculate_total = False
 
@@ -677,6 +691,7 @@ class MainScreen(Screen):
                     severity='warning',
                 )
 
+        # the actual number of results
         issues_count = len(result.issues)
         return WorkItemSearchResult(
             response=result,
@@ -691,14 +706,13 @@ class MainScreen(Screen):
         jql_expression: str | None = None,
         use_advance_search: bool = False,
     ) -> str | None:
-        query: str | None = None
         if search_term:
             if use_advance_search:
                 return f'text ~ "{search_term}"'
             return f'summary ~ "{search_term}" OR description ~ "{search_term}"'
         elif jql_expression:
             return jql_expression
-        return query
+        return None
 
     async def _search_single_issue(self, issue_key: str) -> WorkItemSearchResult:
         response: APIControllerResponse = await self.api.get_issue(
@@ -737,7 +751,7 @@ class MainScreen(Screen):
 
         Args:
             next_page_token: a token that identifies the next page of results.
-            search_term: TODO
+            search_term: a search term to search items using full-text search.
             page: the page number to fetch results; this is only supported for Jira Data Center (aka. on-premises)
 
         Returns:
@@ -800,7 +814,14 @@ class MainScreen(Screen):
             self.search_results_table.page
         )
         # search the work items that match the criteria
-        self.run_worker(self.search_issues(next_page_token, search_term, self.search_results_table.page), exclusive=True)
+        self.run_worker(
+            self.search_issues(
+                next_page_token=next_page_token,
+                search_term=search_term,
+                page=self.search_results_table.page,
+            ),
+            exclusive=True,
+        )
         self.run_button.loading = False
 
     def action_focus_widget(self, key: str) -> None:
@@ -977,8 +998,11 @@ class MainScreen(Screen):
 
     async def request_text_search(self, value: str):
         value = value or ''
-        if value := value.strip():
-            self.run_worker(self.action_search(value))
+        if (value := value.strip()) and len(value) >= max(
+            FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH,
+            int(CONFIGURATION.get().full_text_search_minimum_term_length),
+        ):
+            self.run_worker(self.action_search(search_term=value))
         else:
             self.notify('Nothing to search')
 

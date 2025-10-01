@@ -697,13 +697,12 @@ class APIController:
         jql_query: str | None = None,
     ) -> dict:
         search_criteria: dict = {}
-        criteria_defined = any(
-            [project_key, created_from, created_until, status, assignee, issue_type]
-        )
-
         if jql_query:
             return {'jql': jql_query.strip(), 'updated_from': None}
 
+        criteria_defined = any(
+            [project_key, created_from, created_until, status, assignee, issue_type]
+        )
         if criteria_defined:
             return search_criteria
 
@@ -774,7 +773,6 @@ class APIController:
             issue_type=issue_type,
             jql_query=jql_query,
         )
-
         try:
             response: dict = await self.api.search_issues(
                 project_key=project_key,

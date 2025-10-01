@@ -93,7 +93,7 @@ class IssuesSearchResultsTable(DataTable):
 
     BINDINGS = [
         Binding(
-            key='/',
+            key='.',
             action='filter',
             description='Filter',
             tooltip='Filter the results of the current page',
@@ -126,11 +126,11 @@ class IssuesSearchResultsTable(DataTable):
 
     def __init__(self):
         super().__init__(id='search_results', cursor_type='row')
-        # stores the Jira's next page's token by page number
-        # e.g.: {1: 'token-a', 2: 'token-b'}
+        # stores the next page's token by page number
+        # e.g.: {2: 'token-a', 3: 'token-b'}
         # to fetch the results page
-        #   1: we need to use the token 'token-a'
-        #   2: we need to use the token 'token-b'
+        #   2: we need to use the token 'token-a'
+        #   3: we need to use the token 'token-b'
         self.token_by_page: dict[int, str] = {}
         self.page: int = 1
         self.current_work_item_key: str | None = None
@@ -143,6 +143,14 @@ class IssuesSearchResultsTable(DataTable):
         return self._initial_results_set
 
     def watch_search_results(self, response: JiraIssueSearchResponse | None = None) -> None:
+        """Watches the content of a reactive attribute that contains the details of the work item selected by the user.
+
+        Args:
+            response: an instance of `JiraIssueSearchResponse` with the work item selected by the user.
+
+        Returns:
+            None
+        """
         if response is None:
             return
 
