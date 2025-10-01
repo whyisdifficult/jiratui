@@ -51,6 +51,7 @@
 
 #search_results {
     background: transparent;
+    scrollbar-size-vertical: 1;
 }
 
 /* Search Filters */
@@ -717,10 +718,11 @@ ServerInfoScreen {
 
 ServerInfoScreen > VerticalScroll {
     width: 60%;
-    height: auto;
+    height: 100%;
     border: round $foreground;
     background: $background 70%;
     padding: 0 1;
+    scrollbar-size-vertical: 1;
 }
 ServerInfoScreen > VerticalScroll > DataTable {
     background: transparent;
@@ -733,7 +735,7 @@ ConfigFileScreen {
 }
 
 ConfigFileScreen > Vertical {
-    width: 60%;
+    width: 70%;
     height: 100%;
     border: round $foreground;
     background: $background 70%;
@@ -898,4 +900,16 @@ DataTableSearchInput {
     background: transparent;
     padding: 0 1 0 1;
     box_sizing: border-box;
+}
+
+/* Text Search Screen */
+TextSearchScreen {
+    align: center middle;
+}
+TextSearchScreen > Input {
+    padding: 1 1 0 1;
+    width: 50%;
+    height: 5;
+    border: round $primary;
+    background: transparent;
 }

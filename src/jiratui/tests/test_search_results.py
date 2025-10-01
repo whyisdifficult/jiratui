@@ -170,7 +170,7 @@ async def test_click_filter_datatable_filtering_key_shows_input(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.focus()
         # WHEN
-        await pilot.press('/')
+        await pilot.press('.')
         # THEN
         assert main_screen.search_results_filter_input.display is True
         assert main_screen.search_results_table.page == 1
@@ -196,7 +196,7 @@ async def test_click_filter_datatable_filtering_key_feature_disabled(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.focus()
         # WHEN
-        await pilot.press('/')
+        await pilot.press('.')
         # THEN
         assert main_screen.search_results_filter_input.display is False
         assert main_screen.search_results_table.page == 1
@@ -224,7 +224,7 @@ async def test_click_filter_datatable_filtering_key_hides_input(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.focus()
         # WHEN
-        await pilot.press('/')
+        await pilot.press('.')
         # THEN
         assert main_screen.search_results_filter_input.display is True
         await pilot.press('escape')
@@ -264,7 +264,7 @@ async def test_datatable_filtering_yields_results(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.focus()
         # WHEN
-        await pilot.press('/')
+        await pilot.press('.')
         await pilot.press('a')
         await pilot.press('b')
         await pilot.press('c')
@@ -308,7 +308,7 @@ async def test_datatable_filtering_yields_no_results(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         main_screen.search_results_table.focus()
         # WHEN
-        await pilot.press('/')
+        await pilot.press('.')
         await pilot.press('a')
         await pilot.press('b')
         await pilot.press('d')

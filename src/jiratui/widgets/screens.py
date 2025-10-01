@@ -13,7 +13,7 @@ from textual.worker import Worker
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.constants import LOGGER_NAME
+from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
 from jiratui.models import (
     IssueType,
     JiraIssue,
@@ -44,6 +44,7 @@ from jiratui.widgets.search import (
     SearchResultsContainer,
 )
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
+from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 
@@ -60,6 +61,14 @@ class MainScreen(Screen):
     """The main screen of the application."""
 
     BINDINGS = [
+        Binding(
+            key='/',
+            action='find_by_text',
+            description='Find',
+            key_display='/',
+            tooltip='Find items using full-text search',
+            show=True,
+        ),
         (
             'ctrl+r',
             'search',
@@ -315,7 +324,12 @@ class MainScreen(Screen):
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
                 yield Button(
-                    'Search', id='run-button', variant='warning', disabled=False, flat=True
+                    'Search',
+                    id='run-button',
+                    variant='warning',
+                    disabled=False,
+                    flat=True,
+                    compact=True,
                 )
             with Horizontal():
                 with SearchResultsContainer(id='search_results_container'):
@@ -563,9 +577,23 @@ class MainScreen(Screen):
         self,
         next_page_token: str | None = None,
         calculate_total: bool = True,
+        search_term: str | None = None,
         page: int | None = None,
     ) -> WorkItemSearchResult:
-        # search work items based on search criteria selected by the user
+        """Searches work items.
+
+        Args:
+            next_page_token: if provided then the results page with this token wil be retrieved. This is used for
+            pagination of results in Jira Cloud Platform.
+            calculate_total: if `True` the method will attempt to estimate the total number of results that match the
+            search query.
+            search_term: this is the search term used for ull-text search.
+            page: if provided, then the results page with this number wil/ be retrieved. This is used for
+            pagination of results in Jira Data Center Platform.
+
+        Returns:
+            An instance of `WorkItemSearchResult` with the results of the search.
+        """
         search_field_status: int | None = None
         if value := self.issue_status_selector.selection:
             search_field_status = int(value)
@@ -596,6 +624,13 @@ class MainScreen(Screen):
             else None
         )
 
+        # build the JQL query to search items based on a user-provided JQL query expression or a search term.
+        jql_query: str | None = self._build_jql_query(
+            search_term=search_term,
+            jql_expression=self.jql_expression_input.value,
+            use_advance_search=CONFIGURATION.get().enable_advanced_full_text_search,
+        )
+
         # search work items by different criteria
         response: APIControllerResponse
         if CONFIGURATION.get().cloud:
@@ -607,7 +642,7 @@ class MainScreen(Screen):
                 assignee=search_field_assignee,
                 issue_type=search_field_issue_type,
                 search_in_active_sprint=self.active_sprint_checkbox.value,
-                jql_query=self.jql_expression_input.value,
+                jql_query=jql_query,
                 next_page_token=next_page_token,
                 limit=CONFIGURATION.get().search_results_per_page,
                 order_by=order_by,
@@ -621,7 +656,7 @@ class MainScreen(Screen):
                 assignee=search_field_assignee,
                 issue_type=search_field_issue_type,
                 search_in_active_sprint=self.active_sprint_checkbox.value,
-                jql_query=self.jql_expression_input.value,
+                jql_query=jql_query,
                 page=page,
                 limit=CONFIGURATION.get().search_results_per_page,
                 order_by=order_by,
@@ -635,6 +670,7 @@ class MainScreen(Screen):
             )
             return WorkItemSearchResult(total=0, start=0, end=0)
 
+        # estimation of search results count is only available in Jira Cloud
         if not CONFIGURATION.get().cloud:
             calculate_total = False
 
@@ -648,7 +684,7 @@ class MainScreen(Screen):
                 status=search_field_status,
                 assignee=search_field_assignee,
                 issue_type=search_field_issue_type,
-                jql_query=self.jql_expression_input.value,
+                jql_query=jql_query,
             )
             if counting.success:
                 estimated_total_issues = counting.result
@@ -660,6 +696,7 @@ class MainScreen(Screen):
                     severity='warning',
                 )
 
+        # the actual number of results
         issues_count = len(result.issues)
         return WorkItemSearchResult(
             response=result,
@@ -667,6 +704,20 @@ class MainScreen(Screen):
             start=1 if issues_count else 0,
             end=issues_count,
         )
+
+    @staticmethod
+    def _build_jql_query(
+        search_term: str | None = None,
+        jql_expression: str | None = None,
+        use_advance_search: bool = False,
+    ) -> str | None:
+        if search_term:
+            if use_advance_search:
+                return f'text ~ "{search_term}"'
+            return f'summary ~ "{search_term}" OR description ~ "{search_term}"'
+        elif jql_expression:
+            return jql_expression
+        return None
 
     async def _search_single_issue(self, issue_key: str) -> WorkItemSearchResult:
         response: APIControllerResponse = await self.api.get_issue(
@@ -692,6 +743,7 @@ class MainScreen(Screen):
     async def search_issues(
         self,
         next_page_token: str | None = None,
+        search_term: str | None = None,
         page: int | None = None,
     ) -> None:
         """Searches work items.
@@ -704,18 +756,22 @@ class MainScreen(Screen):
 
         Args:
             next_page_token: a token that identifies the next page of results.
+            search_term: a search term to search items using full-text search.
             page: the page number to fetch results; this is only supported for Jira Data Center (aka. on-premises)
 
         Returns:
             Nothing.
         """
 
+        self.run_button.loading = True
         results: WorkItemSearchResult
         if (value := self.issue_key_input.value) and value.strip():
             # search single issue
             results = await self._search_single_issue(value.strip())
         else:
-            results = await self._search_work_items(next_page_token, page=page)
+            results = await self._search_work_items(
+                next_page_token=next_page_token, search_term=search_term, page=page
+            )
 
         # set the data in the results table
         table = self.search_results_table
@@ -730,14 +786,15 @@ class MainScreen(Screen):
             'total': results.total,
             'current_page_number': self.search_results_table.page,
         }
+        self.run_button.loading = False
 
     @on(Button.Pressed, '#run-button')
     async def handle_run_button(self) -> None:
         self.run_worker(self.action_search())
 
-    async def action_search(self) -> None:
-        """Handles the event that happens when the user presses the "search" button or "ctrl+r"."""
-        self.run_button.loading = True
+    async def action_search(self, search_term: str | None = None) -> None:
+        """Handles the event  when the user presses the "search" button or "ctrl+r"."""
+
         # clear the information pane
         self.issue_info_container.clear_information = True
         # clear the details pane
@@ -764,9 +821,13 @@ class MainScreen(Screen):
         )
         # search the work items that match the criteria
         self.run_worker(
-            self.search_issues(next_page_token, self.search_results_table.page), exclusive=True
+            self.search_issues(
+                next_page_token=next_page_token,
+                search_term=search_term,
+                page=self.search_results_table.page,
+            ),
+            exclusive=True,
         )
-        self.run_button.loading = False
 
     def action_focus_widget(self, key: str) -> None:
         """Focuses a widget based on the key pressed by the user.
@@ -939,3 +1000,17 @@ class MainScreen(Screen):
 
         # fetch sub-tasks
         self.run_worker(self.retrieve_issue_subtasks(work_item.key))
+
+    async def request_text_search(self, value: str):
+        value = value or ''
+        if (value := value.strip()) and len(value) >= max(
+            FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH,
+            int(CONFIGURATION.get().full_text_search_minimum_term_length),
+        ):
+            self.run_worker(self.action_search(search_term=value))
+        else:
+            self.notify('Nothing to search')
+
+    async def action_find_by_text(self) -> None:
+        """Opens a screen to allow the user to enter a term to search items by text."""
+        await self.app.push_screen(TextSearchScreen(), self.request_text_search)

@@ -135,10 +135,18 @@ class ApplicationConfiguration(BaseSettings):
     search_results_page_filtering_minimum_term_length: int = 3
     """When search_results_page_filtering_enabled is True this value controls the minimum number of characters that the
     user needs to type in on order to filter results."""
+    full_text_search_minimum_term_length: int = 3
+    """When performing full-text search this value controls the minimum length of the search term provided by the
+    user. JiraTUI will always enforce a vlue >= 3; even if you set a value of 0 here."""
+    enable_advanced_full_text_search: bool = True
+    """When this is True JiraTUI will use Jira ability to do full-text search not only in summary and description
+    fields but in any text-based field, including comments. This may be slower. If this is False JiraTUI will only
+    search items by summary and description fields."""
     ssl: SSLConfiguration | None = Field(default_factory=SSLConfiguration)
     """SSL configuration for client-side certificates and CA bundle."""
     search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
-    """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC, CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
+    """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC,
+    CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
 
     model_config = SettingsConfigDict(
         extra='allow',
