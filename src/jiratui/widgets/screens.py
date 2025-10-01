@@ -324,7 +324,12 @@ class MainScreen(Screen):
                 yield ActiveSprintCheckbox()
                 yield JQLSearchWidget()
                 yield Button(
-                    'Search', id='run-button', variant='warning', disabled=False, flat=True
+                    'Search',
+                    id='run-button',
+                    variant='warning',
+                    disabled=False,
+                    flat=True,
+                    compact=True,
                 )
             with Horizontal():
                 with SearchResultsContainer(id='search_results_container'):
@@ -758,6 +763,7 @@ class MainScreen(Screen):
             Nothing.
         """
 
+        self.run_button.loading = True
         results: WorkItemSearchResult
         if (value := self.issue_key_input.value) and value.strip():
             # search single issue
@@ -780,15 +786,15 @@ class MainScreen(Screen):
             'total': results.total,
             'current_page_number': self.search_results_table.page,
         }
+        self.run_button.loading = False
 
     @on(Button.Pressed, '#run-button')
     async def handle_run_button(self) -> None:
         self.run_worker(self.action_search())
 
     async def action_search(self, search_term: str | None = None) -> None:
-        """Handles the event that happens when the user presses the "search" button or "ctrl+r"."""
+        """Handles the event  when the user presses the "search" button or "ctrl+r"."""
 
-        self.run_button.loading = True
         # clear the information pane
         self.issue_info_container.clear_information = True
         # clear the details pane
@@ -822,7 +828,6 @@ class MainScreen(Screen):
             ),
             exclusive=True,
         )
-        self.run_button.loading = False
 
     def action_focus_widget(self, key: str) -> None:
         """Focuses a widget based on the key pressed by the user.
