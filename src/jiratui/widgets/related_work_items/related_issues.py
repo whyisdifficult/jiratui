@@ -17,13 +17,6 @@ from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnly
 
 
 class RelatedIssueCollapsible(Collapsible):
-    HELP = """\
-# Related Work Items
-
-This will display a summary of all the work items related to the item currently selected in the Work Items panel on the
-left.
-    """
-
     BINDINGS = [
         Binding(
             key='v',
@@ -93,17 +86,7 @@ left.
 class RelatedIssuesWidget(VerticalScroll):
     """A container for displaying the work items related to a work item."""
 
-    HELP = """\
-# Related Work Items
-
-This will display a summary of all the work items related to the item currently selected.
-
-Pressing `n` allows the user to add new related work items while focusing on a related item and then pressing `d` will
-delete the item.
-
-To view the details of a related item simply focus on the item and then press `v`.
-    """
-
+    HELP = 'See Related Work Items section in the help'
     BINDINGS = [
         Binding(
             key='n',
@@ -119,6 +102,10 @@ To view the details of a related item simply focus on the item and then press `v
     def __init__(self):
         super().__init__(id='related_issues')
         self._issue_key: str | None = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#related-work-items'
 
     @property
     def issue_key(self) -> str | None:

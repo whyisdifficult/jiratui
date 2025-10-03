@@ -247,34 +247,7 @@ class IssueDetailsWidget(VerticalScroll):
     certain fields. For example, work items of type "subtask" typically do not allow the user to update the due date.
     """
 
-    HELP = """\
-# Viewing and Updating Details
-
-This contains the details of the selected work item. Some of these details can be edited/updated. Currently, the
-fields that can be updated are:
-- Summary
-- Assignee
-- Status
-- Priority
-- Due Date
-- Labels
-- Parent
-
-To edit a field simply focus on it, change its value and then press `^s` to save the changes.
-
-## Updating the parent of an issue
-
-Jira arranges the type sof issues into a hierarchy. This hierarchy is used to determine whether an issue can have
-another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
-Subtask do accept parents.
-
-Jiratui disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
-
-## Updating priorities
-
-Once an issue has a priority set up it can not be unset.
-    """
-
+    HELP = 'See Updating Work Items section in the help'
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
     """Reactive variable that contains the work item currently being displayed."""
     clear_form: Reactive[bool] = reactive(False, always_update=True)
@@ -311,6 +284,10 @@ Once an issue has a priority set up it can not be unset.
     def __init__(self):
         super().__init__(id='issue_details')
         self.available_users: list[tuple[str, str]] | None = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#updating-work-items'
 
     @property
     def issue_type_field(self) -> IssueTypeField:
