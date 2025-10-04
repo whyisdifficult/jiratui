@@ -1,4 +1,4 @@
-# Configuring JiraTUI
+# JiraTUI Settings
 
 This page will guide through the process of configuring the application. For a full list of all the configuration
 options refer to the [reference documentation](reference.md).

@@ -19,6 +19,7 @@ extensions = [
     'sphinx_markdown_builder',
     'myst_parser',
     'sphinx_design',  # https://sphinx-design.readthedocs.io/en/rtd-theme/get_started.html
+    'sphinxcontrib.mermaid',
 ]
 
 templates_path = ['_templates']
@@ -35,3 +36,9 @@ source_suffix = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+# -- Mermaid extension: https://github.com/mgaitan/sphinxcontrib-mermaid
+# -- https://www.jsdelivr.com/package/npm/mermaid
+mermaid_version = 'latest'
+# -- https://www.jsdelivr.com/package/npm/@mermaid-js/layout-elk
+mermaid_include_elk = '0.1.7'
