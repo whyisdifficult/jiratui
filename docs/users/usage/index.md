@@ -134,7 +134,7 @@ the argument `--work-item-key`.
 $ jiratui ui --work-item-key ISSUE-1
 ```
 
-#### Select a JIra JQL Expression on Start Up
+#### Select a Jira JQL Expression on Start Up
 
 If you defined JQL expressions via the config variable `pre_defined_jql_expressions` and you would like the app to
 use a specific expression to search work items when no other criteria is selected then you can pass the argument
@@ -156,8 +156,8 @@ $ jiratui ui --jql-expression-id 1
 You can move around in the UI with the `tab` key or, by using your mouse. However, if you want to move faster you can
 jump to some of the components by pressing a single key. Some components in UI indicate between parenthesis the key that
 you can use to jump to them. For example, to quickly jump to the Project dropdown you can simply click `p`. If the focus
-is currently on a component you need to press `esc` to move the focus out and then the key you desired. The following
-table summaries the hot-keys and the component they activate.
+is currently on a component you need to press `esc` to move the focus out of the current component and then press the
+key you desire. The following table summaries the hot-keys and the component they activate.
 
 | Key | Component                                         |
 |-----|---------------------------------------------------|
@@ -470,24 +470,36 @@ Jira arranges the type sof issues into a hierarchy. This hierarchy is used to de
 another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
 Subtask do accept parents.
 
-```{imporatnt}
+```{important}
 JiraTUI disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
 ```
 
 **Updating priorities**
 
-```{imporatnt}
+```{important}
 Once an issue has a priority set up it can not be unset.
 ```
 
 #### Comments
+
+```{figure} /_static/assets/images/comments.png
+:align: center
+
+This image shows a list of comments associated to the selected work item.
+```
 
 This contains the comments associated to the selected work item. Comments can be deleted by focusing on them and then
 pressing `d`. Comments can be added by pressing `n`.
 
 #### Related Work Items
 
-This will display a summary of all the work items related to the item currently selected.
+```{figure} /_static/assets/images/related.png
+:align: center
+
+This image shows a list of work items related to the selected work item.
+```
+
+This tab displays a summary of all the work items related to the item currently selected.
 
 Pressing `n` allows the user to add new related work items while focusing on a related item and then pressing `d` will
 delete the item.
@@ -496,7 +508,13 @@ To view the details of a related item simply focus on the item and then press `v
 
 #### Attachments
 
-This will display a list of files attached to the selected work item.
+```{figure} /_static/assets/images/attachments.png
+:align: center
+
+This image shows a list of files associated to the selected work item.
+```
+
+The attachments tab displays a list of files attached to the selected work item.
 
 To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
 attached file you want to delete and then press `d`.
@@ -512,14 +530,26 @@ The application imposes a maximum file size of 10MB.
 
 #### Web Links
 
-This will display a list of URLs associated to the selected work item. files attached to the selected work item.
+```{figure} /_static/assets/images/web-links.png
+:align: center
+
+This image shows a list of web links associated to the selected work item.
+```
+
+This tab displays a list of URLs associated to the selected work item.
 
 To add a new link simply press `n` and provide the details in the pop-up that opens. To delete a link simply focus on
 the title of the collapsible whose link you want to delete and then press `d`.
 
 #### Subtasks
 
-This will display a list of work items that are a sub task of the selected work item. A work item `A` is a subtask of
+```{figure} /_static/assets/images/subtasks.png
+:align: center
+
+This image shows a list of subtasks associated to the selected work item.
+```
+
+This tab displays a list of work items that are a sub task of the selected work item. A work item `A` is a subtask of
 another work item `B` if the parent of `A` is `B`.
 
 ## CLI Interface
