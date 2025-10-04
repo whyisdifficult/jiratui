@@ -259,11 +259,30 @@ HelpScreen {
 }
 
 HelpScreen > VerticalScroll {
-    width: 60%;
-    height: 80%;
+    width: 75%;
+    height: 95%;
     border: round $foreground;
     background: $background 70%;
     padding: 0 1;
+}
+
+HelpScreen > VerticalScroll > MarkdownViewer {
+    scrollbar-size-vertical: 1;
+}
+
+CustomTitle {
+    layout: vertical;
+    height: auto;
+    align: center middle;
+}
+CustomTitle > Rule {
+    color: $primary;
+}
+CustomTitle > Rule.-horizontal {
+    height: 1;
+    margin: 0 0;
+    width: 1fr;
+    padding: 0 0;
 }
 
 /* Quit Screen */

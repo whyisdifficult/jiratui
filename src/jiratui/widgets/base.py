@@ -53,22 +53,6 @@ class ReadOnlyTextField(ReadOnlyField):
 
 
 class CustomTitle(Widget):
-    DEFAULT_CSS = """
-    CustomTitle {
-        layout: vertical;
-        height: auto;
-        align: center middle;
-    }
-    CustomTitle > Rule {
-        color: $primary;
-    }
-    Rule.-horizontal {
-        height: 1;
-        margin: 0 0;
-        width: 1fr;
-    }
-    """
-
     def __init__(self, title: str) -> None:
         self.title = title
         super().__init__()
