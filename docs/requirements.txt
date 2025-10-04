@@ -3,3 +3,4 @@ sphinx==8.2.3
 sphinx-markdown-builder==0.6.8
 sphinx-rtd-theme==3.0.2
 sphinx-design==0.6.1
+sphinxcontrib-mermaid==1.0.0
