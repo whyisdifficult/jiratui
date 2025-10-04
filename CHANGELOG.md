@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-10-04
 
 ### Added
 
@@ -19,7 +19,6 @@ settings `search_results_page_filtering_enabled` and `search_results_page_filter
 - Add support for configuring bearer authentication via config variable `use_bearer_authentication`.
 - Add configuration variable `cloud` to distinguish between on-premises and cloud platform.
 - Add an option to define the default value of the `order by` widget.
-- Update README and docs with instructions on how to install the tool via Homebrew.
 
 ### Bug Fixes
 
@@ -29,10 +28,13 @@ in https://github.com/whyisdifficult/jiratui/issues/69
 ### Documentation
 
 - Update docs to add details on how to enable/disable the search results filtering feature
+- Update README and docs with instructions on how to install the tool via Homebrew.
+- Update in-app documentation and official documentation with instructions on how to use the UI.
 
 ### Misc
 
 - Upgrade `textual` to `v6.1.0`
+- Add `sphinxcontrib-mermaid` to support [Mermaid](https://mermaid.js.org/) diagrams in the documentation.
 
 ## [1.1.0] - 2025-09-20
 

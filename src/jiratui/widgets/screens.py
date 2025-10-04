@@ -556,7 +556,7 @@ class MainScreen(Screen):
                 return []
             return response.result or []
 
-        if group_id := CONFIGURATION.get().jira_user_group_id:
+        if (group_id := CONFIGURATION.get().jira_user_group_id) and CONFIGURATION.get().cloud:
             # fetch the users that belong to this Jira user group ID
             response = await self.api.list_all_active_users_in_group(group_id=group_id)
             if not response.success:
@@ -567,7 +567,7 @@ class MainScreen(Screen):
                 return []
             return response.result or []
         self.notify(
-            'Unable to find users. Check if the configuration option "jira_user_group_id" is set.',
+            'Unable to find users. Check if the configuration option "jira_user_group_id" is set and that you are using Jira Cloud.',
             severity='warning',
             title='Find Users',
         )

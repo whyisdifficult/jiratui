@@ -52,7 +52,7 @@ class ApplicationConfiguration(BaseSettings):
     """Set this to True if your Jira instance uses Bearer authentication instead of Basic authentication."""
     jira_user_group_id: str | None = None
     """The ID of the group that contains all (or most) of the Jira users in your Jira installation. This value is used
-    as a fall back mechanism to fetch available users."""
+    as a fall back mechanism to fetch available users. This is only supported in the Jira Cloud Platform."""
     jira_base_url: str | None = None
     """This is the base URL of your Jira application. This is used for building the URLs of different web links in the
     Jira TUI application. Example: https://<hostname>.atlassian.net"""

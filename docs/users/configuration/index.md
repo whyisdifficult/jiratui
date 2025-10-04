@@ -1,4 +1,4 @@
-# Basic Configuration
+# Initial Configuration
 
 Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
 file.

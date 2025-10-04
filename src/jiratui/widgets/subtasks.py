@@ -38,13 +38,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
 
 class IssueChildWorkItemsWidget(VerticalScroll):
-    HELP = """\
-# Subtasks
-
-This will display a list of work items that are a sub task of the selected work item. A work item `A` is a subtask of
-another work item `B` if the parent of `A` is `B`.
-    """
-
+    HELP = 'See Subtasks section in the help'
     issues: Reactive[list[JiraIssue] | None] = reactive(None, always_update=True)
 
     BINDINGS = [
@@ -61,6 +55,10 @@ another work item `B` if the parent of `A` is `B`.
     def __init__(self):
         super().__init__(id='issue_subtasks')
         self._issue_key: str | None = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#subtasks'
 
     @property
     def issue_key(self) -> str | None:

@@ -84,12 +84,7 @@ class CommentCollapsible(Collapsible):
 
 
 class IssueCommentsWidget(VerticalScroll):
-    HELP = """
-# Comments
-
-This contains the comments associated to the selected work item. Comments can be deleted by focusing on them and then
-pressing `d`. Comments can be added by pressing `n`.
-    """
+    HELP = 'See Comments section in the help'
     comments: Reactive[list[IssueComment] | None] = reactive(None)
 
     BINDINGS = [
@@ -104,6 +99,10 @@ pressing `d`. Comments can be added by pressing `n`.
     def __init__(self):
         super().__init__(id='issue_comments')
         self._issue_key = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#comments'
 
     @property
     def issue_key(self):

@@ -7,17 +7,7 @@ from jiratui.widgets.jql import JQLEditorScreen
 
 
 class ProjectSelectionInput(Select):
-    HELP = """\
-# Jira Projects
-
-The list of projects displayed depends on the permissions of the user making the requests. This in turn is determined by
-the Jira Account ID you configured when you run the tool. For a project to appear on this list one of these conditions
-must be satisfied:
-
-- The user Jira account must have the [Browse Projects project permission](https://confluence.atlassian.com/x/yodKLg) for the project.
-- The user Jira account must have the [Administer Projects project permission](https://confluence.atlassian.com/x/yodKLg) for the project.
-- The user Jira account must have the [Administer Jira global permission](https://confluence.atlassian.com/x/x4dKLg).
-    """
+    HELP = 'See Projects List section in the help'
 
     projects: Reactive[dict | None] = reactive(None, always_update=True)
     """A dictionary with 2 keys: projects: list and selection: str | None"""
@@ -35,6 +25,10 @@ must be satisfied:
         self.border_title = 'Project'
         self.border_subtitle = '(p)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#projects-list'
+
     def watch_projects(self, projects: dict | None = None) -> None:
         self.clear()
         if projects and (items := projects.get('projects', []) or []):
@@ -48,16 +42,7 @@ must be satisfied:
 
 
 class IssueTypeSelectionInput(Select):
-    HELP = """
-# Search by Type of Work Item
-
-Search work items based on their type. If a project is selected then this list will contain the type of work items
-supported by the project. If no project is selected then this list will contain all the types of work items available
-in the known projects.
-
-**Important**: this list may contain types with duplicated names when there is no project selected. The id of these
-types will be different though.
-    """
+    HELP = 'See Search by Work Item Type section in the help'
 
     def __init__(self, types: list):
         super().__init__(
@@ -72,15 +57,13 @@ types will be different though.
         self.border_title = 'Issue Type'
         self.border_subtitle = '(t)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-work-item-type'
+
 
 class IssueStatusSelectionInput(Select):
-    HELP = """
-# Search by Status
-
-Search work items based on their status. If a project is selected then this list will contain the statuses supported by
-the work types in the project. If no project is selected then this list will contain all possible statuses.
-    """
-
+    HELP = 'See Search by Status section in the help'
     WIDGET_ID = 'jira-issue-status-selector'
 
     statuses: Reactive[list[tuple[str, str]] | None] = reactive(None, always_update=True)
@@ -98,6 +81,10 @@ the work types in the project. If no project is selected then this list will con
         self.border_title = 'Status'
         self.border_subtitle = '(s)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-status'
+
     async def watch_statuses(self, statuses: list[tuple[str, str]] | None = None) -> None:
         self.clear()
         await self.recompose()
@@ -105,13 +92,7 @@ the work types in the project. If no project is selected then this list will con
 
 
 class UserSelectionInput(Select):
-    HELP = """
-# Search by Assignee
-
-Search work items based on their assignee. If a project is selected then this list will contain the active users that
-can have work items assigned in the project. If no project is selected then this list will contain all available
-(active) users.
-    """
+    HELP = 'See Search by Assignee section in the help'
     WIDGET_ID = 'jira-users-selector'
     users: Reactive[dict | None] = reactive(None, always_update=True)
     """A dictionary with 2 keys:
@@ -132,6 +113,10 @@ can have work items assigned in the project. If no project is selected then this
         self.border_title = 'Assignee'
         self.border_subtitle = '(a)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-assignee'
+
     def watch_users(self, users: dict | None = None) -> None:
         self.clear()
         if users and (items := users.get('users', []) or []):
@@ -145,11 +130,7 @@ can have work items assigned in the project. If no project is selected then this
 
 
 class WorkItemInputWidget(Input):
-    HELP = """\
-# Search by Work Item Key
-
-This expects a case-sensitive string. If defined, this has precedence over all the other search criteria.
-    """
+    HELP = 'See Search by Work Item Key section in the help'
 
     def __init__(self, value: str | None = None):
         super().__init__(
@@ -163,6 +144,10 @@ This expects a case-sensitive string. If defined, this has precedence over all t
         self.border_title = 'Work Item Key'
         self.border_subtitle = '(k)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-work-item-key'
+
     @on(Input.Changed)
     def clean_value(self, event: Input.Changed) -> None:
         if event.value is not None:
@@ -170,35 +155,27 @@ This expects a case-sensitive string. If defined, this has precedence over all t
 
 
 class IssueSearchCreatedFromWidget(DateInput):
-    HELP = """\
-# Search Work Items by Date
-
-If defined, only work items that were created after this date (inclusive) will be fetched.
-
-If no `Created From` and `Created Until` search criteria are defined then the tool will fetch work items created
-within the last 15 days. The number of days can be specified by the configuration variable
-`search_issues_default_day_interval`.
-    """
+    HELP = 'See Search by Created From Date section in the help'
     LABEL = 'Created From'
     TOOLTIP = 'Search issues created after this date (inclusive)'
     ID = 'input_date_from'
     BORDER_SUBTITLE = '(f)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-created-from-date'
+
 
 class IssueSearchCreatedUntilWidget(DateInput):
-    HELP = """\
-# Search Work Items by Date
-
-If defined, only work items that were created until this date (inclusive) will be fetched.
-
-If no `Created From` and `Created Until` search criteria are defined then the tool will fetch work items created
-within the last 15 days. The number of days can be specified by the configuration variable
-`search_issues_default_day_interval`.
-    """
+    HELP = 'See Search by Created Until Date section in the help'
     LABEL = 'Created Until'
     TOOLTIP = 'Search issues created until this date (inclusive)'
     ID = 'input_date_until'
     BORDER_SUBTITLE = '(u)'
+
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-created-until-date'
 
 
 class OrderByWidget(Select):
@@ -217,41 +194,19 @@ class OrderByWidget(Select):
 
 
 class ActiveSprintCheckbox(Checkbox):
-    HELP = """\
-# Search Work Items in the Active Sprint
-
-When this checkbox is checked the application will filter work items that correspond to the currently active
-sprint.
-    """
+    HELP = 'See Search by Active Sprint section in the help'
 
     def __init__(self):
         super().__init__(label='Active Sprint', value=False, classes='active-sprint-checkbox')
         self.border_subtitle = '(v)'
 
+    @property
+    def help_anchor(self) -> str:
+        return '#search-by-active-sprint'
+
 
 class JQLSearchWidget(Input):
-    HELP = """\
-# Search Expression
-
-You can search work items using
-[JQL expressions](https://support.atlassian.com/jira-software-cloud/docs/what-is-advanced-search-in-jira-cloud/).
-
-## Examples
-- Search work items assigned to John Smith
-
-```python
-assignee = "John Smith"
-```
-
-or searching by the user's email address:
-
-```python
-assignee = "john@smith.com"
-```
-
-In addition, you can define JQL expressions in the config file using the option `pre_defined_jql_expressions` and then
-load these expressions in the JQL Editor by focussing this field `(j)` and then pressing `^e`.
-    """
+    HELP = 'See Searching Using JQL Expressions section in the help'
 
     BINDINGS = [
         (
@@ -272,6 +227,10 @@ load these expressions in the JQL Editor by focussing this field `(j)` and then 
         )
         self.border_title = 'JQL Query'
         self.border_subtitle = '(j)'
+
+    @property
+    def help_anchor(self) -> str:
+        return '#searching-using-jql-expressions'
 
     def watch_expression(self, value: str | None = None) -> None:
         if value and value not in self.value:  # type:ignore[has-type]

@@ -17,6 +17,7 @@ class WorkItemSummaryContainer(Container):
 
 
 class WorkItemInfoContainer(VerticalGroup):
+    HELP = 'See Work Item Info section in the help'
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
     """The issue whose information we want to display."""
     clear_information: Reactive[bool] = reactive(False, always_update=True)
@@ -25,6 +26,10 @@ class WorkItemInfoContainer(VerticalGroup):
     def __init__(self):
         super().__init__(id='work_item_info_container')
         self._has_extra_custom_fields = False
+
+    @property
+    def help_anchor(self) -> str:
+        return '#work-item-info'
 
     @property
     def issue_summary_widget(self) -> IssueSummaryWidget:

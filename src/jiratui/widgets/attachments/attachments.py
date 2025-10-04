@@ -14,20 +14,7 @@ from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
 class IssueAttachmentsWidget(VerticalScroll):
-    HELP = """\
-# Attachments
-
-This will display a list of files attached to the selected work item.
-
-To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
-attached file you want to delete and then press `d`.
-
-**Important**: Uploading large files may cause the UI to be unresponsive temporarily. This will depend on the size of
-the file.
-
-**Warning**: The application imposes a maximum file size of 10MB.
-    """
-
+    HELP = 'See Attachments section in the help'
     BINDINGS = [
         Binding(
             key='ctrl+u',
@@ -43,6 +30,10 @@ the file.
     def __init__(self):
         super().__init__(id='attachments')
         self._issue_key: str | None = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#attachments'
 
     @property
     def issue_key(self) -> str | None:

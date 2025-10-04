@@ -76,16 +76,7 @@ class IssueRemoteLinkCollapsible(Collapsible):
 class IssueRemoteLinksWidget(VerticalScroll):
     """This widget handles adding and updating the list of remote links (aka. web links) associated to a work item."""
 
-    HELP = """\
-# Web Links (aka. Remote Links)
-
-This will display a list of URLs associated to the selected work item. files attached to the selected work item.
-
-To add a new link simply press `n` and provide the details in the pop-up that opens.
-
-To delete a link simply focus on the title of the collapsible whose link you want to delete and then press `d`.
-    """
-
+    HELP = 'See Web Links section in the help'
     BINDINGS = [
         Binding(
             key='n',
@@ -101,6 +92,10 @@ To delete a link simply focus on the title of the collapsible whose link you wan
 
     def __init__(self):
         super().__init__(id='issue_remote_links')
+
+    @property
+    def help_anchor(self) -> str:
+        return '#web-links'
 
     async def action_add_remote_link(self) -> None:
         """Handles the event to open a pop-up screen to add a remote (web) link to a work item.

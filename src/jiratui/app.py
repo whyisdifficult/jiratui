@@ -138,7 +138,10 @@ class JiraApp(App):
                 self.screen.set_focus(focused)
 
         self.set_focus(None)
-        await self.push_screen(HelpScreen(focused.HELP), restore_focus)
+        anchor = None
+        if hasattr(focused, 'help_anchor'):
+            anchor = focused.help_anchor
+        await self.push_screen(HelpScreen(anchor), restore_focus)
 
     async def action_server_info(self) -> None:
         """Handles the event to show the information of the Jira server instance."""
