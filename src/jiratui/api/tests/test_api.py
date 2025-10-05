@@ -2060,7 +2060,7 @@ async def test_search_issues(build_issue_search_jql_mock: Mock, jira_api: JiraAP
     result = await jira_api.search_issues()
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/search/jql'
-    assert json.loads(route.calls.last.request.content) == {'jql': '', 'maxResults': 30}
+    assert json.loads(route.calls.last.request.content) == {'jql': '', 'maxResults': 50}
     assert result == {}
 
 
@@ -2097,7 +2097,7 @@ async def test_search_issues_with_jira_dc(
     result = await jira_api_dc.search_issues()
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/2/search'
-    assert json.loads(route.calls.last.request.content) == {'jql': '', 'maxResults': 30}
+    assert json.loads(route.calls.last.request.content) == {'jql': '', 'maxResults': 50}
     assert result == {
         'expand': 'names,schema',
         'startAt': 0,
