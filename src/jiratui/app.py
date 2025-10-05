@@ -195,7 +195,11 @@ class JiraApp(App):
             pass
         else:
             fh.setLevel(CONFIGURATION.get().log_level or logging.WARNING)
-            fh.setFormatter(JsonFormatter())
+            fh.setFormatter(
+                JsonFormatter(
+                    '%(asctime)s %(levelname)s %(message)s %(lineno)s %(module)s %(pathname)s '
+                )
+            )
             self.logger.addHandler(fh)
 
 

@@ -1227,7 +1227,7 @@ async def test_get_issue_with_api_error(
     assert isinstance(response, APIControllerResponse)
     assert response.success is False
     assert response.result is None
-    assert response.error == 'Failed to retrieve the work item 10002: an error.'
+    assert response.error == 'an error'
 
 
 @pytest.mark.asyncio
@@ -1682,7 +1682,7 @@ async def test_count_issues_with_api_error(
     assert isinstance(response, APIControllerResponse)
     assert response.success is False
     assert response.result is None
-    assert response.error == 'Failed to count the number of work items: some error'
+    assert response.error == 'some error'
     work_items_search_approximate_count_mock.assert_called_once()
 
 
@@ -1708,7 +1708,7 @@ async def test_count_issues_with_criteria(
     assert isinstance(response, APIControllerResponse)
     assert response.success is False
     assert response.result is None
-    assert response.error == 'Failed to count the number of work items: some error'
+    assert response.error == 'some error'
     work_items_search_approximate_count_mock.assert_called_once_with(
         project_key=None,
         created_from=None,
@@ -2507,7 +2507,7 @@ async def test_get_comments_with_api_error(
     # THEN
     assert isinstance(response, APIControllerResponse)
     assert response.success is False
-    assert response.error == 'Failed to retrieve the comments: some error'
+    assert response.error == 'some error'
     assert response.result is None
     get_comments_mock.assert_called_once_with('1', 0, 10)
 
