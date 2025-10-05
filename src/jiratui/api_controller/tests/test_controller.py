@@ -1580,7 +1580,7 @@ async def test_search_issues_with_missing_issues(
     search_issues_mock.assert_called_once()
 
 
-@pytest.mark.parametrize('page, expected_offset', [(0, 0), (1, 0), (2, 30), (None, 0)])
+@pytest.mark.parametrize('page, expected_offset', [(0, 0), (1, 0), (2, 50), (None, 0)])
 @pytest.mark.asyncio
 @patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
