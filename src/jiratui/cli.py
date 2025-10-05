@@ -91,7 +91,7 @@ def config():
     '--limit',
     '-l',
     type=int,
-    help='The number of work items to return. Default is 10 items within the last 15 days.',
+    help='The number of work items to return. Default is 50.',
 )
 @click.option(
     '--created-from',
@@ -114,7 +114,7 @@ def search_issues(
     """Search work items."""
     if not project_key and not key:
         raise click.BadParameter(
-            'One of --project-key or --key must be provided',
+            'One of --project-key (-p) or --key (-k) must be provided',
         )
 
     handler = CommandHandler()
@@ -138,7 +138,7 @@ def search_issues(
                     ],
                 )
             except CLIException as e:
-                console.print('Unable to find the requested work item.')
+                console.print(str(e))
                 renderer = CLIExceptionRenderer()
                 renderer.render(console, e.get_extra_details())
             except Exception as e:
@@ -158,7 +158,7 @@ def search_issues(
                 created_until=created_until.date() if created_until else None,
             )
         except CLIException as e:
-            console.print('An error occurred while searching for work items')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         except Exception as e:
@@ -180,7 +180,7 @@ def issue_metadata(work_item_key: str) -> None:
         try:
             metadata: dict = asyncio.run(handler.get_metadata(work_item_key))
         except CLIException as e:
-            console.print(f'Unable to retrieve metadata for the given work item: {str(e)}')
+            console.print(str(e))
         else:
             render = JiraIssueMetadataRenderer()
             render.render(console, metadata, issue_key=work_item_key)
@@ -238,7 +238,7 @@ def update_issue(
         try:
             metadata: dict = asyncio.run(handler.get_metadata(work_item_key))
         except CLIException as e:
-            console.print(f'Unable to retrieve metadata for the given work item: {str(e)}')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         except Exception as e:
@@ -265,10 +265,7 @@ def update_issue(
             try:
                 result: bool = asyncio.run(handler.update_issue_status(work_item_key, status_id))
             except CLIException as e:
-                console.print(
-                    'An error occurred when trying to update the status of the work item.'
-                )
-                console.print(f'Error: {str(e)}')
+                console.print(str(e))
                 renderer = CLIExceptionRenderer()
                 renderer.render(console, e.get_extra_details())
             except Exception as e:
@@ -294,8 +291,7 @@ def update_issue(
                     ),
                 )
             except CLIException as e:
-                console.print('An error occurred when trying to update the selected work item.')
-                console.print(f'Error: {str(e)}')
+                console.print(str(e))
                 renderer = CLIExceptionRenderer()
                 renderer.render(console, e.get_extra_details())
             except Exception as e:
@@ -324,7 +320,7 @@ def add_comment(message: str, work_item_key: str):
         try:
             response = handler.add_comment(work_item_key, message)
         except CLIException as e:
-            console.print('Unable to add the comment to the given issue.')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         else:
@@ -352,7 +348,7 @@ def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = No
         try:
             response = handler.get_comments(work_item_key, comment_id, page=page)
         except CLIException as e:
-            console.print('Unable to retrieve the comments for the given issue')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         else:
@@ -374,7 +370,7 @@ def show_comment(work_item_key: str, comment_id: str) -> None:
         try:
             comment = handler.get_comment(work_item_key, comment_id)
         except CLIException as e:
-            console.print('Unable to retrieve the comment.')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         else:
@@ -397,7 +393,7 @@ def delete_comment(work_item_key: str, comment_id: str):
             handler.delete_comment(work_item_key, comment_id)
             console.print('Comment deleted successfully.')
         except CLIException as e:
-            console.print('Unable to delete the comment for the given issue.')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
 
@@ -491,7 +487,7 @@ def search_users(email_or_name: str):
         try:
             items = handler.users(email_or_name=email_or_name)
         except CLIException as e:
-            console.print('Unable to retrieve users.')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         else:
@@ -539,7 +535,7 @@ def search_users_groups(
             try:
                 result = handler.total_users_in_group(group_id=group_id)
             except CLIException as e:
-                console.print('Unable to retrieve the total number of users in the group.')
+                console.print(str(e))
                 renderer = CLIExceptionRenderer()
                 renderer.render(console, e.get_extra_details())
             else:
@@ -555,7 +551,7 @@ def search_users_groups(
                 group_names=[gn.strip() for gn in group_names.split(',')] if group_names else None,
             )
         except CLIException as e:
-            console.print('Unable to retrieve user groups.')
+            console.print(str(e))
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         else:

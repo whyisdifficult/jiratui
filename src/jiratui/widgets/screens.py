@@ -725,7 +725,7 @@ class MainScreen(Screen):
         )
         if not response.success:
             self.notify(
-                f'There was an error while fetching the selected work item {issue_key}',
+                response.error or 'Unable to fetch the given issue',
                 title='Work Items Search',
                 severity='error',
             )

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime, timedelta
+from datetime import date
 from typing import Any
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -167,7 +167,7 @@ class CommandHandler:
         if response.success:
             return {'comments': response.result or [], 'total': len(response.result or [])}
         raise CLIException(
-            'An error occurred while fetching the comments.',
+            'There was an error while trying to fetch the comments.',
             extra={'work_item_key': key, 'error_message': response.error},
         )
 
@@ -309,7 +309,7 @@ class CommandHandler:
         self,
         project_key: str,
         assignee_account_id: str | None = None,
-        limit: int = 10,
+        limit: int | None = None,
         created_from: date | None = None,
         created_until: date | None = None,
     ) -> JiraIssueSearchResponse:
@@ -330,7 +330,7 @@ class CommandHandler:
                 ],
                 assignee=assignee_account_id,
                 limit=limit,
-                created_from=created_from or (datetime.now().date() - timedelta(days=15)),
+                created_from=created_from,
                 created_until=created_until,
                 order_by=CONFIGURATION.get().search_results_default_order,
             )

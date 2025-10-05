@@ -76,6 +76,7 @@ class APIController:
         self.config = CONFIGURATION.get() if not configuration else configuration
         self.api_version: int = self.config.jira_api_version or DEFAULT_JIRA_API_VERSION
         self.api: JiraAPI | JiraAPIv2 | JiraDataCenterAPI
+        # initialize the API depending on whether we are connecting to Jira Cloud or Jira DC platform
         if self.config.cloud:
             if self.api_version == 2:
                 self.api = JiraAPIv2(
@@ -101,6 +102,14 @@ class APIController:
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)
 
+    @staticmethod
+    def _extract_exception_details(exception: Exception) -> dict:
+        extra: dict = exception.extra or {} if hasattr(exception, 'extra') else {}
+        message = (
+            extra.get('errorMessages', [])[0] if extra.get('errorMessages', []) else str(exception)
+        )
+        return {'message': message, 'extra': extra}
+
     async def get_project(self, key: str) -> APIControllerResponse:
         """Retrieves the details of a project by key.
 
@@ -115,11 +124,15 @@ class APIController:
         try:
             response: dict = await self.api.get_project(key)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching details of the project',
-                extra={'error': str(e), 'key': key},
+                'Unable to retrieve project',
+                extra={
+                    'key': key,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=Project(
                 id=str(response.get('id')), name=response.get('name'), key=response.get('key')
@@ -163,6 +176,7 @@ class APIController:
                     keys=keys,
                 )
             except Exception as e:
+                exception_details: dict = self._extract_exception_details(e)
                 self.logger.error(
                     'There was an error while searching projects',
                     extra={
@@ -171,9 +185,12 @@ class APIController:
                         'keys': keys,
                         'order_by': order_by,
                         'limit': RECORDS_PER_PAGE_SEARCH_PROJECTS,
+                        **exception_details.get('extra', {}),
                     },
                 )
-                return APIControllerResponse(result=projects, error=str(e))
+                return APIControllerResponse(
+                    result=projects, error=exception_details.get('message')
+                )
             else:
                 for project in response.get('values', []):
                     projects.append(
@@ -198,11 +215,15 @@ class APIController:
         try:
             response: list[dict] = await self.api.get_project_statuses(project_key)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching statuses associated to the project',
-                extra={'error': str(e), 'project_key': project_key},
+                'Unable to find status codes associated to a project',
+                extra={
+                    'project_key': project_key,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         statuses_by_issue_type: dict[str, dict] = defaultdict(dict)
         for record in response:
             statuses_for_issue_type: list[IssueStatus] = []
@@ -226,11 +247,12 @@ class APIController:
         try:
             response: list[dict] = await self.api.status()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching all available status codes',
-                extra={'error': str(e)},
+                'Unable to find available status codes',
+                extra=exception_details.get('extra'),
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         statuses: list[IssueStatus] = []
         for item in response:
             statuses.append(
@@ -277,17 +299,18 @@ class APIController:
                 groups_names=groups_names,
             )
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while searching users groups',
+                'Unable to find users groups',
                 extra={
-                    'error': str(e),
                     'groups_ids': groups_ids,
                     'groups_names': groups_names,
                     'limit': min(limit, RECORDS_PER_PAGE_LIST_GROUPS),
                     'offset': offset,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         if response:
             groups = [
@@ -308,14 +331,15 @@ class APIController:
         try:
             response: dict = await self.api.get_users_in_group(group_id=group_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to estimate the total number of users in a group',
+                'Unable to estimate the number of users in a group',
                 extra={
-                    'error': str(e),
                     'group_id': group_id,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(result=int(response.get('total', 0)))
 
     async def list_all_active_users_in_group(self, group_id: str) -> APIControllerResponse:
@@ -342,18 +366,20 @@ class APIController:
                     limit=RECORDS_PER_PAGE_LIST_GROUP_USERS,
                 )
             except Exception as e:
+                exception_details: dict = self._extract_exception_details(e)
                 self.logger.error(
-                    'There was an error while fetching all active users in a group.',
+                    'Unable to fetch all active users in a group.',
                     extra={
                         'error': str(e),
                         'group_id': group_id,
                         'offset': i * RECORDS_PER_PAGE_LIST_GROUP_USERS,
                         'limit': RECORDS_PER_PAGE_LIST_GROUP_USERS,
+                        **exception_details.get('extra', {}),
                     },
                 )
                 return APIControllerResponse(
                     result=sorted(users, key=lambda x: x.display_name or x.email or x.account_id),
-                    error=str(e),
+                    error=exception_details.get('message'),
                 )
             else:
                 for user in response.get('values', []):
@@ -394,14 +420,15 @@ class APIController:
         try:
             project: dict = await self.api.get_project(project_key)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching the types of issues associated to a project.',
+                'Unable to find issue types for the given project',
                 extra={
-                    'error': str(e),
                     'project_key': project_key,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=[
                 IssueType(id=str(item.get('id')), name=item.get('name'))
@@ -421,10 +448,11 @@ class APIController:
         try:
             response: list[dict] = await self.api.get_issue_types_for_user()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching types of issues.', extra={'error': str(e)}
+                'Unable to find issue types', extra=exception_details.get('extra', {})
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
             projects_by_id: dict[str, Project] = {}
             projects: APIControllerResponse = await self.search_projects()
@@ -460,11 +488,15 @@ class APIController:
         try:
             response: list[dict] = await self.api.user_search(query=f'{email_or_name}')
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while searching users',
-                extra={'error': str(e), 'email_or_name': email_or_name},
+                'Unable to find users',
+                extra={
+                    'email_or_name': email_or_name,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         users: list[JiraUser] = []
         for user in response:
@@ -512,16 +544,17 @@ class APIController:
                 limit=RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
             )
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching users assignable to an issue',
+                'Unable to find users assignable to a work item',
                 extra={
-                    'error': str(e),
                     'issue_key': issue_key,
                     'query': query,
                     'limit': RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         if active is not None:
             response = [item for item in response if item.get('active') == active]
@@ -571,16 +604,17 @@ class APIController:
                 limit=RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_PROJECTS,
             )
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching users assignable to projects',
+                'Unable to find users assignable to a project',
                 extra={
-                    'error': str(e),
                     'project_keys': project_keys,
                     'query': query,
                     'limit': RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_PROJECTS,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         if active is not None:
             response = [item for item in response if item.get('active') == active]
@@ -650,19 +684,17 @@ class APIController:
                 properties=properties,
             )
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching an issue',
+                'Unable to retrieve the work item',
                 extra={
-                    'error': str(e),
                     'issue_id_or_key': issue_id_or_key,
                     'fields': fields_strings,
                     'properties': properties,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(
-                success=False,
-                error=f'Failed to retrieve the work item {issue_id_or_key}: {str(e)}.',
-            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
             editable_custom_fields: dict[str, Any] | None = None
             if issue.get('fields', {}):
@@ -696,7 +728,6 @@ class APIController:
         issue_type: int | None = None,
         jql_query: str | None = None,
     ) -> dict:
-        search_criteria: dict = {}
         if jql_query:
             return {'jql': jql_query.strip(), 'updated_from': None}
 
@@ -704,7 +735,7 @@ class APIController:
             [project_key, created_from, created_until, status, assignee, issue_type]
         )
         if criteria_defined:
-            return search_criteria
+            return {}
 
         if (expression_id := self.config.jql_expression_id_for_work_items_search) and (
             pre_defined_jql_expressions := self.config.pre_defined_jql_expressions
@@ -763,7 +794,6 @@ class APIController:
             An instance of `APIControllerResponse` with the work items found or, en error if the search can not be
             performed.
         """
-
         criteria: dict = self._build_criteria_for_searching_work_items(
             project_key=project_key,
             created_from=created_from,
@@ -802,7 +832,6 @@ class APIController:
                 success=False,
                 error=f'There was an unknown error while searching for work items: {str(e)}',
             )
-
         issues: list[JiraIssue] = []
         work_item: JiraIssue
         for issue in response.get('issues', []):
@@ -894,19 +923,25 @@ class APIController:
                 limit=limit,
                 order_by=order_by,
             )
-        except ServiceUnavailableException:
-            return APIControllerResponse(
-                success=False, error='Unable to connect to the Jira server.'
+        except ServiceUnavailableException as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to connect to the Jira server', extra=exception_details.get('extra')
             )
-        except ServiceInvalidResponseException:
-            return APIControllerResponse(
-                success=False, error='The response from the server contains errors.'
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        except ServiceInvalidResponseException as e:
+            exception_details = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to search work items by page number', extra=exception_details.get('extra')
             )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         except Exception as e:
-            return APIControllerResponse(
-                success=False,
-                error=f'There was an unknown error while searching for work items: {str(e)}',
+            exception_details = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to search work items by page number. Unknown Error',
+                extra=exception_details.get('extra'),
             )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         issues: list[JiraIssue] = []
         work_item: JiraIssue
@@ -977,9 +1012,12 @@ class APIController:
         except NotImplementedError:
             return APIControllerResponse(result=0)
         except Exception as e:
-            return APIControllerResponse(
-                success=False, error=f'Failed to count the number of work items: {str(e)}'
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to estimate the number of work items', extra=exception_details.get('extra')
             )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
         return APIControllerResponse(result=int(response.get('count', 0)))
 
     async def get_issue_remote_links(
@@ -999,7 +1037,17 @@ class APIController:
         try:
             response: list[dict] = await self.api.get_issue_remote_links(issue_key_or_id, global_id)
         except Exception as e:
-            return APIControllerResponse(success=False, error=str(e))
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve the web links of a work item',
+                extra={
+                    'issue_id_or_key': issue_key_or_id,
+                    'global_id': global_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
         return APIControllerResponse(
             result=[
                 IssueRemoteLink(
@@ -1029,7 +1077,17 @@ class APIController:
         try:
             await self.api.create_issue_remote_link(issue_key_or_id, url, title)
         except Exception as e:
-            return APIControllerResponse(success=False, error=str(e))
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to create the web link',
+                extra={
+                    'issue_key_or_id': issue_key_or_id,
+                    'web_url': url,
+                    'title': title,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def delete_issue_remote_link(
@@ -1048,7 +1106,16 @@ class APIController:
         try:
             await self.api.delete_issue_remote_link(issue_key_or_id, link_id)
         except Exception as e:
-            return APIControllerResponse(success=False, error=str(e))
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to delete web link',
+                extra={
+                    'issue_key_or_id': issue_key_or_id,
+                    'link_id': link_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def server_info(self) -> APIControllerResponse:
@@ -1061,11 +1128,12 @@ class APIController:
         try:
             response: dict = await self.api.server_info()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching details of the Jira server instance.',
-                extra={'error': str(e)},
+                'Unable to retrieve information of the Jira server',
+                extra=exception_details.get('extra'),
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=JiraServerInfo(
                 base_url=response.get('baseUrl'),
@@ -1093,11 +1161,12 @@ class APIController:
         try:
             response: dict = await self.api.myself()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching details of the API user.',
-                extra={'error': str(e)},
+                'Unable to retrieve information of the logged user',
+                extra=exception_details.get('extra'),
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         if self.config.cloud:
             return APIControllerResponse(
                 result=JiraMyselfInfo(
@@ -1140,9 +1209,13 @@ class APIController:
         try:
             return await self.api.issue_edit_metadata(issue_key_or_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching the edit-metadata of a work item.',
-                extra={'error': str(e), 'issue_key_or_id': issue_key_or_id},
+                'Unable to retrieve the metadata to edit the work item',
+                extra={
+                    'issue_key_or_id': issue_key_or_id,
+                    **exception_details.get('extra', {}),
+                },
             )
             return {}
 
@@ -1302,11 +1375,15 @@ class APIController:
         try:
             response: dict = await self.api.transitions(issue_id_or_key)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching the allowed status transitions of a work item.',
-                extra={'error': str(e), 'issue_id_or_key': issue_id_or_key},
+                'Unable to retrieve status transitions for the work item',
+                extra={
+                    'issue_id_or_key': issue_id_or_key,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         transitions: list[IssueTransition] = []
         for transition in response.get('transitions', []):
@@ -1358,11 +1435,16 @@ class APIController:
         try:
             await self.api.transition_issue(issue_id_or_key, transition_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying update the status of a work item.',
-                extra={'error': str(e), 'issue_id_or_key': issue_id_or_key, 'status_id': status_id},
+                'Unable to update the status of the work item',
+                extra={
+                    'issue_id_or_key': issue_id_or_key,
+                    'status_id': status_id,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def get_comment(self, issue_key_or_id: str, comment_id: str) -> APIControllerResponse:
@@ -1379,15 +1461,16 @@ class APIController:
         try:
             comment: dict = await self.api.get_comment(issue_key_or_id, comment_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to get the details of a comment.',
+                'Unable to fetch the comment',
                 extra={
-                    'error': str(e),
                     'issue_key_or_id': issue_key_or_id,
                     'comment_id': comment_id,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         author = comment.get('author', {})
         update_author = comment.get('updateAuthor')
         return APIControllerResponse(
@@ -1433,13 +1516,12 @@ class APIController:
         try:
             response: dict = await self.api.get_comments(issue_key_or_id, offset, limit)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to search the comments of a work item.',
-                extra={'error': str(e), 'issue_key_or_id': issue_key_or_id},
+                'Unable to fetch comments',
+                extra={'issue_key_or_id': issue_key_or_id, **exception_details.get('extra', {})},
             )
-            return APIControllerResponse(
-                success=False, error=f'Failed to retrieve the comments: {str(e)}'
-            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         comments: list[IssueComment] = []
         for record in response.get('comments', []):
             author = record.get('author', {})
@@ -1483,11 +1565,12 @@ class APIController:
         try:
             response = await self.api.add_comment(issue_key_or_id, message)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to add a comment',
-                extra={'error': str(e), 'issue_key_or_id': issue_key_or_id},
+                'Unable to create the comment',
+                extra={'issue_key_or_id': issue_key_or_id, **exception_details.get('extra', {})},
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         author = response.get('author', {})
         update_author = response.get('updateAuthor')
         comment = IssueComment(
@@ -1525,15 +1608,16 @@ class APIController:
         try:
             await self.api.delete_comment(issue_key_or_id, comment_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to delete a comment',
+                'Unable to delete the comment',
                 extra={
-                    'error': str(e),
                     'issue_key_or_id': issue_key_or_id,
                     'comment_id': comment_id,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def link_work_items(
@@ -1564,16 +1648,17 @@ class APIController:
             )
             return APIControllerResponse()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to link 2 work items.',
+                'Unable to link items',
                 extra={
-                    'error': str(e),
                     'left_issue_key': left_issue_key,
                     'link_type': link_type,
                     'link_type_id': link_type_id,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
     async def delete_issue_link(self, link_id: str) -> APIControllerResponse:
         """Deletes the link between 2 work items.
@@ -1588,11 +1673,15 @@ class APIController:
         try:
             await self.api.delete_issue_link(link_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while trying to delete the link of a work item',
-                extra={'error': str(e), 'link_id': link_id},
+                'Unable to delete link between items',
+                extra={
+                    'link_id': link_id,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def issue_link_types(self) -> APIControllerResponse:
@@ -1605,11 +1694,12 @@ class APIController:
         try:
             response: dict = await self.api.issue_link_types()
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching the types of work item links',
-                extra={'error': str(e)},
+                'Unable to fetch the type of links',
+                extra=exception_details.get('extra'),
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         link_types: list[LinkIssueType] = []
         for issue_link_type in response.get('issueLinkTypes', []):
             link_types.append(
@@ -1641,15 +1731,16 @@ class APIController:
             response = await self.api.get_issue_create_meta(project_id_or_key, issue_type_id)
             return APIControllerResponse(result=response)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while fetching the create-metadata of a work item',
+                'Unable to get the metadata to create work items',
                 extra={
-                    'error': str(e),
                     'issue_type_id': issue_type_id,
                     'project_id_or_key': project_id_or_key,
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
     async def create_work_item(self, data: dict) -> APIControllerResponse:
         """Creates a work item.
@@ -1724,6 +1815,7 @@ class APIController:
         try:
             result: dict = await self.api.create_work_item(fields)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
                 'An error occurred while trying to create an item',
                 extra={
@@ -1736,9 +1828,10 @@ class APIController:
                     'duedate': data.get('duedate'),
                     'summary': data.get('summary'),
                     'priority': data.get('priority'),
+                    **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=str(e))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=JiraBaseIssue(id=result.get('id'), key=result.get('key'))
         )
@@ -1793,13 +1886,16 @@ class APIController:
                 issue_key_or_id, filename, name, mime_type
             )
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while attempting to add an attachment',
-                extra={'error': str(e), 'issue_key_or_id': issue_key_or_id, 'filename': filename},
+                'Unable to attach files',
+                extra={
+                    'issue_key_or_id': issue_key_or_id,
+                    'filename': filename,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(
-                success=False, error=f'Failed to attach the file: {str(e)}'
-            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
             creator = None
             if author := response[0].get('author'):
@@ -1833,13 +1929,15 @@ class APIController:
         try:
             await self.api.delete_attachment(attachment_id)
         except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'There was an error while attempting to delete an attachment',
-                extra={'error': str(e), 'attachment_id': attachment_id},
+                'Unable to delete attachment',
+                extra={
+                    'attachment_id': attachment_id,
+                    **exception_details.get('extra', {}),
+                },
             )
-            return APIControllerResponse(
-                success=False, error=f'Failed to delete the attachment: {str(e)}'
-            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
     async def get_work_item_worklog(
@@ -1862,7 +1960,11 @@ class APIController:
         try:
             response: dict = await self.api.get_issue_work_log(issue_key_or_id, offset, limit)
         except Exception as e:
-            return APIControllerResponse(success=False, error=str(e))
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to to retrieve the worklog', extra=exception_details.get('extra')
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         logs: list[JiraWorklog] = []
         for work_log in response.get('worklogs', []):

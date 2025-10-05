@@ -216,35 +216,28 @@ class AsyncJiraClient:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
-            msg = f'{e.__class__.__name__}: {e}.'
-            self.logger.error(msg, extra={'url': url, 'status_code': response.status_code})
+            # see https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#status-codes
+            error_details: dict | None = self._parse_error_response(response)
+
+            extra = {
+                'url': url,
+                'status_code': response.status_code,
+            }
+
+            message = str(e)
+            if error_details is not None and isinstance(error_details, dict):
+                if error_details.get('errorMessages', []):
+                    message = error_details.get('errorMessages', [])[0]
+                extra.update(**error_details)
+
+            self.logger.error(message, extra=extra)
             if response.status_code == 404:
-                raise ResourceNotFoundException(
-                    'The requested resource was not found',
-                    extra={
-                        'error_message': str(e),
-                        'status_code': 404,
-                    },
-                ) from e
+                raise ResourceNotFoundException(message, extra=extra) from e
             if response.status_code == 401:
-                raise AuthorizationException(
-                    'Authorization is required to access the requested resource.',
-                    extra={
-                        'error_message': str(e),
-                        'status_code': 401,
-                    },
-                ) from e
+                raise AuthorizationException(message, extra=extra) from e
             if response.status_code == 403:
-                raise PermissionException(
-                    'Missing required permission to access the requested resource.',
-                    extra={
-                        'error_message': str(e),
-                        'status_code': 403,
-                    },
-                ) from e
-            raise ServiceInvalidRequestException(
-                msg, extra={'status_code': response.status_code}
-            ) from e
+                raise PermissionException(message, extra=extra) from e
+            raise ServiceInvalidRequestException(message, extra=extra) from e
 
         if response.status_code == 204:
             return {}
@@ -254,9 +247,15 @@ class AsyncJiraClient:
         except Exception as e:
             if response.status_code == 201:
                 return {}
-            # This may happen if nginx responds with an error page or on calling ping
             log_msg = f'{e.__class__.__name__}: {e}.'
             self.logger.error(log_msg, extra={'url': url, 'status_code': response.status_code})
             raise ServiceInvalidResponseException(log_msg, extra={}) from e
 
         return response_json
+
+    @staticmethod
+    def _parse_error_response(response: httpx.Response) -> dict | None:
+        try:
+            return response.json()
+        except Exception:
+            return None
