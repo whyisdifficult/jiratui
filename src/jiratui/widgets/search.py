@@ -105,6 +105,7 @@ class IssuesSearchResultsTable(DataTable):
             description='Previous',
             show=True,
             key_display='alt+left',
+            tooltip='Previous page',
         ),
         Binding(
             key='alt+right',
@@ -112,6 +113,7 @@ class IssuesSearchResultsTable(DataTable):
             description='Next',
             show=True,
             key_display='alt+right',
+            tooltip='Next page',
         ),
         Binding(
             key='ctrl+o',
@@ -119,6 +121,7 @@ class IssuesSearchResultsTable(DataTable):
             description='Open in Browser',
             show=True,
             key_display='^o',
+            tooltip='Open item in the browser',
         ),
     ]
 
