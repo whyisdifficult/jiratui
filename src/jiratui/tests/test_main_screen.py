@@ -8,7 +8,15 @@ from textual.widgets import Select
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
-from jiratui.models import IssueStatus, IssueType, JiraUser, Project, WorkItemsSearchOrderBy
+from jiratui.models import (
+    IssueStatus,
+    IssueType,
+    JiraIssue,
+    JiraIssueSearchResponse,
+    JiraUser,
+    Project,
+    WorkItemsSearchOrderBy,
+)
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.filters import (
@@ -25,6 +33,7 @@ from jiratui.widgets.filters import (
 )
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.screens import WorkItemSearchResult
 from jiratui.widgets.search import IssuesSearchResultsTable
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 
@@ -60,6 +69,10 @@ def app() -> JiraApp:
         search_results_page_filtering_enabled=False,
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
+        search_results_truncate_work_item_summary=15,
+        search_results_style_work_item_status=None,
+        search_results_style_work_item_type=None,
+        search_results_per_page=10,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -720,3 +733,165 @@ async def test_click_search_button_resets_widgets(
         assert main_screen.search_results_table.page == 1
         assert main_screen.issue_info_container.issue_summary_widget.visible is False
         assert main_screen.issue_info_container.issue_description_widget.visible is False
+
+
+@patch.object(JiraApp, 'copy_to_clipboard')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_copy_work_item_key_to_clipboard(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    copy_to_clipboard: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        total=1, start=1, end=1, response=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('ctrl+k')
+        await pilot.app.workers.wait_for_complete()
+        # THEN
+        search_work_items_mock.assert_called_once()
+        copy_to_clipboard.assert_called_once_with('key-1')
+
+
+@patch.object(JiraApp, 'copy_to_clipboard')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_copy_work_item_key_to_clipboard_no_item_to_copy(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    copy_to_clipboard: Mock,
+    app,
+):
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        total=1, start=1, end=1, response=JiraIssueSearchResponse(issues=[])
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('ctrl+k')
+        await pilot.app.workers.wait_for_complete()
+        # THEN
+        search_work_items_mock.assert_called_once()
+        copy_to_clipboard.assert_not_called()
+
+
+@patch('jiratui.widgets.screens.build_external_url_for_issue')
+@patch.object(JiraApp, 'copy_to_clipboard')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_copy_work_item_url_to_clipboard(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    copy_to_clipboard: Mock,
+    build_external_url_for_issue_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    build_external_url_for_issue_mock.return_value = 'http://foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        total=1, start=1, end=1, response=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('ctrl+j')
+        await pilot.app.workers.wait_for_complete()
+        # THEN
+        search_work_items_mock.assert_called_once()
+        copy_to_clipboard.assert_called_once_with('http://foo.bar')
+
+
+@patch('jiratui.widgets.screens.build_external_url_for_issue')
+@patch.object(JiraApp, 'copy_to_clipboard')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_copy_work_item_url_to_clipboard_without_results(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    copy_to_clipboard: Mock,
+    build_external_url_for_issue_mock: Mock,
+    app,
+):
+    build_external_url_for_issue_mock.return_value = 'http://foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        total=1, start=1, end=1, response=JiraIssueSearchResponse(issues=[])
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('ctrl+j')
+        await pilot.app.workers.wait_for_complete()
+        # THEN
+        search_work_items_mock.assert_called_once()
+        copy_to_clipboard.assert_not_called()
+
+
+@patch('jiratui.widgets.screens.build_external_url_for_issue')
+@patch.object(JiraApp, 'copy_to_clipboard')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_copy_work_item_url_to_clipboard_without_url(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    copy_to_clipboard: Mock,
+    build_external_url_for_issue_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    build_external_url_for_issue_mock.return_value = ''
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        total=1, start=1, end=1, response=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('ctrl+j')
+        await pilot.app.workers.wait_for_complete()
+        # THEN
+        search_work_items_mock.assert_called_once()
+        copy_to_clipboard.assert_not_called()

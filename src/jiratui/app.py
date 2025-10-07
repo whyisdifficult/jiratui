@@ -30,14 +30,14 @@ class JiraApp(App):
         Binding(
             key='f2',
             action='server_info',
-            description='Server Info',
-            tooltip='Show details of the Jira server.',
+            description='Server',
+            tooltip='Show details of the Jira server',
         ),
         Binding(
             key='f3',
             action='config_info',
             description='Config',
-            tooltip='Show the settings in the configuration file.',
+            tooltip='Show the settings in the configuration file',
         ),
         Binding(
             key='ctrl+q',

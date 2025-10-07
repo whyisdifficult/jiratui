@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results.
+- Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results.
+
 ### Minor Improvements
 
 - Improve the way we handle API exceptions and how we log them

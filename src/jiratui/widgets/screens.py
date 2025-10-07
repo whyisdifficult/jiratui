@@ -21,6 +21,7 @@ from jiratui.models import (
     JiraUser,
     WorkItemsSearchOrderBy,
 )
+from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
@@ -69,10 +70,11 @@ class MainScreen(Screen):
             tooltip='Find items using full-text search',
             show=True,
         ),
-        (
-            'ctrl+r',
-            'search',
-            'Search Issues',
+        Binding(
+            key='ctrl+r',
+            action='search',
+            description='Search',
+            tooltip='Search items by search criteria',
         ),
         Binding(
             key='p',
@@ -182,6 +184,22 @@ class MainScreen(Screen):
             description='New Issue',
             show=True,
             key_display='^n',
+        ),
+        Binding(
+            key='ctrl+k',
+            action='copy_issue_key',
+            description='Copy Issue Key',
+            show=True,
+            key_display='^k',
+            tooltip='Copy the work item key',
+        ),
+        Binding(
+            key='ctrl+j',
+            action='copy_issue_url',
+            description='Copy Issue URL',
+            show=True,
+            key_display='^j',
+            tooltip='Copy the work item URL',
         ),
     ]
 
@@ -762,7 +780,6 @@ class MainScreen(Screen):
         Returns:
             Nothing.
         """
-
         self.run_button.loading = True
         results: WorkItemSearchResult
         if (value := self.issue_key_input.value) and value.strip():
@@ -872,6 +889,19 @@ class MainScreen(Screen):
             self.set_focus(self.issue_child_work_items_widget)
         elif key == '1':
             self.set_focus(self.search_results_table)
+
+    def action_copy_issue_url(self) -> None:
+        """Copy to the clipboard the URL of the item currently selected in the search results."""
+        if (table := self.search_results_table) and table.current_work_item_key:
+            if url := build_external_url_for_issue(table.current_work_item_key):
+                self.app.copy_to_clipboard(url)
+                self.notify('Work item URL copied!')
+
+    def action_copy_issue_key(self) -> None:
+        """Copy to the clipboard the key of the item currently selected in the search results."""
+        if (table := self.search_results_table) and table.current_work_item_key:
+            self.app.copy_to_clipboard(self.search_results_table.current_work_item_key)
+            self.notify('Work item Key copied!')
 
     async def action_create_work_item(self) -> None:
         """Handles the event to create a new work item."""

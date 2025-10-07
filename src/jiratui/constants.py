@@ -66,14 +66,16 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 
 Besides the hot-keys above the following are always available.
 
-| Key      | Action                                                                 |
-|----------|------------------------------------------------------------------------|
-| `ctrl+r` | Searches work items (this is the same as clicking the "Search" button) |
-| `/`      | Enables full-text search                                               |
-| `ctrl+n` | Creates a new work item                                                |
-| `f1`     | Shows this help                                                        |
-| `f2`     | Shows server information                                               |
-| `f3`     | Shows the currently loaded settings                                    |
+| Key      | Action                                                                                         |
+|----------|------------------------------------------------------------------------------------------------|
+| `ctrl+r` | Searches work items (this is the same as clicking the "Search" button)                         |
+| `/`      | Enables full-text search                                                                       |
+| `ctrl+n` | Creates a new work item                                                                        |
+| `f1`     | Shows this help                                                                                |
+| `f2`     | Shows server information                                                                       |
+| `f3`     | Shows the currently loaded settings                                                            |
+| `ctrl+k` | Copy to the clipboard the key of the item currently selected/highlighted in the search results |
+| `ctrl+j` | Copy to the clipboard the URL of the item currently selected/highlighted in the search results |
 
 All these bindings above are always displayed at the bottom of the app depending on the component you are focus on.
 
