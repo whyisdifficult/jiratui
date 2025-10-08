@@ -73,7 +73,7 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Version', justify='right', style='yellow'),
-                        Text(server_info.version, justify='left'),
+                        Text(server_info.get_version(), justify='left'),
                     ),
                     (
                         Text('Deployment Type', justify='right', style='yellow'),
@@ -81,11 +81,11 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Build Number', justify='right', style='yellow'),
-                        Text(str(server_info.build_number), justify='left'),
+                        Text(server_info.get_build_number(), justify='left'),
                     ),
                     (
                         Text('Build Date', justify='right', style='yellow'),
-                        Text(server_info.build_date, justify='left'),
+                        Text(server_info.get_build_date(), justify='left'),
                     ),
                     (
                         Text('Server Time', justify='right', style='yellow'),
@@ -93,11 +93,11 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('SCM Info', justify='right', style='yellow'),
-                        Text(server_info.scm_info, justify='left'),
+                        Text(server_info.get_scm_info(), justify='left'),
                     ),
                     (
                         Text('Server Title', justify='right', style='yellow'),
-                        Text(server_info.server_title, justify='left'),
+                        Text(server_info.get_server_title(), justify='left'),
                     ),
                     (
                         Text('Default Locale', justify='right', style='yellow'),

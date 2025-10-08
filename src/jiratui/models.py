@@ -466,6 +466,21 @@ class JiraServerInfo(BaseModel):
     def get_default_locale(self) -> str:
         return self.default_locale or ''
 
+    def get_server_title(self) -> str:
+        return self.server_title or ''
+
+    def get_scm_info(self) -> str:
+        return self.scm_info or ''
+
+    def get_build_date(self) -> str:
+        return self.build_date or ''
+
+    def get_build_number(self) -> str:
+        return str(self.build_number) if self.build_number is not None else ''
+
+    def get_version(self) -> str:
+        return self.version or ''
+
 
 @dataclass
 class JiraUserGroup(BaseModel):
