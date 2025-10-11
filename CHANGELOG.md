@@ -43,6 +43,7 @@ settings `search_results_page_filtering_enabled` and `search_results_page_filter
 
 - Fix handling of the argument `ui --jql-expression-id` because it was not picking up the given expression id. Reported
 in https://github.com/whyisdifficult/jiratui/issues/69
+- Fix sorting for search when using JQL. Reported in https://github.com/whyisdifficult/jiratui/issues/97
 
 ### Documentation
 
