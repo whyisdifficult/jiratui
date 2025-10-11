@@ -328,14 +328,14 @@ class FileAttachmentWidget:
 
     @staticmethod
     def build_widget(file_type: str, content: bytes) -> Widget | None:
-        """Builds a Widget for visualizing a specific type of file/content.
+        """Builds a `textual.widget.Widget` for visualizing a specific type of file/content.
 
         Args:
             file_type: the file's MIME type.
-            content: the bytes representation of
+            content: the bytes representation of the file's content to display.
 
         Returns:
-
+            A `textual.widget.Widget` to display the contents or `None` if the file's content is not supported.
         """
         try:
             mime = SupportedAttachmentVisualizationMimeTypes(file_type)

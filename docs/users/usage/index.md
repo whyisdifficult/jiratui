@@ -186,17 +186,23 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 |-------------|----------------------|----------------------------------------------------------------------------|
 | `ctrl+s`    | Details              | Saves change to a work item                                                |
 | `ctrl+l`    | Details              | View the work log                                                          |
+| `^k`        | Details              | Copies the key of the work item currently selected                         |
+| `^j`        | Details              | Copies the URL of the work item currently selected                         |
 | `n`         | Comments             | Add a new comment to the work item                                         |
 | `n`         | Related              | Add a new related item to the work item                                    |
-| `n`         | Related              | Add a new related item to the work item                                    |
+| `v`         | Related              | View the related item                                                      |
+| `d`         | Related              | Deletes the related item                                                   |
 | `ctrl+u`    | Attachments          | Attach file to the work item                                               |
-| `ctrl+u`    | Attachments          | Attach file to the work item                                               |
+| `d`         | Attachments          | Deletes an attachment                                                      |
+| `v`         | Attachments          | View the content of the attached file                                      |
 | `n`         | Links                | Link item to the work item                                                 |
-| `n`         | Links                | Link item to the work item                                                 |
+| `d`         | Links                | Deletes a link                                                             |
 | `ctrl+n`    | Subtasks             | Create a new subtask of the work item                                      |
 | `.`         | Search Results       | Enables filtering of results in the results table                          |
 | `alt+right` | Search Results       | Retrieves the next page of results                                         |
 | `alt+left`  | Search Results       | Retrieves the previous page of results. This is only enabled when page > 1 |
+| `^k`        | Search Results       | Copies the key of the work item currently selected                         |
+| `^j`        | Search Results       | Copies the URL of the work item currently selected                         |
 | `ctrl+e`    | JQL Query field      | Opens the JQL Query Editor                                                 |
 
 Besides the hot-keys above the following are always available.
@@ -518,6 +524,10 @@ The attachments tab displays a list of files attached to the selected work item.
 
 To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
 attached file you want to delete and then press `d`.
+
+For some files the application provides a shortcut to view the content of the file directly in the terminal; this
+includes some types of images. When the user selects the attachment and the type of file is supported the user can
+press `v` to download the file and display its content in the terminal.
 
 ```{Important}
 Uploading large files may cause the UI to be unresponsive temporarily. This will depend on the size of
