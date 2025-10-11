@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results.
 - Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results.
 - Support for viewing (some) files attached to work items directly in the terminal. When the user selects an attachment
-and then presses `v` a modal screen is opened to download and display the file's content.
+by pressing `enter` on a row, a modal screen is opened to download and display the file's content.
+- Support for opening attachments in the browser when the users preses `^o` on a selected/highlighted attachment.
 
 ### Minor Improvements
 
@@ -23,6 +24,7 @@ and then presses `v` a modal screen is opened to download and display the file's
 ### Bug Fixes
 
 - Fix bug when adding comments using Jira DC platform. [Bug report](https://github.com/whyisdifficult/jiratui/issues/95)
+- - Fix sorting for search when using JQL. [Bug report](https://github.com/whyisdifficult/jiratui/issues/97)
 
 ## [1.2.0] - 2025-10-04
 
@@ -41,9 +43,8 @@ settings `search_results_page_filtering_enabled` and `search_results_page_filter
 
 ### Bug Fixes
 
-- Fix handling of the argument `ui --jql-expression-id` because it was not picking up the given expression id. Reported
-in https://github.com/whyisdifficult/jiratui/issues/69
-- Fix sorting for search when using JQL. Reported in https://github.com/whyisdifficult/jiratui/issues/97
+- Fix handling of the argument `ui --jql-expression-id` because it was not picking up the given expression
+id. [Bug report](https://github.com/whyisdifficult/jiratui/issues/69)
 
 ### Documentation
 

@@ -21,6 +21,7 @@ from jiratui.utils.mime import (
     can_view_attachment,
     is_image,
 )
+from jiratui.utils.urls import build_external_url_for_attachment
 from jiratui.widgets.attachments.add import AddAttachmentScreen
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
@@ -131,12 +132,12 @@ class AttachmentsDataTable(DataTable):
             tooltip='Deletes the attachment',
         ),
         Binding(
-            key='v',
-            action='view_attachment',
-            description='View',
+            key='ctrl+o',
+            action='open_attachment',
+            description='Browse',
             show=True,
-            key_display='v',
-            tooltip='View the attached file',
+            key_display='^o',
+            tooltip='Open file in the browser',
         ),
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
@@ -144,7 +145,6 @@ class AttachmentsDataTable(DataTable):
     def __init__(self, work_item_key: str):
         super().__init__(cursor_type='row')
         self._selected_attachment_id: str | None = None
-        self._selected_attachment_file_type: str | None = None
         self._selected_attachment_file_name: str | None = None
         self._work_item_key: str | None = work_item_key
 
@@ -163,7 +163,6 @@ class AttachmentsDataTable(DataTable):
         """
         self._selected_attachment_id = str(event.row_key.value)
         if (row := event.data_table.get_row(event.row_key.value)) and len(row) > 0:
-            self._selected_attachment_file_type = row[-1]
             self._selected_attachment_file_name = row[0]
 
     @on(DataTable.RowSelected)
@@ -179,10 +178,33 @@ class AttachmentsDataTable(DataTable):
         Returns:
             None
         """
-        self._selected_attachment_id = str(event.row_key.value)
-        if (row := event.data_table.get_row(event.row_key.value)) and len(row) > 0:
-            self._selected_attachment_file_type = row[-1]
-            self._selected_attachment_file_name = row[0]
+        if event.row_key.value:
+            self._selected_attachment_id = str(event.row_key.value)
+            if (row := event.data_table.get_row(event.row_key.value)) and len(row) > 0:
+                self._selected_attachment_file_name = row[0]
+                selected_attachment_file_type = row[-1]
+                if selected_attachment_file_type:
+                    if not can_view_attachment(selected_attachment_file_type.lower()):
+                        self.notify(
+                            f'The type of file {selected_attachment_file_type} is not supported'
+                        )
+                    else:
+                        self.app.push_screen(
+                            ViewAttachmentScreen(
+                                self._selected_attachment_id,
+                                selected_attachment_file_type,
+                                self._selected_attachment_file_name,
+                            )
+                        )
+
+    async def action_open_attachment(self) -> None:
+        """Opens the currently selected attached file in the default browser."""
+        if self._selected_attachment_id and self._selected_attachment_file_name:
+            self.notify('Opening attachment in the browser...')
+            if url := build_external_url_for_attachment(
+                self._selected_attachment_id, self._selected_attachment_file_name
+            ):
+                self.app.open_url(url)
 
     async def action_delete_attachment(self) -> None:
         """Opens up a modal screen to prompt the user before attempting to delete an attachment."""
@@ -240,31 +262,6 @@ class AttachmentsDataTable(DataTable):
                 else:
                     # fallback to removing the attachment manually based on the id
                     self._update_attachments_after_delete()
-
-    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
-        if action == 'view_file':
-            # only allow to view certain image attachments
-            if self._selected_attachment_id and self._selected_attachment_file_type:
-                return can_view_attachment(self._selected_attachment_file_type.lower())
-            return False
-        return True
-
-    def action_view_attachment(self) -> None:
-        """Opens a modal screen to view the attachment if the attached file is an image file."""
-        if self._selected_attachment_id and self._selected_attachment_file_type:
-            if not can_view_attachment(self._selected_attachment_file_type.lower()):
-                self.notify(
-                    f'The type of file {self._selected_attachment_file_type} is not supported'
-                )
-            else:
-                self.app.push_screen(
-                    ViewAttachmentScreen(
-                        self._selected_attachment_id,
-                        self._selected_attachment_file_type,
-                        self._selected_attachment_file_name,
-                    )
-                )
-        self.refresh_bindings()
 
 
 class ViewAttachmentScreen(ModalScreen):

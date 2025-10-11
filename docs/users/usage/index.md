@@ -190,8 +190,9 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 | `^j`        | Details              | Copies the URL of the work item currently selected                         |
 | `n`         | Comments             | Add a new comment to the work item                                         |
 | `n`         | Related              | Add a new related item to the work item                                    |
-| `v`         | Related              | View the related item                                                      |
+| `enter`     | Related              | View the related item                                                      |
 | `d`         | Related              | Deletes the related item                                                   |
+| `^o`        | Related              | Opens file in the browser                                                  |
 | `ctrl+u`    | Attachments          | Attach file to the work item                                               |
 | `d`         | Attachments          | Deletes an attachment                                                      |
 | `v`         | Attachments          | View the content of the attached file                                      |
@@ -525,9 +526,13 @@ The attachments tab displays a list of files attached to the selected work item.
 To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
 attached file you want to delete and then press `d`.
 
-For some files the application provides a shortcut to view the content of the file directly in the terminal; this
-includes some types of images. When the user selects the attachment and the type of file is supported the user can
-press `v` to download the file and display its content in the terminal.
+When the user selects the attachment and presses `enter` (or clicks on the attachment row) the app will attempt to
+download the file display its content in the terminal. In addition, after selecting/highlighting an attachment the user
+can press `^o` to open the file in the browser.
+
+```{Important}
+In order to open attachments in the default browser the user **MUST** be logged into the browser.
+```
 
 ```{Important}
 Uploading large files may cause the UI to be unresponsive temporarily. This will depend on the size of
