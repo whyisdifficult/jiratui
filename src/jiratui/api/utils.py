@@ -69,7 +69,7 @@ def build_issue_search_jql(
             jql = f'{jql} and {jql_query}'
         else:
             jql = jql_query
-    if 'order by' not in jql and order_by:
+    if order_by and 'order by' not in jql.lower():
         if jql:
             jql = f'{jql} order by {order_by.value}'
         else:
