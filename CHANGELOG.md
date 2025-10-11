@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improve the way we handle API exceptions and how we log them
 
+### Bug Fixes
+
+- Fix bug when adding comments using Jira DC platform. [Bug report](https://github.com/whyisdifficult/jiratui/issues/95)
+
 ## [1.2.0] - 2025-10-04
 
 ### Added

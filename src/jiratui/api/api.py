@@ -1097,7 +1097,7 @@ class JiraAPIv2(JiraAPI):
 
     **API Docs**: https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about
 
-    This class implement methods for connecting to Jira REST API v2.
+    This class implements methods for connecting to Jira REST API v2.
     """
 
     API_PATH_PREFIX = '/rest/api/2/'
@@ -1359,3 +1359,7 @@ class JiraDataCenterAPI(JiraAPI):
                     follow_redirects=True,
                 )
         return None
+      
+    @staticmethod
+    def _build_payload_to_add_comment(message: str) -> dict:
+        return {'body': message}
