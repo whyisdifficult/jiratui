@@ -227,6 +227,7 @@ class IssuesSearchResultsTable(DataTable):
         widget.focus(True)
         widget.total = 0
         widget.value = ''
+        self.refresh_bindings()
 
     def action_hide(self) -> None:
         if not CONFIGURATION.get().search_results_page_filtering_enabled:
@@ -238,6 +239,7 @@ class IssuesSearchResultsTable(DataTable):
         self.search_results = self.get_initial_results_set()
         # give focus back to the data table
         self.focus()
+        self.refresh_bindings()
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""

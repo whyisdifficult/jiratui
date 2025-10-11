@@ -157,6 +157,7 @@ class JiraApp(App):
             await self.push_screen(QuitScreen())
         else:
             await self.api.api.client.close_async_client()
+            await self.api.api.async_http_client.close_async_client()
             self.app.exit()
 
     async def _set_application_title_using_server_info(self) -> None:

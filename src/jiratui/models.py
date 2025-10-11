@@ -202,8 +202,8 @@ class TimeTracking(BaseModel):
 class Attachment(BaseModel):
     id: str
     filename: str
-    size: int
     mime_type: str
+    size: int
     created: datetime | None = None
     author: JiraUser | None = None
 
@@ -213,9 +213,8 @@ class Attachment(BaseModel):
             return datetime.strftime(self.created, '%Y-%m-%d %H:%M')
         return ''
 
-    @property
-    def kb(self) -> Decimal | None:
-        if not self.size:
+    def get_size(self) -> Decimal | None:
+        if self.size is None:
             return None
         return Decimal(self.size / 1024).quantize(Decimal('0.01'))
 
@@ -226,8 +225,13 @@ class Attachment(BaseModel):
                 return email
             elif name := author.display_name:
                 return name
-            return author.account_id
+            elif username := author.username:
+                return username
+            return author.account_id or ''
         return ''
+
+    def get_mime_type(self) -> str:
+        return self.mime_type or ''
 
 
 @dataclass

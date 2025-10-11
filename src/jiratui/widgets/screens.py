@@ -188,7 +188,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+k',
             action='copy_issue_key',
-            description='Copy Issue Key',
+            description='Copy Key',
             show=True,
             key_display='^k',
             tooltip='Copy the work item key',
@@ -196,7 +196,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+j',
             action='copy_issue_url',
-            description='Copy Issue URL',
+            description='Copy URL',
             show=True,
             key_display='^j',
             tooltip='Copy the work item URL',

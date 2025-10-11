@@ -932,3 +932,35 @@ TextSearchScreen > Input {
     border: round $primary;
     background: transparent;
 }
+
+/* Screen to display attached files */
+ViewAttachmentScreen {
+    align: center middle;
+}
+
+ViewAttachmentScreen > VerticalScroll {
+    width: 70%;
+    height: 70%;
+    border: round $foreground;
+    background: transparent;
+    padding: 0 0;
+    scrollbar-size-vertical: 1;
+}
+
+ViewAttachmentScreen > VerticalScroll > Center > Image {
+    background: transparent;
+    width: auto;
+    height: auto;
+}
+
+ViewAttachmentScreen > VerticalScroll > Center {
+    & Markdown, TextArea {
+        background: transparent;
+        width: 100%;
+        height: auto;
+        align: center top;
+    }
+    & LoadingIndicator {
+        align: center middle;
+    }
+}

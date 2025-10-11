@@ -75,7 +75,7 @@ class APIController:
     def __init__(self, configuration: ApplicationConfiguration | None = None):
         self.config = CONFIGURATION.get() if not configuration else configuration
         self.api_version: int = self.config.jira_api_version or DEFAULT_JIRA_API_VERSION
-        self.api: JiraAPI | JiraAPIv2 | JiraDataCenterAPI
+        self.api: JiraAPI
         # initialize the API depending on whether we are connecting to Jira Cloud or Jira DC platform
         if self.config.cloud:
             if self.api_version == 2:
@@ -1939,6 +1939,32 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
+
+    async def get_attachment_content(self, attachment_id: str) -> APIControllerResponse:
+        """Download the content of an attachment.
+
+        Args:
+            attachment_id: the ID of the attachment
+
+        Returns:
+            An instance of `APIControllerResponse` with the bytes representation of the attached file or, an error if
+            the file can not be downloaded.
+        """
+        try:
+            content: bytes = await self.api.get_attachment_content(attachment_id)  # type:ignore
+            return APIControllerResponse(result=content)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'An error occurred while trying to get the contents of an attachment',
+                extra={
+                    'cloud': self.config.cloud,
+                    'error_message': str(e),
+                    'attachment_id': attachment_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
 
     async def get_work_item_worklog(
         self,

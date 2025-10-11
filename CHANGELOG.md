@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results.
 - Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results.
+- Support for viewing (some) files attached to work items directly in the terminal. When the user selects an attachment
+and then presses `v` a modal screen is opened to download and display the file's content.
 
 ### Minor Improvements
 
-- Improve the way we handle API exceptions and how we log them
+- Improve the way we handle API exceptions and how we log them.
+- Upgrade `uv_build` build backend to `>=0.9.2,<0.10.0`.
+- Refactor HTTP and JSON clients.
 
 ### Bug Fixes
 
