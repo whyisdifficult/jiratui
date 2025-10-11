@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from jiratui.api.client import AsyncJiraClient, JiraClient
+from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.config import ApplicationConfiguration
 from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
@@ -42,13 +42,22 @@ class JiraAPI:
         api_token: str,
         configuration: ApplicationConfiguration,
     ):
-        self.client = AsyncJiraClient(
+        # Async JSON client
+        self._client = AsyncJiraClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
             api_token=api_token.strip(),
             configuration=configuration,
         )
-        self.sync_client = JiraClient(
+        # Sync JSON client - for uploading attachments
+        self._sync_client = JiraClient(
+            base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
+            api_username=api_username,
+            api_token=api_token.strip(),
+            configuration=configuration,
+        )
+        # Async HTTP client - for downloading attachments
+        self._async_http_client = JiraTUIAsyncHTTPClient(
             base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
             api_username=api_username,
             api_token=api_token.strip(),
@@ -62,6 +71,18 @@ class JiraAPI:
     @property
     def base_url(self) -> str:
         return self._base_url
+
+    @property
+    def client(self) -> AsyncJiraClient:
+        return self._client
+
+    @property
+    def async_http_client(self) -> JiraTUIAsyncHTTPClient:
+        return self._async_http_client
+
+    @property
+    def sync_client(self) -> JiraClient:
+        return self._sync_client
 
     async def search_projects(
         self,
@@ -100,7 +121,7 @@ class JiraAPI:
         if keys:
             params['keys'] = ','.join(keys[:50])
 
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='project/search', params=params
         )
 
@@ -119,7 +140,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries.
         """
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'project/{project_key}/statuses'
         )
 
@@ -132,7 +153,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the details of the types of issues.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='issuetype')  # type:ignore[return-value]
+        return await self._client.make_request(method=httpx.AsyncClient.get, url='issuetype')  # type:ignore[return-value]
 
     async def get_statuses(
         self,
@@ -160,12 +181,12 @@ class JiraAPI:
             params['startAt'] = offset
         if limit:
             params['maxResults'] = limit
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='statuses/search', params=params
         )
 
     async def status(self) -> list[dict]:
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='status')  # type:ignore[return-value]
+        return await self._client.make_request(method=httpx.AsyncClient.get, url='status')  # type:ignore[return-value]
 
     async def get_project(self, key: str) -> dict:
         """Retrieves the details of a project.
@@ -178,7 +199,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the project.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url=f'project/{key}')  # type:ignore[return-value]
+        return await self._client.make_request(method=httpx.AsyncClient.get, url=f'project/{key}')  # type:ignore[return-value]
 
     async def user_assignable_search(
         self,
@@ -226,7 +247,7 @@ class JiraAPI:
         if issue_id:
             params['issueId'] = issue_id
 
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/assignable/search', params=params
         )
 
@@ -263,7 +284,7 @@ class JiraAPI:
             params['projectKeys'] = ','.join(project_keys)
         if query:
             params['query'] = query
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url='user/assignable/multiProjectSearch',
             params=params,
@@ -304,7 +325,7 @@ class JiraAPI:
             params['fields'] = fields
         if properties is not None:
             params['properties'] = properties
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}',
             params=params,
@@ -328,7 +349,7 @@ class JiraAPI:
         params: dict[str, str] = {}
         if global_id:
             params['globalId'] = global_id
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/remotelink',
             params=params,
@@ -354,7 +375,7 @@ class JiraAPI:
                 'url': url,
             }
         }
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/remotelink',
             data=json.dumps(payload),
@@ -373,7 +394,7 @@ class JiraAPI:
         Returns:
             Nothing.
         """
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.delete,
             url=f'issue/{issue_id_or_key}/remotelink/{link_id}',
         )
@@ -453,7 +474,7 @@ class JiraAPI:
         if next_page_token:
             payload['nextPageToken'] = next_page_token
 
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='search/jql', data=json.dumps(payload)
         )
 
@@ -501,7 +522,7 @@ class JiraAPI:
             jql_query=jql_query,
         )
 
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url='search/approximate-count',
             data=json.dumps({'jql': jql}),
@@ -528,7 +549,7 @@ class JiraAPI:
             payload['issue'] = {'key': issue_key}
         if project_key:
             payload['project'] = {'key': project_key}
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url='expression/evaluate',
             data=json.dumps(payload),
@@ -543,7 +564,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='serverInfo')  # type:ignore[return-value]
+        return await self._client.make_request(method=httpx.AsyncClient.get, url='serverInfo')  # type:ignore[return-value]
 
     async def myself(self) -> dict:
         """Retrieves information of the Jira user connecting to the Jira server.
@@ -554,7 +575,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details.
         """
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url='myself',
             params={'expand': 'groups,applicationRoles'},
@@ -579,7 +600,7 @@ class JiraAPI:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='users/search', params=params
         )
 
@@ -614,7 +635,7 @@ class JiraAPI:
             params['username'] = username
         if query is not None:
             params['query'] = query
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/search', params=params
         )
 
@@ -647,7 +668,7 @@ class JiraAPI:
             params['groupId'] = ','.join(groups_ids)
         if groups_names:
             params['groupName'] = ','.join(groups_names)
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='group/bulk', params=params
         )
 
@@ -680,7 +701,7 @@ class JiraAPI:
             params['maxResults'] = limit
         if group_id:
             params['groupId'] = group_id
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='group/member', params=params
         )
 
@@ -698,7 +719,7 @@ class JiraAPI:
             A dictionary with the details of the comment.
         """
         payload = self._build_payload_to_add_comment(message)
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/comment',
             data=json.dumps(payload),
@@ -727,7 +748,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the comment.
         """
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/comment/{comment_id}',
         )
@@ -753,7 +774,7 @@ class JiraAPI:
             params['maxResults'] = limit
         if offset is not None:
             params['startAt'] = offset
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/comment',
             params=params,
@@ -772,7 +793,7 @@ class JiraAPI:
         Returns:
             Nothing if the comment is deleted; an exception otherwise.
         """
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.delete,
             url=f'issue/{issue_id_or_key}/comment/{comment_id}',
         )
@@ -790,7 +811,7 @@ class JiraAPI:
         Returns:
             A dictionary with the metadata.
         """
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/editmeta'
         )
 
@@ -808,7 +829,7 @@ class JiraAPI:
             A dictionary with the details of the work item after the update.
         """
         data = {'update': payload}
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.put,
             url=f'issue/{issue_id_or_key}',
             data=json.dumps(data),
@@ -832,7 +853,7 @@ class JiraAPI:
             A dictionary with the details of the new item.
         """
         payload = {'fields': fields}
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='issue', data=json.dumps(payload)
         )
 
@@ -848,7 +869,7 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the transitions.
         """
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/transitions'
         )
 
@@ -866,7 +887,7 @@ class JiraAPI:
             Nothing.
         """
         payload = {'transition': transition_id}
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/transitions',
             data=json.dumps(payload),
@@ -910,7 +931,7 @@ class JiraAPI:
         else:
             payload['inwardIssue'] = {'key': left_issue_key}
             payload['outwardIssue'] = {'key': right_issue_key}
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.post,
             url='issueLink',
             data=json.dumps(payload),
@@ -926,10 +947,10 @@ class JiraAPI:
         Returns:
             A dictionary with the types of links between work items.
         """
-        return await self.client.make_request(method=httpx.AsyncClient.get, url='issueLinkType')  # type:ignore[return-value]
+        return await self._client.make_request(method=httpx.AsyncClient.get, url='issueLinkType')  # type:ignore[return-value]
 
     async def delete_issue_link(self, link_id: str) -> None:
-        await self.client.make_request(method=httpx.AsyncClient.delete, url=f'issueLink/{link_id}')
+        await self._client.make_request(method=httpx.AsyncClient.delete, url=f'issueLink/{link_id}')
         return None
 
     async def get_issue_create_meta(
@@ -954,7 +975,7 @@ class JiraAPI:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/createmeta/{project_id_or_key}/issuetypes/{issue_type_id}',
             params=params,
@@ -979,7 +1000,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the results.
         """
-        return self.sync_client.make_request(  # type:ignore[return-value]
+        return self._sync_client.make_request(  # type:ignore[return-value]
             method=httpx.post,
             url=f'issue/{issue_id_or_key}/attachments',
             headers={'X-Atlassian-Token': 'no-check'},
@@ -998,10 +1019,46 @@ class JiraAPI:
         Returns:
             `None`; HTTP 204 if successful or an exception otherwise.
         """
-        await self.client.make_request(
+        await self._client.make_request(
             method=httpx.AsyncClient.delete, url=f'attachment/{attachment_id}'
         )
         return None
+
+    async def get_attachment(self, attachment_id: str) -> dict:
+        """Retrieves an attachment (metadata).
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-get
+            https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-id-get
+
+        Args:
+            attachment_id: the ID of the attachment.
+
+        Returns:
+            A dictionary with the metadata of the attachment.
+        """
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get, url=f'attachment/{attachment_id}'
+        )
+
+    async def get_attachment_content(self, attachment_id: str) -> Any:
+        """Retrieves the contents of an attachment.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-content-id-get
+            https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-content-id-get
+
+        Args:
+            attachment_id: The ID of the attachment.
+
+        Returns:
+            A bytes representation of the attachment's content.
+        """
+        return await self._async_http_client.make_request(
+            method=httpx.AsyncClient.get,
+            url=f'attachment/content/{attachment_id}',
+            follow_redirects=True,
+        )
 
     async def get_issue_work_log(
         self,
@@ -1028,7 +1085,7 @@ class JiraAPI:
             params['startAt'] = offset
         if limit is not None:
             params['maxResults'] = limit
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}/worklog',
             params=params,
@@ -1036,7 +1093,9 @@ class JiraAPI:
 
 
 class JiraAPIv2(JiraAPI):
-    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
+    """Implements methods to connect to the REST API v2 exposed by the Jira Cloud Platform.
+
+    **API Docs**: https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about
 
     This class implement methods for connecting to Jira REST API v2.
     """
@@ -1049,10 +1108,9 @@ class JiraAPIv2(JiraAPI):
 
 
 class JiraDataCenterAPI(JiraAPI):
-    """Implements the Jira API provides by Jira Data Center (aka. on-premises) installations.
+    """Implements the API exposed by the Jira Data Center (aka. on-premises) platform.
 
-    **API Docs**:
-        - https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
+    **API Docs**: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
     """
 
     # see: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure
@@ -1084,7 +1142,7 @@ class JiraDataCenterAPI(JiraAPI):
         Returns:
             A dictionary with the details of the projects.
         """
-        data = await self.client.make_request(method=httpx.AsyncClient.get, url='project')  # type:ignore[return-value]
+        data = await self._client.make_request(method=httpx.AsyncClient.get, url='project')  # type:ignore[return-value]
         return {'values': data, 'isLast': True}
 
     async def search_issues(
@@ -1162,7 +1220,7 @@ class JiraDataCenterAPI(JiraAPI):
         if offset:
             payload['startAt'] = offset
 
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post, url='search', data=json.dumps(payload)
         )
 
@@ -1257,8 +1315,47 @@ class JiraDataCenterAPI(JiraAPI):
             params['projectKeys'] = ','.join(project_keys)
         if query:
             params['username'] = query
-        return await self.client.make_request(  # type:ignore[return-value]
+        return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url='user/assignable/multiProjectSearch',
             params=params,
         )
+
+    async def get_attachment(self, attachment_id: str) -> dict:
+        """Retrieves an attachment (metadata).
+
+        See Also:
+            https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment-getAttachment
+            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get
+
+        Args:
+            attachment_id: the ID of the attachment.
+
+        Returns:
+            JSON representation of the attachment meta-data. The representation does not contain the
+            attachment itself, but contains a URI that can be used to download the actual attached file.
+        """
+        return await super().get_attachment(attachment_id)
+
+    async def get_attachment_content(self, attachment_id: str) -> Any:
+        """Retrieves the contents of an attachment.
+
+        See Also:
+            https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment
+            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get
+
+        Args:
+            attachment_id: The ID of the attachment.
+
+        Returns:
+            A bytes representation of the attachment's content; or `None` if the attachment can not be downloaded.
+        """
+        attachment: dict
+        if attachment := await self.get_attachment(attachment_id):
+            if content := attachment.get('content'):
+                await self._async_http_client.make_request(
+                    method=httpx.AsyncClient.get,
+                    url=content,
+                    follow_redirects=True,
+                )
+        return None

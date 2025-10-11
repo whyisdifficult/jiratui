@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results.
 - Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results.
+- Support for viewing (some) files attached to work items directly in the terminal.
 
 ### Minor Improvements
 
