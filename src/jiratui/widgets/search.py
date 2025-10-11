@@ -118,7 +118,7 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='ctrl+o',
             action='open_issue_in_browser',
-            description='Open in Browser',
+            description='Browse',
             show=True,
             key_display='^o',
             tooltip='Open item in the browser',
