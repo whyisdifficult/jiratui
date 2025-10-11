@@ -1359,7 +1359,7 @@ class JiraDataCenterAPI(JiraAPI):
                     follow_redirects=True,
                 )
         return None
-      
+
     @staticmethod
     def _build_payload_to_add_comment(message: str) -> dict:
         return {'body': message}
