@@ -34,7 +34,9 @@ class ServerInfoScreen(ModalScreen):
         return self.query_one('#config-details', expect_type=DataTable)
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll():
+        vertical = VerticalScroll()
+        vertical.border_title = self.TITLE
+        with vertical:
             yield CustomTitle('JiraTUI API Configuration')
             yield DataTable(cursor_type='row', show_header=False, id='config-details')
             yield CustomTitle(self.TITLE)

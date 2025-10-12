@@ -259,7 +259,7 @@ HelpScreen {
 }
 
 HelpScreen > VerticalScroll {
-    width: 75%;
+    width: 80%;
     height: 95%;
     border: round $foreground;
     background: $background 70%;
@@ -268,6 +268,7 @@ HelpScreen > VerticalScroll {
 
 HelpScreen > VerticalScroll > MarkdownViewer {
     scrollbar-size-vertical: 1;
+    margin-top: 1;
 }
 
 CustomTitle {
@@ -764,6 +765,7 @@ ConfigFileScreen > Vertical > DataTable {
     background: transparent;
     height: 50%;
     scrollbar-size-vertical: 1;
+    margin-top: 1
 }
 
 .config-file-textarea {
@@ -963,4 +965,46 @@ ViewAttachmentScreen > VerticalScroll > Center {
     & LoadingIndicator {
         align: center middle;
     }
+}
+
+/* Screen to create git branches */
+GitScreen {
+    align: center middle;
+}
+
+GitScreen > Vertical {
+    width: 70%;
+    height: 70%;
+    border: round $foreground;
+    background: transparent;
+    padding: 1 1;
+    scrollbar-size-vertical: 1;
+}
+
+#target-repo-message {
+    color: $success;
+    padding: 0 1;
+}
+
+#error-message {
+    color: $error;
+    padding: 0 1;
+}
+
+GitBranchNameInput {
+    box_sizing: content-box;
+    height: 1;
+    border: round $accent;
+    width: 60;
+    margin: 1 0;
+    padding: 0 1;
+    background: $background;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+GitRepositorySelectionWidget {
+    border: round $accent;
+    padding: 0 1;
 }

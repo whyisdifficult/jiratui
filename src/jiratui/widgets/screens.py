@@ -37,6 +37,7 @@ from jiratui.widgets.filters import (
     UserSelectionInput,
     WorkItemInputWidget,
 )
+from jiratui.widgets.git_screen import GitScreen
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.search import (
@@ -200,6 +201,14 @@ class MainScreen(Screen):
             show=True,
             key_display='^j',
             tooltip='Copy the work item URL',
+        ),
+        Binding(
+            key='ctrl+g',
+            action='create_git_branch',
+            description='Git',
+            show=True,
+            key_display='^g',
+            tooltip='Creates a Git branch with the key of the work item',
         ),
     ]
 
@@ -368,7 +377,7 @@ class MainScreen(Screen):
                         yield IssueRemoteLinksWidget()
                     with TabPane(title='Subtasks'):
                         yield IssueChildWorkItemsWidget()
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     async def on_mount(self) -> None:
         # fetch the list of projects
@@ -902,6 +911,14 @@ class MainScreen(Screen):
         if (table := self.search_results_table) and table.current_work_item_key:
             self.app.copy_to_clipboard(self.search_results_table.current_work_item_key)
             self.notify('Work item Key copied!')
+
+    def action_create_git_branch(self) -> None:
+        """Opens up a modal screen to allow the user to create Git branches."""
+        if (table := self.search_results_table) and table.current_work_item_key:
+            self.run_worker(self._open_git_screen(table.current_work_item_key))
+
+    async def _open_git_screen(self, work_item_key: str) -> None:
+        await self.app.push_screen(GitScreen(work_item_key))
 
     async def action_create_work_item(self) -> None:
         """Handles the event to create a new work item."""

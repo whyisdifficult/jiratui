@@ -147,6 +147,15 @@ class ApplicationConfiguration(BaseSettings):
     search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
     """The default order for search results. Accepts values from WorkItemsSearchOrderBy enum: CREATED_ASC,
     CREATED_DESC, PRIORITY_ASC, PRIORITY_DESC, KEY_ASC, KEY_DESC."""
+    git_repositories: dict | None = None
+    """The Git repositories to create new branches based on work items. It expects a mapping from user-defined IDs into
+    a dictionary with the name of the repository and the path to the directory that contains the .git directory.
+    Example:
+    1: {
+        'name': 'The repo for my cool application',
+        'path': '/my/repository/.git
+    }
+    """
 
     model_config = SettingsConfigDict(
         extra='allow',

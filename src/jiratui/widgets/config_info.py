@@ -7,7 +7,6 @@ from textual.screen import ModalScreen
 from textual.widgets import DataTable, TextArea
 
 from jiratui.config import CONFIGURATION
-from jiratui.widgets.base import CustomTitle
 
 
 class ConfigFileScreen(ModalScreen):
@@ -21,8 +20,9 @@ class ConfigFileScreen(ModalScreen):
         return self.query_one('#config-details', expect_type=DataTable)
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle(self.TITLE)
+        vertical = Vertical()
+        vertical.border_title = self.TITLE
+        with vertical:
             yield DataTable(cursor_type='row', show_header=False, id='config-details')
             if CONFIGURATION.get().pre_defined_jql_expressions:
                 jql_expressions_textarea = TextArea.code_editor(
@@ -38,7 +38,7 @@ class ConfigFileScreen(ModalScreen):
     @staticmethod
     def _get_data():
         return CONFIGURATION.get().model_dump(
-            exclude={'pre_defined_jql_expressions', 'jira_api_token'}
+            exclude={'pre_defined_jql_expressions', 'jira_api_token', 'git_repositories'}
         )
 
     async def on_mount(self) -> None:
