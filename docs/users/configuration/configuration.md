@@ -105,7 +105,8 @@ characters requires to start filtering results. The default is 3 but can be set 
 
 ## Setting the Default Order for Search Results
 
-You can control the default sort order for search results using the `search_results_default_order` configuration option. This determines how issues are ordered when you perform a search in JiraTUI.
+You can control the default sort order for search results using the `search_results_default_order` configuration
+option. This determines how issues are ordered when you perform a search in JiraTUI.
 
 **Accepted values:**
 - `created asc`
@@ -123,3 +124,31 @@ search_results_default_order: 'created desc'
 ```
 
 You can still change the order interactively in the UI; this setting only controls the initial/default value.
+
+## Setting Git Repositories
+
+Starting with `v1.3.0` JiraTUI allows users to create Git branches directly from the UI. Once you select a work item,
+you can press `^g` to open up a dialog to create a new Git branch using the work item's key as the initial value for the
+branch.
+
+To support this you need to configure the repositories that the tool can use to create branches. In principle there is
+no direct connection between projects and Git repos. A project may use different repos and a repo may be used in
+different projects. Because of this you need to configure the Git repos you want to use.
+
+You can do this via the configuration variable `git_repositories`. Using this setting you define repositories
+specifying an ID, a name and a path to the repository's `.git` directory.
+
+**Example**:
+
+```yaml
+git_repositories:
+   1:
+      name: 'My Project A'
+      path: '/projects/project-a/.git'
+   2:
+      name: 'My Project B'
+      path: '/projects/project-b/.git'
+```
+
+Using this configuration JiraTUI will be able to display these repositories and, you will be able to choose the target
+repo for creating a new branch.
