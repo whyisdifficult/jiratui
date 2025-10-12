@@ -4,8 +4,6 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, TextArea
 
-from jiratui.widgets.base import CustomTitle
-
 
 class AddCommentScreen(Screen[str]):
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
@@ -25,8 +23,9 @@ class AddCommentScreen(Screen[str]):
         return self.query_one('#add-comment-button-save', expect_type=Button)
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle(self.title)
+        vertical = Vertical()
+        vertical.border_title = self.title
+        with vertical:
             yield TextArea.code_editor('', language='markdown', show_line_numbers=False)
             with ItemGrid(classes='add-comment-grid-buttons'):
                 yield Button('Save', variant='success', id='add-comment-button-save', disabled=True)

@@ -6,7 +6,6 @@ from textual.screen import Screen
 from textual.widgets import Button, DirectoryTree, Input, Rule, Static
 
 from jiratui.config import CONFIGURATION
-from jiratui.widgets.base import CustomTitle
 
 
 class AddAttachmentScreen(Screen[str]):
@@ -58,8 +57,9 @@ class AddAttachmentScreen(Screen[str]):
         return self.DEFAULT_ATTACHMENTS_SOURCE_DIRECTORY
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle(f'Attach File to Work Item {self._work_item_key}')
+        vertical = Vertical()
+        vertical.border_title = self.title
+        with vertical:
             yield Static(
                 Text(
                     'Important: uploading large files can make the interface temporarily unresponsive',
