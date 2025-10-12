@@ -122,11 +122,15 @@ class GitScreen(ModalScreen[bool]):
             self.error_message_widget.content = str(e)
             return None
 
+    @staticmethod
+    def _get_repo_branches(repo: Repo) -> set[str]:
+        return {branch.name.lower() for branch in repo.branches}
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == 'button-create-git-branch':
             if repo := self._get_git_repository(self.repository_selector.selection):
                 # check that the branch we want to create does not exist
-                if self.branch_input.value.lower() in {head.name.lower() for head in repo.heads}:
+                if self.branch_input.value.lower() in self._get_repo_branches(repo):
                     self.error_message_widget.content = (
                         'The branch you want to create already exists'
                     )
@@ -135,8 +139,12 @@ class GitScreen(ModalScreen[bool]):
                         if self.checkbox_input.value is True:
                             new_branch_reference.checkout()
                             self.notify(
-                                f'Branch {new_branch_reference} created and checked out successfully'
+                                f'Branch {new_branch_reference} created and checked out successfully',
+                                title='Git Integration',
                             )
                         else:
-                            self.notify(f'Branch {new_branch_reference} created successfully')
+                            self.notify(
+                                f'Branch {new_branch_reference} created successfully',
+                                title='Git Integration',
+                            )
                         self.dismiss(True)
