@@ -244,6 +244,12 @@ project. Otherwise the app will attempt to find all the users that belong to the
 
 **Important**: fetching users by group id is only supported in the Jira Cloud Platform.
 
+# Creating Git Branches
+
+If you want to create a Git branch for a work item you can do so by selecting the work item int he search results and
+then pressing `^g`. This will open a pop-up screen and will allow you to specify the target repository and the name of
+the branch. The list of available repositories is controlled by the configuration variable `git_repositories`.
+
 # Creating Work Items
 
 To create a work item you can press `ctrl+n`. This will open up a modal screen with a form to provide the necessary

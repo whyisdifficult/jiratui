@@ -259,7 +259,7 @@ HelpScreen {
 }
 
 HelpScreen > VerticalScroll {
-    width: 75%;
+    width: 80%;
     height: 95%;
     border: round $foreground;
     background: $background 70%;
@@ -268,6 +268,7 @@ HelpScreen > VerticalScroll {
 
 HelpScreen > VerticalScroll > MarkdownViewer {
     scrollbar-size-vertical: 1;
+    margin-top: 1;
 }
 
 CustomTitle {
@@ -340,13 +341,20 @@ WorkItemReadOnlyDetailsScreen > VerticalScroll {
 
 AddCommentScreen {
     align: center middle;
+    background: $background 70%;
 }
 AddCommentScreen > Vertical {
     width: 50%;
     height: 40%;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
 }
 #add-comment-button-save {
     width: 20%;
@@ -373,13 +381,16 @@ AddCommentScreen > Vertical {
 
 AddRemoteLinkScreen {
     align: center middle;
+    background: $background 70%;
 }
 AddRemoteLinkScreen > Vertical {
     width: 50%;
     height: auto;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
 }
 #add-remote-link-button-save {
     width: 20%;
@@ -438,13 +449,16 @@ RemoteLinkURLInputWidget {
 
 AddWorkItemRelationshipScreen {
     align: center middle;
+    background: $background 70%;
 }
 AddWorkItemRelationshipScreen > Vertical {
     width: 50%;
     height: auto;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
 }
 #add-link-button-save {
     width: 20%;
@@ -474,7 +488,7 @@ AddWorkItemRelationshipScreen > Vertical {
 
 IssueLinkTypeSelector {
     width: auto;
-    border: round $primary-lighten-3;
+    border: round $accent;
     padding: 0 1;
 }
 
@@ -487,7 +501,7 @@ LinkedWorkItemInputWidget {
     padding: 0 1;
     background: $background;
     &.required {
-        border: round red;
+        border: round $accent;
     }
     &:focus {
         border: round $accent-lighten-3;
@@ -502,13 +516,16 @@ LinkedWorkItemInputWidget {
 
 AddWorkItemScreen {
     align: center middle;
+    background: $background 70%;
 }
 AddWorkItemScreen > Vertical {
     width: 70%;
     height: auto;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
 }
 #add-work-item-button-save {
     width: 20%;
@@ -676,13 +693,16 @@ ConfirmationScreen > Grid {
 
 AddAttachmentScreen {
     align: center middle;
+    background: $background 70%;
 }
 AddAttachmentScreen > Vertical {
     width: 70%;
     height: auto;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
 }
 
 #attachment-directory-tree {
@@ -764,6 +784,7 @@ ConfigFileScreen > Vertical > DataTable {
     background: transparent;
     height: 50%;
     scrollbar-size-vertical: 1;
+    margin-top: 1
 }
 
 .config-file-textarea {
@@ -963,4 +984,46 @@ ViewAttachmentScreen > VerticalScroll > Center {
     & LoadingIndicator {
         align: center middle;
     }
+}
+
+/* Screen to create git branches */
+GitScreen {
+    align: center middle;
+}
+
+GitScreen > Vertical {
+    width: 70%;
+    height: 50%;
+    border: round $foreground;
+    background: transparent;
+    padding: 1 1;
+    scrollbar-size-vertical: 1;
+}
+
+#target-repo-message {
+    color: $success;
+    padding: 0 1;
+}
+
+#error-message {
+    color: $error;
+    padding: 0 1;
+}
+
+GitBranchNameInput {
+    box_sizing: content-box;
+    height: 1;
+    border: round $accent;
+    width: 60;
+    margin: 1 0;
+    padding: 0 1;
+    background: $background;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+GitRepositorySelectionWidget {
+    border: round $accent;
+    padding: 0 1;
 }

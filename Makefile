@@ -4,6 +4,7 @@ help:
 	@echo "  env                        - Synchronize the uv environment"
 	@echo "  install_pre_commit_hooks   - Install pre-commit hooks"
 	@echo "  lint                       - Lint the code"
+	@echo "  lint-fix                   - Lint the code and apply fixes"
 	@echo "  test                       - Run tests"
 	@echo "  docs-live                  - Generate documentation with live reload"
 	@echo "  docs-markdown              - Generate documentation in Markdown format"
@@ -34,7 +35,7 @@ lint-fix:
 
 .PHONY: test
 test:
-	uv run --no-sync pytest src
+	uv run --no-sync pytest src/jiratui
 
 .PHONY: docs-live
 docs-live:

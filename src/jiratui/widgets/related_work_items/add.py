@@ -7,7 +7,6 @@ from textual.widgets import Button, Input, Rule, Select, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import LinkIssueType
-from jiratui.widgets.base import CustomTitle
 
 
 class LinkedWorkItemInputWidget(Input):
@@ -31,6 +30,7 @@ class IssueLinkTypeSelector(Select):
             type_to_search=True,
             compact=True,
         )
+        self.valid_empty = False
         self.border_title = 'Link Types'
 
 
@@ -56,12 +56,13 @@ class AddWorkItemRelationshipScreen(Screen[dict]):
         return self.query_one('#add-link-button-save', expect_type=Button)
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle(self.title)
+        vertical = Vertical()
+        vertical.border_title = self.title
+        with vertical:
             yield Static(
                 Text('Important: Fields marked with (*) are required.', style='italic orange')
             )
-            yield Rule(classes='rule-50')
+            yield Rule()
             with ItemGrid(classes='issue-linking-grid'):
                 yield IssueLinkTypeSelector([])
                 yield LinkedWorkItemInputWidget()

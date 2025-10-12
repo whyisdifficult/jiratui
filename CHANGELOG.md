@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for viewing (some) files attached to work items directly in the terminal. When the user selects an attachment
 by pressing `enter` on a row, a modal screen is opened to download and display the file's content.
 - Support for opening attachments in the browser when the users preses `^o` on a selected/highlighted attachment.
+- A feature to create Git branches directly from the application's UI using the key of a work item as an initial name
+for the branch. Git repositories can be configured in the config file.
 
 ### Minor Improvements
 

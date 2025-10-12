@@ -5,8 +5,6 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Rule, Static
 
-from jiratui.widgets.base import CustomTitle
-
 
 class RemoteLinkURLInputWidget(Input):
     def __init__(self):
@@ -61,16 +59,16 @@ class AddRemoteLinkScreen(Screen[dict]):
         return self.query_one('#add-remote-link-button-save', expect_type=Button)
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle(self.title)
+        vertical = Vertical()
+        vertical.border_title = self.title
+        with vertical:
             yield Static(
                 Text('Important: Fields marked with (*) are required.', style='italic orange')
             )
-            yield Rule(classes='rule-50')
+            yield Rule()
             with ItemGrid(classes='issue-remote-link-grid'):
                 yield RemoteLinkURLInputWidget()
                 yield RemoteLinkNameInputWidget()
-            yield Rule()
             with ItemGrid(classes='add-remote-link-grid-buttons'):
                 yield Button(
                     'Save', variant='success', id='add-remote-link-button-save', disabled=True
