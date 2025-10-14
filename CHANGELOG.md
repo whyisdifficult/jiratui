@@ -22,6 +22,7 @@ for the branch. Git repositories can be configured in the config file.
 - Improve the way we handle API exceptions and how we log them.
 - Upgrade `uv_build` build backend to `>=0.9.2,<0.10.0`.
 - Refactor HTTP and JSON clients.
+- Add hotkey `2` to focus the Info tab.
 
 ### Bug Fixes
 
