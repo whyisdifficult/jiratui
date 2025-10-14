@@ -23,7 +23,8 @@ for the branch. Git repositories can be configured in the config file.
 - Upgrade `uv_build` build backend to `>=0.9.2,<0.10.0`.
 - Refactor HTTP and JSON clients.
 - Add hotkey `2` to focus the Info tab.
-- Ase `python-magic` library to detect mime type when uploading files as attachments.
+- Use `python-magic` library to detect mime type when uploading files as attachments.
+- Update the way we display related tasks and subtasks to use border title and subtitles.
 
 ### Bug Fixes
 
