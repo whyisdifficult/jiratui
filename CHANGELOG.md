@@ -5,31 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.3.0] - 2025-10-14
 
 ### Added
 
-- Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results.
-- Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results.
+- Enable using `^k` to copy to the clipboard the key of the issue selected/highlighted in the search results; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/92
+- Enable using `^j` to copy to the clipboard the URL of the issue selected/highlighted in the search results; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/92
 - Support for viewing (some) files attached to work items directly in the terminal. When the user selects an attachment
-by pressing `enter` on a row, a modal screen is opened to download and display the file's content.
-- Support for opening attachments in the browser when the users preses `^o` on a selected/highlighted attachment.
+by pressing `enter` on a row, a modal screen is opened to download and display the file's content; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/99
+- Support for opening attachments in the browser when the users preses `^o` on a selected/highlighted attachment; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/101
 - A feature to create Git branches directly from the application's UI using the key of a work item as an initial name
-for the branch. Git repositories can be configured in the config file.
+for the branch. Git repositories can be configured in the config file; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/99
+- [Issue-95] add support for adding comments using Jira DC; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/96
 
 ### Minor Improvements
 
-- Improve the way we handle API exceptions and how we log them.
+- Improve the way we handle API exceptions and how we log them; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/89
 - Upgrade `uv_build` build backend to `>=0.9.2,<0.10.0`.
 - Refactor HTTP and JSON clients.
-- Add hotkey `2` to focus the Info tab.
-- Use `python-magic` library to detect mime type when uploading files as attachments.
-- Update the way we display related tasks and subtasks to use border title and subtitles.
+- Add hotkey `2` to focus the Info tab; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/104
+- Use `python-magic` library to detect mime type when uploading files as attachments; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/105
+- Update the way we display related tasks and subtasks to use border title and subtitles; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/106
 
 ### Bug Fixes
 
 - Fix bug when adding comments using Jira DC platform. [Bug report](https://github.com/whyisdifficult/jiratui/issues/95)
-- - Fix sorting for search when using JQL. [Bug report](https://github.com/whyisdifficult/jiratui/issues/97)
+- Fix sorting for search when using JQL. [Bug report](https://github.com/whyisdifficult/jiratui/issues/97) by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/100
+- [Issue-93] fix bug when displaying server info for Jira DC; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/94
+
+### Documentation
+
+- Update the dependencies for sphinx docs; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/87
 
 ## [1.2.0] - 2025-10-04
 
