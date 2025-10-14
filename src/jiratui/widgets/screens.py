@@ -144,6 +144,12 @@ class MainScreen(Screen):
             show=False,
         ),
         Binding(
+            key='2',
+            action='focus_widget("2")',
+            description='Focus the Info tab widget',
+            show=False,
+        ),
+        Binding(
             key='3',
             action='focus_widget("3")',
             description='Focus the Details tab widget',
@@ -237,6 +243,27 @@ class MainScreen(Screen):
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
         be used for searching issues when the user does not select any filter/criteria in the UI. """
         self.logger = logging.getLogger(LOGGER_NAME)
+        # maps keys to widget ids to enable quick navigation
+        self.keys_widget_ids_mapping: dict[str, str] = {
+            'p': '#jira-project-selector',
+            't': '#jira-issue-types-selector',
+            's': '#jira-issue-status-selector',
+            'a': '#jira-users-selector',
+            'k': '#input_issue_key',
+            'f': '#input_date_from',
+            'u': '#input_date_until',
+            'o': '#issue-search-order-by-selector',
+            'v': '#active-sprint-checkbox',
+            'j': '#input_search_term',
+            '1': '#search_results',
+            '2': '#work_item_info_container',
+            '3': '#issue_details',
+            '4': '#issue_comments',
+            '5': '#related_issues',
+            '6': '#attachments',
+            '7': '#issue_remote_links',
+            '8': '#issue_subtasks',
+        }
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -864,40 +891,10 @@ class MainScreen(Screen):
         Returns:
             Nothing.
         """
-        if key == 'p':
-            self.set_focus(self.project_selector)
-        elif key == 't':
-            self.set_focus(self.issue_type_selector)
-        elif key == 's':
-            self.set_focus(self.issue_status_selector)
-        elif key == 'a':
-            self.set_focus(self.users_selector)
-        elif key == 'k':
-            self.set_focus(self.issue_key_input)
-        elif key == 'f':
-            self.set_focus(self.issue_date_from_input)
-        elif key == 'u':
-            self.set_focus(self.issue_date_until_input)
-        elif key == 'o':
-            self.set_focus(self.order_by_widget)
-        elif key == 'v':
-            self.set_focus(self.active_sprint_checkbox)
-        elif key == 'j':
-            self.set_focus(self.jql_expression_input)
-        elif key == '3':
-            self.set_focus(self.issue_details_widget)
-        elif key == '4':
-            self.set_focus(self.issue_comments_widget)
-        elif key == '5':
-            self.set_focus(self.related_issues_widget)
-        elif key == '6':
-            self.set_focus(self.issue_attachments_widget)
-        elif key == '7':
-            self.set_focus(self.issue_remote_links_widget)
-        elif key == '8':
-            self.set_focus(self.issue_child_work_items_widget)
-        elif key == '1':
-            self.set_focus(self.search_results_table)
+
+        if widget_id := self.keys_widget_ids_mapping.get(key):
+            if target_widget := self.query_one(widget_id):
+                self.set_focus(target_widget)
 
     def action_copy_issue_url(self) -> None:
         """Copy to the clipboard the URL of the item currently selected in the search results."""

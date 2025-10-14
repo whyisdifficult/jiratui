@@ -4,7 +4,7 @@ from typing import Any, cast
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, VerticalScroll
+from textual.containers import Center, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Label, ProgressBar, Select, Static
 
@@ -231,7 +231,7 @@ class TimeTrackingContainer(Center):
         self.border_title = 'Time Tracking'
 
 
-class IssueDetailsWidget(VerticalScroll):
+class IssueDetailsWidget(Vertical):
     """Implements a form to allow the user to view and edit some of the fields associated to a work item.
 
     The list of fields that can be updated are fixed:
@@ -284,6 +284,7 @@ class IssueDetailsWidget(VerticalScroll):
     def __init__(self):
         super().__init__(id='issue_details')
         self.available_users: list[tuple[str, str]] | None = None
+        self.can_focus = True
 
     @property
     def help_anchor(self) -> str:

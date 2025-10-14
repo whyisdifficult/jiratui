@@ -197,7 +197,12 @@ class ActiveSprintCheckbox(Checkbox):
     HELP = 'See Search by Active Sprint section in the help'
 
     def __init__(self):
-        super().__init__(label='Active Sprint', value=False, classes='active-sprint-checkbox')
+        super().__init__(
+            id='active-sprint-checkbox',
+            label='Active Sprint',
+            value=False,
+            classes='active-sprint-checkbox',
+        )
         self.border_subtitle = '(v)'
 
     @property
