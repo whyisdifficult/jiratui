@@ -17,6 +17,8 @@ from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnly
 
 
 class RelatedIssueCollapsible(Collapsible):
+    """A collapsible to show a work item related to another item"""
+
     BINDINGS = [
         Binding(
             key='v',
@@ -155,6 +157,15 @@ class RelatedIssuesWidget(VerticalScroll):
                 self.issues = work_item.related_issues or []
 
     def watch_issues(self, items: list[RelatedJiraIssue] | None) -> None:
+        """Updates the list of work items related to the currently-selected item.
+
+        Args:
+            items: the list of items related to the current work item.
+
+        Returns:
+            None
+        """
+
         self.remove_children()
 
         if not items:
@@ -163,13 +174,7 @@ class RelatedIssuesWidget(VerticalScroll):
         rows: list[RelatedIssueCollapsible] = []
         issue: RelatedJiraIssue
         for issue in items:
-            styles: dict | None = RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING.get(
-                issue.priority_name.lower(), {}
-            )
-
-            children: list[Widget] = [
-                Static(Text(issue.cleaned_summary())),
-            ]
+            children: list[Widget] = [Static(Text(issue.cleaned_summary()))]
 
             if browsable_url := build_external_url_for_issue(issue.key):
                 children.append(
@@ -178,20 +183,16 @@ class RelatedIssuesWidget(VerticalScroll):
                     )
                 )
 
-            children.append(
-                Static(
-                    Text(
-                        f'{issue.priority_name} priority',
-                        style=styles.get('text_style', '') if styles else '',
-                    ),
-                    classes='related-work-item-priority',
-                ),
-            )
             collapsible = RelatedIssueCollapsible(
                 *children,
                 title=Text(f'{issue.link_type} | {issue.key} | {issue.display_status()}'),
                 work_item_key=issue.key,
                 link_id=issue.id,
+            )
+            if issue.priority_name:
+                collapsible.border_subtitle = f'{issue.priority_name} priority'
+            styles: dict | None = RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING.get(
+                issue.priority_name.lower(), {}
             )
             if styles and (collapsible_class := styles.get('collapsible_class')):
                 collapsible.add_class(collapsible_class)
