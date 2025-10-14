@@ -36,6 +36,7 @@ dependencies = [
     "pydantic-settings[yaml]>=2.10.1",
     "python-dateutil>=2.9.0.post0",
     "python-json-logger>=3.3.0",
+    "python-magic>=0.4.27",
     "textual-image>=0.8.4",
     "textual[syntax]>=6.1.0",
     "xdg-base-dirs>=6.0.2",

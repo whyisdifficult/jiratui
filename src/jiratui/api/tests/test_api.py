@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import httpx
 import pytest
@@ -7,8 +7,16 @@ import respx
 
 from jiratui.api.api import JiraAPI, JiraDataCenterAPI
 from jiratui.api.utils import build_issue_search_jql
+from jiratui.exceptions import FileUploadException
 from jiratui.models import WorkItemsSearchOrderBy
 from jiratui.utils.test_utilities import get_url_pattern, load_json_response
+
+# for testing file uploads
+DATA = """\
+line 1
+line 2
+line 3
+"""
 
 
 @pytest.mark.asyncio
@@ -2427,3 +2435,33 @@ async def test_work_items_search_approximate_count(
     assert route.calls.last.request.url.path == '/rest/api/3/search/approximate-count'
     assert json.loads(route.calls.last.request.content) == {'jql': 'key=value'}
     assert result == {'key': 'data'}
+
+
+@patch.object(JiraAPI, '_detect_file_mime_type')
+def test_add_attachment_to_issue_mime_detection_fails(
+    detect_file_mime_type_mock: Mock, jira_api: JiraAPI
+):
+    # GIVEN
+    detect_file_mime_type_mock.side_effect = FileNotFoundError
+    with patch('builtins.open', mock_open(read_data=DATA)):
+        # WHEN
+        with pytest.raises(FileUploadException):
+            jira_api.add_attachment_to_issue('key-1', 'test-file.txt', 'test-file.txt')
+
+
+@patch.object(JiraAPI, '_detect_file_mime_type')
+@respx.mock
+def test_add_attachment_to_issue(detect_file_mime_type_mock: Mock, jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/key-1/attachments'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    detect_file_mime_type_mock.return_value = 'text/plain'
+    # WHEN
+    with patch('builtins.open', mock_open(read_data=DATA)):
+        result = jira_api.add_attachment_to_issue('key-1', 'test-file.txt', 'test-file.txt')
+        assert result == {}
