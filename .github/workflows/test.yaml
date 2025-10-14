@@ -29,6 +29,9 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
+    - name: Install libmagic on macOS
+      if: runner.os == 'macOS'
+      run: brew install libmagic
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:

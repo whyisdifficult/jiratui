@@ -60,3 +60,7 @@ class AuthorizationException(APIException):
 
 class PermissionException(APIException):
     pass
+
+
+class FileUploadException(APIException):
+    pass

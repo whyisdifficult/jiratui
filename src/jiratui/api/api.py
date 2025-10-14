@@ -1,13 +1,17 @@
 from datetime import date
+from io import BufferedReader
 import json
+import logging
 from typing import Any
 
 import httpx
+import magic
 
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.config import ApplicationConfiguration
-from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS
+from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS, LOGGER_NAME
+from jiratui.exceptions import FileUploadException
 from jiratui.models import WorkItemsSearchOrderBy
 
 
@@ -67,6 +71,7 @@ class JiraAPI:
         # this allows us to issue requests to different endpoints depending on whether Jira runs on the cloud (default)
         # or on-premises
         self.cloud = configuration.cloud if configuration.cloud is False else True
+        self.logger = logging.getLogger(LOGGER_NAME)
 
     @property
     def base_url(self) -> str:
@@ -982,7 +987,11 @@ class JiraAPI:
         )
 
     def add_attachment_to_issue(
-        self, issue_id_or_key: str, filename, file_name: str, mime_type: str
+        self,
+        issue_id_or_key: str,
+        filename,
+        file_name: str,
+        mime_type: str | None = None,
     ) -> list[dict]:
         """Adds an attachment to an issue.
 
@@ -1000,12 +1009,28 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the results.
         """
-        return self._sync_client.make_request(  # type:ignore[return-value]
-            method=httpx.post,
-            url=f'issue/{issue_id_or_key}/attachments',
-            headers={'X-Atlassian-Token': 'no-check'},
-            files={'file': (file_name, open(filename, 'rb'), mime_type)},
-        )
+
+        with open(filename, 'rb') as file_to_upload:
+            try:
+                # attempt to detect the MIME type based on the content of the file
+                detected_mime_type: str = self._detect_file_mime_type(file_to_upload)  # type:ignore
+            except FileNotFoundError as e:
+                self.logger.warning(
+                    f'File not found. Unable to determine the MIME type of he file {filename}.'
+                )
+                raise FileUploadException(
+                    f'The file {filename} was not found. Unable to upload it as attachment.'
+                ) from e
+            return self._sync_client.make_request(  # type:ignore[return-value]
+                method=httpx.post,
+                url=f'issue/{issue_id_or_key}/attachments',
+                headers={'X-Atlassian-Token': 'no-check'},
+                files={'file': (file_name, file_to_upload, detected_mime_type)},
+            )
+
+    @staticmethod
+    def _detect_file_mime_type(file_to_upload: BufferedReader) -> str:
+        return magic.from_buffer(file_to_upload.read(2028), mime=True)
 
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.
