@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Container, VerticalGroup, VerticalScroll
+from textual.containers import Container, Vertical, VerticalGroup, VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widgets import Markdown
 
@@ -16,7 +16,10 @@ class WorkItemSummaryContainer(Container):
         self.visible = False
 
 
-class WorkItemInfoContainer(VerticalGroup):
+class WorkItemInfoContainer(Vertical):
+    """The container for all the widgets that store/show information (description and other text-based fields) of a
+    work item."""
+
     HELP = 'See Work Item Info section in the help'
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
     """The issue whose information we want to display."""
@@ -26,6 +29,7 @@ class WorkItemInfoContainer(VerticalGroup):
     def __init__(self):
         super().__init__(id='work_item_info_container')
         self._has_extra_custom_fields = False
+        self.can_focus = True
 
     @property
     def help_anchor(self) -> str:

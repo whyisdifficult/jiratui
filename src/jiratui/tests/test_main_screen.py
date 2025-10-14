@@ -35,7 +35,9 @@ from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidge
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screens import WorkItemSearchResult
 from jiratui.widgets.search import IssuesSearchResultsTable
+from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
+from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 
 
 @pytest.fixture()
@@ -94,11 +96,13 @@ def app() -> JiraApp:
         ('v', ActiveSprintCheckbox),
         ('j', JQLSearchWidget),
         ('1', IssuesSearchResultsTable),
+        ('2', WorkItemInfoContainer),
         ('3', IssueDetailsWidget),
         ('4', IssueCommentsWidget),
         ('5', RelatedIssuesWidget),
         ('6', IssueAttachmentsWidget),
         ('7', IssueRemoteLinksWidget),
+        ('8', IssueChildWorkItemsWidget),
     ],
 )
 @patch('jiratui.widgets.screens.MainScreen.get_users')
