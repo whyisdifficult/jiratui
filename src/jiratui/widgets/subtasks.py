@@ -28,6 +28,7 @@ class ChildWorkItemCollapsible(Collapsible):
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
         super().__init__(*args, **kwargs)
+        self.border_title = self._work_item_key
 
     @property
     def work_item_key(self) -> str | None:
@@ -80,13 +81,22 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         )
 
     def watch_issues(self, items: list[JiraIssue]) -> None:
+        """Updates the list of work items that are subtasks of the currently-selected item.
+
+        Args:
+            items: the list of items that are subtasks of the current work item.
+
+        Returns:
+            None
+        """
+
         self.remove_children()
         if not items:
             return
         rows: list[ChildWorkItemCollapsible] = []
         for issue in items:
             children: list[Widget] = [
-                Static(Text(f'Status: {issue.status.name}')),
+                Static(Text(f'Status: {issue.status_name}')),
                 Static(Text(f'Type: {issue.issue_type.name}')),
                 Static(Text(f'Assignee: {issue.display_assignee()}')),
             ]
@@ -96,11 +106,11 @@ class IssueChildWorkItemsWidget(VerticalScroll):
                         browsable_url, url=browsable_url, tooltip='open link in the default browser'
                     )
                 )
-            rows.append(
-                ChildWorkItemCollapsible(
-                    *children,
-                    title=Text(f'{issue.key} | {issue.cleaned_summary()}'),
-                    work_item_key=issue.key,
-                )
+            item_collapsible = ChildWorkItemCollapsible(
+                *children,
+                title=Text(issue.cleaned_summary()),
+                work_item_key=issue.key,
             )
+            item_collapsible.border_subtitle = issue.status_name
+            rows.append(item_collapsible)
         self.mount_all(rows)

@@ -292,6 +292,12 @@ class JiraIssue(JiraBaseIssue):
         return ''
 
     @property
+    def status_name(self) -> str:
+        if self.status:
+            return self.status.name
+        return ''
+
+    @property
     def assignee_display_name(self) -> str:
         if self.assignee:
             return self.assignee.display_name

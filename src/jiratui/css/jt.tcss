@@ -828,11 +828,6 @@ RelatedIssueCollapsible {
     }
 }
 
-.related-work-item-priority {
-    content-align: right middle;
-    margin: 0 1 0 0;
-}
-
 /* Comments */
 
 CommentCollapsible {

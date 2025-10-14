@@ -4,11 +4,11 @@ RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING = {
         'collapsible_class': 'lowest-priority',
     },
     'low': {
-        'text_style': 'bold yellow',
+        'text_style': 'bold purple',
         'collapsible_class': 'low-priority',
     },
     'medium': {
-        'text_style': 'bold purple',
+        'text_style': 'bold yellow',
         'collapsible_class': 'medium-priority',
     },
     'high': {
