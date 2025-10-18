@@ -1239,7 +1239,7 @@ class APIController:
         )
 
     async def get_edit_metadata_for_issue(self, issue_key_or_id: str) -> dict:
-        """Retrieve the metadata relevant for editing a work item.
+        """Retrieves the metadata relevant for editing a work item.
 
         Args:
             issue_key_or_id: the (case-sensitive) key of the work item.
@@ -1984,7 +1984,7 @@ class APIController:
         return APIControllerResponse()
 
     async def get_attachment_content(self, attachment_id: str) -> APIControllerResponse:
-        """Download the content of an attachment.
+        """Downloads the content of an attachment.
 
         Args:
             attachment_id: the ID of the attachment
@@ -2097,7 +2097,7 @@ class APIController:
         comment: str | None = None,
         current_remaining_estimate: str | None = None,
     ) -> APIControllerResponse:
-        """Retrieves the work log of a work item.
+        """Adds a worklog to an item.
 
         ```{important}
         The author and update author information depends on whether the toll uses Jira DC API, Jira Cloud API v2 or v3.
@@ -2148,6 +2148,7 @@ class APIController:
                 display_name=value.get('displayName'),
                 active=value.get('active'),
                 username=value.get('name') if not self.config.cloud else None,
+                email=value.get('emailAddress'),
             )
         author = None
         if value := response.get('author'):
@@ -2158,6 +2159,7 @@ class APIController:
                 display_name=value.get('displayName'),
                 active=value.get('active'),
                 username=value.get('name') if not self.config.cloud else None,
+                email=value.get('emailAddress'),
             )
 
         # the comment of a worklog could be a string if Jira DC API or Jira Cloud API v2 is used; if Jira Cloud API v3
