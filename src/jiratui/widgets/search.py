@@ -135,7 +135,7 @@ class IssuesSearchResultsTable(DataTable):
         #   2: we need to use the token 'token-a'
         #   3: we need to use the token 'token-b'
         self.token_by_page: dict[int, str] = {}
-        self.page: int = 1
+        self.page = 1
         self.current_work_item_key: str | None = None
         self._initial_results_set: JiraIssueSearchResponse | None = None
 

@@ -9,7 +9,6 @@ from textual.widgets import DataTable, Rule
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraIssueSearchResponse
-from jiratui.widgets.base import CustomTitle
 from jiratui.widgets.summary import IssueDescriptionWidget
 
 
@@ -24,8 +23,9 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
         self._work_item_key = work_item_key
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll():
-            yield CustomTitle(self.TITLE)
+        vertical = VerticalScroll()
+        vertical.border_title = self.TITLE
+        with vertical:
             yield DataTable(
                 cursor_type='row', show_header=False, id='work-item-readonly-details-dt'
             )

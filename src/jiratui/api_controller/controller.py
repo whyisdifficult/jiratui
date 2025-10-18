@@ -44,10 +44,12 @@ from jiratui.models import (
     IssueTransitionState,
     IssueType,
     JiraBaseIssue,
+    JiraGlobalSettings,
     JiraIssue,
     JiraIssueSearchResponse,
     JiraMyselfInfo,
     JiraServerInfo,
+    JiraTimeTrackingConfiguration,
     JiraUser,
     JiraUserGroup,
     JiraWorklog,
@@ -1118,6 +1120,45 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
+    async def global_settings(self) -> APIControllerResponse:
+        """Retrieves the global settings of the Jira instance.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the details or,
+            `APIControllerResponse(success=False)` if there is an error fetching the details.
+        """
+        try:
+            response: dict = await self.api.global_settings()
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve information of the Jira server',
+                extra=exception_details.get('extra'),
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        time_tracking_configuration = None
+        if values := response.get('timeTrackingConfiguration'):
+            time_tracking_configuration = JiraTimeTrackingConfiguration(
+                default_unit=values.get('defaultUnit'),
+                time_format=values.get('timeFormat'),
+                working_days_per_week=values.get('workingDaysPerWeek'),
+                working_hours_per_day=values.get('workingHoursPerDay'),
+            )
+
+        return APIControllerResponse(
+            result=JiraGlobalSettings(
+                attachments_enabled=response.get('attachmentsEnabled'),
+                issue_linking_enabled=response.get('issueLinkingEnabled'),
+                subtasks_enabled=response.get('subTasksEnabled'),
+                unassigned_issues_allowed=response.get('unassignedIssuesAllowed'),
+                voting_enabled=response.get('votingEnabled'),
+                watching_enabled=response.get('watchingEnabled'),
+                time_tracking_enabled=response.get('timeTrackingEnabled'),
+                time_tracking_configuration=time_tracking_configuration,
+            )
+        )
+
     async def server_info(self) -> APIControllerResponse:
         """Retrieves details of the Jira server instance.
 
@@ -1522,6 +1563,8 @@ class APIController:
                 extra={'issue_key_or_id': issue_key_or_id, **exception_details.get('extra', {})},
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
+        # the body of a comment could be a string if Jira DC API or Jira Cloud API v2 is used; if Jira Cloud API
+        # is used then this will be an ADF.
         comments: list[IssueComment] = []
         for record in response.get('comments', []):
             author = record.get('author', {})
@@ -1974,6 +2017,10 @@ class APIController:
     ) -> APIControllerResponse:
         """Retrieves the work log of a work item.
 
+        ```{important}
+        The author and update author information depends on whether the toll uses Jira DC API, Jira Cloud API v2 or v3.
+        ```
+
         Args:
             issue_key_or_id: the case-sensitive key or id of a work item.
             offset: the index of the first item to return in a page of results (page offset).
@@ -1995,19 +2042,29 @@ class APIController:
         logs: list[JiraWorklog] = []
         for work_log in response.get('worklogs', []):
             update_author = None
-            if author := work_log.get('updateAuthor'):
+            if value := work_log.get('updateAuthor'):
                 update_author = JiraUser(
-                    account_id=author.get('accountId'),
-                    display_name=author.get('displayName'),
-                    active=author.get('active'),
+                    account_id=value.get('accountId')
+                    if self.config.cloud
+                    else value.get('emailAddress'),
+                    display_name=value.get('displayName'),
+                    active=value.get('active'),
+                    email=value.get('emailAddress'),
+                    username=value.get('name') if not self.config.cloud else None,
                 )
             author = None
             if value := work_log.get('author'):
                 author = JiraUser(
-                    account_id=value.get('accountId'),
+                    account_id=value.get('accountId')
+                    if self.config.cloud
+                    else value.get('emailAddress'),
                     display_name=value.get('displayName'),
                     active=value.get('active'),
+                    email=value.get('emailAddress'),
+                    username=value.get('name') if not self.config.cloud else None,
                 )
+            # the comment of a worklog could be a string if Jira DC API or Jira Cloud API v2 is used; if Jira Cloud API
+            # v3 is used then this will be an ADF.
             logs.append(
                 JiraWorklog(
                     id=work_log.get('id'),
@@ -2028,5 +2085,93 @@ class APIController:
                 start_at=response.get('startAt'),
                 max_results=response.get('maxResults'),
                 total=response.get('total'),
+            )
+        )
+
+    async def add_work_item_worklog(
+        self,
+        issue_key_or_id: str,
+        started: datetime,
+        time_spent: str,
+        time_remaining: str | None = None,
+        comment: str | None = None,
+        current_remaining_estimate: str | None = None,
+    ) -> APIControllerResponse:
+        """Retrieves the work log of a work item.
+
+        ```{important}
+        The author and update author information depends on whether the toll uses Jira DC API, Jira Cloud API v2 or v3.
+        ```
+
+        Args:
+            issue_key_or_id: the case-sensitive key or id of a work item.
+            current_remaining_estimate: the issue's current remaining time estimate, as days (#d), hours
+            (#h), or minutes (#m or #). For example, 2d.
+            started: the datetime on which the worklog effort was started. Required when creating a worklog. Optional
+            when updating a worklog.
+            time_spent: the time spent working on the issue as days (#d), hours (#h), or minutes (#m or #). E.g. `2d 1h`
+            time_remaining: the value to set as the issue's remaining time estimate, as days (#d), hours
+            (#h), or minutes (#m or #). For example, 2d.
+            comment: a comment about the worklog.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with the `JiraWorklog` entries;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
+        remaining_time = None
+        if (
+            time_remaining
+            and current_remaining_estimate
+            and time_remaining != current_remaining_estimate
+        ):
+            remaining_time = time_remaining
+
+        try:
+            response: dict = await self.api.add_issue_work_log(
+                issue_id_or_key=issue_key_or_id,
+                started=started,
+                time_spent=time_spent,
+                time_remaining=remaining_time,
+                comment=comment,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error('Unable to add worklog', extra=exception_details.get('extra'))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        update_author = None
+        if value := response.get('updateAuthor'):
+            update_author = JiraUser(
+                account_id=value.get('accountId')
+                if self.config.cloud
+                else value.get('emailAddress'),
+                display_name=value.get('displayName'),
+                active=value.get('active'),
+                username=value.get('name') if not self.config.cloud else None,
+            )
+        author = None
+        if value := response.get('author'):
+            author = JiraUser(
+                account_id=value.get('accountId')
+                if self.config.cloud
+                else value.get('emailAddress'),
+                display_name=value.get('displayName'),
+                active=value.get('active'),
+                username=value.get('name') if not self.config.cloud else None,
+            )
+
+        # the comment of a worklog could be a string if Jira DC API or Jira Cloud API v2 is used; if Jira Cloud API v3
+        # is used then this will be an ADF.
+        return APIControllerResponse(
+            result=JiraWorklog(
+                id=response.get('id'),
+                issue_id=response.get('issueId'),
+                started=isoparse(response.get('started')) if response.get('started') else None,
+                updated=isoparse(response.get('updated')) if response.get('updated') else None,
+                time_spent=response.get('timeSpent'),
+                time_spent_seconds=response.get('timeSpentSeconds'),
+                author=author,
+                update_author=update_author,
+                comment=response.get('comment'),
             )
         )

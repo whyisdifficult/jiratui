@@ -7,7 +7,7 @@ from textual.widgets import DataTable
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.constants import DEFAULT_JIRA_API_VERSION
-from jiratui.models import JiraMyselfInfo, JiraServerInfo
+from jiratui.models import JiraGlobalSettings, JiraMyselfInfo, JiraServerInfo
 from jiratui.widgets.base import CustomTitle
 
 
@@ -33,16 +33,22 @@ class ServerInfoScreen(ModalScreen):
     def datatable_config_info(self) -> DataTable:
         return self.query_one('#config-details', expect_type=DataTable)
 
+    @property
+    def global_settings_details(self) -> DataTable:
+        return self.query_one('#global-settings-details', expect_type=DataTable)
+
     def compose(self) -> ComposeResult:
         vertical = VerticalScroll()
         vertical.border_title = self.TITLE
         with vertical:
             yield CustomTitle('JiraTUI API Configuration')
             yield DataTable(cursor_type='row', show_header=False, id='config-details')
-            yield CustomTitle(self.TITLE)
+            yield CustomTitle('Server Information')
             yield DataTable(cursor_type='row', show_header=False, id='server-details')
             yield CustomTitle('User Account Details')
             yield DataTable(cursor_type='row', show_header=False, id='user-details')
+            yield CustomTitle('Jira Global Settings')
+            yield DataTable(cursor_type='row', show_header=False, id='global-settings-details')
 
     def _get_server_info(self) -> JiraServerInfo | None:
         return self._server_info
@@ -55,9 +61,8 @@ class ServerInfoScreen(ModalScreen):
                 pass
 
         if server_info:
-            table = self.datatable_server_info
-            table.add_columns(*['Property', 'Value'])
-            table.add_rows(
+            self.datatable_server_info.add_columns(*['Property', 'Value'])
+            self.datatable_server_info.add_rows(
                 [
                     (
                         Text('Base URL', justify='right', style='yellow'),
@@ -153,9 +158,8 @@ class ServerInfoScreen(ModalScreen):
                 ]
             )
 
-        table = self.datatable_config_info
-        table.add_columns(*['Property', 'Value'])
-        table.add_rows(
+        self.datatable_config_info.add_columns(*['Property', 'Value'])
+        self.datatable_config_info.add_rows(
             [
                 (
                     Text('API Version', justify='right', style='yellow'),
@@ -166,3 +170,69 @@ class ServerInfoScreen(ModalScreen):
                 ),
             ]
         )
+
+        jira_global_settings: JiraGlobalSettings | None
+        response_global_settings: APIControllerResponse = await self.app.api.global_settings()  # type:ignore[attr-defined]
+        if response_myself.success and (jira_global_settings := response_global_settings.result):
+            self.global_settings_details.add_columns(*['Property', 'Value'])
+            self.global_settings_details.add_rows(
+                [
+                    (
+                        Text('Attachments Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_attachments_enabled(), justify='left'),
+                    ),
+                    (
+                        Text('Issue Linking Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_issue_linking_enabled(), justify='left'),
+                    ),
+                    (
+                        Text('Subtasks Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_subtasks_enabled(), justify='left'),
+                    ),
+                    (
+                        Text('Voting Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_voting_enabled() or '', justify='left'),
+                    ),
+                    (
+                        Text('Time Tracking Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_time_tracking_enabled(), justify='left'),
+                    ),
+                    (
+                        Text('Watching Enabled', justify='right', style='yellow'),
+                        Text(jira_global_settings.display_watching_enabled(), justify='left'),
+                    ),
+                    (
+                        Text('Unassigned Issues Allowed', justify='right', style='yellow'),
+                        Text(
+                            jira_global_settings.display_unassigned_issues_allowed(), justify='left'
+                        ),
+                    ),
+                ]
+            )
+            if tracking_configuration := jira_global_settings.time_tracking_configuration:
+                self.global_settings_details.add_rows(
+                    [
+                        (
+                            Text('Default Unit', justify='right', style='yellow'),
+                            Text(tracking_configuration.display_default_unit(), justify='left'),
+                        ),
+                        (
+                            Text('Time Format', justify='right', style='yellow'),
+                            Text(tracking_configuration.display_time_format(), justify='left'),
+                        ),
+                        (
+                            Text('Working Days per Week', justify='right', style='yellow'),
+                            Text(
+                                tracking_configuration.display_working_days_per_week(),
+                                justify='left',
+                            ),
+                        ),
+                        (
+                            Text('Working Hours per Day', justify='right', style='yellow'),
+                            Text(
+                                tracking_configuration.display_working_hours_per_day(),
+                                justify='left',
+                            ),
+                        ),
+                    ]
+                )

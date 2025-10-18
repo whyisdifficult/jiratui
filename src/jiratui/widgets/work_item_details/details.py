@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Any, cast
 
+from dateutil import parser  # type:ignore[import-untyped]
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Vertical, VerticalScroll
+from textual.containers import HorizontalGroup, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
-from textual.widgets import Input, Label, ProgressBar, Select, Static
+from textual.widget import Widget
+from textual.widgets import Input, Label, ProgressBar, Select
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
@@ -19,7 +21,7 @@ from jiratui.utils.work_item_updates import (
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
 from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
-from jiratui.widgets.work_item_details.work_log import WorkItemWorkLogScreen
+from jiratui.widgets.work_item_details.work_log import LogWorkScreen, WorkItemWorkLogScreen
 
 
 class IssueDetailsAssigneeSelection(UserSelectionInput):
@@ -137,7 +139,7 @@ class IssueSummaryField(Input):
         self.add_class(*['issue_details_input_field', 'required', 'cols-3'])
         self.jira_field_key = 'summary'
         """The key to used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled: bool = True
+        self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
     def watch_update_enabled(self, enabled: bool = True) -> None:
@@ -165,7 +167,7 @@ class WorkItemLabelsField(Input):
         self.add_class(*['issue_details_input_field', 'cols-3'])
         self.jira_field_key = 'labels'
         """The key to used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled: bool = True
+        self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
     def on_input_changed(self, event: Input.Changed) -> None:
@@ -195,7 +197,7 @@ class WorkItemDetailsDueDate(DateInput):
         super().__init__()
         self.jira_field_key = 'duedate'
         """The key to used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled: bool = True
+        self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
     def watch_update_enabled(self, enabled: bool = True) -> None:
@@ -203,32 +205,53 @@ class WorkItemDetailsDueDate(DateInput):
         self.disabled = not enabled
 
 
-class TimeTrackingContainer(Center):
+class TimeTrackingWidget(Widget):
+    """A widget to display time tracking information for a work item using a progress bar and a label."""
+
     DEFAULT_CSS = """
-    TimeTrackingContainer {
-        align-horizontal: left;
-        box_sizing: content-box;
-        height: auto;
-        border: round $primary-lighten-3;
-        margin: 0 0;
-        padding: 0 1;
-        background: $background;
-        &.required {
-            border: round red;
-        }
-        &:focus {
-            border: round $accent-lighten-3;
-        }
-    }
     Bar > .bar--bar {
-        color: yellow;
+        color: $accent;
         background: $secondary;
     }
     """
 
-    def __init__(self):
-        super().__init__(classes='cols-3')
+    def __init__(
+        self,
+        original_estimate: str | None = None,
+        time_spent: str | None = None,
+        remaining_estimate: str | None = None,
+        original_estimate_seconds: int | None = None,
+        time_spent_seconds: int | None = None,
+        remaining_estimate_seconds: int | None = None,
+    ):
+        super().__init__()
         self.border_title = 'Time Tracking'
+        self._original_estimate = original_estimate or ''
+        self._time_spent = time_spent or ''
+        self._remaining_estimate = remaining_estimate or ''
+        self._original_estimate_seconds = original_estimate_seconds
+        self._time_spent_seconds = time_spent_seconds or 0
+        self._remaining_estimate_seconds = remaining_estimate_seconds
+
+    @property
+    def progress_bar(self) -> ProgressBar:
+        return self.query_one(ProgressBar)
+
+    def compose(self) -> ComposeResult:
+        yield Label(
+            f'Original Estimate: {self._original_estimate} | Time Spent: {self._time_spent} | Remaining Estimate: {self._remaining_estimate}'
+        )
+        yield ProgressBar(total=100, show_percentage=True, show_eta=False)
+
+    def on_mount(self):
+        if self._original_estimate_seconds:
+            self.progress_bar.progress = (
+                self._time_spent_seconds * 100
+            ) / self._original_estimate_seconds
+        elif self._remaining_estimate_seconds and self._time_spent_seconds:
+            self.progress_bar.progress = (self._time_spent_seconds * 100) / (
+                self._remaining_estimate_seconds + self._time_spent_seconds
+            )
 
 
 class IssueDetailsWidget(Vertical):
@@ -254,7 +277,7 @@ class IssueDetailsWidget(Vertical):
     """Reactive variable to clear the fields in the form."""
 
     BINDINGS = [
-        ('ctrl+s', 'save_work_item', 'Save Changes'),
+        ('ctrl+s', 'save_work_item', 'Save'),
         Binding(
             key='x',
             action='focus_widget("x")',
@@ -275,8 +298,14 @@ class IssueDetailsWidget(Vertical):
         ),
         Binding(
             key='ctrl+l',
-            action='view_issue_work_log',
-            description='View Work Log',
+            action='view_worklog',
+            description='Worklog',
+            show=True,
+        ),
+        Binding(
+            key='ctrl+t',
+            action='log_work',
+            description='Log Work',
             show=True,
         ),
     ]
@@ -351,8 +380,8 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(WorkItemDetailsDueDate)
 
     @property
-    def time_tracking_container(self) -> TimeTrackingContainer:
-        return self.query_one(TimeTrackingContainer)
+    def time_tracking_widget(self) -> TimeTrackingWidget:
+        return self.query_one(TimeTrackingWidget)
 
     @property
     def work_item_labels_widget(self) -> WorkItemLabelsField:
@@ -361,6 +390,10 @@ class IssueDetailsWidget(Vertical):
     @property
     def issue_resolution_date_field(self) -> ReadOnlyTextField:
         return self.query_one('#issue_resolution_date', expect_type=ReadOnlyTextField)
+
+    @property
+    def time_tracking_container(self) -> HorizontalGroup:
+        return self.query_one('#time-tracking-container', expect_type=HorizontalGroup)
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id='issue-details-form'):
@@ -413,7 +446,7 @@ class IssueDetailsWidget(Vertical):
             # row 8
             yield WorkItemLabelsField()
             # row 9
-            yield TimeTrackingContainer()
+            yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
 
     def action_focus_widget(self, key: str) -> None:
         """Focuses a widget depending on the key pressed.
@@ -436,7 +469,7 @@ class IssueDetailsWidget(Vertical):
         elif key == 'z':
             self.screen.set_focus(self.issue_status_selector)
 
-    def action_view_issue_work_log(self) -> None:
+    def action_view_worklog(self) -> None:
         """Opens a pop-up modal to display the work log of a work item.
 
         Returns:
@@ -444,6 +477,76 @@ class IssueDetailsWidget(Vertical):
         """
         if self.issue:
             self.app.push_screen(WorkItemWorkLogScreen(self.issue.key))
+
+    def action_log_work(self) -> None:
+        """Opens a pop-up modal to allow the user to log work for the current work item.
+
+        Returns:
+            Nothing.
+        """
+        if self.issue:
+            current_remaining_estimate = None
+            if self.issue.time_tracking:
+                current_remaining_estimate = self.issue.time_tracking.remaining_estimate
+            self.app.push_screen(
+                LogWorkScreen(self.issue.key, current_remaining_estimate),
+                self.request_adding_worklog,
+            )
+
+    def request_adding_worklog(self, data: dict) -> None:
+        self.run_worker(
+            self._add_worklog(
+                time_spent=data.get('time_spent'),
+                time_remaining=data.get('time_remaining'),
+                description=data.get('description'),
+                started=data.get('started'),
+                current_remaining_estimate=data.get('current_remaining_estimate'),
+            )
+        )
+
+    async def _add_worklog(
+        self,
+        time_spent: str,
+        started: str,
+        time_remaining: str | None = None,
+        description: str | None = None,
+        current_remaining_estimate: str | None = None,
+    ) -> None:
+        """Adds a comment to the issue and retrieves the list comments if the comment was added successfully.
+
+        Args:
+            time_spent: the time spent on the task. E.g. 1w 1d
+            time_remaining: the time remaining in the task. E.g. 1w 1d
+            description: an optional description of the work done in the task.
+            started: the date/time on which the work was started.
+            current_remaining_estimate: the current remaining estimate of the task.
+
+        Return:
+            `None`
+        """
+
+        if not time_spent:
+            self.notify(
+                'You need to provide the time spent on the task to log work', title='Worklog'
+            )
+        else:
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+            response: APIControllerResponse = await application.api.add_work_item_worklog(
+                issue_key_or_id=self.issue.key,
+                started=parser.parse(f'{started}Z') if started else None,
+                time_spent=time_spent,
+                time_remaining=time_remaining,
+                comment=description,
+                current_remaining_estimate=current_remaining_estimate,
+            )
+            if not response.success:
+                self.notify(
+                    f'Failed to log work for the item: {response.error}',
+                    severity='error',
+                    title='Worklog',
+                )
+            else:
+                self.notify('Work logged successfully', title='Worklog')
 
     def _update_priority_selection(self, priorities, priority_id: str) -> None:
         for priority in priorities or []:
@@ -498,30 +601,21 @@ class IssueDetailsWidget(Vertical):
             self.work_item_labels_widget.value = ''
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
-        self.time_tracking_container.remove_children()
+        self.time_tracking_container.remove_children(TimeTrackingWidget)
+
         if not time_tracking_data:
-            self.time_tracking_container.mount(Static('N/A'))
             return
 
-        self.time_tracking_container.mount_all(
-            [
-                ProgressBar(total=100, show_percentage=True, show_eta=False),
-                Label(
-                    f'Original Estimate: {time_tracking_data.original_estimate or "-"} | Time Spent: {time_tracking_data.time_spent or "-"} | Remaining Estimate: {time_tracking_data.remaining_estimate or "-"}'
-                ),
-            ]
-        )
-        if time_tracking_data.original_estimate_seconds:
-            self.issue_time_tracking.progress = (
-                (time_tracking_data.time_spent_seconds or 0) * 100
-            ) / time_tracking_data.original_estimate_seconds
-        elif (
-            time_tracking_data.remaining_estimate_seconds and time_tracking_data.time_spent_seconds
-        ):
-            self.issue_time_tracking.progress = (time_tracking_data.time_spent_seconds * 100) / (
-                time_tracking_data.remaining_estimate_seconds
-                + time_tracking_data.time_spent_seconds
+        self.time_tracking_container.mount(
+            TimeTrackingWidget(
+                time_tracking_data.original_estimate,
+                time_tracking_data.time_spent,
+                time_tracking_data.remaining_estimate,
+                time_tracking_data.original_estimate_seconds,
+                time_tracking_data.time_spent_seconds,
+                time_tracking_data.remaining_estimate_seconds,
             )
+        )
 
     def _build_payload_for_update(self) -> dict:
         payload: dict[str, Any] = {}
