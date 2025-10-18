@@ -110,12 +110,14 @@ class TimeSpentInput(Input):
         super().__init__(placeholder='E.g. 1w 1d', valid_empty=False, classes='required')
         self.border_title = 'Time Spent'
         self.border_subtitle = '(*)'
+        self.tooltip = 'Enter the amount of time you work on this task'
 
 
 class TimeRemainingInput(Input):
     def __init__(self, initial_value: str | None = None):
         super().__init__(value=initial_value, placeholder='E.g. 1d 1h 30m')
         self.border_title = 'Time Remaining'
+        self.tooltip = 'Optionally, enter the time remaining in the task'
 
 
 class LogDateTimeInput(DateInput):
@@ -126,6 +128,7 @@ class LogDateTimeInput(DateInput):
         super().__init__(valid_empty=False)
         self.disabled = True
         self.border_title = 'Date Started'
+        self.tooltip = 'Enter the date/time on which the work was done'
 
 
 class WorkDescription(TextArea):
@@ -133,6 +136,8 @@ class WorkDescription(TextArea):
         super().__init__()
         self.disabled = True
         self.border_title = 'Work Description'
+        self.compact = True
+        self.tooltip = 'Add an optional description'
 
 
 class LogWorkScreen(Screen[dict]):
