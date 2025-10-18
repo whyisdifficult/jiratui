@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import json
 from unittest.mock import Mock, mock_open, patch
 
@@ -909,6 +910,52 @@ async def test_myself(jira_api: JiraAPI):
         'key': '',
         'name': '',
         'timeZone': 'Australia/Sydney',
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_global_settings(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('configuration'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'attachmentsEnabled': True,
+                'issueLinkingEnabled': True,
+                'subTasksEnabled': False,
+                'timeTrackingConfiguration': {
+                    'defaultUnit': 'day',
+                    'timeFormat': 'pretty',
+                    'workingDaysPerWeek': 5,
+                    'workingHoursPerDay': 8,
+                },
+                'timeTrackingEnabled': True,
+                'unassignedIssuesAllowed': False,
+                'votingEnabled': True,
+                'watchingEnabled': True,
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.global_settings()
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/configuration'
+    assert result == {
+        'attachmentsEnabled': True,
+        'issueLinkingEnabled': True,
+        'subTasksEnabled': False,
+        'timeTrackingConfiguration': {
+            'defaultUnit': 'day',
+            'timeFormat': 'pretty',
+            'workingDaysPerWeek': 5,
+            'workingHoursPerDay': 8,
+        },
+        'timeTrackingEnabled': True,
+        'unassignedIssuesAllowed': False,
+        'votingEnabled': True,
+        'watchingEnabled': True,
     }
 
 
@@ -1918,6 +1965,392 @@ async def test_delete_attachment(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_add_issue_work_log(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/worklog'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'author': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'comment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                        }
+                    ],
+                },
+                'id': '100028',
+                'issueId': '10002',
+                'started': '2021-01-17T12:34:00.000+0000',
+                'timeSpent': '3h 20m',
+                'timeSpentSeconds': 12000,
+                'updateAuthor': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'updated': '2021-01-18T23:45:00.000+0000',
+                'visibility': {
+                    'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                    'type': 'group',
+                    'value': 'jira-developers',
+                },
+            },
+        )
+    )
+    # WHEN
+    started = datetime(2025, 10, 18, 10, 20, tzinfo=timezone.utc)
+    result = await jira_api.add_issue_work_log(
+        '1',
+        '1d',
+        started,
+        '1h',
+        'comment here',
+    )
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog'
+    assert 'newEstimate=1h' in str(route.calls.last.request.url.query)
+    assert 'adjustEstimate=new' in str(route.calls.last.request.url.query)
+    assert json.loads(route.calls.last.request.content) == {
+        'started': '2025-10-18T10:20:00.000+0000',
+        'timeSpent': '1d',
+        'comment': {
+            'content': [
+                {'content': [{'text': 'comment here', 'type': 'text'}], 'type': 'paragraph'}
+            ],
+            'type': 'doc',
+            'version': 1,
+        },
+    }
+    assert result == {
+        'author': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'comment': {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'type': 'paragraph',
+                    'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                }
+            ],
+        },
+        'id': '100028',
+        'issueId': '10002',
+        'started': '2021-01-17T12:34:00.000+0000',
+        'timeSpent': '3h 20m',
+        'timeSpentSeconds': 12000,
+        'updateAuthor': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'updated': '2021-01-18T23:45:00.000+0000',
+        'visibility': {
+            'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+            'type': 'group',
+            'value': 'jira-developers',
+        },
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_add_issue_work_log_without_comment(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/worklog'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'author': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'comment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                        }
+                    ],
+                },
+                'id': '100028',
+                'issueId': '10002',
+                'started': '2021-01-17T12:34:00.000+0000',
+                'timeSpent': '3h 20m',
+                'timeSpentSeconds': 12000,
+                'updateAuthor': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'updated': '2021-01-18T23:45:00.000+0000',
+                'visibility': {
+                    'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                    'type': 'group',
+                    'value': 'jira-developers',
+                },
+            },
+        )
+    )
+    # WHEN
+    started = datetime(2025, 10, 18, 10, 20, tzinfo=timezone.utc)
+    result = await jira_api.add_issue_work_log(
+        '1',
+        '1d',
+        started,
+        '1h',
+    )
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog'
+    assert 'newEstimate=1h' in str(route.calls.last.request.url.query)
+    assert 'adjustEstimate=new' in str(route.calls.last.request.url.query)
+    assert json.loads(route.calls.last.request.content) == {
+        'started': '2025-10-18T10:20:00.000+0000',
+        'timeSpent': '1d',
+    }
+    assert result == {
+        'author': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'comment': {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'type': 'paragraph',
+                    'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                }
+            ],
+        },
+        'id': '100028',
+        'issueId': '10002',
+        'started': '2021-01-17T12:34:00.000+0000',
+        'timeSpent': '3h 20m',
+        'timeSpentSeconds': 12000,
+        'updateAuthor': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'updated': '2021-01-18T23:45:00.000+0000',
+        'visibility': {
+            'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+            'type': 'group',
+            'value': 'jira-developers',
+        },
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_add_issue_work_log_without_time_remaining_input(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/worklog'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'author': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'comment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                        }
+                    ],
+                },
+                'id': '100028',
+                'issueId': '10002',
+                'started': '2021-01-17T12:34:00.000+0000',
+                'timeSpent': '3h 20m',
+                'timeSpentSeconds': 12000,
+                'updateAuthor': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'updated': '2021-01-18T23:45:00.000+0000',
+                'visibility': {
+                    'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                    'type': 'group',
+                    'value': 'jira-developers',
+                },
+            },
+        )
+    )
+    # WHEN
+    started = datetime(2025, 10, 18, 10, 20, tzinfo=timezone.utc)
+    result = await jira_api.add_issue_work_log(
+        '1',
+        '1d',
+        started,
+    )
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog'
+    assert 'newEstimate=1h' not in str(route.calls.last.request.url.query)
+    assert 'adjustEstimate=auto' in str(route.calls.last.request.url.query)
+    assert json.loads(route.calls.last.request.content) == {
+        'started': '2025-10-18T10:20:00.000+0000',
+        'timeSpent': '1d',
+    }
+    assert result == {
+        'author': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'comment': {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'type': 'paragraph',
+                    'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                }
+            ],
+        },
+        'id': '100028',
+        'issueId': '10002',
+        'started': '2021-01-17T12:34:00.000+0000',
+        'timeSpent': '3h 20m',
+        'timeSpentSeconds': 12000,
+        'updateAuthor': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'updated': '2021-01-18T23:45:00.000+0000',
+        'visibility': {
+            'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+            'type': 'group',
+            'value': 'jira-developers',
+        },
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_add_issue_work_log_with_jira_dc_api(jira_api_dc: JiraDataCenterAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/worklog'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'author': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'comment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                        }
+                    ],
+                },
+                'id': '100028',
+                'issueId': '10002',
+                'started': '2021-01-17T12:34:00.000+0000',
+                'timeSpent': '3h 20m',
+                'timeSpentSeconds': 12000,
+                'updateAuthor': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'updated': '2021-01-18T23:45:00.000+0000',
+                'visibility': {
+                    'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                    'type': 'group',
+                    'value': 'jira-developers',
+                },
+            },
+        )
+    )
+    # WHEN
+    started = datetime(2025, 10, 18, 10, 20, tzinfo=timezone.utc)
+    result = await jira_api_dc.add_issue_work_log(
+        '1',
+        '1d',
+        started,
+        '1h',
+        'comment here',
+    )
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/issue/1/worklog'
+    assert 'newEstimate=1h' in str(route.calls.last.request.url.query)
+    assert 'adjustEstimate=new' in str(route.calls.last.request.url.query)
+    assert json.loads(route.calls.last.request.content) == {
+        'started': '2025-10-18T10:20:00.000+0000',
+        'timeSpent': '1d',
+        'comment': 'comment here',
+        'issueId': '1',
+    }
+    assert result == {
+        'author': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'comment': {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'type': 'paragraph',
+                    'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                }
+            ],
+        },
+        'id': '100028',
+        'issueId': '10002',
+        'started': '2021-01-17T12:34:00.000+0000',
+        'timeSpent': '3h 20m',
+        'timeSpentSeconds': 12000,
+        'updateAuthor': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': False,
+            'displayName': 'Mia Krystof',
+        },
+        'updated': '2021-01-18T23:45:00.000+0000',
+        'visibility': {
+            'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+            'type': 'group',
+            'value': 'jira-developers',
+        },
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_get_issue_work_log(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('issue/1/worklog'))
@@ -1970,6 +2403,105 @@ async def test_get_issue_work_log(jira_api: JiraAPI):
     result = await jira_api.get_issue_work_log('1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog'
+    request_url = str(route.calls.last.request.url)
+    assert 'startAt=' not in request_url
+    assert 'maxResults=' not in request_url
+    assert result == {
+        'maxResults': 1,
+        'startAt': 0,
+        'total': 1,
+        'worklogs': [
+            {
+                'author': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'comment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {
+                            'type': 'paragraph',
+                            'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                        }
+                    ],
+                },
+                'id': '100028',
+                'issueId': '10002',
+                'started': '2021-01-17T12:34:00.000+0000',
+                'timeSpent': '3h 20m',
+                'timeSpentSeconds': 12000,
+                'updateAuthor': {
+                    'accountId': '5b10a2844c20165700ede21g',
+                    'active': False,
+                    'displayName': 'Mia Krystof',
+                },
+                'updated': '2021-01-18T23:45:00.000+0000',
+                'visibility': {
+                    'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                    'type': 'group',
+                    'value': 'jira-developers',
+                },
+            }
+        ],
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_issue_work_log_for_jira_dc_api(jira_api_dc: JiraDataCenterAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/1/worklog'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'maxResults': 1,
+                'startAt': 0,
+                'total': 1,
+                'worklogs': [
+                    {
+                        'author': {
+                            'accountId': '5b10a2844c20165700ede21g',
+                            'active': False,
+                            'displayName': 'Mia Krystof',
+                        },
+                        'comment': {
+                            'type': 'doc',
+                            'version': 1,
+                            'content': [
+                                {
+                                    'type': 'paragraph',
+                                    'content': [{'type': 'text', 'text': 'I did some work here.'}],
+                                }
+                            ],
+                        },
+                        'id': '100028',
+                        'issueId': '10002',
+                        'started': '2021-01-17T12:34:00.000+0000',
+                        'timeSpent': '3h 20m',
+                        'timeSpentSeconds': 12000,
+                        'updateAuthor': {
+                            'accountId': '5b10a2844c20165700ede21g',
+                            'active': False,
+                            'displayName': 'Mia Krystof',
+                        },
+                        'updated': '2021-01-18T23:45:00.000+0000',
+                        'visibility': {
+                            'identifier': '276f955c-63d7-42c8-9520-92d01dca0625',
+                            'type': 'group',
+                            'value': 'jira-developers',
+                        },
+                    }
+                ],
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api_dc.get_issue_work_log('1', 0, 10)
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/issue/1/worklog'
     request_url = str(route.calls.last.request.url)
     assert 'startAt=' not in request_url
     assert 'maxResults=' not in request_url

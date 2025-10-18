@@ -29,7 +29,7 @@ class IssueRemoteLinkCollapsible(Collapsible):
         super().__init__(*args, **kwargs)
 
     async def action_delete_remote_link(self) -> None:
-        """Opens a moda screen to ask the user if they want to delete a remote link or not.
+        """Opens a modal screen to ask the user if they want to delete a remote link or not.
 
         Returns:
             Nothing.
