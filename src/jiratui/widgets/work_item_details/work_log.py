@@ -76,6 +76,7 @@ class WorkLogCollapsible(Collapsible):
 class WorkItemWorkLogScreen(Screen):
     """A screen that displays the worklogs of a work item."""
 
+    HELP = 'See Worklogs section in the help'
     DEFAULT_CSS = """
     WorkItemWorkLogScreen > Vertical > Label {
         color: $accent;
@@ -91,6 +92,10 @@ class WorkItemWorkLogScreen(Screen):
         self._work_item_key = work_item_key
         self._worklog_counter = 0
         self._worklog_total_count = 0
+
+    @property
+    def help_anchor(self) -> str:
+        return '#worklogs'
 
     @property
     def work_log_items_container(self) -> VerticalScroll:

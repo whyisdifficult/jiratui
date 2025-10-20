@@ -172,6 +172,7 @@ key you desire. The following table summaries the hot-keys and the component the
 | `v` | Activates the Active Sprint checkbox              |
 | `j` | Activates the JQL Query input                     |
 | `1` | Activates the Work Items search result table/pane |
+| `2` | Activates the Info tab                            |
 | `3` | Activates the Details tab                         |
 | `4` | Activates the Comments tab                        |
 | `5` | Activates the Related tab                         |
@@ -184,27 +185,30 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 
 | Key         | Active Tab/Component | Action                                                                     |
 |-------------|----------------------|----------------------------------------------------------------------------|
-| `ctrl+s`    | Details              | Saves change to a work item                                                |
-| `ctrl+l`    | Details              | View the work log                                                          |
+| `^s`        | Details              | Saves change to a work item                                                |
 | `^k`        | Details              | Copies the key of the work item currently selected                         |
 | `^j`        | Details              | Copies the URL of the work item currently selected                         |
+| `^l`        | Details              | View the work log                                                          |
+| `^t`        | Details              | Log work for a work item                                                   |
+| `d`         | Worklogs             | Delete a work log                                                          |
+| `^o`        | Worklogs             | Open worklog in the browser                                                |
 | `n`         | Comments             | Add a new comment to the work item                                         |
 | `n`         | Related              | Add a new related item to the work item                                    |
 | `enter`     | Related              | View the related item                                                      |
 | `d`         | Related              | Deletes the related item                                                   |
 | `^o`        | Related              | Opens file in the browser                                                  |
-| `ctrl+u`    | Attachments          | Attach file to the work item                                               |
+| `^u`        | Attachments          | Attach file to the work item                                               |
 | `d`         | Attachments          | Deletes an attachment                                                      |
 | `v`         | Attachments          | View the content of the attached file                                      |
 | `n`         | Links                | Link item to the work item                                                 |
 | `d`         | Links                | Deletes a link                                                             |
-| `ctrl+n`    | Subtasks             | Create a new subtask of the work item                                      |
+| `^n`        | Subtasks             | Create a new subtask of the work item                                      |
 | `.`         | Search Results       | Enables filtering of results in the results table                          |
 | `alt+right` | Search Results       | Retrieves the next page of results                                         |
 | `alt+left`  | Search Results       | Retrieves the previous page of results. This is only enabled when page > 1 |
 | `^k`        | Search Results       | Copies the key of the work item currently selected                         |
 | `^j`        | Search Results       | Copies the URL of the work item currently selected                         |
-| `ctrl+e`    | JQL Query field      | Opens the JQL Query Editor                                                 |
+| `^e`        | JQL Query field      | Opens the JQL Query Editor                                                 |
 
 Besides the hot-keys above the following are always available.
 
@@ -566,6 +570,15 @@ This image shows a list of subtasks associated to the selected work item.
 
 This tab displays a list of work items that are a sub task of the selected work item. A work item `A` is a subtask of
 another work item `B` if the parent of `A` is `B`.
+
+#### Worklogs
+
+The "Details" tab also allows you to log work for a given work item. To do so you can press `^t` to open a pop-up screen
+that will allow you to indicate the amount of time you work on a task, the date/time and an optional description.
+
+Moreover, to view the work log associated to a work item you can press `^l` in the "Details" tab. This will open up a
+pop-up screen that will display the work done on the task. Selecting 1 log in the list and pressing `d` allows you to
+delete the entry. You can also press `^o` to open a worklog details in the browser.
 
 ## CLI Interface
 
