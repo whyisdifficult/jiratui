@@ -2997,3 +2997,15 @@ def test_add_attachment_to_issue(detect_file_mime_type_mock: Mock, jira_api: Jir
     with patch('builtins.open', mock_open(read_data=DATA)):
         result = jira_api.add_attachment_to_issue('key-1', 'test-file.txt', 'test-file.txt')
         assert result == {}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_delete_work_log(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.delete(get_url_pattern('issue/1/worklog/2'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    await jira_api.delete_work_log('1', '2')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog/2'

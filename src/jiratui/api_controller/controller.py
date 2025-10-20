@@ -2136,7 +2136,16 @@ class APIController:
             )
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
-            self.logger.error('Unable to add worklog', extra=exception_details.get('extra'))
+            self.logger.error(
+                'Unable to add worklog',
+                extra={
+                    'time_spent': time_spent,
+                    'time_remaining': time_remaining,
+                    'current_remaining_estimate': current_remaining_estimate,
+                    'started': str(started) if started else None,
+                    **exception_details.get('extra', {}),
+                },
+            )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         update_author = None
@@ -2177,3 +2186,28 @@ class APIController:
                 comment=response.get('comment'),
             )
         )
+
+    async def remove_worklog(self, issue_id_or_key: str, worklog_id: str) -> APIControllerResponse:
+        """Deletes a worklog from an issue.
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            worklog_id: the ID of the worklog.
+
+        Returns:
+            `APIControllerResponse(success=True)` if the operation was successful;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
+        try:
+            await self.api.delete_work_log(issue_id_or_key=issue_id_or_key, worklog_id=worklog_id)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to delete worklog',
+                extra={
+                    'worklog_id': worklog_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse()

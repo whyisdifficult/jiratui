@@ -1183,6 +1183,30 @@ class JiraAPI:
             params=params,
         )
 
+    async def delete_work_log(self, issue_id_or_key: str, worklog_id: str) -> bool:
+        """Deletes a worklog from an issue.
+
+        ```{important}
+        Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see
+        [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
+        ```
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-id-delete
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            worklog_id: the ID of the worklog.
+
+        Returns:
+            True if the operation succeeds.
+        """
+        await self._client.make_request(
+            method=httpx.AsyncClient.delete,
+            url=f'issue/{issue_id_or_key}/worklog/{worklog_id}',
+        )
+        return True
+
     @staticmethod
     def _build_worklog_comment_payload(message: str) -> dict:
         """Builds the payload required for adding/set a description/comment to a worklog when a worklog is added to a work item.

@@ -112,7 +112,7 @@ class IssueParentField(Input):
         self.add_class(*['issue_details_input_field', 'work-item-key'])
         self.jira_field_key = 'parent'
         """The key to used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled: bool = True
+        self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
     def watch_update_enabled(self, enabled: bool = True) -> None:
@@ -460,7 +460,7 @@ class IssueDetailsWidget(Vertical):
             key: the key that was pressed.
 
         Returns:
-            Nothing.
+            `None`.
         """
         if key == 'x':
             self.screen.set_focus(self.assignee_selector)
@@ -473,7 +473,7 @@ class IssueDetailsWidget(Vertical):
         """Opens a pop-up modal to display the work log of a work item.
 
         Returns:
-            Nothing.
+            `None`.
         """
         if self.issue:
             self.app.push_screen(WorkItemWorkLogScreen(self.issue.key))
@@ -482,7 +482,7 @@ class IssueDetailsWidget(Vertical):
         """Opens a pop-up modal to allow the user to log work for the current work item.
 
         Returns:
-            Nothing.
+            `None`.
         """
         if self.issue:
             current_remaining_estimate = None
@@ -490,10 +490,18 @@ class IssueDetailsWidget(Vertical):
                 current_remaining_estimate = self.issue.time_tracking.remaining_estimate
             self.app.push_screen(
                 LogWorkScreen(self.issue.key, current_remaining_estimate),
-                self.request_adding_worklog,
+                self._request_adding_worklog,
             )
 
-    def request_adding_worklog(self, data: dict) -> None:
+    def _request_adding_worklog(self, data: dict) -> None:
+        """Requests a worker to attempt to log work for the currently-selected item.
+
+        Args:
+            data: the data returned by the modal screen after the user clicks the "save" button.
+
+        Returns:
+            `None`.
+        """
         self.run_worker(
             self._add_worklog(
                 time_spent=data.get('time_spent'),
@@ -512,7 +520,7 @@ class IssueDetailsWidget(Vertical):
         description: str | None = None,
         current_remaining_estimate: str | None = None,
     ) -> None:
-        """Adds a comment to the issue and retrieves the list comments if the comment was added successfully.
+        """Logs work for the currently-selected item.
 
         Args:
             time_spent: the time spent on the task. E.g. 1w 1d
@@ -526,6 +534,8 @@ class IssueDetailsWidget(Vertical):
         """
 
         if not time_spent:
+            # this should not happen but if for some reason it does then make sure to let the user know that we can't
+            # add the worklog
             self.notify(
                 'You need to provide the time spent on the task to log work', title='Worklog'
             )

@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from typing import cast
 
@@ -5,17 +6,19 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical, VerticalScroll
+from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Button, Collapsible, Input, Label, Markdown, TextArea
+from textual.widgets import Button, Collapsible, Footer, Input, Label, Markdown, TextArea
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import JiraWorklog
+from jiratui.models import JiraWorklog, PaginatedJiraWorklog
 from jiratui.utils.urls import build_external_url_for_work_log
 from jiratui.widgets.base import DateInput
 
 
 class WorkLogCollapsible(Collapsible):
-    """A collapsible widget to display information of a worklog."""
+    """A collapsible widget to display information of a worklog and to handle opening the worklog details in the
+    browser and deleting work logs."""
 
     BINDINGS = [
         Binding(
@@ -23,11 +26,24 @@ class WorkLogCollapsible(Collapsible):
             action='open_in_browser',
             description='Browse',
             show=True,
-        )
+        ),
+        Binding(
+            key='d',
+            action='delete_worklog',
+            description='Delete Worklog',
+            show=True,
+        ),
     ]
+
+    class Deleted(Message):
+        """A worklog is deleted."""
+
+        pass
 
     def __init__(self, *args, **kwargs):
         self._url = kwargs.pop('url')
+        self._worklog_id = kwargs.pop('worklog_id')
+        self._work_item_key = kwargs.pop('work_item_key')
         super().__init__(*args, **kwargs)
 
     def action_open_in_browser(self) -> None:
@@ -35,9 +51,30 @@ class WorkLogCollapsible(Collapsible):
         if self._url:
             self.app.open_url(self._url)
 
+    def action_delete_worklog(self):
+        """Attempts to delete the worklog."""
+        if self._worklog_id:
+            self.run_worker(self._delete_worklog)
+
+    async def _delete_worklog(self) -> None:
+        """Deletes a worklog."""
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.remove_worklog(
+            self._work_item_key, self._worklog_id
+        )
+        if response.success:
+            self.notify('Worklog deleted', title='Worklog')
+            self.styles.display = 'none'
+            # notify the parents to update necessary information after deleting a worklog
+            self.post_message(self.Deleted())
+        else:
+            self.notify(
+                f'Failed to delete the worklog: {response.error}', title='Worklog', severity='error'
+            )
+
 
 class WorkItemWorkLogScreen(Screen):
-    """A screen that displays the worklog of a work item."""
+    """A screen that displays the worklogs of a work item."""
 
     DEFAULT_CSS = """
     WorkItemWorkLogScreen > Vertical > Label {
@@ -52,6 +89,8 @@ class WorkItemWorkLogScreen(Screen):
     def __init__(self, work_item_key: str):
         super().__init__()
         self._work_item_key = work_item_key
+        self._worklog_counter = 0
+        self._worklog_total_count = 0
 
     @property
     def work_log_items_container(self) -> VerticalScroll:
@@ -63,36 +102,51 @@ class WorkItemWorkLogScreen(Screen):
 
     def compose(self) -> ComposeResult:
         vertical = Vertical()
-        vertical.border_title = f'Work Log - {self._work_item_key}'
+        vertical.border_title = f'{self.TITLE} - {self._work_item_key}'
         with vertical:
-            yield Label('Hint: press ^o to open a worklog in the browser')
             yield VerticalScroll()
+        yield Footer(show_command_palette=False)
 
     async def on_mount(self) -> None:
         if self._work_item_key:
             self.run_worker(self.fetch_work_log())
 
+    def on_work_log_collapsible_deleted(self, message: WorkLogCollapsible.Deleted) -> None:
+        self._update_subtitle(True)
+        message.stop()
+
+    def _update_subtitle(self, after_deletion: bool = False) -> None:
+        if after_deletion:
+            if self._worklog_counter > 0:
+                self._worklog_counter -= 1
+            if self._worklog_total_count > 0:
+                self._worklog_total_count -= 1
+        self.root_container.border_subtitle = (
+            f'Showing {self._worklog_counter} of {self._worklog_total_count}'
+        )
+
     async def fetch_work_log(self) -> None:
         """Retrieves the work log data associated to a work item and updates the details in the screen.
 
         Returns:
-            Nothing.
+            `None`.
         """
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_work_item_worklog(
             self._work_item_key
         )
+        result: PaginatedJiraWorklog
         if response.success and (result := response.result):
-            self.root_container.border_subtitle = f'Showing {len(result.logs)} of {result.total}'
+            self._worklog_counter = len(result.logs)
+            self._worklog_total_count = result.total
+            self._update_subtitle()
             elements: list[WorkLogCollapsible] = []
             worklog: JiraWorklog
             for worklog in result.logs:
                 comment_text = ''
-                if worklog.comment:
-                    if not (comment_text := worklog.get_comment()):
-                        comment_text = (
-                            'Unable to display the description associated to the worklog.'
-                        )
+                if worklog.comment and not (comment_text := worklog.get_comment()):
+                    # this may happen if we fail to parse the ADF data for Jira Cloud API
+                    comment_text = 'Unable to display the description associated to the worklog.'
 
                 url = build_external_url_for_work_log(self._work_item_key, worklog.id)
                 elements.append(
@@ -100,6 +154,8 @@ class WorkItemWorkLogScreen(Screen):
                         Markdown(comment_text),
                         title=worklog.display(),
                         url=url or None,
+                        worklog_id=worklog.id,
+                        work_item_key=self._work_item_key,
                     )
                 )
             await self.work_log_items_container.mount_all(elements)
@@ -129,6 +185,7 @@ class LogDateTimeInput(DateInput):
         self.disabled = True
         self.border_title = 'Date Started'
         self.tooltip = 'Enter the date/time on which the work was done'
+        self.value = datetime.now().strftime('%Y-%m-%d %H:%M')
 
 
 class WorkDescription(TextArea):
@@ -206,11 +263,19 @@ class LogWorkScreen(Screen[dict]):
         self._enable_disable_widgets(
             time_spent_value=self.time_spent_input.value,
             time_remaining_value=event.value,
+            enable_disable_related_widgets=True,
         )
 
     @on(Input.Blurred, 'LogDateTimeInput')
     def validate_date_time(self, event: Input.Changed) -> None:
-        self.save_button.disabled = not event.value
+        if not event.value:
+            self.save_button.disabled = True
+        else:
+            try:
+                datetime.strptime(event.value, '%Y-%m-%d %H:%M')
+                self.save_button.disabled = False
+            except ValueError:
+                self.save_button.disabled = True
 
     @staticmethod
     def _valid_time_expression(value: str) -> bool:
@@ -262,18 +327,6 @@ class LogWorkScreen(Screen[dict]):
             if enable_disable_related_widgets:
                 self.log_date_time_input.disabled = not valid_time_spent
                 self.work_description_input.disabled = not valid_time_spent
-
-            # update the button and related widgets based on the value provided for time remaining
-            if (not self._current_remaining_estimate and time_remaining_value) or (
-                self._current_remaining_estimate
-                and time_remaining_value
-                and time_remaining_value != self._current_remaining_estimate
-            ):
-                valid_time_remaining = self._valid_time_expression(time_remaining_value)
-                self.save_button.disabled = not valid_time_remaining
-                if enable_disable_related_widgets:
-                    self.log_date_time_input.disabled = not valid_time_remaining
-                    self.work_description_input.disabled = not valid_time_remaining
         elif not time_spent_value and time_remaining_value:
             # we always need a value for the time spent
             self.save_button.disabled = True
@@ -296,10 +349,17 @@ class LogWorkScreen(Screen[dict]):
                 and time_remaining_value != self._current_remaining_estimate
             ):
                 valid_time_remaining = self._valid_time_expression(time_remaining_value)
-                self.save_button.disabled = not valid_time_remaining
+                self.save_button.disabled = self.save_button.disabled or not valid_time_remaining
                 if enable_disable_related_widgets:
-                    self.log_date_time_input.disabled = not valid_time_remaining
-                    self.work_description_input.disabled = not valid_time_remaining
+                    if not self.log_date_time_input.disabled and valid_time_remaining:
+                        self.log_date_time_input.disabled = False
+                    else:
+                        self.log_date_time_input.disabled = True
+
+                    if not self.work_description_input.disabled and valid_time_remaining:
+                        self.work_description_input.disabled = False
+                    else:
+                        self.work_description_input.disabled = True
 
     @on(Button.Pressed, '#log-work-button-quit')
     def handle_quit_button(self) -> None:

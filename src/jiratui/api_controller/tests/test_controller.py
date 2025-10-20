@@ -3087,3 +3087,35 @@ async def test_add_work_item_worklog_without_time_remaining(
         time_remaining=None,
         comment='some comment',
     )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_log')
+async def test_remove_worklog(delete_work_log_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    delete_work_log_mock.return_value = None
+    # WHEN
+    response = await jira_api_controller.remove_worklog('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result is None
+    delete_work_log_mock.assert_called_once_with(issue_id_or_key='1', worklog_id='2')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_log')
+async def test_remove_worklog_with_api_error(
+    delete_work_log_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_work_log_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.remove_worklog('1', '2')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    delete_work_log_mock.assert_called_once_with(issue_id_or_key='1', worklog_id='2')
