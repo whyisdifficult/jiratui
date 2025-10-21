@@ -702,14 +702,18 @@ async def test_delete_worklog(
         await pilot.press('3')
         await pilot.press('tab')
         await pilot.press('ctrl+l')
+        screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        assert screen.root_container.border_subtitle == 'Showing 2 of 2'
+        assert screen.root_container.border_title == 'Worklog - key-2'
+        assert screen._work_logs_deleted is False
         await pilot.press('tab')
         await pilot.press('d')
         # THEN
         assert isinstance(app.screen, WorkItemWorkLogScreen)
         get_work_item_worklog_mock.assert_called_once_with('key-2')
         remove_worklog_mock.assert_called_once_with('key-2', '1')
-        screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        assert screen.work_log_items_container.border_subtitle == 'Showing 1 of 1'
+        assert screen.root_container.border_subtitle == 'Showing 1 of 1'
+        assert screen._work_logs_deleted is True
 
 
 @patch.object(JiraApp, 'open_url')

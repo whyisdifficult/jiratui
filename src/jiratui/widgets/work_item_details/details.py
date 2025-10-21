@@ -21,7 +21,10 @@ from jiratui.utils.work_item_updates import (
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
 from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
-from jiratui.widgets.work_item_details.work_log import LogWorkScreen, WorkItemWorkLogScreen
+from jiratui.widgets.work_item_details.work_log import (
+    LogWorkScreen,
+    WorkItemWorkLogScreen,
+)
 
 
 class IssueDetailsAssigneeSelection(UserSelectionInput):
@@ -476,7 +479,9 @@ class IssueDetailsWidget(Vertical):
             `None`.
         """
         if self.issue:
-            self.app.push_screen(WorkItemWorkLogScreen(self.issue.key))
+            self.app.push_screen(
+                WorkItemWorkLogScreen(self.issue.key), self._handle_worklog_screen_dismissal
+            )
 
     def action_log_work(self) -> None:
         """Opens a pop-up modal to allow the user to log work for the current work item.
@@ -492,6 +497,24 @@ class IssueDetailsWidget(Vertical):
                 LogWorkScreen(self.issue.key, current_remaining_estimate),
                 self._request_adding_worklog,
             )
+
+    def _handle_worklog_screen_dismissal(self, response: dict | None = None) -> None:
+        # when the screen that shows work logs for a work item is dismissed, check the result and if
+        # required fetch the details of the work item to refresh the details form and reflect the changes in time
+        # tracking information
+        if response.get('work_logs_deleted'):
+            self.run_worker(self._refresh_work_item_details)
+
+    async def _refresh_work_item_details(self) -> None:
+        """Fetches the details of the work item to retrieve the latest changes and update the details form.
+
+        This is useful for operations that update the details, e.g. saving the work item's details or, deleting a
+        worklog."""
+
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        issue_details_response = await application.api.get_issue(issue_id_or_key=self.issue.key)
+        if issue_details_response.success and issue_details_response.result:
+            self.issue = issue_details_response.result.issues[0]
 
     def _request_adding_worklog(self, data: dict) -> None:
         """Requests a worker to attempt to log work for the currently-selected item.
@@ -549,14 +572,16 @@ class IssueDetailsWidget(Vertical):
                 comment=description,
                 current_remaining_estimate=current_remaining_estimate,
             )
-            if not response.success:
+            if response.success:
+                self.notify('Work logged successfully', title='Worklog')
+                # refresh the details of the work item to reflect the changes in time tracking information
+                await self._refresh_work_item_details()
+            else:
                 self.notify(
                     f'Failed to log work for the item: {response.error}',
                     severity='error',
                     title='Worklog',
                 )
-            else:
-                self.notify('Work logged successfully', title='Worklog')
 
     def _update_priority_selection(self, priorities, priority_id: str) -> None:
         for priority in priorities or []:
@@ -685,8 +710,9 @@ class IssueDetailsWidget(Vertical):
         """Updates the fields of a work item that have changed.
 
         Returns:
-            Nothing.
+            `None`.
         """
+
         if not self.issue:
             self.notify('You must select a work item before saving changes')
             return
@@ -764,9 +790,7 @@ class IssueDetailsWidget(Vertical):
 
         if issue_was_updated:
             # fetch the issue again to retrieve the latest changes and update the form
-            response = await application.api.get_issue(issue_id_or_key=self.issue.key)
-            if response.success and response.result:
-                self.issue = response.result.issues[0]
+            await self._refresh_work_item_details()
 
     @staticmethod
     def _determine_editable_fields(work_item: JiraIssue) -> dict:

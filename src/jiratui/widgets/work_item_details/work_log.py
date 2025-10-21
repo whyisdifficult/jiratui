@@ -73,8 +73,8 @@ class WorkLogCollapsible(Collapsible):
             )
 
 
-class WorkItemWorkLogScreen(Screen):
-    """A screen that displays the worklogs of a work item."""
+class WorkItemWorkLogScreen(Screen[dict]):
+    """A screen that displays the work logs of a work item."""
 
     HELP = 'See Worklogs section in the help'
     DEFAULT_CSS = """
@@ -83,7 +83,7 @@ class WorkItemWorkLogScreen(Screen):
     }
     """
     BINDINGS = [
-        ('escape', 'app.pop_screen', 'Close'),
+        ('escape', 'close_screen', 'Close'),
     ]
     TITLE = 'Worklog'
 
@@ -92,6 +92,9 @@ class WorkItemWorkLogScreen(Screen):
         self._work_item_key = work_item_key
         self._worklog_counter = 0
         self._worklog_total_count = 0
+        # True when at least 1 work log was deleted; useful for refreshing the details of the work item after this
+        # screen is dismissed
+        self._work_logs_deleted = False
 
     @property
     def help_anchor(self) -> str:
@@ -117,11 +120,17 @@ class WorkItemWorkLogScreen(Screen):
             self.run_worker(self.fetch_work_log())
 
     def on_work_log_collapsible_deleted(self, message: WorkLogCollapsible.Deleted) -> None:
+        """Refreshes the subtitle of the main container to reflect the number of work logs remaining after
+        deleting one."""
         self._update_subtitle(True)
+        self._work_logs_deleted = True
         message.stop()
 
-    def _update_subtitle(self, after_deletion: bool = False) -> None:
-        if after_deletion:
+    def action_close_screen(self) -> None:
+        self.dismiss({'work_logs_deleted': self._work_logs_deleted})
+
+    def _update_subtitle(self, update_counters: bool = False) -> None:
+        if update_counters:
             if self._worklog_counter > 0:
                 self._worklog_counter -= 1
             if self._worklog_total_count > 0:
@@ -136,6 +145,7 @@ class WorkItemWorkLogScreen(Screen):
         Returns:
             `None`.
         """
+
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_work_item_worklog(
             self._work_item_key
