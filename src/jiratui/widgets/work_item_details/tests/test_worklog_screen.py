@@ -11,6 +11,7 @@ from jiratui.app import JiraApp
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, JiraWorklog, PaginatedJiraWorklog
 from jiratui.widgets.filters import ProjectSelectionInput
 from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.work_log import (
     LogDateTimeInput,
     LogWorkScreen,
@@ -410,11 +411,13 @@ async def test_log_work_screen_saving(
         )
 
 
+@patch.object(IssueDetailsWidget, '_refresh_work_item_details')
 @patch.object(LogWorkScreen, 'dismiss')
 @pytest.mark.parametrize('current_remaining_estimate', ['', '2h'])
 @pytest.mark.asyncio
-async def test_log_work_screen_cancel(
+async def test_adding_worklog_user_clicks_cancel(
     dismiss_mock: Mock,
+    refresh_work_item_details_mock: Mock,
     current_remaining_estimate: str,
     jira_api_controller,
     app,
@@ -460,8 +463,10 @@ async def test_log_work_screen_cancel(
         assert isinstance(screen.focused, Button)
         await pilot.press('enter')
         dismiss_mock.assert_called_once_with({})
+        refresh_work_item_details_mock.assert_not_called()
 
 
+@patch.object(IssueDetailsWidget, '_refresh_work_item_details')
 @patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
@@ -478,6 +483,7 @@ async def test_adding_worklog_with_success(
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     add_work_item_worklog_mock: AsyncMock,
+    refresh_work_item_details_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -528,6 +534,78 @@ async def test_adding_worklog_with_success(
             comment='-',
             current_remaining_estimate=None,
         )
+        refresh_work_item_details_mock.assert_called_once()
+
+
+@patch.object(IssueDetailsWidget, '_refresh_work_item_details')
+@patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
+@patch('jiratui.widgets.screens.APIController.get_issue')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_adding_worklog_with_error_adding_new_worklog(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    add_work_item_worklog_mock: AsyncMock,
+    refresh_work_item_details_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    add_work_item_worklog_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test() as pilot:
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN/THEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('ctrl+t')
+        assert isinstance(app.screen, LogWorkScreen)
+        date_time_value = app.screen.log_date_time_input.value  # type:ignore
+        await pilot.press('1')
+        await pilot.press('w')
+        await pilot.press('tab')  # move to time remaining
+        await pilot.press('2')
+        await pilot.press('w')
+        await pilot.press('tab')  # move to date/time
+        await pilot.press('tab')  # move to description
+        await pilot.press('-')  # move to time remaining
+        await pilot.press('tab')  # move to save button
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        add_work_item_worklog_mock.assert_called_once_with(
+            issue_key_or_id='key-2',
+            started=parser.parse(f'{date_time_value}Z'),
+            time_spent='1w',
+            time_remaining='2w',
+            comment='-',
+            current_remaining_estimate=None,
+        )
+        refresh_work_item_details_mock.assert_not_called()
 
 
 @patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
@@ -600,7 +678,7 @@ async def test_adding_worklog_when_users_clicks_cancel(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_open_modal_view_worklogs(
+async def test_open_modal_to_view_work_logs(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -714,6 +792,136 @@ async def test_delete_worklog(
         remove_worklog_mock.assert_called_once_with('key-2', '1')
         assert screen.root_container.border_subtitle == 'Showing 1 of 1'
         assert screen._work_logs_deleted is True
+
+
+@patch.object(IssueDetailsWidget, '_handle_worklog_screen_dismissal')
+@patch('jiratui.widgets.screens.APIController.remove_worklog')
+@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screens.APIController.get_issue')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_delete_worklog_and_close_worklog_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    get_work_item_worklog_mock: AsyncMock,
+    build_external_url_for_work_log_mock: Mock,
+    remove_worklog_mock: Mock,
+    handle_worklog_screen_dismissal_mock: Mock,
+    jira_issues: list[JiraIssue],
+    jira_worklogs: list[JiraWorklog],
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    get_work_item_worklog_mock.return_value = APIControllerResponse(
+        result=PaginatedJiraWorklog(logs=jira_worklogs, max_results=10, start_at=0, total=2)
+    )
+    build_external_url_for_work_log_mock.return_value = 'foo.bar'
+    remove_worklog_mock.return_value = APIControllerResponse()
+    async with app.run_test() as pilot:
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN/THEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('ctrl+l')
+        screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        assert screen.root_container.border_subtitle == 'Showing 2 of 2'
+        assert screen.root_container.border_title == 'Worklog - key-2'
+        assert screen._work_logs_deleted is False
+        await pilot.press('tab')
+        await pilot.press('d')
+        await pilot.press('escape')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        handle_worklog_screen_dismissal_mock.assert_called_once_with({'work_logs_deleted': True})
+
+
+@patch.object(IssueDetailsWidget, '_handle_worklog_screen_dismissal')
+@patch('jiratui.widgets.screens.APIController.remove_worklog')
+@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screens.APIController.get_issue')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.get_users')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_and_close_worklog_screen_without_deleting(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_users_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    get_work_item_worklog_mock: AsyncMock,
+    build_external_url_for_work_log_mock: Mock,
+    remove_worklog_mock: Mock,
+    handle_worklog_screen_dismissal_mock: Mock,
+    jira_issues: list[JiraIssue],
+    jira_worklogs: list[JiraWorklog],
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    get_work_item_worklog_mock.return_value = APIControllerResponse(
+        result=PaginatedJiraWorklog(logs=jira_worklogs, max_results=10, start_at=0, total=2)
+    )
+    build_external_url_for_work_log_mock.return_value = 'foo.bar'
+    remove_worklog_mock.return_value = APIControllerResponse()
+    async with app.run_test() as pilot:
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN/THEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('ctrl+l')
+        screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        assert screen._work_logs_deleted is False
+        await pilot.press('escape')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        handle_worklog_screen_dismissal_mock.assert_called_once_with({'work_logs_deleted': False})
 
 
 @patch.object(JiraApp, 'open_url')
