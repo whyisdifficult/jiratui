@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock
 
 from pydantic import SecretStr
@@ -14,6 +14,7 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraUser,
+    JiraWorklog,
     Project,
     WorkItemsSearchOrderBy,
 )
@@ -160,6 +161,32 @@ def jira_api_v2(config_for_testing) -> JiraAPIv2:
 @pytest.fixture
 def jira_api_dc(config_for_testing_jira_dc) -> JiraDataCenterAPI:
     return JiraDataCenterAPI('https://foo.bar', 'foo', 'bar', config_for_testing_jira_dc)
+
+
+@pytest.fixture
+def jira_worklogs() -> list[JiraWorklog]:
+    return [
+        JiraWorklog(
+            id='1',
+            issue_id='key-2',
+            started=datetime(2025, 10, 18, 13, 45, 0, tzinfo=timezone.utc),
+            time_spent='1h',
+            time_spent_seconds=3600,
+            author=Mock(spec=JiraUser),
+            update_author=Mock(spec=JiraUser),
+            comment='-',
+        ),
+        JiraWorklog(
+            id='2',
+            issue_id='key-2',
+            started=datetime(2025, 10, 19, 13, 45, 0, tzinfo=timezone.utc),
+            time_spent='1h',
+            time_spent_seconds=3600,
+            author=Mock(spec=JiraUser),
+            update_author=Mock(spec=JiraUser),
+            comment='-',
+        ),
+    ]
 
 
 @pytest.fixture

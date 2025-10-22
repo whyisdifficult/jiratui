@@ -29,7 +29,10 @@ class DateInput(MaskedInput):
             self.border_subtitle = self.BORDER_SUBTITLE
         if not self.valid_empty:
             self.add_class('required')
-            self.border_subtitle = f'{self.border_subtitle} (*)'
+            if self.border_subtitle:
+                self.border_subtitle = f'{self.border_subtitle} (*)'
+            else:
+                self.border_subtitle = '(*)'
 
 
 class ReadOnlyField(Input):

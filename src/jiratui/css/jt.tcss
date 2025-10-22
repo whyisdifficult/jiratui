@@ -323,13 +323,13 @@ QuitScreen > Grid {
 
 WorkItemReadOnlyDetailsScreen {
     align: center middle;
+    background: $background 80%;
 }
 
 WorkItemReadOnlyDetailsScreen > VerticalScroll {
     width: 70%;
     height: 85%;
     border: round $foreground;
-    background: $background 60%;
     padding: 0 1;
 }
 
@@ -341,7 +341,7 @@ WorkItemReadOnlyDetailsScreen > VerticalScroll {
 
 AddCommentScreen {
     align: center middle;
-    background: $background 70%;
+    background: $background 80%;
 }
 AddCommentScreen > Vertical {
     width: 50%;
@@ -381,7 +381,7 @@ AddCommentScreen > Vertical {
 
 AddRemoteLinkScreen {
     align: center middle;
-    background: $background 70%;
+    background: $background 80%;
 }
 AddRemoteLinkScreen > Vertical {
     width: 50%;
@@ -449,7 +449,7 @@ RemoteLinkURLInputWidget {
 
 AddWorkItemRelationshipScreen {
     align: center middle;
-    background: $background 70%;
+    background: $background 80%;
 }
 AddWorkItemRelationshipScreen > Vertical {
     width: 50%;
@@ -516,7 +516,7 @@ LinkedWorkItemInputWidget {
 
 AddWorkItemScreen {
     align: center middle;
-    background: $background 70%;
+    background: $background 80%;
 }
 AddWorkItemScreen > Vertical {
     width: 70%;
@@ -753,13 +753,13 @@ FileNameInputWidget {
 
 ServerInfoScreen {
     align: center middle;
+    background: $background 80%;
 }
 
 ServerInfoScreen > VerticalScroll {
     width: 60%;
     height: 100%;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
     scrollbar-size-vertical: 1;
 }
@@ -771,13 +771,13 @@ ServerInfoScreen > VerticalScroll > DataTable {
 
 ConfigFileScreen {
     align: center middle;
+    background: $background 80%;
 }
 
 ConfigFileScreen > Vertical {
     width: 70%;
     height: 100%;
     border: round $foreground;
-    background: $background 70%;
     padding: 0 1;
 }
 ConfigFileScreen > Vertical > DataTable {
@@ -848,25 +848,6 @@ IssueRemoteLinkCollapsible {
     & > Contents {
         padding: 1 0 0 3;
     }
-}
-
-/* Work Log Screen */
-
-WorkItemWorkLogScreen {
-    align: center middle;
-}
-
-WorkItemWorkLogScreen > Vertical {
-    width: 50%;
-    height: 70%;
-    border: round $foreground;
-    background: $background 70%;
-    padding: 0 1;
-}
-
-WorkLogCollapsible {
-    border: round $accent;
-    background: transparent;
 }
 
 /* JQL Editor */
@@ -952,13 +933,13 @@ TextSearchScreen > Input {
 /* Screen to display attached files */
 ViewAttachmentScreen {
     align: center middle;
+    background: $background 80%;
 }
 
 ViewAttachmentScreen > VerticalScroll {
     width: 70%;
     height: 70%;
     border: round $foreground;
-    background: transparent;
     padding: 0 0;
     scrollbar-size-vertical: 1;
 }
@@ -984,13 +965,13 @@ ViewAttachmentScreen > VerticalScroll > Center {
 /* Screen to create git branches */
 GitScreen {
     align: center middle;
+    background: $background 80%;
 }
 
 GitScreen > Vertical {
     width: 70%;
     height: 50%;
     border: round $foreground;
-    background: transparent;
     padding: 1 1;
     scrollbar-size-vertical: 1;
 }
@@ -1021,4 +1002,95 @@ GitBranchNameInput {
 GitRepositorySelectionWidget {
     border: round $accent;
     padding: 0 1;
+}
+
+/* Screen for logging work */
+
+LogWorkScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+LogWorkScreen > Vertical {
+    width: 55%;
+    height: 50%;
+    border: round $foreground;
+    background: transparent;
+    padding: 1 1;
+    scrollbar-size-vertical: 1;
+    & .log-work-time-input-grid {
+        grid-size: 2 1;
+        grid-columns: 50% 50%;
+        align: center middle;
+    }
+    & .log-work-buttons-grid {
+        grid-size: 2 1;
+        grid-columns: 50% 50%;
+        align: center middle;
+    }
+    & .log-work-date-hint-grid {
+        grid-size: 2 1;
+        grid-columns: 50% 50%;
+        align: left middle;
+    }
+}
+
+TimeSpentInput, TimeRemainingInput {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+WorkDescription {
+    background: transparent;
+    border: round $primary-lighten-3;
+    scrollbar-size-vertical: 1;
+}
+
+/* Time Tracking */
+
+TimeTrackingWidget {
+    box_sizing: content-box;
+    height: 2;
+    border: round $secondary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    align-horizontal: left;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+/* Worklog Screen */
+
+WorkItemWorkLogScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+WorkItemWorkLogScreen > Vertical {
+    width: 60%;
+    height: 75%;
+    border: round $foreground;
+    padding: 0 1;
+    & > VerticalScroll {
+        scrollbar-size-vertical: 1;
+    }
+}
+
+WorkLogCollapsible {
+    border: round $primary;
+    background: transparent;
+    padding-bottom: 0;
 }

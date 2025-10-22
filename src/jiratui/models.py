@@ -438,6 +438,59 @@ class JiraIssueSearchResponse(BaseModel):
 
 
 @dataclass
+class JiraTimeTrackingConfiguration(BaseModel):
+    default_unit: str
+    time_format: str
+    working_days_per_week: int
+    working_hours_per_day: int
+
+    def display_default_unit(self) -> str:
+        return self.default_unit or ''
+
+    def display_time_format(self) -> str:
+        return self.time_format or ''
+
+    def display_working_days_per_week(self) -> str:
+        return str(self.working_days_per_week or '')
+
+    def display_working_hours_per_day(self) -> str:
+        return str(self.working_hours_per_day or '')
+
+
+@dataclass
+class JiraGlobalSettings(BaseModel):
+    attachments_enabled: bool
+    issue_linking_enabled: bool
+    subtasks_enabled: bool
+    unassigned_issues_allowed: bool
+    voting_enabled: bool
+    watching_enabled: bool
+    time_tracking_enabled: bool
+    time_tracking_configuration: JiraTimeTrackingConfiguration | None = None
+
+    def display_attachments_enabled(self) -> str:
+        return 'Yes' if self.attachments_enabled else 'No'
+
+    def display_subtasks_enabled(self) -> str:
+        return 'Yes' if self.subtasks_enabled else 'No'
+
+    def display_issue_linking_enabled(self) -> str:
+        return 'Yes' if self.issue_linking_enabled else 'No'
+
+    def display_unassigned_issues_allowed(self) -> str:
+        return 'Yes' if self.unassigned_issues_allowed else 'No'
+
+    def display_voting_enabled(self) -> str:
+        return 'Yes' if self.voting_enabled else 'No'
+
+    def display_watching_enabled(self) -> str:
+        return 'Yes' if self.watching_enabled else 'No'
+
+    def display_time_tracking_enabled(self) -> str:
+        return 'Yes' if self.time_tracking_enabled else 'No'
+
+
+@dataclass
 class JiraServerInfo(BaseModel):
     base_url: str
     version: str
@@ -578,6 +631,7 @@ class JiraWorklog(BaseModel):
     author: JiraUser | None = None
     update_author: JiraUser | None = None
     comment: dict | str | None = None
+    """Jira DC API uses strings instead of ADF, which are represented as dictionaries."""
 
     def updated_on(self) -> str:
         if self.update_author:
@@ -608,6 +662,14 @@ class JiraWorklog(BaseModel):
                 return f'{self.author.display_user} logged {self.time_spent}'
 
     def get_comment(self) -> str:
+        """Gets the value of the worklog's comment.
+
+        Jira DC API uses strings instead of ADF. In these cases we simply return the string value. For Jira Cloud API
+        the value of the comment is an ADF dictionary and, in these cases we need to convert it to Markdown.
+
+        Returns:
+            A string representation of the worklog's description.
+        """
         if not self.comment:
             return ''
         if isinstance(self.comment, str):
