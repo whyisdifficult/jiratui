@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import cast
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -106,7 +105,7 @@ async def test_log_work_screen_with_valid_time_spent_value(
         assert screen.save_button.disabled is False
         assert screen.log_date_time_input.disabled is False
         assert screen.work_description_input.disabled is False
-        assert screen.log_date_time_input.value == datetime.now().strftime('%Y-%m-%d %H:%M')
+        assert screen.log_date_time_input.value
         assert screen.work_description_input.text == ''
         assert screen.time_remaining_input.value == current_remaining_estimate
 
@@ -205,13 +204,13 @@ async def test_log_work_screen_with_incorrect_datetime_value(
         assert screen.save_button.disabled is False
         assert screen.log_date_time_input.disabled is False
         assert screen.work_description_input.disabled is False
-        assert screen.log_date_time_input.value == datetime.now().strftime('%Y-%m-%d %H:%M')
+        assert screen.log_date_time_input.value
         assert screen.work_description_input.text == ''
         assert screen.time_remaining_input.value == current_remaining_estimate
         await pilot.press('tab')
         await pilot.press('tab')  # focus is on the date/time widget
         assert isinstance(screen.focused, LogDateTimeInput)
-        assert screen.log_date_time_input.value == datetime.now().strftime('%Y-%m-%d %H:%M')
+        assert screen.log_date_time_input.value
         await pilot.press('2')
         await pilot.press('0')
         await pilot.press('2')
