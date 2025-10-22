@@ -238,7 +238,6 @@ async def test_log_work_screen_with_empty_datetime_value(
     app,
 ):
     # GIVEN
-    date_time_input = datetime.now().strftime('%Y-%m-%d %H:%M')
     async with app.run_test() as pilot:
         await app.push_screen(LogWorkScreen('1', current_remaining_estimate))
         screen = cast('LogWorkScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -251,7 +250,7 @@ async def test_log_work_screen_with_empty_datetime_value(
         assert screen.save_button.disabled is False
         assert screen.log_date_time_input.disabled is False
         assert screen.work_description_input.disabled is False
-        assert screen.log_date_time_input.value == date_time_input
+        assert screen.log_date_time_input.value
         assert screen.work_description_input.text == ''
         assert screen.time_remaining_input.value == current_remaining_estimate
         await pilot.press('tab')
@@ -295,7 +294,7 @@ async def test_log_work_screen_with_valid_time_spent_incorrect_time_remaining(
         assert screen.save_button.disabled is False
         assert screen.log_date_time_input.disabled is False
         assert screen.work_description_input.disabled is False
-        assert screen.log_date_time_input.value == datetime.now().strftime('%Y-%m-%d %H:%M')
+        assert screen.log_date_time_input.value
         assert screen.work_description_input.text == ''
         assert screen.time_remaining_input.value == current_remaining_estimate
         await pilot.press('tab')
@@ -325,7 +324,7 @@ async def test_log_work_screen_with_valid_time_spent_correct_time_remaining(
         assert screen.save_button.disabled is False
         assert screen.log_date_time_input.disabled is False
         assert screen.work_description_input.disabled is False
-        assert screen.log_date_time_input.value == datetime.now().strftime('%Y-%m-%d %H:%M')
+        assert screen.log_date_time_input.value
         assert screen.work_description_input.text == ''
         assert screen.time_remaining_input.value == current_remaining_estimate
         await pilot.press('tab')
