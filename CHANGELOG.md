@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow the user to view the details of a worklog in the browser; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/111
 - Show Jira's global settings in the server information; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/111
 
+### Bug Fixes
+
+- Fixes a bug that prevents searching tasks using JQL when the name of a project is "CF"; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/115
+
 ### Documentation
 
 - Updated the documentation related to work logs; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/111
