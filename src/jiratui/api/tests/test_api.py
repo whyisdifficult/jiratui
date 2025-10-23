@@ -2904,7 +2904,7 @@ def test_build_issue_search_jql_with_jql_query_and_fields():
     # WHEN
     result = build_issue_search_jql(jql_query='q1', project_key='P1')
     # THEN
-    assert result == 'project = P1 and q1'
+    assert result == 'project = "P1" and q1'
 
 
 def test_build_issue_search_jql_with_jql_query_and_fields_and_orderby():
@@ -2913,7 +2913,7 @@ def test_build_issue_search_jql_with_jql_query_and_fields_and_orderby():
         jql_query='q1', project_key='P1', order_by=WorkItemsSearchOrderBy.KEY_ASC
     )
     # THEN
-    assert result == 'project = P1 and q1 order by key asc'
+    assert result == 'project = "P1" and q1 order by key asc'
 
 
 def test_build_issue_search_jql_no_jql_query_and_fields_and_orderby():
