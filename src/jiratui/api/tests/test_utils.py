@@ -25,7 +25,7 @@ def test_build_issue_search_jql_with_parameters():
     )
     # THEN
     assert result == (
-        'project = P1 and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2'
+        'project = "P1" and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2'
     )
 
 
@@ -44,7 +44,7 @@ def test_build_issue_search_jql_with_parameters_and_jql_query():
     )
     # THEN
     assert result == (
-        'project = P1 and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2 and q=5'
+        'project = "P1" and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2 and q=5'
     )
 
 
@@ -78,5 +78,5 @@ def test_build_issue_search_jql_with_parameters_and_jql_query_with_order():
     )
     # THEN
     assert result == (
-        'project = P1 and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2 and q=5 order by key asc'
+        'project = "P1" and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2 and q=5 order by key asc'
     )

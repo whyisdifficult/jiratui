@@ -39,7 +39,7 @@ def build_issue_search_jql(
     """
     fields: list[str] = []
     if project_key:
-        fields.append(f'project = {project_key}')
+        fields.append(f'project = "{project_key}"')
     if created_from:
         value = date.strftime(created_from, '%Y-%m-%d')
         fields.append(f'created >= "{value}"')
