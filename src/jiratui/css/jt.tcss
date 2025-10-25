@@ -254,19 +254,13 @@ WorkItemDetailsDueDate {
 
 /* Help Screen */
 
-HelpScreen {
-    align: center middle;
-}
-
-HelpScreen > VerticalScroll {
+HelpScreen > MarkdownViewer {
     width: 80%;
     height: 95%;
     border: round $foreground;
     background: $background 70%;
     padding: 0 1;
-}
-
-HelpScreen > VerticalScroll > MarkdownViewer {
+    border-title-align: center;
     scrollbar-size-vertical: 1;
     margin-top: 1;
 }
