@@ -473,8 +473,13 @@ class MediaNode(Node):
         https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/media/
     """
 
-    _media_id: str
-    _media_type: str
+    _media_type: str  # possible values: file, external (aka. url)
+    _media_id: str | None = None
+    _media_url: str | None = None
+    _media_collection: str | None = None
+    _media_alt: str | None = None
+    _media_height: int | None = None
+    _media_width: int | None = None
 
     def __init__(self, node_dict: dict):
         super().__init__(node_dict)
@@ -482,22 +487,49 @@ class MediaNode(Node):
         if 'attrs' not in node_dict:
             raise ValueError("media node must contain 'attrs' attribute")
 
-        if 'type' not in node_dict.get('attrs', {}):
+        attrs = node_dict.get('attrs', {})
+
+        if 'type' not in attrs:
             raise ValueError("media node must contain 'type' attribute")
 
-        if 'id' not in node_dict.get('attrs', {}):
-            raise ValueError("media node must contain 'type' attribute")
+        if 'id' not in attrs and 'url' not in attrs:
+            raise ValueError("media node must contain 'id' or 'url' attribute")
 
-        self._media_id = node_dict.get('attrs', {}).get('id')
-        self._media_type = node_dict.get('attrs', {}).get('type')
+        self._media_id = attrs.get('id')
+        self._media_type = attrs.get('type')
+        self._media_url = attrs.get('url')
+        self._media_alt = attrs.get('alt')
+        self._media_collection = attrs.get('collection')
+        self._media_height = attrs.get('height')
+        self._media_width = attrs.get('width')
 
     @property
-    def media_id(self) -> str:
+    def media_id(self) -> str | None:
         return self._media_id
 
     @property
     def media_type(self) -> str:
         return self._media_type
+
+    @property
+    def media_url(self) -> str | None:
+        return self._media_url
+
+    @property
+    def media_collection(self) -> str | None:
+        return self._media_collection
+
+    @property
+    def media_alt(self) -> str | None:
+        return self._media_alt
+
+    @property
+    def media_height(self) -> int | None:
+        return self._media_height
+
+    @property
+    def media_width(self) -> int | None:
+        return self._media_width
 
 
 class MediaInlineNode(Node):

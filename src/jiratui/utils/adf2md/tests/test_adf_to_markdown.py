@@ -738,7 +738,43 @@ def test_create_node_presenter_without_children():
                     ],
                 }
             ),
-            '[see-attachments]',
+            '(See attached file "moon.jpeg")',
+        ),
+        (
+            MediaSingleNode(
+                {
+                    'type': 'mediaSingle',
+                    'attrs': {'layout': 'center'},
+                    'content': [
+                        {
+                            'type': 'media',
+                            'attrs': {
+                                'type': 'url',
+                                'url': 'foo.bar',
+                            },
+                        }
+                    ],
+                }
+            ),
+            '[foo.bar](foo.bar)',
+        ),
+        (
+            MediaSingleNode(
+                {
+                    'type': 'mediaSingle',
+                    'attrs': {'layout': 'center'},
+                    'content': [
+                        {
+                            'type': 'media',
+                            'attrs': {
+                                'type': 'external',
+                                'url': 'foo.bar',
+                            },
+                        }
+                    ],
+                }
+            ),
+            '[foo.bar](foo.bar)',
         ),
         (EmojiNode({'type': 'emoji', 'attrs': {'shortName': ':grinning:', 'text': '😀'}}), '😀'),
         (

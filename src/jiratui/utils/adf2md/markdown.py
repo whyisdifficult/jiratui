@@ -323,12 +323,18 @@ class HeadingPresenter(NodePresenter):
 
 class MediaSinglePresenter(NodePresenter):
     def __str__(self):
-        return '[see-attachments]'
+        if self._child_presenters:
+            return str(self._child_presenters[0])
+        return '(*unable to render media*)'
 
 
 class MediaPresenter(NodePresenter):
     def __str__(self):
-        return '[see-attachments]'
+        if self.node.media_type in ['url', 'external']:
+            return f'[{self.node.media_url}]({self.node.media_url})'
+        elif self.node.media_type == 'file' and self.node.media_alt:
+            return f'(See attached file "{self.node.media_alt}")'
+        return '(*unknown-media-type*)'
 
 
 class MediaInlinePresenter(NodePresenter):
