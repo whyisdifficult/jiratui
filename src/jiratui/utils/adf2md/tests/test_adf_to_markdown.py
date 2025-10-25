@@ -738,7 +738,7 @@ def test_create_node_presenter_without_children():
                     ],
                 }
             ),
-            '(See attached file "moon.jpeg")',
+            '(See file "moon.jpeg" in attachments tab)',
         ),
         (
             MediaSingleNode(

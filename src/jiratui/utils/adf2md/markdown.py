@@ -333,7 +333,7 @@ class MediaPresenter(NodePresenter):
         if self.node.media_type in ['url', 'external']:
             return f'[{self.node.media_url}]({self.node.media_url})'
         elif self.node.media_type == 'file' and self.node.media_alt:
-            return f'(See attached file "{self.node.media_alt}")'
+            return f'(See file "{self.node.media_alt}" in attachments tab)'
         return '(*unknown-media-type*)'
 
 
