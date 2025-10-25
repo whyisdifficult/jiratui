@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Minor Improvements
 
 - Remove the constant `APPLICATION_HELP` and replace it with a Markdown file that contains the in-app help; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/116
+- Upgrade packages; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/117
+    - `click` to `v8.3.0`
+    - `pydantic-settings[yaml]` to `v2.11.0`
+    - `python-json-logger` to `v4.0.0`
+    - `textual[syntax]` to `v6.4.0`
+    - `textual-dev` to `v1.8.0`
 
 ### Documentation
 

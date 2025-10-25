@@ -30,15 +30,15 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "click>=8.2.1",
+    "click==8.3.0",
     "gitpython>=3.1.45",
     "httpx>=0.28.1",
-    "pydantic-settings[yaml]>=2.10.1",
+    "pydantic-settings[yaml]>=2.11.0",
     "python-dateutil>=2.9.0.post0",
-    "python-json-logger>=3.3.0",
+    "python-json-logger>=4.0.0",
     "python-magic>=0.4.27",
     "textual-image>=0.8.4",
-    "textual[syntax]>=6.1.0",
+    "textual[syntax]>=6.4.0",
     "xdg-base-dirs>=6.0.2",
 ]
 
@@ -52,7 +52,7 @@ Changelog = "https://github.com/whyisdifficult/jiratui/blob/main/CHANGELOG.md"
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
-    "textual-dev>=1.7.0",
+    "textual-dev>=1.8.0",
 ]
 docs = [
     "myst-parser>=4.0.1",
