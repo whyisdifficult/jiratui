@@ -32,6 +32,7 @@ def app() -> JiraApp:
         theme=None,
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
+        search_on_startup=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

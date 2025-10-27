@@ -26,11 +26,11 @@ class SSLConfiguration(BaseModel):
     """Indicates whether HTTP requests should use SSL validation."""
     ca_bundle: str | None = None
     """Path to the CA bundle file."""
-    certificate_file: str = None
+    certificate_file: str | None = None
     """Path to the a client-side certificate file, e.g. cert.pem"""
-    key_file: str = None
+    key_file: str | None = None
     """Path to the key file."""
-    password: SecretStr = None
+    password: SecretStr | None = None
     """The password for the key file."""
 
 
@@ -156,6 +156,9 @@ class ApplicationConfiguration(BaseSettings):
         'path': '/my/repository/.git
     }
     """
+
+    """If True, triggers a search automatically when the UI starts. Can be set via CLI argument --search-on-startup."""
+    search_on_startup: bool = False
 
     model_config = SettingsConfigDict(
         extra='allow',
