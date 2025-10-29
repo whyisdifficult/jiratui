@@ -437,12 +437,19 @@ def completions(shell):
     help='The ID of a JQL expression as defined in the config.',
 )
 @click.option('--theme', '-t', default=None, help='The name of the theme to use.')
+@click.option(
+    '--search-on-startup',
+    is_flag=True,
+    default=False,
+    help='Trigger search automatically when the UI starts.',
+)
 def ui(
     project_key: str | None = None,
     work_item_key: str | None = None,
     assignee_account_id: str | None = None,
     jql_expression_id: int | None = None,
     theme: str | None = None,
+    search_on_startup: bool = False,
 ):
     """Launches the JiraTUI application."""
     if theme and theme not in BUILTIN_THEMES:
@@ -451,6 +458,7 @@ def ui(
         sys.exit(1)
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
+        settings.search_on_startup = search_on_startup
     except FileNotFoundError as e:
         console.print(e)
         sys.exit(1)

@@ -56,6 +56,15 @@ Options:
                                    dropdowns can pre-select your user
   -j, --jql-expression-id INTEGRER The ID of a JQL expression as defined in the config.
   -t, --theme TEXT                 The name of the theme to use.
+  --search-on-startup              Trigger search automatically when the UI starts.
+```
+
+#### Trigger Search on Startup
+
+If you want the application to automatically perform a search as soon as the UI starts, use the `--search-on-startup` flag:
+
+```shell
+$ jiratui ui --search-on-startup
 ```
 
 #### Selecting a Theme
@@ -160,7 +169,7 @@ is currently on a component you need to press `esc` to move the focus out of the
 key you desire. The following table summaries the hot-keys and the component they activate.
 
 | Key | Component                                         |
-|-----|---------------------------------------------------|
+| --- | ------------------------------------------------- |
 | `p` | Activates the Project dropdown                    |
 | `t` | Activates the Issue Type dropdown                 |
 | `s` | Activates the Status dropdown                     |
@@ -184,7 +193,7 @@ When you select a work item from the Work Items search results pane and click `e
 is loaded into the tabs on the right-hand side. Depending on the tab that is active certain hot-keys are enabled:
 
 | Key         | Active Tab/Component | Action                                                                     |
-|-------------|----------------------|----------------------------------------------------------------------------|
+| ----------- | -------------------- | -------------------------------------------------------------------------- |
 | `^s`        | Details              | Saves change to a work item                                                |
 | `^k`        | Details              | Copies the key of the work item currently selected                         |
 | `^j`        | Details              | Copies the URL of the work item currently selected                         |
@@ -213,7 +222,7 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 Besides the hot-keys above the following are always available.
 
 | Key      | Action                                                                 |
-|----------|------------------------------------------------------------------------|
+| -------- | ---------------------------------------------------------------------- |
 | `ctrl+r` | Searches work items (this is the same as clicking the "Search" button) |
 | `/`      | Enables full-text search                                               |
 | `ctrl+n` | Creates a new work item                                                |
@@ -289,11 +298,11 @@ In addition to searching using the filters above, JiraTUI allows you to search i
 search. This type of search has 2 modes: standard and advanced.
 
 - **Standard Full-text Search**: this modes searches items using the items' summary and description fields. This uses
-queries of the form `summary ~ "search term" OR description ~ "search term"`.
+  queries of the form `summary ~ "search term" OR description ~ "search term"`.
 
 - **Advanced Full-text Search**: in addition to searching items using the items' summary and description fields, this
-modes also searches items by using any text-based field. This includes comments. This uses
-queries of the form `text ~ "search term".
+  modes also searches items by using any text-based field. This includes comments. This uses
+  queries of the form `text ~ "search term".
 
 If you want/need to disable advanced full-text search you can do so with the setting
 `enable_advanced_full_text_search`. Also, the setting `full_text_search_minimum_term_length` controls the minimum
@@ -301,8 +310,8 @@ length of the search term to activate the search. Independently of the value you
 a minimum of 3 characters.
 
 For more details on full-text search in Jira refer to
-https://support.atlassian.com/jira-software-cloud/docs/jql-fields/#Text) and
-https://support.atlassian.com/jira-software-cloud/docs/search-for-work-items-using-the-text-field/.
+<https://support.atlassian.com/jira-software-cloud/docs/jql-fields/#Text>) and
+<https://support.atlassian.com/jira-software-cloud/docs/search-for-work-items-using-the-text-field/>.
 
 ```{important}
 Full-text search is only available when you connect to the Jira Cloud Platform. This feature is not
@@ -383,9 +392,9 @@ The list of projects depends on the permissions of the logged-in user. For a pro
 one of these conditions must be satisfied:
 
 - The user Jira account must have the [Browse Projects project permission](https://confluence.atlassian.com/x/yodKLg)
-for the project.
+  for the project.
 - The user Jira account must have the [Administer Projects project permission](https://confluence.atlassian.com/x/yodKLg)
-for the project.
+  for the project.
 - The user Jira account must have the [Administer Jira global permission](https://confluence.atlassian.com/x/x4dKLg).
 
 By default, JiraTUI will retrieve all available projects. However, if you set the config variable

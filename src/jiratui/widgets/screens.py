@@ -428,6 +428,10 @@ class MainScreen(Screen):
                     '\t', ' '
                 )
 
+        # Trigger search on startup if enabled
+        if CONFIGURATION.get().search_on_startup:
+            self.run_worker(self.action_search(), exclusive=True)
+
     async def fetch_projects(self) -> None:
         """Fetches the list of available projects.
 
