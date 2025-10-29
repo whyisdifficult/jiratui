@@ -157,8 +157,8 @@ class ApplicationConfiguration(BaseSettings):
     }
     """
 
-    """If True, triggers a search automatically when the UI starts. Can be set via CLI argument --search-on-startup."""
     search_on_startup: bool = False
+    """If True, triggers a search automatically when the UI starts. Can be set via CLI argument --search-on-startup."""
 
     model_config = SettingsConfigDict(
         extra='allow',
