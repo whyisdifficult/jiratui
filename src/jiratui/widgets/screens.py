@@ -408,15 +408,15 @@ class MainScreen(Screen):
 
     async def on_mount(self) -> None:
         # fetch the list of projects
-        self.run_worker(self.fetch_projects())
+        workers: list[Worker] = [self.run_worker(self.fetch_projects())]
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
         # users, status codes and work item types after the project dropdown is updated with the selection.
         # the same happens when the user configures the app to fetch only projects on start up
         if not CONFIGURATION.get().on_start_up_only_fetch_projects and not self.initial_project_key:
-            # in this case there is no need to fetch users, status codes and work item types
+            # in this case we need to fetch users, status codes and work item types
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
-            self.run_worker(self.fetch_users())
+            workers.append(self.run_worker(self.fetch_users()))
 
         if self.initial_jql_expression_id and (
             pre_defined_jql_expressions := CONFIGURATION.get().pre_defined_jql_expressions
@@ -430,6 +430,9 @@ class MainScreen(Screen):
 
         # Trigger search on startup if enabled
         if CONFIGURATION.get().search_on_startup:
+            # make sure to wait for the related workers so the method that searches work items have the necessary
+            # filters set up, e.g. the selected project (if any) and the selected users (if any)
+            await self.app.workers.wait_for_complete(workers)
             self.run_worker(self.action_search(), exclusive=True)
 
     async def fetch_projects(self) -> None:
