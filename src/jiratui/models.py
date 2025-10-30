@@ -686,3 +686,15 @@ class PaginatedJiraWorklog(BaseModel):
     max_results: int
     start_at: int
     total: int
+
+
+@dataclass
+class JiraField(BaseModel):
+    id: str
+    """The ID of the field."""
+    key: str
+    """The key of the field."""
+    name: str
+    """The name of the field."""
+    custom: bool
+    """Whether the field is a custom field."""

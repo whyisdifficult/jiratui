@@ -44,6 +44,7 @@ from jiratui.models import (
     IssueTransitionState,
     IssueType,
     JiraBaseIssue,
+    JiraField,
     JiraGlobalSettings,
     JiraIssue,
     JiraIssueSearchResponse,
@@ -2211,3 +2212,111 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
+
+    async def get_fields(self) -> APIControllerResponse:
+        """Retrieves system and custom issue fields.
+
+        Returns:
+            `APIControllerResponse(success=True, result=fields)` if the operation was successful;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
+        try:
+            response = await self.api.get_fields()
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error('Unable to fetch fields', extra=exception_details.get('extra'))
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        fields: list[JiraField] = []
+        for field in response:
+            fields.append(
+                JiraField(
+                    id=field.get('id', ''),
+                    key=field.get('key', ''),
+                    name=field.get('name'),
+                    custom=field.get('custom'),
+                )
+            )
+        return APIControllerResponse(result=fields)
+
+    async def flag_issue(
+        self,
+        issue_id_or_key: str,
+        add_flag: bool = True,
+        note: str | None = None,
+    ) -> APIControllerResponse:
+        """Adds or removes a flag to/from a work item.
+
+        Optionally, it creates a comment with a note.
+
+        Args:
+            issue_id_or_key: the id or key of the work item that we want to flag.
+            add_flag: if True then a flag is added to the item; otherwise the flag is removed.
+            note: an optional message to create a comment; useful to explain why the issue is flagged.
+
+        Returns:
+
+        """
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Flagging issues is only supported for Jira Cloud Platform',
+            )
+        # get metadata for updating/editing the work item
+        issue_edit_metadata: dict = await self.get_edit_metadata_for_issue(issue_id_or_key)
+        if not issue_edit_metadata:
+            self.logger.error(
+                'Unable to find required metadata for updating the issue. The issue can not be flagged.',
+                extra={'issue_id_or_key': issue_id_or_key},
+            )
+            return APIControllerResponse(success=False, error='Unable to flag the item.')
+
+        # extract the schema of the field that we need to update to flag the item
+        if not (field_details := self._find_field_metadata(issue_edit_metadata, name='flagged')):
+            self.logger.error(
+                'Unable to find schema information for the field: flagged',
+                extra={'issue_id_or_key': issue_id_or_key},
+            )
+            return APIControllerResponse(success=False, error='Unable to flag the item.')
+        else:
+            if 'set' not in field_details.get('operations'):
+                return APIControllerResponse(success=False, error='Unable to flag the item.')
+            if not (allowed_values := field_details.get('allowedValues')):
+                return APIControllerResponse(success=False, error='Unable to flag the item.')
+
+            # set the field value; we expect the field to accept a single option and so, we always pick the first one
+            option_id = allowed_values[0].get('id') if add_flag else None
+            payload = {field_details.get('key'): [{'set': [{'id': option_id}]}]}
+            # attempt to update hte issue to flag it
+            try:
+                response: dict = await self.api.update_issue(issue_id_or_key, payload)
+            except Exception as e:
+                exception_details: dict = self._extract_exception_details(e)
+                self.logger.error(
+                    'Unable to flag the issue',
+                    extra={
+                        'issue_id_or_key': issue_id_or_key,
+                        'payload': payload,
+                        'add_flag': add_flag,
+                        **exception_details.get('extra', {}),
+                    },
+                )
+                return APIControllerResponse(success=False, error=exception_details.get('message'))
+            else:
+                updated_fields: list[str] = []
+                if fields := response.get('fields', {}):
+                    updated_fields = list(fields.keys())
+
+                # add an optional comment with the note
+                if note:
+                    await self.add_comment(issue_id_or_key, note)
+
+                return APIControllerResponse(
+                    result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
+                )
+
+    @staticmethod
+    def _find_field_metadata(issue_edit_metadata: dict, name: str) -> dict | None:
+        for _, metadata in issue_edit_metadata.get('fields', {}).items():
+            if metadata.get('name').lower() == name.lower():
+                return metadata
+        return None

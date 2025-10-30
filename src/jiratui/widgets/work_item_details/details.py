@@ -21,6 +21,7 @@ from jiratui.utils.work_item_updates import (
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
 from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
+from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 from jiratui.widgets.work_item_details.work_log import (
     LogWorkScreen,
     WorkItemWorkLogScreen,
@@ -311,6 +312,12 @@ class IssueDetailsWidget(Vertical):
             description='Log Work',
             show=True,
         ),
+        Binding(
+            key='ctrl+f',
+            action='flag_work_item',
+            description='Flag It',
+            show=True,
+        ),
     ]
 
     def __init__(self):
@@ -471,6 +478,33 @@ class IssueDetailsWidget(Vertical):
             self.screen.set_focus(self.priority_selector)
         elif key == 'z':
             self.screen.set_focus(self.issue_status_selector)
+
+    def action_flag_work_item(self) -> None:
+        """ """
+        # TODO depending on whether the issue is flagged or not the this action with either ad or remove a flag
+        if self.issue and self.issue.key:
+            self.app.push_screen(
+                FlagWorkItemScreen(self.issue.key), self._request_flagging_work_item
+            )
+
+    def _request_flagging_work_item(self, note: str | None = None) -> None:
+        self.run_worker(self._flag_work_item(key=self.issue.key, note=note))
+
+    async def _flag_work_item(self, key: str, note: str | None = None) -> None:
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.flag_issue(
+            issue_id_or_key=key, note=note
+        )
+        if response.success:
+            self.notify('Work item flagged successfully', title='Update Work Item')
+            # refresh the details of the work item to reflect the changes in time tracking information
+            await self._refresh_work_item_details()
+        else:
+            self.notify(
+                f'Failed to flag the item: {response.error}',
+                severity='error',
+                title='Update Work Item',
+            )
 
     def action_view_worklog(self) -> None:
         """Opens a pop-up modal to display the work log of a work item.

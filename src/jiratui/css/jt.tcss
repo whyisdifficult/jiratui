@@ -1088,3 +1088,29 @@ WorkLogCollapsible {
     background: transparent;
     padding-bottom: 0;
 }
+
+/* Screen for flagging work items */
+
+FlagWorkItemScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+FlagWorkItemScreen > Vertical {
+    width: 55%;
+    height: 40%;
+    border: round $foreground;
+    background: transparent;
+    padding: 1 1;
+    scrollbar-size-vertical: 1;
+    & .flag-work-item-buttons-grid {
+        grid-size: 2 1;
+        grid-columns: 50% 50%;
+        align: center middle;
+    }
+    & > TextArea {
+        background: transparent;
+        border: round $primary;
+        height: 10;
+    }
+}
