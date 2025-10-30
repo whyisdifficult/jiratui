@@ -225,6 +225,7 @@ class MainScreen(Screen):
         user_account_id: str | None = None,
         jql_expression_id: int | None = None,
         work_item_key: str | None = None,
+        focus_item_on_startup: int | None = None,
     ):
         super().__init__()
         self.api = APIController() if not api else api
@@ -242,6 +243,8 @@ class MainScreen(Screen):
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
         be used for searching issues when the user does not select any filter/criteria in the UI. """
+        self.focus_item_on_startup = focus_item_on_startup
+        """The position of the work item to focus and open on startup. Requires search_on_startup to be enabled."""
         self.logger = logging.getLogger(LOGGER_NAME)
         # maps keys to widget ids to enable quick navigation
         self.keys_widget_ids_mapping: dict[str, str] = {
@@ -433,7 +436,12 @@ class MainScreen(Screen):
             # make sure to wait for the related workers so the method that searches work items have the necessary
             # filters set up, e.g. the selected project (if any) and the selected users (if any)
             await self.app.workers.wait_for_complete(workers)
-            self.run_worker(self.action_search(), exclusive=True)
+            search_worker = self.run_worker(self.action_search(), exclusive=True)
+
+            # If focus_item_on_startup is specified, wait for search to complete and then focus the item
+            if self.focus_item_on_startup:
+                await self.app.workers.wait_for_complete([search_worker])
+                self.run_worker(self._focus_item_after_startup(self.focus_item_on_startup))
 
     async def fetch_projects(self) -> None:
         """Fetches the list of available projects.
@@ -453,7 +461,7 @@ class MainScreen(Screen):
         Returns:
             Nothing.
         """
-        project_keys = [self.initial_project_key] if self.initial_project_key else None
+        project_keys = [self.initial_project_key] if self.initial_project_key else []
         response: APIControllerResponse = await self.api.search_projects(keys=project_keys)
         if not response.success:
             self.notify(f'Failed to fetch the list of projects: {response.error}')
@@ -736,7 +744,7 @@ class MainScreen(Screen):
             calculate_total = False
 
         result: JiraIssueSearchResponse = response.result
-        estimated_total_issues: int | None = None
+        estimated_total_issues: int = 0
         if calculate_total:
             counting: APIControllerResponse = await self.api.count_issues(
                 project_key=project_key,
@@ -761,7 +769,7 @@ class MainScreen(Screen):
         issues_count = len(result.issues)
         return WorkItemSearchResult(
             response=result,
-            total=estimated_total_issues,
+            total=estimated_total_issues if estimated_total_issues else 0,
             start=1 if issues_count else 0,
             end=issues_count,
         )
@@ -825,7 +833,7 @@ class MainScreen(Screen):
         """
         self.run_button.loading = True
         results: WorkItemSearchResult
-        if (value := self.issue_key_input.value) and value.strip():
+        if (value := self.issue_key_input.value) and isinstance(value, str) and value.strip():
             # search single issue
             results = await self._search_single_issue(value.strip())
         else:
@@ -947,7 +955,7 @@ class MainScreen(Screen):
 
         if data:
             response: APIControllerResponse = await self.api.create_work_item(data)
-            if response.success:
+            if response.success and response.result:
                 self.notify(
                     f'Work item {response.result.key} created successfully',
                     title='Create Work Item',
@@ -978,7 +986,8 @@ class MainScreen(Screen):
                     title='Work Item Search',
                 )
             else:
-                self.issue_child_work_items_widget.issues = response.result.issues
+                if response.result:
+                    self.issue_child_work_items_widget.issues = response.result.issues
 
     async def fetch_issue(self, selected_work_item_key: str) -> None:
         """Retrieves the details of a work item selected by the user in the search results.
@@ -1065,3 +1074,79 @@ class MainScreen(Screen):
     async def action_find_by_text(self) -> None:
         """Opens a screen to allow the user to enter a term to search items by text."""
         await self.app.push_screen(TextSearchScreen(), self.request_text_search)
+
+    async def _focus_item_after_startup(self, position: int) -> None:
+        """Focuses and opens a work item at the specified position after startup search completes.
+
+        Args:
+            position: the 1-based position of the work item in the search results to focus and open.
+
+        Returns:
+            Nothing.
+        """
+        import asyncio
+
+        # Get the search results table
+        table = self.search_results_table
+
+        # Wait for the table to be populated with results (with timeout)
+        max_attempts = 50  # 5 seconds total
+        attempt = 0
+        row_count = 0
+
+        while attempt < max_attempts:
+            await self.app.animator.wait_for_idle()
+            await asyncio.sleep(0.1)
+            row_count = len(table.rows)
+            if row_count > 0:
+                break
+            attempt += 1
+
+        # Check if we timed out waiting for results
+        if row_count == 0:
+            self.notify(
+                'Search results are empty or still loading.',
+                severity='warning',
+                title='Focus Work Item',
+            )
+            return
+
+        # Check if the position is valid
+        if position < 1 or position > row_count:
+            self.notify(
+                f'Position {position} is out of range. Search results contain {row_count} item(s).',
+                severity='warning',
+                title='Focus Work Item',
+            )
+            return
+
+        # Convert 1-based position to 0-based index
+        row_index = position - 1
+
+        # Get the row key at this position
+        row_keys = list(table.rows)
+        row_key = row_keys[row_index]
+
+        # Extract the work item key from the row
+        row_key_value = str(row_key.value)
+        work_item_key = None
+        if '#' in row_key_value:
+            _, work_item_key = row_key_value.split('#')
+
+        # Move cursor to this row
+        table.move_cursor(row=row_index)
+
+        # Give a moment for the cursor to move
+        await asyncio.sleep(0.1)
+        await self.app.animator.wait_for_idle()
+
+        # Trigger the row selection action (simulates pressing Enter)
+        # This will fire the on_data_table_row_selected event which calls fetch_issue
+        table.action_select_cursor()
+
+        # Wait for the issue to be fetched and rendered
+        await asyncio.sleep(0.3)
+        await self.app.animator.wait_for_idle()
+
+        # Shift focus to the issue info container so user can interact with the issue
+        self.issue_info_container.focus()

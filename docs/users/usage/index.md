@@ -57,6 +57,7 @@ Options:
   -j, --jql-expression-id INTEGRER The ID of a JQL expression as defined in the config.
   -t, --theme TEXT                 The name of the theme to use.
   --search-on-startup              Trigger search automatically when the UI starts.
+  --focus-item-on-startup INTEGER  Focus and open the work item at the specified position on startup. Requires --search-on-startup.
 ```
 
 #### Trigger Search on Startup
@@ -65,6 +66,32 @@ If you want the application to automatically perform a search as soon as the UI 
 
 ```shell
 $ jiratui ui --search-on-startup
+```
+
+#### Focus on a Specific Work Item on Startup
+
+If you want the application to automatically focus on and open a specific work item from the search results, you can use the `--focus-item-on-startup` flag with a position number. This flag requires `--search-on-startup` to be enabled.
+
+The position number is 1-based, meaning `1` refers to the first item in the search results, `2` refers to the second item, and so on.
+
+```shell
+$ jiratui ui --search-on-startup --focus-item-on-startup 1
+```
+
+This is particularly useful when combined with other filters. For example, to automatically open the first item of a specific project:
+
+```shell
+$ jiratui ui --project-key PROJECT-1 --search-on-startup --focus-item-on-startup 1
+```
+
+Or to open the third item from a JQL expression search:
+
+```shell
+$ jiratui ui --jql-expression-id 1 --search-on-startup --focus-item-on-startup 3
+```
+
+```{important}
+The `--focus-item-on-startup` flag requires `--search-on-startup` to be enabled. The position must be a positive integer (1 or greater) and should not exceed the number of items returned by the search.
 ```
 
 #### Selecting a Theme
