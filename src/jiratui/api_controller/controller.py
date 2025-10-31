@@ -2241,13 +2241,10 @@ class APIController:
             note: an optional message to create a comment; useful to explain why the issue is flagged.
 
         Returns:
-
+            `APIControllerResponse(success=True)` if a flag was added/removed.
+            `APIControllerResponse(success=False)` if there was an error.
         """
-        if not self.config.cloud:
-            return APIControllerResponse(
-                success=False,
-                error='Flagging issues is only supported for Jira Cloud Platform',
-            )
+
         # get metadata for updating/editing the work item
         issue_edit_metadata: dict = await self.get_edit_metadata_for_issue(issue_id_or_key)
         if not issue_edit_metadata:
@@ -2264,42 +2261,56 @@ class APIController:
                 extra={'issue_id_or_key': issue_id_or_key},
             )
             return APIControllerResponse(success=False, error='Unable to flag the item.')
+
+        if 'set' not in field_details.get('operations'):
+            self.logger.error(
+                'The field flagged does not support the "set" operation',
+                extra={'issue_id_or_key': issue_id_or_key, 'field_details': field_details},
+            )
+            return APIControllerResponse(
+                success=False,
+                error='Unable to flag the item. The field does not support setting a value.',
+            )
+        if not (allowed_values := field_details.get('allowedValues')):
+            self.logger.error(
+                'The field flagged does not have allowedValues',
+                extra={'issue_id_or_key': issue_id_or_key, 'field_details': field_details},
+            )
+            return APIControllerResponse(
+                success=False,
+                error='Unable to flag the item. The field does not have allowed values.',
+            )
+
+        # set the field value; we expect the field to accept a single option and so, we always pick the first one
+        option_id = allowed_values[0].get('id') if add_flag else None
+        payload = {field_details.get('key'): [{'set': [{'id': option_id}]}]}
+        # attempt to update the issue to flag it
+        try:
+            response: dict = await self.api.update_issue(issue_id_or_key, payload)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to flag the issue',
+                extra={
+                    'issue_id_or_key': issue_id_or_key,
+                    'payload': payload,
+                    'add_flag': add_flag,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
-            if 'set' not in field_details.get('operations'):
-                return APIControllerResponse(success=False, error='Unable to flag the item.')
-            if not (allowed_values := field_details.get('allowedValues')):
-                return APIControllerResponse(success=False, error='Unable to flag the item.')
+            updated_fields: list[str] = []
+            if fields := response.get('fields', {}):
+                updated_fields = list(fields.keys())
 
-            # set the field value; we expect the field to accept a single option and so, we always pick the first one
-            option_id = allowed_values[0].get('id') if add_flag else None
-            payload = {field_details.get('key'): [{'set': [{'id': option_id}]}]}
-            # attempt to update hte issue to flag it
-            try:
-                response: dict = await self.api.update_issue(issue_id_or_key, payload)
-            except Exception as e:
-                exception_details: dict = self._extract_exception_details(e)
-                self.logger.error(
-                    'Unable to flag the issue',
-                    extra={
-                        'issue_id_or_key': issue_id_or_key,
-                        'payload': payload,
-                        'add_flag': add_flag,
-                        **exception_details.get('extra', {}),
-                    },
-                )
-                return APIControllerResponse(success=False, error=exception_details.get('message'))
-            else:
-                updated_fields: list[str] = []
-                if fields := response.get('fields', {}):
-                    updated_fields = list(fields.keys())
+            # add an optional comment with the note
+            if note:
+                await self.add_comment(issue_id_or_key, note)
 
-                # add an optional comment with the note
-                if note:
-                    await self.add_comment(issue_id_or_key, note)
-
-                return APIControllerResponse(
-                    result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
-                )
+            return APIControllerResponse(
+                result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
+            )
 
     @staticmethod
     def _find_field_metadata(issue_edit_metadata: dict, name: str) -> dict | None:

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import Mock, call, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
@@ -3119,3 +3119,278 @@ async def test_remove_worklog_with_api_error(
     assert response.error == 'some error'
     assert response.result is None
     delete_work_log_mock.assert_called_once_with(issue_id_or_key='1', worklog_id='2')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_without_metadata(
+    get_edit_metadata_for_issue_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {}
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1')
+    # THEN
+    assert result == APIControllerResponse(success=False, error='Unable to flag the item.')
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_find_field_metadata')
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_without_field_metadata(
+    get_edit_metadata_for_issue_mock: Mock,
+    find_field_metadata_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {}
+    find_field_metadata_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged1',
+                'key': 'customfield_10021',
+                'operations': ['add', 'set', 'remove'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1')
+    # THEN
+    assert result == APIControllerResponse(success=False, error='Unable to flag the item.')
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_field_without_operations(
+    get_edit_metadata_for_issue_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': [],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1')
+    # THEN
+    assert result == APIControllerResponse(
+        success=False, error='Unable to flag the item. The field does not support setting a value.'
+    )
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_field_without_allowed_values(
+    get_edit_metadata_for_issue_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': ['set'],
+                'allowedValues': [],
+            }
+        }
+    }
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1')
+    # THEN
+    assert result == APIControllerResponse(
+        success=False, error='Unable to flag the item. The field does not have allowed values.'
+    )
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_updating_fails(
+    get_edit_metadata_for_issue_mock: Mock,
+    update_issue_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': ['set'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    update_issue_mock.side_effect = ValueError('some error')
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1')
+    # THEN
+    assert result == APIControllerResponse(success=False, error='some error')
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+    update_issue_mock.assert_called_once_with(
+        '1', {'customfield_10021': [{'set': [{'id': '10019'}]}]}
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_updating_fails_when_removing_flag(
+    get_edit_metadata_for_issue_mock: Mock,
+    update_issue_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': ['set'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    update_issue_mock.side_effect = ValueError('some error')
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1', add_flag=False)
+    # THEN
+    assert result == APIControllerResponse(success=False, error='some error')
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+    update_issue_mock.assert_called_once_with('1', {'customfield_10021': [{'set': [{'id': None}]}]})
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'add_comment')
+@patch.object(JiraAPI, 'update_issue')
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_updating_succeeds_with_note(
+    get_edit_metadata_for_issue_mock: Mock,
+    update_issue_mock: AsyncMock,
+    add_comment_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': ['set'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    update_issue_mock.return_value = {}
+    add_comment_mock.return_value = APIControllerResponse()
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status(
+        '1', add_flag=True, note='comment'
+    )
+    # THEN
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=[])
+    )
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+    update_issue_mock.assert_called_once_with(
+        '1', {'customfield_10021': [{'set': [{'id': '10019'}]}]}
+    )
+    add_comment_mock.assert_called_once_with('1', 'comment')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'add_comment')
+@patch.object(JiraAPI, 'update_issue')
+@patch.object(APIController, 'get_edit_metadata_for_issue')
+async def test_update_issue_flagged_status_updating_succeeds_without_note(
+    get_edit_metadata_for_issue_mock: Mock,
+    update_issue_mock: AsyncMock,
+    add_comment_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_edit_metadata_for_issue_mock.return_value = {
+        'fields': {
+            'customfield_10021': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'customfield_10021',
+                'operations': ['set'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            }
+        }
+    }
+    update_issue_mock.return_value = {}
+    add_comment_mock.return_value = APIControllerResponse()
+    # WHEN
+    result = await jira_api_controller.update_issue_flagged_status('1', add_flag=True)
+    # THEN
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=[])
+    )
+    get_edit_metadata_for_issue_mock.assert_called_once_with('1')
+    update_issue_mock.assert_called_once_with(
+        '1', {'customfield_10021': [{'set': [{'id': '10019'}]}]}
+    )
+    add_comment_mock.assert_not_called()
