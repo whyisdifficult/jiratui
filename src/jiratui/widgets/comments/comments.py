@@ -113,7 +113,8 @@ class IssueCommentsWidget(VerticalScroll):
         self._issue_key = value
 
     def save_comment(self, content: str) -> None:
-        self.run_worker(self.add_comment_to_issue(content))
+        if content and content.strip():
+            self.run_worker(self.add_comment_to_issue(content))
 
     def action_add_comment(self) -> None:
         """Opens a screen to add a comment to the issue."""
