@@ -38,6 +38,7 @@ def app() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         enable_advanced_full_text_search=True,
         full_text_search_minimum_term_length=3,
+        search_on_startup=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

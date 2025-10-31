@@ -40,6 +40,7 @@ def config_for_testing() -> ApplicationConfiguration:
         log_file='',  # empty filename disables logging to a text file
         log_level='ERROR',
         ssl=None,
+        search_on_startup=False,
     )
     return config_mock
 
@@ -141,6 +142,7 @@ def app() -> JiraApp:
         search_results_page_filtering_enabled=False,
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
+        search_on_startup=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

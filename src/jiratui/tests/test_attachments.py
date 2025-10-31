@@ -37,6 +37,7 @@ async def test_focus_attachments_datatable(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -84,6 +85,7 @@ async def test_focus_attachments_datatable_highlight_file(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -134,6 +136,7 @@ async def test_attachment_download_fails(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -192,6 +195,7 @@ async def test_show_attachment(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -250,6 +254,7 @@ async def test_show_attachment_with_language(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -311,6 +316,7 @@ async def test_show_attachment_with_unsupported_type(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -372,6 +378,7 @@ async def test_open_attachment_in_browser_without_url(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
@@ -432,6 +439,7 @@ async def test_open_attachment_in_browser(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )

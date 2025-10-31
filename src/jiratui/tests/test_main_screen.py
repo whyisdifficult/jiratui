@@ -75,6 +75,7 @@ def app() -> JiraApp:
         search_results_style_work_item_status=None,
         search_results_style_work_item_type=None,
         search_results_per_page=10,
+        search_on_startup=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

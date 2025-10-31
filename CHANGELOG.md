@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for displaying external links in ADF-based issue description; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/119
 - Add support for flagging work items; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/127
+- Add support for searching work items on startup; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/121
+
+### Minor Improvements
+
+- Improve searching work items on startup by waiting for workers to finish; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/123
 
 ## [1.4.0] - 2025-10-25
 

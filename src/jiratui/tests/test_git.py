@@ -29,6 +29,7 @@ async def test_open_git_screen(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     async with app.run_test() as pilot:
         # GIVEN
@@ -71,6 +72,7 @@ async def test_git_screen_select_repo(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     async with app.run_test() as pilot:
         # GIVEN
@@ -118,6 +120,7 @@ async def test_git_screen_no_branch_disables_button(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     async with app.run_test() as pilot:
         # GIVEN
@@ -172,6 +175,7 @@ async def test_git_screen_press_button_repo_not_found(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     get_git_repository_mock.return_value = None
     async with app.run_test() as pilot:
@@ -229,6 +233,7 @@ async def test_git_screen_press_button_branch_exists(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     get_git_repository_mock.return_value = Mock(spec=Repo)
     get_repo_branches_mock.return_value = ['feature/key-2']
@@ -295,6 +300,7 @@ async def test_git_screen_press_button_branch_does_not_exists(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     get_git_repository_mock.return_value = Mock(spec=Repo)
     get_repo_branches_mock.return_value = ['feature/key-3']
@@ -351,6 +357,7 @@ async def test_git_screen_press_button_branch_creation_fails(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     get_git_repository_mock.return_value = Mock(
         spec=Repo, create_head=Mock(side_effect=Exception('error'))
@@ -409,6 +416,7 @@ async def test_git_screen_press_button_branch_creation_with_checkout(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.search_on_startup = False
     app.config.git_repositories = {'1': {'name': 'Repo A', 'path': 'path/a/.git'}}
     get_git_repository_mock.return_value = Mock(spec=Repo, create_head=Mock(spec=Head))
     get_repo_branches_mock.return_value = ['feature/key-3']
