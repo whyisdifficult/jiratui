@@ -443,6 +443,13 @@ def completions(shell):
     default=False,
     help='Trigger search automatically when the UI starts.',
 )
+@click.option(
+    '--focus-item-on-startup',
+    '-f',
+    default=None,
+    type=int,
+    help='Focus and open the work item at the specified position on startup. Requires --search-on-startup.',
+)
 def ui(
     project_key: str | None = None,
     work_item_key: str | None = None,
@@ -450,12 +457,23 @@ def ui(
     jql_expression_id: int | None = None,
     theme: str | None = None,
     search_on_startup: bool = False,
+    focus_item_on_startup: int | None = None,
 ):
     """Launches the JiraTUI application."""
     if theme and theme not in BUILTIN_THEMES:
         console.print('The name of the theme you provided is not supported.')
         console.print('To see the list of supported themes run: jiratui themes')
         sys.exit(1)
+
+    # Validate that --focus-item-on-startup requires --search-on-startup
+    if focus_item_on_startup is not None:
+        if not search_on_startup:
+            console.print('--focus-item-on-startup requires --search-on-startup to be enabled.')
+            sys.exit(1)
+        if focus_item_on_startup < 1:
+            console.print('--focus-item-on-startup must be a positive integer (1 or greater).')
+            sys.exit(1)
+
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
         settings.search_on_startup = search_on_startup
@@ -477,6 +495,7 @@ def ui(
         jql_expression_id=jql_expression_id,
         work_item_key=work_item_key,
         user_theme=theme,
+        focus_item_on_startup=focus_item_on_startup,
     ).run()
 
 

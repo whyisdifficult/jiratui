@@ -58,6 +58,7 @@ class JiraApp(App):
         jql_expression_id: int | None = None,
         work_item_key: str | None = None,
         user_theme: str | None = None,
+        focus_item_on_startup: int | None = None,
     ):
         """Initializes the application.
 
@@ -70,6 +71,7 @@ class JiraApp(App):
             work_item_key: a work item key to set the work item widget.
             user_theme: the name of a Textual theme to use as the theme of the app. If this value is provided it will
             override the value set in the config variable `theme`.
+            focus_item_on_startup: the position of the work item to focus and open on startup. Requires search_on_startup to be enabled.
         """
         super().__init__()
         self.config = settings
@@ -97,6 +99,9 @@ class JiraApp(App):
         self.initial_jql_expression_id: int | None = (
             int(jql_expression_id) if jql_expression_id is not None else None
         )
+
+        self.focus_item_on_startup: int | None = focus_item_on_startup
+
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
         self._setup_theme(user_theme)
@@ -123,6 +128,7 @@ class JiraApp(App):
                 self.initial_user_account_id,
                 self.initial_jql_expression_id,
                 self.initial_work_item_key,
+                self.focus_item_on_startup,
             )
         )
 
