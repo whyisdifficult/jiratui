@@ -15,6 +15,7 @@ class FlagWorkItemScreen(Screen[dict]):
     }
     """
 
+    HELP = 'See Flagging Work Items section in the help'
     BINDINGS = [
         ('escape', 'pop_screen', 'Close'),
     ]
@@ -23,6 +24,10 @@ class FlagWorkItemScreen(Screen[dict]):
         super().__init__()
         self._work_item_key = work_item_key
         self._work_item_is_flagged = work_item_is_flagged
+
+    @property
+    def help_anchor(self) -> str:
+        return '#flagging-work-items'
 
     @property
     def note(self) -> TextArea:
