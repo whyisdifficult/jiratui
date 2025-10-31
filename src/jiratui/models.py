@@ -269,11 +269,11 @@ class JiraIssue(JiraBaseIssue):
     labels: list[str] | None = None
     attachments: list[Attachment] | None = None
     sprint: JiraSprint | None = None
-    # a dictionary with all the fields that can be edited
     edit_meta: dict | None = None
-    # editable_custom_fields: a dictionary with the value of the custom fields associated to the issue that support
-    # editing.
-    editable_custom_fields: dict[str, Any] | None = None
+    """a dictionary with the issue's edit metadata"""
+    custom_fields: dict[str, Any] | None = None
+    """a dictionary with the value of the custom fields associated to the issue that support updates based on the
+    issue's edit metadata"""
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -388,18 +388,20 @@ class JiraIssue(JiraBaseIssue):
             return None
         return self.edit_meta.get('fields')
 
-    def get_editable_custom_field_value(self, name: str) -> dict | None:
-        """Retrieves the value of a custom field that supports editing.
+    def get_custom_field_value(self, key: str) -> Any | None:
+        """Retrieves the value of a custom field.
 
         Args:
-            name: the name of a field.
+            key: the key of a field.
 
         Returns:
-            The metadata of the field; None if the metadata does not contain information of the field.
+            The value of the custom field.
         """
-        if not self.editable_custom_fields:
+        if not self.custom_fields:
             return None
-        return self.editable_custom_fields.get(name)
+        if not key:
+            return None
+        return self.custom_fields.get(key)
 
     def get_description(self) -> str:
         if not self.description:
@@ -686,3 +688,15 @@ class PaginatedJiraWorklog(BaseModel):
     max_results: int
     start_at: int
     total: int
+
+
+@dataclass
+class JiraField(BaseModel):
+    id: str
+    """The ID of the field."""
+    key: str
+    """The key of the field."""
+    name: str
+    """The name of the field."""
+    custom: bool
+    """Whether the field is a custom field."""

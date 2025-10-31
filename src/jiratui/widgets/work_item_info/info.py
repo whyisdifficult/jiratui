@@ -109,9 +109,7 @@ class WorkItemInfoContainer(Vertical):
                             and field_schema.get('custom') == CustomFieldTypes.TEXTAREA.value
                         ):
                             # get the value of the custom field
-                            if custom_field_value := work_item.get_editable_custom_field_value(
-                                field_key
-                            ):
+                            if custom_field_value := work_item.get_custom_field_value(field_key):
                                 if isinstance(custom_field_value, str):
                                     content = custom_field_value.strip()
                                 else:

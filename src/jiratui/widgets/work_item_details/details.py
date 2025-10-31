@@ -5,7 +5,7 @@ from dateutil import parser  # type:ignore[import-untyped]
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import HorizontalGroup, Vertical, VerticalScroll
+from textual.containers import HorizontalGroup, Right, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Input, Label, ProgressBar, Select
@@ -13,6 +13,7 @@ from textual.widgets import Input, Label, ProgressBar, Select
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
+from jiratui.utils.fields import get_field_key
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_due_date_has_changed,
@@ -21,6 +22,7 @@ from jiratui.utils.work_item_updates import (
 )
 from jiratui.widgets.base import DateInput, ReadOnlyField, ReadOnlyTextField
 from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
+from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 from jiratui.widgets.work_item_details.work_log import (
     LogWorkScreen,
     WorkItemWorkLogScreen,
@@ -161,6 +163,24 @@ class IssueSummaryField(Input):
         return self.value
 
 
+class WorkItemFlagField(Label):
+    """A widget that shows whether a work item is flagged."""
+
+    show: Reactive[bool | None] = reactive(True)
+    """Toggles the widget display."""
+
+    def __init__(self):
+        super().__init__('Flagged!', classes='cols-3 accent')
+        self.styles.display = 'block'
+        self.disabled = True
+
+    def watch_show(self, value: bool = True) -> None:
+        if value:
+            self.styles.display = 'block'
+        else:
+            self.styles.display = 'none'
+
+
 class WorkItemLabelsField(Input):
     update_enabled: Reactive[bool | None] = reactive(True)
 
@@ -268,6 +288,7 @@ class IssueDetailsWidget(Vertical):
     - Due Date
     - Labels
     - Parent
+    - Flagged (a custom field)
 
     Whether these fields can be updated depends on the work item's edit metadata. Some work items disallow editing
     certain fields. For example, work items of type "subtask" typically do not allow the user to update the due date.
@@ -311,12 +332,22 @@ class IssueDetailsWidget(Vertical):
             description='Log Work',
             show=True,
         ),
+        Binding(
+            key='ctrl+f',
+            action='flag_work_item',
+            description='Flag It',
+            show=True,
+        ),
     ]
 
     def __init__(self):
         super().__init__(id='issue_details')
         self.available_users: list[tuple[str, str]] | None = None
         self.can_focus = True
+        self._work_item_is_flagged = None
+        """Indicates whether the issue contains a flag, i.e. it has been flagged."""
+        self._flagging_work_item_enabled = True
+        """Indicates whether adding/removing a flag to a work item is enabled. This depends on the issue's metadata."""
 
     @property
     def help_anchor(self) -> str:
@@ -398,23 +429,24 @@ class IssueDetailsWidget(Vertical):
     def time_tracking_container(self) -> HorizontalGroup:
         return self.query_one('#time-tracking-container', expect_type=HorizontalGroup)
 
+    @property
+    def work_item_flag_widget(self) -> WorkItemFlagField:
+        return self.query_one(WorkItemFlagField)
+
     def compose(self) -> ComposeResult:
+        with Right():
+            yield WorkItemFlagField()  # row 0
         with VerticalScroll(id='issue-details-form'):
-            # row 1
-            yield IssueSummaryField()
-            # row 2
-            yield IssueDetailsAssigneeSelection([])
-            yield IssueDetailsStatusSelection([])
-            yield IssueTypeField()
-            # row 3
-            yield IssueKeyField()
-            yield IssueParentField()
-            yield IssueSprintField()
-            # row 4
-            yield ProjectIDField()
-            # row 5
-            yield IssueDetailsPrioritySelection([])
-            yield ReporterField()
+            yield IssueSummaryField()  # row 1
+            yield IssueDetailsAssigneeSelection([])  # row 2
+            yield IssueDetailsStatusSelection([])  # row 2
+            yield IssueTypeField()  # row 2
+            yield IssueKeyField()  # row 3
+            yield IssueParentField()  # row 3
+            yield IssueSprintField()  # row 3
+            yield ProjectIDField()  # row 4
+            yield IssueDetailsPrioritySelection([])  # row 5
+            yield ReporterField()  # row 5
             # row 6
             yield ReadOnlyTextField(
                 id='issue_created_date',
@@ -471,6 +503,41 @@ class IssueDetailsWidget(Vertical):
             self.screen.set_focus(self.priority_selector)
         elif key == 'z':
             self.screen.set_focus(self.issue_status_selector)
+
+    def action_flag_work_item(self) -> None:
+        """Opens a modal screen to let the user add/remove a flag with an optional comment/note."""
+
+        if self.issue and self.issue.key and self._flagging_work_item_enabled:
+            self.app.push_screen(
+                FlagWorkItemScreen(self.issue.key, self._work_item_is_flagged),
+                self._request_flagging_work_item,
+            )
+
+    def _request_flagging_work_item(self, value: dict | None = None) -> None:
+        """If we need to update the flag run a worker to do so."""
+
+        if value and value.get('update_flag'):
+            self.run_worker(self._toggle_work_item_flag(key=self.issue.key, note=value.get('note')))
+
+    async def _toggle_work_item_flag(self, key: str, note: str | None = None) -> None:
+        """Toggles the flag of the work item."""
+
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.update_issue_flagged_status(
+            issue_id_or_key=key,
+            note=note,
+            add_flag=not self._work_item_is_flagged,
+        )
+        if response.success:
+            self.notify('Work item flagged successfully', title='Update Work Item')
+            # refresh the details of the work item to reflect the changes in time tracking information
+            await self._refresh_work_item_details()
+        else:
+            self.notify(
+                f'Failed to flag the item: {response.error}',
+                severity='error',
+                title='Update Work Item',
+            )
 
     def action_view_worklog(self) -> None:
         """Opens a pop-up modal to display the work log of a work item.
@@ -590,7 +657,7 @@ class IssueDetailsWidget(Vertical):
                 return
 
     def _setup_priority_selector(
-        self, issue_edit_meta: dict, issue_priority: IssuePriority
+        self, issue_edit_meta: dict | None, issue_priority: IssuePriority
     ) -> None:
         if issue_edit_meta:
             # the issue may not support priority, for example Epics. In that case disable the select widget
@@ -634,6 +701,9 @@ class IssueDetailsWidget(Vertical):
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
             self.work_item_labels_widget.value = ''
+            self._work_item_is_flagged = None
+            self._flagging_work_item_enabled = True
+            self.work_item_flag_widget.show = False
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
         self.time_tracking_container.remove_children(TimeTrackingWidget)
@@ -927,13 +997,13 @@ class IssueDetailsWidget(Vertical):
                 self.issue_status_selector.value = current_status_id
 
     def watch_issue(self, response: JiraIssue | None) -> None:
-        """Updates the update-form fields associated to a work item.
+        """Updates the form fields associated to a work item with the details of the work item.
 
         Args:
             response: a work item selected by the user in the left-hand side panel.
 
         Returns:
-            Nothing.
+            `None`.
         """
 
         # "reset" the form by setting the value of all its elements to the default
@@ -949,7 +1019,7 @@ class IssueDetailsWidget(Vertical):
             )
         )
 
-        editable_fields = self._determine_editable_fields(response)
+        editable_fields: dict = self._determine_editable_fields(response)
 
         # fetch the list of assignable users for the work item
         self.run_worker(
@@ -1008,3 +1078,20 @@ class IssueDetailsWidget(Vertical):
         self.work_item_labels_widget.update_enabled = editable_fields.get(
             self.work_item_labels_widget.jira_field_key
         )
+
+        # check if the work item has been flagged; and show a label at the top with a message for the user
+        if not response.edit_meta:
+            self._flagging_work_item_enabled = False
+        else:
+            field_metadata: dict | None = get_field_key(
+                'flagged', response.edit_meta.get('fields', {})
+            )
+            if not field_metadata:
+                self._flagging_work_item_enabled = False
+            else:
+                work_item_flag: Any = response.get_custom_field_value(field_metadata.get('key'))
+                self._work_item_is_flagged = True if work_item_flag else False
+                if self._work_item_is_flagged:
+                    self.work_item_flag_widget.show = True
+                else:
+                    self.work_item_flag_widget.show = False
