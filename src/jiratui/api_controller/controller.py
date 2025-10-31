@@ -60,6 +60,7 @@ from jiratui.models import (
     UpdateWorkItemResponse,
     WorkItemsSearchOrderBy,
 )
+from jiratui.utils.fields import get_custom_fields_values
 
 
 @dataclass
@@ -642,18 +643,6 @@ class APIController:
             result=sorted(users, key=lambda item: item.display_name or item.account_id)
         )
 
-    @staticmethod
-    def _extract_editable_custom_fields(
-        issue_fields: dict | None = None,
-        issue_editable_custom_fields: dict | None = None,
-    ) -> dict[str, Any]:
-        # extract the value of all the custom fields that can be edited
-        custom_fields: dict[str, Any] = {}
-        for custom_field_id, custom_field_data in issue_fields.items():
-            if custom_field_id in issue_editable_custom_fields:
-                custom_fields[custom_field_id] = custom_field_data
-        return custom_fields
-
     async def get_issue(
         self,
         issue_id_or_key: str,
@@ -699,17 +688,15 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
-            editable_custom_fields: dict[str, Any] | None = None
+            custom_fields_values: dict[str, Any] | None = None
             if issue.get('fields', {}):
-                # extract the value of the custom fields that can be edited
-                editable_custom_fields = self._extract_editable_custom_fields(
+                # extract the value of the custom fields
+                custom_fields_values = get_custom_fields_values(
                     issue.get('fields', {}), issue.get('editmeta', {}).get('fields')
                 )
 
             try:
-                instance: JiraIssue = WorkItemFactory.create_work_item(
-                    issue, editable_custom_fields
-                )
+                instance: JiraIssue = WorkItemFactory.create_work_item(issue, custom_fields_values)
             except Exception as e:
                 self.logger.error(
                     'There was an error while extracting data from an issue',
@@ -2238,7 +2225,7 @@ class APIController:
             )
         return APIControllerResponse(result=fields)
 
-    async def flag_issue(
+    async def update_issue_flagged_status(
         self,
         issue_id_or_key: str,
         add_flag: bool = True,
