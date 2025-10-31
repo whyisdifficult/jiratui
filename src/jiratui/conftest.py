@@ -200,6 +200,23 @@ def jira_issues() -> list[JiraIssue]:
             summary='abcd',
             status=IssueStatus(name='Done', id='1'),
             issue_type=IssueType(id='1', name='Task'),
+            edit_meta={
+                'fields': {
+                    'customfield_10021': {
+                        'required': False,
+                        'schema': {
+                            'type': 'array',
+                            'items': 'option',
+                            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                            'customId': 10021,
+                        },
+                        'name': 'Flagged',
+                        'key': 'customfield_10021',
+                        'operations': ['add', 'set', 'remove'],
+                        'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+                    },
+                }
+            },
         ),
         JiraIssue(
             id='2',
@@ -210,6 +227,23 @@ def jira_issues() -> list[JiraIssue]:
             project=Project(id='1', name='Project 1', key='P1'),
             created=datetime(2025, 10, 11),
             updated=datetime(2025, 10, 11),
+            edit_meta={
+                'fields': {
+                    'customfield_10021': {
+                        'required': False,
+                        'schema': {
+                            'type': 'array',
+                            'items': 'option',
+                            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                            'customId': 10021,
+                        },
+                        'name': 'Flagged',
+                        'key': 'customfield_10021',
+                        'operations': ['add', 'set', 'remove'],
+                        'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+                    },
+                }
+            },
             attachments=[
                 Attachment(
                     id='1',

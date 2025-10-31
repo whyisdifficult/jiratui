@@ -213,7 +213,17 @@ class WorkDescription(TextArea):
 
 
 class LogWorkScreen(Screen[dict]):
-    """A modal screen to allow the user to log work for a work item."""
+    """A modal screen to allow the user to log work for a work item.
+
+    The screen's result is a dictionary with the following keys:
+    {
+        'time_spent': the time spent as provided by the user in the screen's form.
+        'time_remaining': the time remaining as provided by the user in the screen's form.
+        'description': an optional as provided by the user in the screen's form.
+        'started': an optional datetime string.
+        'current_remaining_estimate': the issue's current remaining time.
+    }
+    """
 
     BINDINGS = [
         ('escape', 'app.pop_screen', 'Close'),

@@ -22,7 +22,7 @@ from jiratui.models import (
 class WorkItemFactory:
     @staticmethod
     def create_work_item(
-        data: dict, editable_custom_fields: dict[str, Any] | None = None
+        data: dict, custom_fields_values: dict[str, Any] | None = None
     ) -> JiraIssue:
         fields = data.get('fields', {})
         project = fields.get('project', {})
@@ -128,11 +128,11 @@ class WorkItemFactory:
             else None,
             attachments=attachments,
             sprint=sprint,
-            edit_meta=data.get('editmeta'),
+            edit_meta=data.get('editmeta', {}),
             due_date=datetime.strptime(fields.get('duedate'), '%Y-%m-%d').date()
             if fields.get('duedate')
             else None,
-            editable_custom_fields=editable_custom_fields,
+            custom_fields=custom_fields_values,
         )
 
 
