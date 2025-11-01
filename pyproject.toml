@@ -3,7 +3,7 @@ name = "jiratui"
 version = "1.5.0"
 description = "A TUI for interacting with Atlassian Jira from your terminal."
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 
 authors = [
   {name = "Gaston T.", email = "pythondeveloper@outlook.com"}
@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Terminals",
     "Topic :: Utilities",
@@ -81,7 +82,7 @@ requires = ["uv_build>=0.9.2,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.mypy]
-python_version = 3.13
+python_version = 3.14
 strict_optional = false
 ignore_missing_imports = true
 show_error_context = false
