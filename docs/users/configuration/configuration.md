@@ -87,7 +87,9 @@ addition to the available projects. This may make the startup a bit slower.
 
 If the setting `tui_title_include_jira_server_title = True` the application will fetch server information from the Jira
 API instance and use the server's title or server base URL to build the title of the application. If this is set to
-`False` the title will set to the default, or to the value of the `tui_custom_title` setting above; if defined.
+`False` the title will set to the default, or to the value of the `tui_custom_title` setting; if defined.
+
+You can use `tui_custom_title` to set a custom title for the application. If `tui_custom_title` is set to an empty string (`""`), no title will be rendered at all. If `tui_custom_title` is not set, the application will fall back to using `tui_title`.
 
 
 ## Enable Filtering Search Results

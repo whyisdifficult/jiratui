@@ -363,7 +363,14 @@ class MainScreen(Screen):
             An instance of `ComposeResult`.
         """
 
-        yield Header(id='app-header', icon='*')
+        # Only render header if tui_custom_title is not explicitly set to empty string
+        config = CONFIGURATION.get()
+        should_show_header = True
+        if config.tui_custom_title is not None and config.tui_custom_title == '':
+            should_show_header = False
+
+        if should_show_header:
+            yield Header(id='app-header', icon='*')
         with Vertical(id='main-container'):
             with HorizontalGroup():
                 yield ProjectSelectionInput(projects=[])

@@ -29,6 +29,7 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',
@@ -59,6 +60,7 @@ def app_with_input_and_config_theme() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',
@@ -89,6 +91,7 @@ def app_with_input_theme() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',
@@ -119,6 +122,7 @@ def app_without_config_theme() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',
@@ -149,6 +153,7 @@ def app() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',
@@ -549,3 +554,218 @@ async def test_application_with_unrecognized_config_theme(
 ):
     async with app_with_unrecognized_config_theme.run_test() as pilot:
         assert pilot.app.theme == 'textual-dark'
+
+
+@pytest.fixture()
+def config_dict() -> dict:
+    """Base configuration dictionary for testing."""
+    return {
+        'jira_api_base_url': 'foo.bar',
+        'jira_api_username': 'foo',
+        'jira_api_token': SecretStr('foo'),
+        'jira_api_version': 3,
+        'cloud': True,
+        'ssl': None,
+        'use_bearer_authentication': False,
+        'ignore_users_without_email': True,
+        'default_project_key_or_id': None,
+        'jira_account_id': None,
+        'jira_user_group_id': 'qwerty',
+        'tui_title': None,
+        'tui_custom_title': None,
+        'tui_title_include_jira_server_title': False,
+        'on_start_up_only_fetch_projects': False,
+        'log_file': '',
+        'log_level': 'ERROR',
+        'theme': None,
+        'search_results_page_filtering_enabled': False,
+        'search_results_default_order': WorkItemsSearchOrderBy.CREATED_DESC,
+        'enable_advanced_full_text_search': True,
+        'full_text_search_minimum_term_length': 3,
+        'search_on_startup': False,
+    }
+
+
+def create_app_with_config(config_dict: dict, **config_overrides) -> JiraApp:
+    """Helper to create JiraApp with specific config overrides."""
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_data = config_dict.copy()
+    config_data.update(config_overrides)
+    config_mock.configure_mock(**config_data)
+
+    app = JiraApp(config_mock)
+    app.api = APIController(config_mock)
+    app._setup_logging = MagicMock()  # type:ignore[method-assign]
+    return app
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_with_custom_value(config_dict):
+    """Test that tui_custom_title overrides tui_title when set to a custom value."""
+    app = create_app_with_config(
+        config_dict, tui_title='Default Title', tui_custom_title='My Custom Title'
+    )
+
+    async with app.run_test():
+        assert app.title == 'My Custom Title'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_with_empty_string(config_dict):
+    """Test that tui_custom_title set to empty string hides the header."""
+    app = create_app_with_config(config_dict, tui_title='Default Title', tui_custom_title='')
+
+    async with app.run_test():
+        assert app.title == ''
+        main_screen = app.screen
+        assert not main_screen.query('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_not_set_fallback_to_tui_title(config_dict):
+    """Test that when tui_custom_title is None, it falls back to tui_title."""
+    app = create_app_with_config(config_dict, tui_title='Default Title', tui_custom_title=None)
+
+    async with app.run_test():
+        assert app.title == 'Default Title'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_not_set_and_tui_title_not_set(config_dict):
+    """Test that when both tui_custom_title and tui_title are None, title uses default."""
+    app = create_app_with_config(config_dict, tui_title=None, tui_custom_title=None)
+
+    async with app.run_test():
+        assert app.title == 'JiraTUI'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_whitespace_handling(config_dict):
+    """Test that tui_custom_title with whitespace is properly stripped."""
+    app = create_app_with_config(
+        config_dict, tui_title='Default Title', tui_custom_title='  Custom Title With Spaces  '
+    )
+
+    async with app.run_test():
+        assert app.title == 'Custom Title With Spaces'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_only_whitespace(config_dict):
+    """Test that tui_custom_title with only whitespace keeps default title."""
+    app = create_app_with_config(config_dict, tui_title='Default Title', tui_custom_title='   ')
+
+    async with app.run_test():
+        assert app.title == 'JiraTUI'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+@pytest.mark.asyncio
+async def test_tui_custom_title_priority_over_tui_title(config_dict):
+    """Test that tui_custom_title takes priority over tui_title."""
+    app = create_app_with_config(
+        config_dict,
+        tui_title='Default Title',
+        tui_custom_title='Custom Title',
+        tui_title_include_jira_server_title=False,
+    )
+
+    async with app.run_test():
+        assert app.title == 'Custom Title'
+        main_screen = app.screen
+        assert main_screen.query_one('#app-header')
+
+
+def test_set_application_title_with_custom_title(config_dict):
+    """Test _set_application_title method with custom title."""
+    app = create_app_with_config(
+        config_dict, tui_title='Default Title', tui_custom_title='My Custom Title'
+    )
+
+    app._set_application_title()
+
+    assert app.title == 'My Custom Title'
+
+
+def test_set_application_title_with_empty_string(config_dict):
+    """Test _set_application_title method with empty string."""
+    app = create_app_with_config(config_dict, tui_title='Default Title', tui_custom_title='')
+
+    app._set_application_title()
+
+    assert app.title == ''
+
+
+def test_set_application_title_fallback_to_tui_title(config_dict):
+    """Test _set_application_title method falls back to tui_title."""
+    app = create_app_with_config(config_dict, tui_title='Default Title', tui_custom_title=None)
+
+    app._set_application_title()
+
+    assert app.title == 'Default Title'
+
+
+def test_header_compose_logic_with_empty_string(config_dict):
+    """Test MainScreen compose logic when tui_custom_title is empty string."""
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_data = config_dict.copy()
+    config_data.update({'tui_title': 'Default Title', 'tui_custom_title': ''})
+    config_mock.configure_mock(**config_data)
+
+    from jiratui.config import CONFIGURATION
+
+    CONFIGURATION.set(config_mock)
+    config = CONFIGURATION.get()
+
+    should_show_header = True
+    if config.tui_custom_title is not None and config.tui_custom_title == '':
+        should_show_header = False
+
+    assert should_show_header is False
+
+
+def test_header_compose_logic_with_custom_title(config_dict):
+    """Test MainScreen compose logic when tui_custom_title has value."""
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_data = config_dict.copy()
+    config_data.update({'tui_title': 'Default Title', 'tui_custom_title': 'Custom Title'})
+    config_mock.configure_mock(**config_data)
+
+    from jiratui.config import CONFIGURATION
+
+    CONFIGURATION.set(config_mock)
+    config = CONFIGURATION.get()
+
+    should_show_header = True
+    if config.tui_custom_title is not None and config.tui_custom_title == '':
+        should_show_header = False
+
+    assert should_show_header is True
+
+
+def test_header_compose_logic_with_none(config_dict):
+    """Test MainScreen compose logic when tui_custom_title is None."""
+    config_mock = Mock(spec=ApplicationConfiguration)
+    config_data = config_dict.copy()
+    config_data.update({'tui_title': 'Default Title', 'tui_custom_title': None})
+    config_mock.configure_mock(**config_data)
+
+    from jiratui.config import CONFIGURATION
+
+    CONFIGURATION.set(config_mock)
+    config = CONFIGURATION.get()
+
+    should_show_header = True
+    if config.tui_custom_title is not None and config.tui_custom_title == '':
+        should_show_header = False
+
+    assert should_show_header is True

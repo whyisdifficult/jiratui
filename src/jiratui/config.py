@@ -112,6 +112,8 @@ class ApplicationConfiguration(BaseSettings):
     to the available projects. This may make the startup slower."""
     tui_title: str | None = None
     """An optional title for the application. This is displayed in the top bar."""
+    tui_custom_title: str | None = None
+    """A custom title for the application. If set, this overrides tui_title. If empty string, no title will be rendered."""
     tui_title_include_jira_server_title: bool = True
     """If `True` the application will fetch server information from the Jira API instance and use the server title or
     server base URL to build the title of the application. If set to `False` the title will be the default or, to the
