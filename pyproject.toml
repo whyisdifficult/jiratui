@@ -63,13 +63,13 @@ docs = [
     "sphinxcontrib-mermaid>=1.0.0",
 ]
 lint = [
-    "mypy>=1.17.1",
-    "ruff>=0.12.9",
+    "mypy>=1.18.2",
+    "ruff>=0.14.3",
 ]
 test = [
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
+    "pytest>8.4.1",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>6.2.1",
     "respx>=0.22.0",
 ]
 
