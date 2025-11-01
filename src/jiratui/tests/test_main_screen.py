@@ -63,6 +63,7 @@ def app() -> JiraApp:
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,
+        tui_custom_title=None,
         tui_title_include_jira_server_title=False,
         on_start_up_only_fetch_projects=False,
         log_file='',

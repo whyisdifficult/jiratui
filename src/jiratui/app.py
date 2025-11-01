@@ -177,9 +177,23 @@ class JiraApp(App):
             self.title = f'{self.title} - {self.server_info.base_url_or_server_title}'  # type:ignore[has-type]
 
     def _set_application_title(self) -> None:
-        if (custom_title := CONFIGURATION.get().tui_title) and custom_title.strip():
+        config = CONFIGURATION.get()
+
+        # Check if tui_custom_title is defined
+        if config.tui_custom_title is not None:
+            # If tui_custom_title is an empty string, don't render title at all
+            if config.tui_custom_title == '':
+                self.title = ''
+                return
+            # If tui_custom_title has a value, use it
+            elif config.tui_custom_title.strip():
+                self.title = config.tui_custom_title.strip()
+        # Fall back to tui_title if tui_custom_title is not set
+        elif (custom_title := config.tui_title) and custom_title.strip():
             self.title = custom_title.strip()
-        if CONFIGURATION.get().tui_title_include_jira_server_title:
+
+        # Append Jira server title if configured
+        if config.tui_title_include_jira_server_title and self.title:
             if self.server_info:
                 self.title = f'{self.title} - {self.server_info.base_url_or_server_title}'
             else:
