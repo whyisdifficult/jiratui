@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.5.0] - 2025-11-01
 
 ### Added
 
 - Add support for displaying external links in ADF-based issue description; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/119
 - Add support for flagging work items; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/127
 - Add support for searching work items on startup; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/121
+- Add support for a custom title; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/129
 
 ### Minor Improvements
 
