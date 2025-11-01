@@ -11,7 +11,7 @@ repos:
         args: ['--maxkb=800']
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.7
+    rev: v0.14.3
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -19,6 +19,6 @@ repos:
       # Run the formatter.
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.17.1'
+    rev: 'v1.18.2'
     hooks:
       - id: mypy
