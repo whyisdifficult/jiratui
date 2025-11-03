@@ -6,6 +6,14 @@ from typing import Any
 def get_custom_fields_values(fields_values: dict, edit_metadata: dict) -> dict[str, Any]:
     """Retrieves the values of all the custom fields associated to an issue.
 
+    ```{important}
+    To determine if a field is a custom field we use the edit metadata associated to the work item. However, some
+    (custom) fields MAY not appear in the edit metadata if they are not part of a editable screen. For example, this is
+    the case with the "flagged" field. Depending on the platform's configuration this field MAY or MAY NOT appear in
+    the edit metadata. As result, we also extract the value of the customs fields that appear in the issue's `fields`
+    attribute. This is done by iterating over all the fields and processing the fields that start with `customfield_`.
+    ```
+
     Args:
         fields_values: the values of all the fields known to an issue.
         edit_metadata: an issue's edit metadata's fields attribute.
@@ -18,8 +26,14 @@ def get_custom_fields_values(fields_values: dict, edit_metadata: dict) -> dict[s
     for _, field_data in edit_metadata.items():
         schema = field_data.get('schema', {})
         if schema.get('customId') or schema.get('custom'):
-            # the field is a custom field
+            # the field is custom
             values[field_data.get('key')] = fields_values.get(field_data.get('key'))
+    for field_key, field_value in fields_values.items():
+        if not field_key.lower().startswith('customfield_'):
+            continue
+        # the field is custom
+        if field_key not in values:
+            values[field_key] = field_value
     return values
 
 

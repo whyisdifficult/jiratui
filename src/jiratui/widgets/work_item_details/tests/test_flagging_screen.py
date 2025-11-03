@@ -1,15 +1,16 @@
 from typing import cast
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.models import JiraIssue, JiraIssueSearchResponse
+from jiratui.models import JiraField, JiraIssue, JiraIssueSearchResponse
 from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 
 
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.get_users')
@@ -24,6 +25,7 @@ async def test_open_flag_screen(
     get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
+    determine_issue_flagged_status_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -55,6 +57,7 @@ async def test_open_flag_screen(
         assert isinstance(app.screen, FlagWorkItemScreen)
 
 
+@patch('jiratui.widgets.screens.APIController.get_fields')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.get_users')
@@ -69,6 +72,7 @@ async def test_open_flag_screen_issue_has_no_metadata(
     get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
+    get_fields_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -83,6 +87,7 @@ async def test_open_flag_screen_issue_has_no_metadata(
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[selected_issue])
     )
+    get_fields_mock.return_value = APIControllerResponse(success=True, result=[])
     async with app.run_test() as pilot:
         search_work_items_mock.return_value = WorkItemSearchResult(
             total=2,
@@ -102,6 +107,7 @@ async def test_open_flag_screen_issue_has_no_metadata(
         assert isinstance(app.screen, MainScreen)
 
 
+@patch('jiratui.widgets.screens.APIController.get_fields')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.get_users')
@@ -116,6 +122,7 @@ async def test_open_flag_screen_missing_metadata_for_flagged_field(
     get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
+    get_fields_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -126,25 +133,11 @@ async def test_open_flag_screen_missing_metadata_for_flagged_field(
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
     selected_issue = jira_issues[1]
-    selected_issue.edit_meta = {
-        'fields': {
-            'customfield_10021': {
-                'required': False,
-                'schema': {
-                    'type': 'array',
-                    'items': 'option',
-                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
-                    'customId': 10021,
-                },
-                'name': 'AnotherFieldName',
-                'key': 'customfield_10021',
-                'operations': ['add', 'set', 'remove'],
-                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
-            },
-        }
-    }
     get_issue_mock.return_value = APIControllerResponse(
         result=JiraIssueSearchResponse(issues=[selected_issue])
+    )
+    get_fields_mock.return_value = APIControllerResponse(
+        success=True, result=[JiraField(id='1', name='Flagged', key='', schema={}, custom=True)]
     )
     async with app.run_test() as pilot:
         search_work_items_mock.return_value = WorkItemSearchResult(
@@ -165,6 +158,7 @@ async def test_open_flag_screen_missing_metadata_for_flagged_field(
         assert isinstance(app.screen, MainScreen)
 
 
+@patch('jiratui.widgets.screens.APIController.get_fields')
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
@@ -173,7 +167,7 @@ async def test_open_flag_screen_missing_metadata_for_flagged_field(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_open_flag_screen_flagging_enabled_issue_is_flagged(
+async def test_open_flag_screen_issue_supports_flagging_and_is_flagged(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -181,6 +175,7 @@ async def test_open_flag_screen_flagging_enabled_issue_is_flagged(
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
+    get_fields_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -195,6 +190,12 @@ async def test_open_flag_screen_flagging_enabled_issue_is_flagged(
         result=JiraIssueSearchResponse(issues=[selected_issue])
     )
     get_custom_field_value_mock.return_value = True
+    get_fields_mock.return_value = APIControllerResponse(
+        success=True,
+        result=[
+            JiraField(id='10000', name='Flagged', key='customfield_10000', schema={}, custom=True)
+        ],
+    )
     async with app.run_test() as pilot:
         search_work_items_mock.return_value = WorkItemSearchResult(
             total=2,
@@ -216,6 +217,7 @@ async def test_open_flag_screen_flagging_enabled_issue_is_flagged(
         assert 'Remove' in app.screen.root_container.border_title
 
 
+@patch('jiratui.widgets.screens.APIController.get_fields')
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
@@ -224,7 +226,7 @@ async def test_open_flag_screen_flagging_enabled_issue_is_flagged(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_open_flag_screen_flagging_enabled_issue_is_not_flagged(
+async def test_open_flag_screen_issue_supports_flagging_and_is_not_flagged(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -232,6 +234,7 @@ async def test_open_flag_screen_flagging_enabled_issue_is_not_flagged(
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
+    get_fields_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -246,6 +249,12 @@ async def test_open_flag_screen_flagging_enabled_issue_is_not_flagged(
         result=JiraIssueSearchResponse(issues=[selected_issue])
     )
     get_custom_field_value_mock.return_value = []
+    get_fields_mock.return_value = APIControllerResponse(
+        success=True,
+        result=[
+            JiraField(id='10000', name='Flagged', key='customfield_10000', schema={}, custom=True)
+        ],
+    )
     async with app.run_test() as pilot:
         search_work_items_mock.return_value = WorkItemSearchResult(
             total=2,
@@ -267,6 +276,8 @@ async def test_open_flag_screen_flagging_enabled_issue_is_not_flagged(
         assert 'Add' in app.screen.root_container.border_title
 
 
+@patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_toggle_work_item_flag')
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
@@ -285,6 +296,7 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status(
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
     toggle_work_item_flag_mock: AsyncMock,
+    determine_issue_flagged_status_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -321,6 +333,8 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status(
         toggle_work_item_flag_mock.assert_not_called()
 
 
+@patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_toggle_work_item_flag')
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
@@ -339,6 +353,7 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
     toggle_work_item_flag_mock: AsyncMock,
+    determine_issue_flagged_status_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -377,6 +392,8 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
         toggle_work_item_flag_mock.assert_not_called()
 
 
+@patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
 @patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
@@ -387,7 +404,7 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_open_flag_screen_updating_flag_status_clicking_save_button(
+async def test_open_flag_screen_updating_flag_status_clicking_save_button1(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -397,6 +414,7 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button(
     get_custom_field_value_mock: Mock,
     update_issue_flagged_status_mock: AsyncMock,
     refresh_work_item_details_mock: AsyncMock,
+    determine_issue_flagged_status_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -442,6 +460,8 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button(
         refresh_work_item_details_mock.assert_called_once()
 
 
+@patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
 @patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
@@ -462,6 +482,7 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_withou
     get_custom_field_value_mock: Mock,
     update_issue_flagged_status_mock: AsyncMock,
     refresh_work_item_details_mock: AsyncMock,
+    determine_issue_flagged_status_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -506,6 +527,8 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_withou
         refresh_work_item_details_mock.assert_called_once()
 
 
+@patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
 @patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
@@ -526,6 +549,7 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_update
     get_custom_field_value_mock: Mock,
     update_issue_flagged_status_mock: AsyncMock,
     refresh_work_item_details_mock: AsyncMock,
+    determine_issue_flagged_status_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -559,13 +583,13 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_update
         await pilot.press('tab')
         await pilot.press('ctrl+f')
         assert isinstance(app.screen, FlagWorkItemScreen)
-        assert app.screen._work_item_is_flagged is False  # type:ignore[name-defined] # noqa: F821
+        assert app.screen._work_item_is_flagged is True  # type:ignore[name-defined] # noqa: F821
         await pilot.press('-')
         await pilot.press('tab')
         await pilot.press('enter')
         update_issue_flagged_status_mock.assert_called_once_with(
             issue_id_or_key='key-2',
             note='-',
-            add_flag=True,
+            add_flag=False,
         )
         refresh_work_item_details_mock.assert_not_called()

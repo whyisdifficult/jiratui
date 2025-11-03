@@ -692,6 +692,11 @@ class PaginatedJiraWorklog(BaseModel):
 
 @dataclass
 class JiraField(BaseModel):
+    """Represents a Jira field as returned by the endpoint that retrieves fields.
+
+    See: https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
+    """
+
     id: str
     """The ID of the field."""
     key: str
@@ -700,3 +705,6 @@ class JiraField(BaseModel):
     """The name of the field."""
     custom: bool
     """Whether the field is a custom field."""
+    schema: dict
+    untranslated_name: str | None = None
+    """The name of the field without translations."""
