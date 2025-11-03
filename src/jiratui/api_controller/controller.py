@@ -690,9 +690,10 @@ class APIController:
         else:
             custom_fields_values: dict[str, Any] | None = None
             if issue.get('fields', {}):
-                # extract the value of the custom fields
+                # extract the value of the issue's custom fields
                 custom_fields_values = get_custom_fields_values(
-                    issue.get('fields', {}), issue.get('editmeta', {}).get('fields')
+                    issue.get('fields', {}),
+                    issue.get('editmeta', {}).get('fields'),
                 )
 
             try:
@@ -2200,7 +2201,7 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
-    async def get_fields(self) -> APIControllerResponse:
+    async def get_fields(self, field_name: str | None = None) -> APIControllerResponse:
         """Retrieves system and custom issue fields.
 
         Returns:
@@ -2215,12 +2216,16 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         fields: list[JiraField] = []
         for field in response:
+            if field_name and field.get('name').lower() != field_name.lower():
+                continue
             fields.append(
                 JiraField(
                     id=field.get('id', ''),
                     key=field.get('key', ''),
                     name=field.get('name'),
+                    untranslated_name=field.get('name'),
                     custom=field.get('custom'),
+                    schema=field.get('schema', {}),
                 )
             )
         return APIControllerResponse(result=fields)
@@ -2235,6 +2240,46 @@ class APIController:
 
         Optionally, it creates a comment with a note.
 
+        The status of a flag is stored in a custom field. The key/ID depends on the configuration of the target Jira
+        platform. In order to support a dynamic feature that doesn't require the user to specify what is the key/id of
+        the field used for flagging I decided to use an
+        [endpoint to extract the necessary configuration](#jiratui.api_controller.controller.APIController.get_fields)
+        of the supported fields.
+
+        As a result, this method implements the following logic:
+
+        ```{mermaid}
+        sequenceDiagram
+            actor User
+            User->>UI: flag work item
+            UI->>Controller: update the flag status of the work item
+            Controller->>API: get field configuration for field "flagged"
+            API->>Controller: APIControllerResponse with field configuration
+            alt field configuration not found or field key is not set
+                API->>UI: "Unable to flag the item. Missing fields configuration"
+                UI->>User: "Unable to flag the item"
+            else
+                Controller->>API: update issue
+                API->>Controller: update response
+                alt the update failed
+                    Controller->>UI: Failed to update the item's flag
+                    UI->>User: "Unable to flag the item"
+                else
+                    alt the user wants to add a note
+                        Controller->>Controller: add comment to the issue
+                    end
+                    Controller->>UI: Item flagged successfully
+                    UI->>User: "Item flagged!"
+                end
+            end
+        ```
+
+        ```{important}
+        To update the work item's flag field we can't use the id of the option that represents the value of the field
+        (aka. "Impediment") because we don't always have edit metadata for the field. If the field is not part of an
+        edit screen the issue's edit metadata will not contain the metadata; this is why we rely on the [fields
+        configuration endpoint](#jiratui.api_controller.controller.APIController.get_fields).
+
         Args:
             issue_id_or_key: the id or key of the work item that we want to flag.
             add_flag: if True then a flag is added to the item; otherwise the flag is removed.
@@ -2245,48 +2290,41 @@ class APIController:
             `APIControllerResponse(success=False)` if there was an error.
         """
 
-        # get metadata for updating/editing the work item
-        issue_edit_metadata: dict = await self.get_edit_metadata_for_issue(issue_id_or_key)
-        if not issue_edit_metadata:
+        # retrieve the configuration of the field used for storing/updating the flag
+        response: APIControllerResponse = await self.get_fields('flagged')
+        if not response.success or not response.result:
             self.logger.error(
-                'Unable to find required metadata for updating the issue. The issue can not be flagged.',
+                'Unable to find the configuration of the required field "flagged". The issue can not be flagged.',
                 extra={'issue_id_or_key': issue_id_or_key},
             )
-            return APIControllerResponse(success=False, error='Unable to flag the item.')
-
-        # extract the schema of the field that we need to update to flag the item
-        if not (field_details := self._find_field_metadata(issue_edit_metadata, name='flagged')):
-            self.logger.error(
-                'Unable to find schema information for the field: flagged',
-                extra={'issue_id_or_key': issue_id_or_key},
+            return APIControllerResponse(
+                success=False, error='Unable to flag the item. Missing fields configuration.'
             )
-            return APIControllerResponse(success=False, error='Unable to flag the item.')
 
-        if 'set' not in field_details.get('operations'):
+        field_configuration: JiraField = response.result[0]  # type:ignore
+
+        if not field_configuration.key:
             self.logger.error(
-                'The field flagged does not support the "set" operation',
-                extra={'issue_id_or_key': issue_id_or_key, 'field_details': field_details},
+                'Unable to find the key for the required field: flagged',
+                extra={
+                    'issue_id_or_key': issue_id_or_key,
+                    'fields_configuration': field_configuration,
+                },
             )
             return APIControllerResponse(
                 success=False,
-                error='Unable to flag the item. The field does not support setting a value.',
-            )
-        if not (allowed_values := field_details.get('allowedValues')):
-            self.logger.error(
-                'The field flagged does not have allowedValues',
-                extra={'issue_id_or_key': issue_id_or_key, 'field_details': field_details},
-            )
-            return APIControllerResponse(
-                success=False,
-                error='Unable to flag the item. The field does not have allowed values.',
+                error='Unable to flag the item. Missing configuration for "flagged" field.',
             )
 
-        # set the field value; we expect the field to accept a single option and so, we always pick the first one
-        option_id = allowed_values[0].get('id') if add_flag else None
-        payload = {field_details.get('key'): [{'set': [{'id': option_id}]}]}
-        # attempt to update the issue to flag it
+        # set the field value; we expect the field to accept a single option and to always accept the "set" operation
+        if add_flag:
+            payload = {field_configuration.key: [{'set': [{'value': 'Impediment'}]}]}
+        else:
+            payload = {field_configuration.key: [{'set': [{'id': None}]}]}
+
         try:
-            response: dict = await self.api.update_issue(issue_id_or_key, payload)
+            # attempt to update the issue to flag it
+            update_issue_response: dict = await self.api.update_issue(issue_id_or_key, payload)
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
@@ -2301,7 +2339,7 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
             updated_fields: list[str] = []
-            if fields := response.get('fields', {}):
+            if fields := update_issue_response.get('fields', {}):
                 updated_fields = list(fields.keys())
 
             # add an optional comment with the note
@@ -2311,10 +2349,3 @@ class APIController:
             return APIControllerResponse(
                 result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
             )
-
-    @staticmethod
-    def _find_field_metadata(issue_edit_metadata: dict, name: str) -> dict | None:
-        for _, metadata in issue_edit_metadata.get('fields', {}).items():
-            if metadata.get('name').lower() == name.lower():
-                return metadata
-        return None

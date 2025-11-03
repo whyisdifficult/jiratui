@@ -13,7 +13,6 @@ from textual.widgets import Input, Label, ProgressBar, Select
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
-from jiratui.utils.fields import get_field_key
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_due_date_has_changed,
@@ -346,8 +345,13 @@ class IssueDetailsWidget(Vertical):
         self.can_focus = True
         self._work_item_is_flagged = None
         """Indicates whether the issue contains a flag, i.e. it has been flagged."""
-        self._flagging_work_item_enabled = True
-        """Indicates whether adding/removing a flag to a work item is enabled. This depends on the issue's metadata."""
+        self._issue_supports_flagging = True
+        """Indicates whether adding/removing a flag to a work item is supported. This depends on the issue's
+        metadata or the configuration of the field used for storing the value of the flag."""
+
+    @property
+    def issue_is_flagged(self) -> bool:
+        return self._work_item_is_flagged
 
     @property
     def help_anchor(self) -> str:
@@ -507,10 +511,14 @@ class IssueDetailsWidget(Vertical):
     def action_flag_work_item(self) -> None:
         """Opens a modal screen to let the user add/remove a flag with an optional comment/note."""
 
-        if self.issue and self.issue.key and self._flagging_work_item_enabled:
+        if self.issue and self.issue.key and self._issue_supports_flagging:
             self.app.push_screen(
-                FlagWorkItemScreen(self.issue.key, self._work_item_is_flagged),
+                FlagWorkItemScreen(self.issue.key, self.issue_is_flagged),
                 self._request_flagging_work_item,
+            )
+        else:
+            self.notify(
+                'Flagging this issue is not supported.', severity='warning', title='Flag Work Item'
             )
 
     def _request_flagging_work_item(self, value: dict | None = None) -> None:
@@ -526,7 +534,7 @@ class IssueDetailsWidget(Vertical):
         response: APIControllerResponse = await application.api.update_issue_flagged_status(
             issue_id_or_key=key,
             note=note,
-            add_flag=not self._work_item_is_flagged,
+            add_flag=not self.issue_is_flagged,
         )
         if response.success:
             self.notify('Work item flagged successfully', title='Update Work Item')
@@ -702,7 +710,7 @@ class IssueDetailsWidget(Vertical):
             self.issue_due_date_field.value = ''
             self.work_item_labels_widget.value = ''
             self._work_item_is_flagged = None
-            self._flagging_work_item_enabled = True
+            self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
@@ -1053,25 +1061,19 @@ class IssueDetailsWidget(Vertical):
         self.issue_parent_field.update_enabled = editable_fields.get(
             self.issue_parent_field.jira_field_key
         )
-
         self.issue_sprint_field.value = response.sprint_name
-
         self.issue_summary_field.value = response.summary
         self.issue_summary_field.update_enabled = editable_fields.get(
             self.issue_summary_field.jira_field_key
         )
-
         self.issue_due_date_field.value = response.display_due_date
         self.issue_due_date_field.update_enabled = editable_fields.get(
             self.issue_due_date_field.jira_field_key
         )
-
         # update the priority selection depending on whether the issue supports prioritization
         self._setup_priority_selector(response.edit_meta, response.priority)
-
         # set up time tracking widgets
         self._setup_time_tracking(response.time_tracking)
-
         # set up the labels; if any exists
         if response.labels:
             self.work_item_labels_widget.value = ','.join(response.labels)
@@ -1080,18 +1082,31 @@ class IssueDetailsWidget(Vertical):
         )
 
         # check if the work item has been flagged; and show a label at the top with a message for the user
-        if not response.edit_meta:
-            self._flagging_work_item_enabled = False
-        else:
-            field_metadata: dict | None = get_field_key(
-                'flagged', response.edit_meta.get('fields', {})
+        self.run_worker(self._determine_issue_flagged_status(response))
+
+    async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
+        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+        # retrieve the configuration of all the supported fields
+        response: APIControllerResponse = await application.api.get_fields('flagged')
+        if not response.success or not response.result:
+            # we won't be able to find the key of the field that we need to update in order to set/remove a flag;
+            # let's disable flagging for the issue
+            self._issue_supports_flagging = False
+            self.notify(
+                'Unable to flag the work item. Missing fields configuration',
+                severity='error',
+                title='Flag Work Item',
             )
-            if not field_metadata:
-                self._flagging_work_item_enabled = False
+        else:
+            # extract the key of the field used for flagging items based on the name of the field
+            if not response.result[0].key:  # type:ignore
+                self._issue_supports_flagging = False
+                self.notify(
+                    'Unable to flag the work item. Missing required field configuration',
+                    severity='error',
+                    title='Flag Work Item',
+                )
             else:
-                work_item_flag: Any = response.get_custom_field_value(field_metadata.get('key'))
+                work_item_flag: Any = issue.get_custom_field_value(response.result[0].key)  # type:ignore
                 self._work_item_is_flagged = True if work_item_flag else False
-                if self._work_item_is_flagged:
-                    self.work_item_flag_widget.show = True
-                else:
-                    self.work_item_flag_widget.show = False
+                self.work_item_flag_widget.show = self.issue_is_flagged
