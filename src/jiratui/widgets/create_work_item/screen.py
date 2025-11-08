@@ -10,7 +10,7 @@ from textual.widgets import Button, Input, Rule, Select, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueType, Project
-from jiratui.utils.create_work_item import create_widgets_for_work_item_creation
+from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
     CreateWorkItemAssigneeSelectionInput,
     CreateWorkItemDescription,

@@ -128,6 +128,7 @@ class WorkItemInfoContainer(Vertical):
             self.description_container.styles.height = '50%'
         else:
             self.description_container.styles.height = '92%'  # leave some space
+        return None
 
     @staticmethod
     def _extract_adf(data) -> str:

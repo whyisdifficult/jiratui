@@ -60,7 +60,6 @@ from jiratui.models import (
     UpdateWorkItemResponse,
     WorkItemsSearchOrderBy,
 )
-from jiratui.utils.fields import get_custom_fields_values
 
 
 @dataclass
@@ -688,16 +687,8 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         else:
-            custom_fields_values: dict[str, Any] | None = None
-            if issue.get('fields', {}):
-                # extract the value of the issue's custom fields
-                custom_fields_values = get_custom_fields_values(
-                    issue.get('fields', {}),
-                    issue.get('editmeta', {}).get('fields'),
-                )
-
             try:
-                instance: JiraIssue = WorkItemFactory.create_work_item(issue, custom_fields_values)
+                instance: JiraIssue = WorkItemFactory.create_work_item(issue)
             except Exception as e:
                 self.logger.error(
                     'There was an error while extracting data from an issue',
@@ -1255,7 +1246,6 @@ class APIController:
         This method supports updating the following fields:
         - Summary
         - Assignee
-        - Status
         - Priority
         - Due Date
         - Labels
@@ -1280,7 +1270,7 @@ class APIController:
         if not (edit_issue_metadata := issue.edit_meta):
             raise UpdateWorkItemException('Missing expected metadata.')
 
-        if not (fields := edit_issue_metadata.get('fields', {})):
+        if not (metadata_fields := edit_issue_metadata.get('fields', {})):
             raise UpdateWorkItemException(
                 'The selected work item does not include the required fields metadata.'
             )
@@ -1293,7 +1283,7 @@ class APIController:
 
         if 'summary' in updates:
             # the issue's summary has changed
-            if meta_summary := fields.get('summary', {}):
+            if meta_summary := metadata_fields.get('summary', {}):
                 if 'set' not in meta_summary.get('operations', {}):
                     raise UpdateWorkItemException(
                         'The field "summary" can not be updated for the selected work item.',
@@ -1308,7 +1298,7 @@ class APIController:
 
         if 'due_date' in updates:
             # the issue's due date has changed
-            if meta_due_date := fields.get('duedate', {}):
+            if meta_due_date := metadata_fields.get('duedate', {}):
                 if 'set' not in meta_due_date.get('operations', {}):
                     raise UpdateWorkItemException(
                         'The field "duedate" can not be updated for the selected work item.',
@@ -1325,7 +1315,7 @@ class APIController:
 
         if 'priority' in updates:
             # the issue's priority has changed
-            if meta_priority := fields.get('priority', {}):
+            if meta_priority := metadata_fields.get('priority', {}):
                 if 'set' not in meta_priority.get('operations', {}):
                     raise UpdateWorkItemException(
                         'The field "priority" can not be updated for the selected work item.',
@@ -1342,7 +1332,7 @@ class APIController:
 
         if 'parent' in updates:
             # the issue's parent has changed
-            if meta_parent := fields.get('parent', {}):
+            if meta_parent := metadata_fields.get('parent', {}):
                 if 'set' not in meta_parent.get('operations', {}):
                     raise UpdateWorkItemException(
                         'The field "parent" can not be updated for the selected work item.',
@@ -1357,7 +1347,7 @@ class APIController:
 
         if 'assignee_account_id' in updates:
             # the issue's assignee has changed
-            if meta_assignee := fields.get('assignee', {}):
+            if meta_assignee := metadata_fields.get('assignee', {}):
                 if 'set' not in meta_assignee.get('operations', {}):
                     raise UpdateWorkItemException(
                         'The field "assignee" can not be updated for the selected work item.',
@@ -1378,9 +1368,33 @@ class APIController:
                 )
 
         if 'labels' in updates:
-            if meta_labels := fields.get('labels', {}):
+            if meta_labels := metadata_fields.get('labels', {}):
                 if 'set' in meta_labels.get('operations', {}):
                     fields_to_update[meta_labels.get('key')] = [{'set': updates.get('labels')}]
+
+        # process additional fields
+        if CONFIGURATION.get().enable_updating_additional_fields:
+            for field_key, field_value in updates.items():
+                # ignore the fields updated above
+                if field_key in [
+                    'summary',
+                    'due_date',
+                    'priority',
+                    'parent',
+                    'assignee_account_id',
+                    'labels',
+                ]:
+                    continue
+                else:
+                    if metadata := metadata_fields.get(field_key, {}):
+                        # TODO the format of the payload to update the field depends on the schema of the field
+                        if 'set' in metadata.get('operations', {}):
+                            fields_to_update[metadata.get('key')] = [{'set': field_value}]
+                    else:
+                        raise UpdateWorkItemException(
+                            f'The field {field_key} can not be updated for the selected work item.',
+                            extra={'work_item_key': issue.key},
+                        )
 
         if fields_to_update:
             response: dict = await self.api.update_issue(issue.key, fields_to_update)

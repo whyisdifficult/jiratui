@@ -137,30 +137,35 @@
 
 IssueChildWorkItemsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Remote Links */
 
 IssueRemoteLinksWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Attachments */
 
 IssueAttachmentsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Related Work Items */
 
 RelatedIssuesWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Comments */
 
 IssueCommentsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Description */
@@ -183,10 +188,17 @@ IssueDescriptionWidget {
 /*  Work Item Details */
 
 #issue-details-form {
-    layout: grid;
-    grid-size: 3 10;
-    grid-rows: auto;
     scrollbar-size-vertical: 1;
+}
+
+#issue-details-form > StaticFieldsWidgets {
+    grid-size: 3;
+    align: left middle;
+}
+
+#issue-details-form > DynamicFieldsWidgets {
+   grid-size: 2;
+   align: left middle;
 }
 
 #jira-users-assignee-selector-edit {
@@ -615,6 +627,9 @@ AddWorkItemScreen > Vertical {
 .create-work-item-generic-selector {
     border: round $primary-lighten-3;
     padding: 0 1;
+    &.required {
+        border: round red;
+    }
 }
 
 CreateWorkItemIssueSummaryField {

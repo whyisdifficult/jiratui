@@ -3,7 +3,7 @@
 from typing import Any
 
 
-def get_custom_fields_values(fields_values: dict, edit_metadata: dict) -> dict[str, Any]:
+def get_custom_fields_values(fields_values: dict, edit_metadata_fields: dict) -> dict[str, Any]:
     """Retrieves the values of all the custom fields associated to an issue.
 
     ```{important}
@@ -16,14 +16,14 @@ def get_custom_fields_values(fields_values: dict, edit_metadata: dict) -> dict[s
 
     Args:
         fields_values: the values of all the fields known to an issue.
-        edit_metadata: an issue's edit metadata's fields attribute.
+        edit_metadata_fields: an issue's edit metadata's fields attribute.
 
     Returns:
         A dictionary with the `key` of the custom field and the (current) value of the field.
     """
 
     values: dict[str, Any] = {}
-    for _, field_data in edit_metadata.items():
+    for _, field_data in edit_metadata_fields.items():
         schema = field_data.get('schema', {})
         if schema.get('customId') or schema.get('custom'):
             # the field is custom
@@ -35,6 +35,32 @@ def get_custom_fields_values(fields_values: dict, edit_metadata: dict) -> dict[s
         if field_key not in values:
             values[field_key] = field_value
     return values
+
+
+def get_additional_fields_values(
+    fields_values: dict[str, Any], ignored_fields: list[str]
+) -> dict[str, Any]:
+    """Retrieves the values of all the non-custom fields and fields not handled by the JiraIssue factory associated to
+    an issue.
+
+    Args:
+        fields_values: a mapping of field key/id to field value as retrieved from the API.
+        ignored_fields: a list of field ids/keys to ignore.
+
+    Returns:
+        A dictionary of field key/id to field value.
+    """
+
+    additional_fields: dict[str, Any] = {}
+    for field_id_key, field_value in fields_values.items():
+        if field_id_key in ignored_fields:
+            # this field's value is extracted by the factory separately
+            continue
+        if field_id_key.lower().startswith('customfield_'):
+            # this field's value is extracted by the factory separately
+            continue
+        additional_fields[field_id_key] = field_value
+    return additional_fields
 
 
 def get_field_key(name: str, edit_metadata_fields: dict) -> dict | None:

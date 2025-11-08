@@ -17,7 +17,7 @@ from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnly
 
 
 class RelatedIssueCollapsible(Collapsible):
-    """A collapsible to show a work item related to another item"""
+    """A collapsible to show a work item related to another item."""
 
     BINDINGS = [
         Binding(

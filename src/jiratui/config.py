@@ -158,9 +158,10 @@ class ApplicationConfiguration(BaseSettings):
         'path': '/my/repository/.git
     }
     """
-
     search_on_startup: bool = False
     """If True, triggers a search automatically when the UI starts. Can be set via CLI argument --search-on-startup."""
+    enable_updating_additional_fields: bool = False
+    """If True the app will allow the user to view and update additional fields."""
 
     model_config = SettingsConfigDict(
         extra='allow',

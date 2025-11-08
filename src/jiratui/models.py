@@ -29,6 +29,30 @@ def custom_as_json_dict_factory(data) -> dict:
     return {k: convert_value(v) for k, v in data}
 
 
+class JiraWorkItemFields(Enum):
+    """The fields supported by JiraTUI whose values can be extracted from the details of a work item."""
+
+    PROJECT = 'project'
+    STATUS = 'status'
+    ASSIGNEE = 'assignee'
+    REPORTER = 'reporter'
+    PRIORITY = 'priority'
+    PARENT = 'parent'
+    TIME_TRACKING = 'timetracking'
+    ATTACHMENT = 'attachment'
+    SUMMARY = 'summary'
+    DESCRIPTION = 'description'
+    CREATED = 'created'
+    UPDATED = 'updated'
+    ISSUE_TYPE = 'issuetype'
+    ISSUE_LINKS = 'issuelinks'
+    COMMENT = 'comment'
+    RESOLUTION_DATE = 'resolutiondate'
+    RESOLUTION = 'resolution'
+    LABELS = 'labels'
+    DUE_DATE = 'duedate'
+
+
 class WorkItemsSearchOrderBy(enum.Enum):
     CREATED_ASC = 'created asc'
     CREATED_DESC = 'created desc'
@@ -274,6 +298,10 @@ class JiraIssue(JiraBaseIssue):
     custom_fields: dict[str, Any] | None = None
     """a dictionary with the value of the custom fields associated to the issue that support updates based on the
     issue's edit metadata"""
+    additional_fields: dict[str, Any] | None = None
+    """These are fields that are not custom but whose values are not stored in a specific field; like the ones
+    above. These fields have a key without the prefix 'custom_' and, are rendered dynamically in the UI's update
+    form."""
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -397,11 +425,26 @@ class JiraIssue(JiraBaseIssue):
         Returns:
             The value of the custom field.
         """
-        if not self.custom_fields:
-            return None
         if not key:
             return None
+        if not self.custom_fields:
+            return None
         return self.custom_fields.get(key)
+
+    def get_additional_field_value(self, key: str) -> Any | None:
+        """Retrieves the value of a "dynamic" field.
+
+        Args:
+            key: the key of a field.
+
+        Returns:
+            The value of the "dynamic" field.
+        """
+        if not key:
+            return None
+        if not self.additional_fields:
+            return None
+        return self.additional_fields.get(key)
 
     def get_description(self) -> str:
         if not self.description:
