@@ -78,7 +78,13 @@ class DataTableSearchInput(Input):
                 issues := initial_results_set.issues
             ):
                 filtered: list[JiraIssue] = [
-                    record for record in issues if cleaned in record.summary.lower()
+                    record
+                    for record in issues
+                    if (
+                        cleaned in record.summary.lower()
+                        or cleaned in record.key.lower()
+                        or cleaned in record.parent_key
+                    )
                 ]
                 screen.search_results_table.search_results = JiraIssueSearchResponse(
                     issues=filtered
@@ -171,7 +177,7 @@ class IssuesSearchResultsTable(DataTable):
             self.token_by_page[self.page + 1] = response.next_page_token
 
         # set the columns
-        self.add_columns(*['#', 'Key', 'Status', 'Type', 'Summary'])
+        self.add_columns(*['#', 'Key', 'Parent', 'Status', 'Type', 'Summary'])
         # build the rows
         for index, issue in enumerate(response.issues):
             issue_summary = issue.cleaned_summary(
@@ -191,6 +197,7 @@ class IssuesSearchResultsTable(DataTable):
                 *[
                     index + 1,
                     issue.key,
+                    issue.parent_key,
                     Text(issue.status.name, style=style_status),
                     Text(issue.work_item_type_name, style=style_work_type),
                     Text(issue_summary),

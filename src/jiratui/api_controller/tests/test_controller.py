@@ -1639,7 +1639,7 @@ async def test_search_issues_for_jira_dc(
         search_in_active_sprint=False,
         jql_query=None,
         offset=expected_offset,
-        fields=['id', 'key', 'status', 'summary', 'issuetype'],
+        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
         limit=None,
         order_by=None,
     )
