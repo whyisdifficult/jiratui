@@ -797,7 +797,7 @@ class MainScreen(Screen):
 
     async def _search_single_issue(self, issue_key: str) -> WorkItemSearchResult:
         response: APIControllerResponse = await self.api.get_issue(
-            issue_id_or_key=issue_key, fields=['summary', 'status', 'issuetype']
+            issue_id_or_key=issue_key, fields=['summary', 'status', 'issuetype', 'parent']
         )
         if not response.success:
             self.notify(
@@ -847,7 +847,6 @@ class MainScreen(Screen):
             results = await self._search_work_items(
                 next_page_token=next_page_token, search_term=search_term, page=page
             )
-
         # set the data in the results table
         table = self.search_results_table
         # store the initial results set in the table to handle local searches
