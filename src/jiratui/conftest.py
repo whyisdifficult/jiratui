@@ -42,6 +42,7 @@ def config_for_testing() -> ApplicationConfiguration:
         log_level='ERROR',
         ssl=None,
         search_on_startup=False,
+        enable_updating_additional_fields=False,
     )
     return config_mock
 
@@ -67,6 +68,7 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         log_file='',  # empty filename disables logging to a text file
         log_level='ERROR',
         ssl=None,
+        enable_updating_additional_fields=False,
     )
     return config_mock
 
@@ -93,6 +95,7 @@ def jira_api_controller() -> APIController:
         log_level='ERROR',
         search_issues_default_day_interval=15,
         ssl=None,
+        enable_updating_additional_fields=False,
     )
     return APIController(config_mock)
 
@@ -119,6 +122,7 @@ def jira_api_controller_for_jira_dc() -> APIController:
         log_level='ERROR',
         search_issues_default_day_interval=15,
         ssl=None,
+        enable_updating_additional_fields=False,
     )
     return APIController(config_mock)
 
@@ -148,6 +152,7 @@ def app() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        enable_updating_additional_fields=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

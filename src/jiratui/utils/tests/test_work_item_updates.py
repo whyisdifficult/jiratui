@@ -2,9 +2,10 @@ from datetime import date
 
 import pytest
 
-from jiratui.models import IssuePriority, JiraUser
+from jiratui.models import IssuePriority, JiraIssueComponent, JiraUser
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
+    work_item_components_has_changed,
     work_item_due_date_has_changed,
     work_item_parent_has_changed,
     work_item_priority_has_changed,
@@ -66,3 +67,52 @@ def test_work_item_parent_has_changed(current_parent_key, target_parent_key, exp
 )
 def test_work_item_due_date_has_changed(current_due_date, target_due_date, expected_result):
     assert work_item_due_date_has_changed(current_due_date, target_due_date) is expected_result
+
+
+@pytest.mark.parametrize(
+    'current_components, target_components, expected_result',
+    [
+        (None, None, False),
+        (None, [], False),
+        ([], None, False),
+        ([], [], False),
+        ([JiraIssueComponent(id='1', name='a')], [], True),
+        ([JiraIssueComponent(id='1', name='a')], None, True),
+        (None, [{'id': '1', 'name': 'a'}], True),
+        ([], [{'id': '1', 'name': 'a'}], True),
+        (
+            [JiraIssueComponent(id='1', name='a')],
+            [{'id': '1', 'name': 'a'}, {'id': '2', 'name': 'b'}],
+            True,
+        ),
+        (
+            [JiraIssueComponent(id='1', name='a'), JiraIssueComponent(id='2', name='b')],
+            [{'id': '1', 'name': 'a'}],
+            True,
+        ),
+        (
+            [JiraIssueComponent(id='1', name='a')],
+            [{'id': '1', 'name': 'a'}],
+            False,
+        ),
+        (
+            [JiraIssueComponent(id='1', name='a')],
+            [{'id': '2', 'name': 'a'}],
+            True,
+        ),
+        (
+            [JiraIssueComponent(id='1', name='a')],
+            [{'id': '1', 'name': 'a'}, {'id': '2', 'name': 'a'}],
+            True,
+        ),
+    ],
+)
+def test_work_item_components_has_changed(
+    current_components: list[JiraIssueComponent],
+    target_components: list[dict],
+    expected_result: bool,
+):
+    # WHEN/THEN
+    assert (
+        work_item_components_has_changed(current_components, target_components) is expected_result
+    )

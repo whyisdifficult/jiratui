@@ -1250,6 +1250,7 @@ class APIController:
         - Due Date
         - Labels
         - Parent
+        - Components
 
         Args:
             issue: the work item we want to update.
@@ -1372,6 +1373,20 @@ class APIController:
                 if 'set' in meta_labels.get('operations', {}):
                     fields_to_update[meta_labels.get('key')] = [{'set': updates.get('labels')}]
 
+        if 'components' in updates:
+            if meta_components := metadata_fields.get('components', {}):
+                if 'set' not in meta_components.get('operations', {}):
+                    raise UpdateWorkItemException(
+                        'The field "components" can not be updated for the selected work item.',
+                        extra={'work_item_key': issue.key},
+                    )
+                fields_to_update[meta_components.get('key')] = [{'set': updates.get('components')}]
+            else:
+                raise UpdateWorkItemException(
+                    'The field "components" can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+
         # process additional fields
         if CONFIGURATION.get().enable_updating_additional_fields:
             for field_key, field_value in updates.items():
@@ -1383,11 +1398,11 @@ class APIController:
                     'parent',
                     'assignee_account_id',
                     'labels',
+                    'components',
                 ]:
                     continue
                 else:
                     if metadata := metadata_fields.get(field_key, {}):
-                        # TODO the format of the payload to update the field depends on the schema of the field
                         if 'set' in metadata.get('operations', {}):
                             fields_to_update[metadata.get('key')] = [{'set': field_value}]
                     else:

@@ -11,6 +11,7 @@ from jiratui.models import (
     IssueStatus,
     IssueType,
     JiraIssue,
+    JiraIssueComponent,
     JiraSprint,
     JiraUser,
     JiraWorkItemFields,
@@ -83,6 +84,17 @@ class WorkItemFactory:
                     created=isoparse(item.get('created')) if item.get('created') else None,
                     mime_type=item.get('mimeType'),
                     author=creator,
+                )
+            )
+
+        # extract the components
+        components: list[JiraIssueComponent] = []
+        for component in fields.get('components', []) or []:
+            components.append(
+                JiraIssueComponent(
+                    id=component.get('id'),
+                    name=component.get('name'),
+                    description=component.get('description'),
                 )
             )
 
@@ -178,6 +190,7 @@ class WorkItemFactory:
             else None,
             custom_fields=custom_fields_values,
             additional_fields=additional_fields,
+            components=components,
         )
 
 

@@ -272,6 +272,15 @@ class JiraBaseIssue(BaseModel):
 
 
 @dataclass
+class JiraIssueComponent(BaseModel):
+    """A component that can be associated to a work item."""
+
+    id: str
+    name: str
+    description: str | None = None
+
+
+@dataclass
 class JiraIssue(JiraBaseIssue):
     summary: str
     status: IssueStatus
@@ -302,6 +311,7 @@ class JiraIssue(JiraBaseIssue):
     """These are fields that are not custom but whose values are not stored in a specific field; like the ones
     above. These fields have a key without the prefix 'custom_' and, are rendered dynamically in the UI's update
     form."""
+    components: list[JiraIssueComponent] | None = None
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -431,6 +441,11 @@ class JiraIssue(JiraBaseIssue):
             return None
         return self.custom_fields.get(key)
 
+    def get_custom_fields(self) -> dict[str, Any]:
+        if self.custom_fields is None:
+            return {}
+        return self.custom_fields
+
     def get_additional_field_value(self, key: str) -> Any | None:
         """Retrieves the value of a "dynamic" field.
 
@@ -445,6 +460,11 @@ class JiraIssue(JiraBaseIssue):
         if not self.additional_fields:
             return None
         return self.additional_fields.get(key)
+
+    def get_additional_fields(self) -> dict[str, Any]:
+        if self.additional_fields is None:
+            return {}
+        return self.additional_fields
 
     def get_description(self) -> str:
         if not self.description:

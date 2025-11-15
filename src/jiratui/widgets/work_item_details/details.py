@@ -14,6 +14,7 @@ from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
+    work_item_components_has_changed,
     work_item_due_date_has_changed,
     work_item_parent_has_changed,
     work_item_priority_has_changed,
@@ -21,6 +22,7 @@ from jiratui.utils.work_item_updates import (
 from jiratui.widgets.base import ReadOnlyTextField
 from jiratui.widgets.work_item_details.factory import create_dynamic_widgets_for_updating_work_item
 from jiratui.widgets.work_item_details.fields import (
+    IssueComponentsField,
     IssueDetailsAssigneeSelection,
     IssueDetailsPrioritySelection,
     IssueDetailsStatusSelection,
@@ -33,11 +35,14 @@ from jiratui.widgets.work_item_details.fields import (
     ReporterField,
     TimeTrackingWidget,
     WorkItemDetailsDueDate,
+    WorkItemDynamicFieldUpdateDateTimeWidget,
     WorkItemDynamicFieldUpdateDateWidget,
+    WorkItemDynamicFieldUpdateLabelsWidget,
+    WorkItemDynamicFieldUpdateMultiCheckboxesWidget,
     WorkItemDynamicFieldUpdateNumericWidget,
     WorkItemDynamicFieldUpdateSelectionWidget,
     WorkItemDynamicFieldUpdateTextWidget,
-    WorkItemDynamicFieldUpdateWidget,
+    WorkItemDynamicFieldUpdateURLWidget,
     WorkItemFlagField,
     WorkItemLabelsField,
 )
@@ -68,6 +73,9 @@ class IssueDetailsWidget(Vertical):
     - Labels
     - Parent
     - Flagged (a custom field)
+    - Components
+    - (Some) Custom field types
+    - (Some) System field types
 
     Whether these fields can be updated depends on the work item's edit metadata. Some work items disallow editing
     certain fields. For example, work items of type "subtask" typically do not allow the user to update the due date.
@@ -221,6 +229,10 @@ class IssueDetailsWidget(Vertical):
     def dynamic_fields_widgets_container(self) -> DynamicFieldsWidgets:
         return self.query_one(DynamicFieldsWidgets)
 
+    @property
+    def issue_components_field(self) -> IssueComponentsField:
+        return self.query_one(IssueComponentsField)
+
     def compose(self) -> ComposeResult:
         with Right():
             yield WorkItemFlagField()  # row 0
@@ -270,6 +282,7 @@ class IssueDetailsWidget(Vertical):
                 # row 8
                 yield WorkItemLabelsField()
                 # row 9
+                yield IssueComponentsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()
 
@@ -498,6 +511,7 @@ class IssueDetailsWidget(Vertical):
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
+            self.issue_components_field.data = None
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
         self.time_tracking_container.remove_children(TimeTrackingWidget)
@@ -524,7 +538,7 @@ class IssueDetailsWidget(Vertical):
             if (
                 summary := self.issue_summary_field.validated_summary
             ) and summary != self.issue.summary:
-                payload['summary'] = summary
+                payload[self.issue_summary_field.jira_field_key] = summary
 
         if self.issue_due_date_field.update_enabled:
             # check if the due date has changed
@@ -542,13 +556,15 @@ class IssueDetailsWidget(Vertical):
                         severity='warning',
                     )
                 else:
-                    payload['priority'] = self.priority_selector.selection
+                    payload[self.priority_selector.jira_field_key] = (
+                        self.priority_selector.selection
+                    )
 
         if self.issue_parent_field.update_enabled:
             if work_item_parent_has_changed(
                 self.issue.parent_issue_key, self.issue_parent_field.value
             ):
-                payload['parent'] = self.issue_parent_field.value
+                payload[self.issue_parent_field.jira_field_key] = self.issue_parent_field.value
 
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed
@@ -568,20 +584,35 @@ class IssueDetailsWidget(Vertical):
                 current_labels: list[str] = [lbl.lower() for lbl in self.issue.labels or []]
                 if not current_labels or (set(labels) != set(current_labels)):
                     # update the list of labels
-                    payload['labels'] = labels
+                    payload[self.work_item_labels_widget.jira_field_key] = labels
 
-        # process the "dynamic" fields, which include custom and additional fields
-        for dynamic_widget in self.dynamic_fields_widgets_container.children:
-            if (
-                not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateWidget)
-                and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateNumericWidget)
-                and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateTextWidget)
-                and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateDateWidget)
-                and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateSelectionWidget)
+        if self.issue_components_field.update_enabled:
+            if work_item_components_has_changed(
+                self.issue.components, self.issue_components_field.components
             ):
-                continue
-            if dynamic_widget.value_has_changed:
-                payload[dynamic_widget.id] = dynamic_widget.get_value()
+                payload[self.issue_components_field.jira_field_key] = (
+                    self.issue_components_field.components
+                )
+
+        # process dynamically-generated field widgets; e.g. additional system fields and custom fields
+        if CONFIGURATION.get().enable_updating_additional_fields:
+            # process the "dynamic" fields, which include custom and system fields
+            for dynamic_widget in self.dynamic_fields_widgets_container.children:
+                if (
+                    not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateNumericWidget)
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateDateWidget)
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateDateTimeWidget)
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateSelectionWidget)
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateURLWidget)
+                    and not isinstance(
+                        dynamic_widget, WorkItemDynamicFieldUpdateMultiCheckboxesWidget
+                    )
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateTextWidget)
+                    and not isinstance(dynamic_widget, WorkItemDynamicFieldUpdateLabelsWidget)
+                ):
+                    continue
+                if dynamic_widget.value_has_changed:
+                    payload[dynamic_widget.id] = dynamic_widget.get_value_for_update()
         return payload
 
     async def action_save_work_item(self) -> None:
@@ -596,7 +627,7 @@ class IssueDetailsWidget(Vertical):
             return
 
         issue_was_updated: bool = False
-        # the payload with the fields that will be updated
+        # build the payload with the fields that will be updated
         payload: dict = self._build_payload_for_update()
         # check if we need to transition the issue and move it to the new status if needed
         issue_requires_transition = (
@@ -672,9 +703,21 @@ class IssueDetailsWidget(Vertical):
 
     @staticmethod
     def _determine_editable_fields(work_item: JiraIssue) -> dict:
+        """Determines which of fields of a work item that can be updated via the details form support updates based on
+        the work item's edit metadata.
+
+        Args:
+            work_item: the work item to check.
+
+        Returns:
+            A dictionary with the ID of the fields that support updates. If a field does not support updates then the
+            app will not allow the user to update its value.
+        """
+
         work_item_edit_metadata: dict | None = work_item.edit_meta
         if not work_item_edit_metadata:
             return {}
+
         if not (fields := work_item_edit_metadata.get('fields', {})):
             return {}
 
@@ -711,6 +754,11 @@ class IssueDetailsWidget(Vertical):
 
         if field_labels := fields.get('labels', {}):
             editable_fields[field_labels.get('key')] = 'set' in field_labels.get('operations', {})
+
+        if field_components := fields.get('components', {}):
+            editable_fields[field_components.get('key')] = 'set' in field_components.get(
+                'operations', {}
+            )
 
         return editable_fields
 
@@ -827,6 +875,8 @@ class IssueDetailsWidget(Vertical):
             )
         )
 
+        # check which of the fields in the details form can be updated; diable the widgets of those that do not support
+        # updates
         editable_fields: dict = self._determine_editable_fields(work_item)
 
         # fetch the list of assignable users for the work item
@@ -884,15 +934,37 @@ class IssueDetailsWidget(Vertical):
         # check if the work item has been flagged; and show a label at the top with a message for the user
         self.run_worker(self._determine_issue_flagged_status(work_item))
 
+        # populate the widget with the components associated to the work item
+        self.issue_components_field.data = {
+            'current_values': work_item.components,
+            'allowed_values': (
+                work_item.get_field_edit_metadata('components').get('allowedValues', [])
+                if work_item.get_field_edit_metadata('components')
+                else None
+            ),
+        }
+        self.issue_components_field.update_enabled = editable_fields.get(
+            self.issue_components_field.jira_field_key
+        )
+
         if CONFIGURATION.get().enable_updating_additional_fields:
-            # add dynamic widgets to support updating additional fields including custom fields
+            # add dynamic widgets to support updating additional fields including custom fields and other system fields
             self.run_worker(self._add_dynamic_fields_widgets(work_item))
 
-    async def _add_dynamic_fields_widgets(self, work_item: JiraIssue):
+    async def _add_dynamic_fields_widgets(self, work_item: JiraIssue) -> None:
+        """Builds and mount a list of (dynamic) widgets to support updating (some) system and custom field types
+
+        Args:
+            work_item: the work item.
+
+        Returns:
+            None; updates the `DynamicFieldsWidgets` widget.
+        """
+
         await self.dynamic_fields_widgets_container.remove_children()
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
             work_item,
-            skip_fields_ids_or_keys=[],  # TODO get from config
+            skip_fields_ids_or_keys=[],  # TODO read from the config
         ):
             await self.dynamic_fields_widgets_container.mount(*dynamic_widgets)
 

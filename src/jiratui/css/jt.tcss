@@ -265,6 +265,51 @@ WorkItemDetailsDueDate {
     }
 }
 
+WorkItemComponentsScreen {
+    align: center middle;
+    background: $background 80%;
+}
+WorkItemComponentsScreen > SelectionList {
+    width: 60%;
+    height: 50%;
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
+    background: transparent;
+    scrollbar-size-vertical: 1;
+}
+
+IssueComponentsField {
+    box_sizing: content-box;
+    height: 1;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
+    column-span: 3;
+}
+
+IssueComponentsField > #components {
+    box_sizing: border-box;
+    height: 3;
+    width: 100%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
 /* Help Screen */
 
 HelpScreen > MarkdownViewer {
@@ -1135,4 +1180,51 @@ WorkItemFlagField {
     min-width: 10;
     max-width: 10;
     content-align: center middle;
+}
+
+/* Multi-checkbox field and screen */
+
+WorkItemDynamicFieldUpdateMultiCheckboxesWidget {
+    box_sizing: content-box;
+    height: 1;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
+    column-span: 3;
+}
+
+WorkItemDynamicFieldUpdateMultiCheckboxesWidget > Input {
+    box_sizing: border-box;
+    height: 3;
+    width: 100%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+SelectionsScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+SelectionsScreen > SelectionList {
+    width: 60%;
+    height: 50%;
+    padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
+    border: round $primary-lighten-3;
+    background: transparent;
 }

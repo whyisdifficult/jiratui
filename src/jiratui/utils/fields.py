@@ -28,10 +28,10 @@ def get_custom_fields_values(fields_values: dict, edit_metadata_fields: dict) ->
         if schema.get('customId') or schema.get('custom'):
             # the field is custom
             values[field_data.get('key')] = fields_values.get(field_data.get('key'))
+    # extract the custom fields of the issue from the issue's current values
     for field_key, field_value in fields_values.items():
         if not field_key.lower().startswith('customfield_'):
             continue
-        # the field is custom
         if field_key not in values:
             values[field_key] = field_value
     return values

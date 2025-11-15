@@ -30,6 +30,7 @@ from jiratui.widgets.work_item_details.fields import (
 async def test_text_widget_values(app, original_value, value, has_changed):
     async with app.run_test():
         widget = WorkItemDynamicFieldUpdateTextWidget(
+            'field_key_1',
             field_supports_update=True,
             original_value=original_value,
             value=value,
@@ -56,6 +57,7 @@ async def test_text_widget_values(app, original_value, value, has_changed):
 async def test_numeric_widget_values(app, original_value, value, has_changed):
     async with app.run_test():
         widget = WorkItemDynamicFieldUpdateNumericWidget(
+            'field_key_1',
             field_supports_update=True,
             original_value=original_value,
             value=value,
@@ -82,6 +84,7 @@ async def test_numeric_widget_values(app, original_value, value, has_changed):
 async def test_generic_widget_values(app, original_value, value, has_changed):
     async with app.run_test():
         widget = WorkItemDynamicFieldUpdateWidget(
+            'field_key_1',
             field_supports_update=True,
             original_value=original_value,
             value=value,
@@ -108,6 +111,7 @@ async def test_generic_widget_values(app, original_value, value, has_changed):
 async def test_date_widget_values(app, original_value, value, has_changed):
     async with app.run_test():
         widget = WorkItemDynamicFieldUpdateDateWidget(
+            'field_key_1',
             field_supports_update=True,
             original_value=original_value,
             value=value,
@@ -128,6 +132,7 @@ async def test_date_widget_values(app, original_value, value, has_changed):
 async def test_single_selection_widget_values(app, original_value, value, has_changed):
     async with app.run_test():
         widget = WorkItemDynamicFieldUpdateSelectionWidget(
+            'field_key_1',
             options=[('0', '0'), ('1', '1')],
             field_supports_update=True,
             original_value=original_value,
