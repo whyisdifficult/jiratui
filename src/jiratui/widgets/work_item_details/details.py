@@ -240,13 +240,13 @@ class IssueDetailsWidget(Vertical):
             with StaticFieldsWidgets():
                 yield IssueSummaryField()  # row 1
                 yield IssueDetailsAssigneeSelection([])  # row 2
+                yield IssueDetailsPrioritySelection([])  # row 2
                 yield IssueDetailsStatusSelection([])  # row 2
-                yield IssueTypeField()  # row 2
                 yield IssueKeyField()  # row 3
                 yield IssueParentField()  # row 3
                 yield IssueSprintField()  # row 3
                 yield ProjectIDField()  # row 4
-                yield IssueDetailsPrioritySelection([])  # row 5
+                yield IssueTypeField()  # row 5
                 yield ReporterField()  # row 5
                 # row 6
                 yield ReadOnlyTextField(

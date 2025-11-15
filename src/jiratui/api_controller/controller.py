@@ -1388,7 +1388,7 @@ class APIController:
                 )
 
         # process additional fields
-        if CONFIGURATION.get().enable_updating_additional_fields:
+        if self.config.enable_updating_additional_fields:
             for field_key, field_value in updates.items():
                 # ignore the fields updated above
                 if field_key in [
