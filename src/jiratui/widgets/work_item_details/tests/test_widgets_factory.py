@@ -731,7 +731,7 @@ async def test_create_dynamic_widgets_custom_field_select(work_item: JiraIssue, 
         assert widgets[0].disabled is False
         assert widgets[0].selection is None
         assert widgets[0].id == 'customfield_10128'
-        assert widgets[0].get_value_for_update() == {'id': None}
+        assert widgets[0].get_value_for_update() is None
 
 
 @pytest.mark.asyncio

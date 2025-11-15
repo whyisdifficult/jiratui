@@ -448,7 +448,7 @@ class WorkItemDynamicFieldUpdateNumericWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value')
         self.jira_field_key = jira_field_key
-        super().__init__(id=self.jira_field_key, type='number', placeholder='123', **kwargs)
+        super().__init__(id=self.jira_field_key, type='number', placeholder='123.45', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
 
@@ -498,7 +498,7 @@ class WorkItemDynamicFieldUpdateTextWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', None)
         self.jira_field_key = jira_field_key
-        super().__init__(id=self.jira_field_key, **kwargs)
+        super().__init__(id=self.jira_field_key, placeholder='some string...', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
 
@@ -662,13 +662,15 @@ class WorkItemDynamicFieldUpdateSelectionWidget(Select):
         """Retrieves the original value of the work item's field as retrieved from the API."""
         return self.__original_value
 
-    def get_value_for_update(self) -> dict:
+    def get_value_for_update(self) -> dict | None:
         """Returns the value of the field in the format required for updating the field in Jira.
 
-        Returns: a dictionary with the id of the option selected by the user; the id will be None if no option is
-        selected by the user.
+        Returns: a dictionary with the id of the option selected by the user; None if the user does not select
+        anything. This wil unset the field.
         """
 
+        if self.selection is None:
+            return None
         return {'id': self.selection}
 
     @property
@@ -693,7 +695,9 @@ class WorkItemDynamicFieldUpdateURLWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', '')
         self.jira_field_key = jira_field_key
-        super().__init__(id=self.jira_field_key, type='text', placeholder='https://...', **kwargs)
+        super().__init__(
+            id=self.jira_field_key, type='text', placeholder='https://jiratui.sh', **kwargs
+        )
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
 
@@ -710,10 +714,10 @@ class WorkItemDynamicFieldUpdateURLWidget(Input):
 
         return self.value
 
-    def on_input_changed(self, event: Input.Changed) -> None:
+    def on_input_blurred(self, event: Input.Changed) -> None:
         if event.value and event.value.strip():
             if 'http' not in event.value:
-                self.value = 'https://'
+                self.value = f'https://{event.value}'
 
     @property
     def value_has_changed(self) -> bool:
@@ -742,7 +746,7 @@ class WorkItemDynamicFieldUpdateLabelsWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value: list[str] = kwargs.pop('original_value', [])
         self.jira_field_key = jira_field_key
-        super().__init__(id=self.jira_field_key, **kwargs)
+        super().__init__(id=self.jira_field_key, placeholder='labelA, labelB', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
 
