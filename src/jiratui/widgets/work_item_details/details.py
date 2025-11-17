@@ -588,10 +588,10 @@ class IssueDetailsWidget(Vertical):
 
         if self.issue_components_field.update_enabled:
             if work_item_components_has_changed(
-                self.issue.components, self.issue_components_field.components
+                self.issue.components, self.issue_components_field.get_value_for_update()
             ):
                 payload[self.issue_components_field.jira_field_key] = (
-                    self.issue_components_field.components
+                    self.issue_components_field.get_value_for_update()
                 )
 
         # process dynamically-generated field widgets; e.g. additional system fields and custom fields
@@ -612,7 +612,7 @@ class IssueDetailsWidget(Vertical):
                 ):
                     continue
                 if dynamic_widget.value_has_changed:
-                    payload[dynamic_widget.id] = dynamic_widget.get_value_for_update()
+                    payload[dynamic_widget.jira_field_key] = dynamic_widget.get_value_for_update()
         return payload
 
     async def action_save_work_item(self) -> None:

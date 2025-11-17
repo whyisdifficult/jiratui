@@ -251,11 +251,11 @@ class IssueComponentsField(Widget):
             self.dismiss(self.query_one(SelectionList).selected)
 
     def __init__(self):
-        super().__init__()
-        self.__allowed_values: list[dict] | None = None
-        self.__current_selected_ids: list[str] = []
         self.jira_field_key = 'components'
         """The ID/key of the field in Jira."""
+        super().__init__(id=self.jira_field_key)
+        self.__allowed_values: list[dict] | None = None
+        self.__current_selected_ids: list[str] = []
         self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -270,8 +270,22 @@ class IssueComponentsField(Widget):
             ]
         return []
 
+    def get_value_for_update(self) -> list[dict]:
+        """Returns the value of the field in the format required for updating the field in Jira.
+
+        Returns: the current selection as a list of dict that can be used for updating the field in Jira.
+        """
+
+        if self.__allowed_values:
+            return [
+                item
+                for item in self.__allowed_values
+                if item.get('id') in self.__current_selected_ids
+            ]
+        return []
+
     def compose(self) -> ComposeResult:
-        components_input = Input(id='components')
+        components_input = Input(id=f'input-field-{self.jira_field_key}')
         components_input.border_title = 'Components'
         components_input.border_subtitle = 'Tip: press enter to update'
         yield components_input
@@ -292,7 +306,7 @@ class IssueComponentsField(Widget):
         self.update_is_enabled = enabled
         self.query_one(Input).disabled = not enabled
 
-    @on(Input.Submitted, '#components')
+    @on(Input.Submitted, '#input-field-components')
     def open_modal(self, event: Input.Submitted) -> None:
         current_selections: list[Selection] = []
         for allowed_value in self.__allowed_values or []:
@@ -850,7 +864,7 @@ class WorkItemDynamicFieldUpdateMultiCheckboxesWidget(Widget):
         return []
 
     def compose(self) -> ComposeResult:
-        labels_input = Input()
+        labels_input = Input(id=f'input-field-{self.jira_field_key}')
         labels_input.border_title = self.__field_title
         labels_input.border_subtitle = 'Tip: press enter to update'
         labels_input.disabled = self.disabled
