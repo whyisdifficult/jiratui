@@ -294,7 +294,7 @@ IssueComponentsField {
     column-span: 3;
 }
 
-IssueComponentsField > #components {
+IssueComponentsField > #input-field-components {
     box_sizing: border-box;
     height: 3;
     width: 100%;

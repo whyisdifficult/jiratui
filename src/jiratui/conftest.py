@@ -44,6 +44,7 @@ def config_for_testing() -> ApplicationConfiguration:
         ssl=None,
         search_on_startup=False,
         enable_updating_additional_fields=False,
+        update_additional_fields_ignore_ids=None,
     )
     return config_mock
 
@@ -70,6 +71,7 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         log_level='ERROR',
         ssl=None,
         enable_updating_additional_fields=False,
+        update_additional_fields_ignore_ids=None,
     )
     return config_mock
 
@@ -97,6 +99,7 @@ def jira_api_controller() -> APIController:
         search_issues_default_day_interval=15,
         ssl=None,
         enable_updating_additional_fields=False,
+        update_additional_fields_ignore_ids=None,
     )
     return APIController(config_mock)
 
@@ -124,6 +127,7 @@ def jira_api_controller_for_jira_dc() -> APIController:
         search_issues_default_day_interval=15,
         ssl=None,
         enable_updating_additional_fields=False,
+        update_additional_fields_ignore_ids=None,
     )
     return APIController(config_mock)
 
@@ -154,6 +158,7 @@ def app() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         enable_updating_additional_fields=False,
+        update_additional_fields_ignore_ids=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
