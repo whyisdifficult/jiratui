@@ -175,6 +175,8 @@ def create_dynamic_widgets_for_updating_work_item(
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
                     )
+                    if field.get('required'):
+                        widget.valid_empty = False
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.DATETIME.value:
                 if field.get('key') in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
@@ -186,6 +188,9 @@ def create_dynamic_widgets_for_updating_work_item(
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
                     )
+                    if field.get('required'):
+                        widget.valid_empty = False
+
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.SELECT.value:
                 # fields of type option allow a single value from a list of options
                 if allowed_values := field.get('allowedValues'):
@@ -274,6 +279,8 @@ def create_dynamic_widgets_for_updating_work_item(
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
                     )
+                    if field.get('required'):
+                        widget.valid_empty = False
 
         if widget:
             widget.border_title = field.get('name').title()
@@ -282,7 +289,6 @@ def create_dynamic_widgets_for_updating_work_item(
             )
             if field.get('required'):
                 widget.add_class('required')
-                widget.valid_empty = False
                 widget.border_subtitle = '(*)'
 
             widgets.append(widget)
