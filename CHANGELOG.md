@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `number`
 - New config variable `enable_updating_additional_fields` to enable/disable the feature that allows users to view/update
 some custom fields and system fields types; by [@whyisdifficult](https://github.com/whyisdifficult)
+- Show the parent key (if present) in the search results table; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/141
 
 ### Minor Improvements
 

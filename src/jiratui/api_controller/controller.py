@@ -796,7 +796,9 @@ class APIController:
                 issue_type=issue_type,
                 search_in_active_sprint=search_in_active_sprint,
                 jql_query=criteria.get('jql'),
-                fields=fields if fields else ['id', 'key', 'status', 'summary', 'issuetype'],
+                fields=fields
+                if fields
+                else ['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
                 next_page_token=next_page_token,
                 limit=limit,
                 order_by=order_by,
@@ -900,7 +902,9 @@ class APIController:
                 issue_type=issue_type,
                 search_in_active_sprint=search_in_active_sprint,
                 jql_query=criteria.get('jql'),
-                fields=fields if fields else ['id', 'key', 'status', 'summary', 'issuetype'],
+                fields=fields
+                if fields
+                else ['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
                 offset=offset,
                 limit=limit,
                 order_by=order_by,
