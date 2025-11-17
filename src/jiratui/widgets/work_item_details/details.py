@@ -952,7 +952,7 @@ class IssueDetailsWidget(Vertical):
             self.run_worker(self._add_dynamic_fields_widgets(work_item))
 
     async def _add_dynamic_fields_widgets(self, work_item: JiraIssue) -> None:
-        """Builds and mount a list of (dynamic) widgets to support updating (some) system and custom field types
+        """Builds and mounts a list of (dynamic) widgets to support updating (some) system and custom field types
 
         Args:
             work_item: the work item.
@@ -961,10 +961,13 @@ class IssueDetailsWidget(Vertical):
             None; updates the `DynamicFieldsWidgets` widget.
         """
 
+        update_additional_fields_ignore_ids = (
+            CONFIGURATION.get().update_additional_fields_ignore_ids
+        )
         await self.dynamic_fields_widgets_container.remove_children()
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
             work_item,
-            skip_fields_ids_or_keys=[],  # TODO read from the config
+            skip_fields_ids_or_keys=update_additional_fields_ignore_ids,
         ):
             await self.dynamic_fields_widgets_container.mount(*dynamic_widgets)
 

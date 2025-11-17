@@ -97,11 +97,11 @@ def create_dynamic_widgets_for_updating_work_item(
     if not work_item.edit_meta:
         return []
 
-    if skip_fields_ids_or_keys:
-        skip_fields_ids_or_keys = [item.lower() for item in skip_fields_ids_or_keys]
-
+    field_ids_or_keys_to_skip: list[str]
     if skip_fields_ids_or_keys is None:
-        skip_fields_ids_or_keys = []
+        field_ids_or_keys_to_skip = []
+    else:
+        field_ids_or_keys_to_skip = [item.lower() for item in skip_fields_ids_or_keys]
 
     widgets: list[Widget] = []
 
@@ -120,8 +120,8 @@ def create_dynamic_widgets_for_updating_work_item(
 
         # ignore the field as requested by the app configuration
         if (
-            field_name.lower() in skip_fields_ids_or_keys
-            or field.get('key').lower() in skip_fields_ids_or_keys
+            field_name.lower() in field_ids_or_keys_to_skip
+            or field.get('key').lower() in field_ids_or_keys_to_skip
         ):
             continue
 
