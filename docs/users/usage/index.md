@@ -522,6 +522,7 @@ types. Currently, the list of custom fields that can be updated include the foll
 these fields. **Important**: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
 - `select`: these fields allow the user to select a single option out of a list of available options.
 - `multicheckboxes`: these fields allow the user to select multiple options out of a list of available options.
+- `url`: these fields allow the user to provide a URL.
 
 By default, JiraTUI does not allow users to view and update the fields in the above. To enable this feature you can set
 the variable `enable_updating_additional_fields: True` in the config file. For more details refer to
