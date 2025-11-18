@@ -15,6 +15,8 @@ from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
 class CommentCollapsible(Collapsible):
+    """A collapsible to show a comment associated to a work item."""
+
     BINDINGS = [
         Binding(
             key='d',
@@ -84,6 +86,8 @@ class CommentCollapsible(Collapsible):
 
 
 class IssueCommentsWidget(VerticalScroll):
+    """A container for displaying the comments of a work item."""
+
     HELP = 'See Comments section in the help'
     comments: Reactive[list[IssueComment] | None] = reactive(None)
 

@@ -16,6 +16,7 @@ from jiratui.models import (
     IssueStatus,
     IssueType,
     JiraIssue,
+    JiraIssueComponent,
     JiraUser,
     Project,
     RelatedJiraIssue,
@@ -463,6 +464,82 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
             remaining_estimate_seconds=60,
             time_spent_seconds=60,
         ),
+        components=[],
+        additional_fields={
+            'aggregateprogress': {
+                'progress': 0,
+                'total': 0,
+            },
+            'aggregatetimeestimate': None,
+            'aggregatetimeoriginalestimate': None,
+            'aggregatetimespent': None,
+            'components': [],
+            'creator': {
+                'accountId': 'abe10be',
+                'accountType': 'atlassian',
+                'active': True,
+                'displayName': 'Bart',
+                'emailAddress': 'bart@simpson.com',
+                'timeZone': 'Europe/Amsterdam',
+            },
+            'environment': None,
+            'fixVersions': [],
+            'issuerestriction': {
+                'issuerestrictions': {},
+                'shouldDisplay': True,
+            },
+            'lastViewed': '2025-07-09T11:34:16',
+            'progress': {
+                'progress': 0,
+                'total': 0,
+            },
+            'security': None,
+            'statusCategory': {
+                'colorName': 'yellow',
+                'id': 4,
+                'key': 'indeterminate',
+                'name': 'In Progress',
+            },
+            'statuscategorychangedate': '2025-07-08T15:23:50.516+0200',
+            'subtasks': [],
+            'timeestimate': None,
+            'timeoriginalestimate': None,
+            'timespent': None,
+            'versions': [],
+            'votes': {
+                'hasVoted': False,
+                'votes': 0,
+            },
+            'watches': {
+                'isWatching': True,
+                'watchCount': 1,
+            },
+            'worklog': {
+                'maxResults': 20,
+                'startAt': 0,
+                'total': 0,
+                'worklogs': [],
+            },
+            'workratio': -1,
+        },
+        custom_fields={
+            'customfield_10001': None,
+            'customfield_10015': None,
+            'customfield_10016': None,
+            'customfield_10019': '0|i0001r:',
+            'customfield_10020': [
+                {
+                    'boardId': 1,
+                    'endDate': '2025-07-19T12:35:00.967Z',
+                    'id': 2,
+                    'name': 'SCRUM Sprint 0',
+                    'startDate': '2025-07-05T12:35:00.967Z',
+                    'state': 'active',
+                },
+            ],
+            'customfield_10021': None,
+            'customfield_10036': None,
+        },
     )
 
 
@@ -604,7 +681,171 @@ def test_build_issue_instance_with_more_details_no_adf(
             remaining_estimate_seconds=60,
             time_spent_seconds=60,
         ),
+        components=[],
+        additional_fields={
+            'aggregateprogress': {
+                'progress': 0,
+                'total': 0,
+            },
+            'aggregatetimeestimate': None,
+            'aggregatetimeoriginalestimate': None,
+            'aggregatetimespent': None,
+            'components': [],
+            'creator': {
+                'accountId': 'abe10be',
+                'accountType': 'atlassian',
+                'active': True,
+                'displayName': 'Bart',
+                'emailAddress': 'bart@simpson.com',
+                'timeZone': 'Europe/Amsterdam',
+            },
+            'environment': None,
+            'fixVersions': [],
+            'issuerestriction': {
+                'issuerestrictions': {},
+                'shouldDisplay': True,
+            },
+            'lastViewed': '2025-07-09T11:34:16',
+            'progress': {
+                'progress': 0,
+                'total': 0,
+            },
+            'security': None,
+            'statusCategory': {
+                'colorName': 'yellow',
+                'id': 4,
+                'key': 'indeterminate',
+                'name': 'In Progress',
+            },
+            'statuscategorychangedate': '2025-07-08T15:23:50.516+0200',
+            'subtasks': [],
+            'timeestimate': None,
+            'timeoriginalestimate': None,
+            'timespent': None,
+            'versions': [],
+            'votes': {
+                'hasVoted': False,
+                'votes': 0,
+            },
+            'watches': {
+                'isWatching': True,
+                'watchCount': 1,
+            },
+            'worklog': {
+                'maxResults': 20,
+                'startAt': 0,
+                'total': 0,
+                'worklogs': [],
+            },
+            'workratio': -1,
+        },
+        custom_fields={
+            'customfield_10001': None,
+            'customfield_10015': None,
+            'customfield_10016': None,
+            'customfield_10019': '0|i0001r:',
+            'customfield_10020': [
+                {
+                    'boardId': 1,
+                    'endDate': '2025-07-19T12:35:00.967Z',
+                    'id': 2,
+                    'name': 'SCRUM Sprint 0',
+                    'startDate': '2025-07-05T12:35:00.967Z',
+                    'state': 'active',
+                },
+            ],
+            'customfield_10021': None,
+            'customfield_10036': None,
+        },
     )
+    assert issue.get_custom_fields() == {
+        'customfield_10001': None,
+        'customfield_10015': None,
+        'customfield_10016': None,
+        'customfield_10019': '0|i0001r:',
+        'customfield_10020': [
+            {
+                'boardId': 1,
+                'endDate': '2025-07-19T12:35:00.967Z',
+                'id': 2,
+                'name': 'SCRUM Sprint 0',
+                'startDate': '2025-07-05T12:35:00.967Z',
+                'state': 'active',
+            },
+        ],
+        'customfield_10021': None,
+        'customfield_10036': None,
+    }
+    assert issue.get_additional_fields() == {
+        'aggregateprogress': {
+            'progress': 0,
+            'total': 0,
+        },
+        'aggregatetimeestimate': None,
+        'aggregatetimeoriginalestimate': None,
+        'aggregatetimespent': None,
+        'components': [],
+        'creator': {
+            'accountId': 'abe10be',
+            'accountType': 'atlassian',
+            'active': True,
+            'displayName': 'Bart',
+            'emailAddress': 'bart@simpson.com',
+            'timeZone': 'Europe/Amsterdam',
+        },
+        'environment': None,
+        'fixVersions': [],
+        'issuerestriction': {
+            'issuerestrictions': {},
+            'shouldDisplay': True,
+        },
+        'lastViewed': '2025-07-09T11:34:16',
+        'progress': {
+            'progress': 0,
+            'total': 0,
+        },
+        'security': None,
+        'statusCategory': {
+            'colorName': 'yellow',
+            'id': 4,
+            'key': 'indeterminate',
+            'name': 'In Progress',
+        },
+        'statuscategorychangedate': '2025-07-08T15:23:50.516+0200',
+        'subtasks': [],
+        'timeestimate': None,
+        'timeoriginalestimate': None,
+        'timespent': None,
+        'versions': [],
+        'votes': {
+            'hasVoted': False,
+            'votes': 0,
+        },
+        'watches': {
+            'isWatching': True,
+            'watchCount': 1,
+        },
+        'worklog': {
+            'maxResults': 20,
+            'startAt': 0,
+            'total': 0,
+            'worklogs': [],
+        },
+        'workratio': -1,
+    }
+
+
+@patch('jiratui.api_controller.factories.CONFIGURATION')
+def test_build_issue_instance_with_components(configuration_mock: Mock, config_for_testing):
+    # GIVEN
+    json_data = load_json_response(__file__, 'issue.json')
+    json_data['fields']['components'] = [{'id': '1', 'name': 'Component 1'}]
+    work_item = json_data
+    # WHEN
+    issue = WorkItemFactory.create_work_item(work_item)
+    # THEN
+    assert isinstance(issue, JiraIssue)
+    assert issue.components == [JiraIssueComponent(id='1', name='Component 1')]
 
 
 @patch('jiratui.api_controller.factories.CONFIGURATION')

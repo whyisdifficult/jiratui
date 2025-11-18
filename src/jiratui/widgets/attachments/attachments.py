@@ -27,6 +27,8 @@ from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
 class IssueAttachmentsWidget(VerticalScroll):
+    """A container for displaying the files attached to a work item."""
+
     HELP = 'See Attachments section in the help'
     BINDINGS = [
         Binding(

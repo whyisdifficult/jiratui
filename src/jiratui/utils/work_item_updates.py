@@ -1,6 +1,6 @@
 from datetime import date
 
-from jiratui.models import IssuePriority, JiraUser
+from jiratui.models import IssuePriority, JiraIssueComponent, JiraUser
 
 
 def work_item_priority_has_changed(
@@ -17,6 +17,7 @@ def work_item_priority_has_changed(
     Returns:
         `True` id the priority has changed; `False` otherwise.
     """
+
     if current_priority is None:
         if not target_priority:
             return False
@@ -68,6 +69,7 @@ def work_item_parent_has_changed(
     Returns:
         `True` id the priority has changed; `False` otherwise.
     """
+
     if current_parent_key is None:
         if not target_parent_key:
             return False
@@ -98,5 +100,34 @@ def work_item_due_date_has_changed(
     if not target_due_date:
         return True
     if str(current_due_date) == target_due_date:
+        return False
+    return True
+
+
+def work_item_components_has_changed(
+    current_components: list[JiraIssueComponent],
+    target_components: list[dict],
+) -> bool:
+    """Determines if the components field of a work item has changed based on the current value and a new selection
+    made by the user.
+
+    Args:
+        current_components: the list of components currently assigned to a work item.
+        target_components: the new list of components.
+
+    Returns:
+        `True` if the list of components has changed.
+    """
+
+    if not current_components and target_components:
+        return True
+    if current_components and not target_components:
+        return True
+    if not current_components and not target_components:
+        return False
+    if len(current_components) != len(target_components):
+        return True
+    current_set = {x.id for x in current_components}
+    if current_set.intersection({x.get('id') for x in target_components}) == current_set:
         return False
     return True

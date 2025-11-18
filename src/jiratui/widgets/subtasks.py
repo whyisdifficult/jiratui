@@ -15,6 +15,8 @@ from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnly
 
 
 class ChildWorkItemCollapsible(Collapsible):
+    """A collapsible to show the work items that are children of another work item."""
+
     BINDINGS = [
         Binding(
             key='v',

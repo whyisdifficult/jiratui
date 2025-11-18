@@ -137,30 +137,35 @@
 
 IssueChildWorkItemsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Remote Links */
 
 IssueRemoteLinksWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Attachments */
 
 IssueAttachmentsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Related Work Items */
 
 RelatedIssuesWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Comments */
 
 IssueCommentsWidget {
     hatch: right $success 20%;
+    scrollbar-size-vertical: 1;
 }
 
 /* Tab Pane - Description */
@@ -183,10 +188,17 @@ IssueDescriptionWidget {
 /*  Work Item Details */
 
 #issue-details-form {
-    layout: grid;
-    grid-size: 3 10;
-    grid-rows: auto;
     scrollbar-size-vertical: 1;
+}
+
+#issue-details-form > StaticFieldsWidgets {
+    grid-size: 3;
+    align: left middle;
+}
+
+#issue-details-form > DynamicFieldsWidgets {
+   grid-size: 2;
+   align: left middle;
 }
 
 #jira-users-assignee-selector-edit {
@@ -242,6 +254,51 @@ WorkItemDetailsDueDate {
     height: 1;
     border: round $accent;
     width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+WorkItemComponentsScreen {
+    align: center middle;
+    background: $background 80%;
+}
+WorkItemComponentsScreen > SelectionList {
+    width: 60%;
+    height: 50%;
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
+    background: transparent;
+    scrollbar-size-vertical: 1;
+}
+
+IssueComponentsField {
+    box_sizing: content-box;
+    height: 1;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
+    column-span: 3;
+}
+
+IssueComponentsField > #input-field-components {
+    box_sizing: border-box;
+    height: 3;
+    width: 100%;
+    border: round $primary-lighten-3;
     margin: 0 0;
     padding: 0 1;
     background: $background;
@@ -615,6 +672,9 @@ AddWorkItemScreen > Vertical {
 .create-work-item-generic-selector {
     border: round $primary-lighten-3;
     padding: 0 1;
+    &.required {
+        border: round red;
+    }
 }
 
 CreateWorkItemIssueSummaryField {
@@ -1120,4 +1180,51 @@ WorkItemFlagField {
     min-width: 10;
     max-width: 10;
     content-align: center middle;
+}
+
+/* Multi-checkbox field and screen */
+
+WorkItemDynamicFieldUpdateMultiCheckboxesWidget {
+    box_sizing: content-box;
+    height: 1;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
+    column-span: 3;
+}
+
+WorkItemDynamicFieldUpdateMultiCheckboxesWidget > Input {
+    box_sizing: border-box;
+    height: 3;
+    width: 100%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+SelectionsScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+SelectionsScreen > SelectionList {
+    width: 60%;
+    height: 50%;
+    padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
+    border: round $primary-lighten-3;
+    background: transparent;
 }

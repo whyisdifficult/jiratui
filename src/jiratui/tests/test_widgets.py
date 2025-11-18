@@ -7,7 +7,7 @@ from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import WorkItemsSearchOrderBy
-from jiratui.widgets.work_item_details.details import IssueSummaryField
+from jiratui.widgets.work_item_details.fields import IssueSummaryField
 
 
 @pytest.fixture()

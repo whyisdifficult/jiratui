@@ -158,9 +158,13 @@ class ApplicationConfiguration(BaseSettings):
         'path': '/my/repository/.git
     }
     """
-
     search_on_startup: bool = False
     """If True, triggers a search automatically when the UI starts. Can be set via CLI argument --search-on-startup."""
+    enable_updating_additional_fields: bool = False
+    """If True the app will allow the user to view and update additional fields."""
+    update_additional_fields_ignore_ids: list[str] | None = None
+    """When `enable_updating_additional_fields = True`, some custom fields and system fields with these ids or keys
+    will be ignored and not show in the Details tab and will not be updated."""
 
     model_config = SettingsConfigDict(
         extra='allow',

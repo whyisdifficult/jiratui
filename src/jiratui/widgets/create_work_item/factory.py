@@ -10,32 +10,6 @@ from jiratui.widgets.create_work_item.fields import (
 )
 
 
-class CreateWorkItemFieldId(Enum):
-    PROJECT = 'project'
-    ISSUE_TYPE = 'issuetype'
-    REPORTER = 'reporter'
-    SUMMARY = 'summary'
-    DESCRIPTION = 'description'
-    PARENT = 'parent'
-    DUE_DATE = 'duedate'
-    PRIORITY = 'priority'
-
-
-SKIP_FIELDS = [
-    CreateWorkItemFieldId.PROJECT.value,
-    CreateWorkItemFieldId.ISSUE_TYPE.value,
-    CreateWorkItemFieldId.REPORTER.value,
-    CreateWorkItemFieldId.SUMMARY.value,
-    CreateWorkItemFieldId.DESCRIPTION.value,
-    CreateWorkItemFieldId.PARENT.value,
-]
-
-PROCESS_OPTIONAL_FIELDS: list[str] = [
-    CreateWorkItemFieldId.DUE_DATE.value,
-    CreateWorkItemFieldId.PRIORITY.value,
-]
-
-
 def create_widgets_for_work_item_creation(data: list[dict]) -> list[Widget]:
     """Creates a list of widgets for the "form" that allows users to create work items.
 
@@ -94,3 +68,28 @@ def create_widgets_for_work_item_creation(data: list[dict]) -> list[Widget]:
                 widget.border_title = item.get('name')
         widgets.append(widget)
     return widgets
+
+
+class CreateWorkItemFieldId(Enum):
+    PROJECT = 'project'
+    ISSUE_TYPE = 'issuetype'
+    REPORTER = 'reporter'
+    SUMMARY = 'summary'
+    DESCRIPTION = 'description'
+    PARENT = 'parent'
+    DUE_DATE = 'duedate'
+    PRIORITY = 'priority'
+
+
+SKIP_FIELDS = [
+    CreateWorkItemFieldId.PROJECT.value,
+    CreateWorkItemFieldId.ISSUE_TYPE.value,
+    CreateWorkItemFieldId.REPORTER.value,
+    CreateWorkItemFieldId.SUMMARY.value,
+    CreateWorkItemFieldId.DESCRIPTION.value,
+    CreateWorkItemFieldId.PARENT.value,
+]
+PROCESS_OPTIONAL_FIELDS: list[str] = [
+    CreateWorkItemFieldId.DUE_DATE.value,
+    CreateWorkItemFieldId.PRIORITY.value,
+]

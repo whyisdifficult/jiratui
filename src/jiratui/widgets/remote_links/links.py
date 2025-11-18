@@ -13,6 +13,8 @@ from jiratui.widgets.remote_links.add import AddRemoteLinkScreen
 
 
 class IssueRemoteLinkCollapsible(Collapsible):
+    """A collapsible to show a remote link associated to a work item."""
+
     BINDINGS = [
         Binding(
             key='d',

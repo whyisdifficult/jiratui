@@ -11,29 +11,43 @@ from jiratui.models import (
     IssueStatus,
     IssueType,
     JiraIssue,
+    JiraIssueComponent,
     JiraSprint,
     JiraUser,
+    JiraWorkItemFields,
     Project,
     RelatedJiraIssue,
     TimeTracking,
 )
+from jiratui.utils.fields import get_additional_fields_values, get_custom_fields_values
 
 
 class WorkItemFactory:
     @staticmethod
-    def create_work_item(
-        data: dict, custom_fields_values: dict[str, Any] | None = None
-    ) -> JiraIssue:
-        fields = data.get('fields', {})
-        project = fields.get('project', {})
-        status = fields.get('status', {})
-        assignee: dict | None = fields.get('assignee')
-        reporter: dict | None = fields.get('reporter')
-        priority = fields.get('priority')
-        parent_issue_key = fields.get('parent').get('key') if fields.get('parent') else None
+    def create_work_item(data: dict) -> JiraIssue:
+        """Creates an instance of `JiraIssue` for a work item as returned by the API.
+
+        Args:
+            data: the work item as returned by the API.
+
+        Returns:
+            An instance of `JiraIssue` with the value of the work item's fields supported by the app.
+        """
+
+        fields: dict = data.get('fields', {})
+        project: dict = fields.get(JiraWorkItemFields.PROJECT.value, {})
+        status: dict = fields.get(JiraWorkItemFields.STATUS.value, {})
+        assignee: dict | None = fields.get(JiraWorkItemFields.ASSIGNEE.value)
+        reporter: dict | None = fields.get(JiraWorkItemFields.REPORTER.value)
+        priority: dict | None = fields.get(JiraWorkItemFields.PRIORITY.value)
+        parent_issue_key = (
+            fields.get(JiraWorkItemFields.PARENT.value).get('key')
+            if fields.get(JiraWorkItemFields.PARENT.value)
+            else None
+        )
 
         tracking = None
-        if time_tracking := fields.get('timetracking'):
+        if time_tracking := fields.get(JiraWorkItemFields.TIME_TRACKING.value):
             tracking = TimeTracking(
                 original_estimate=time_tracking.get('originalEstimate'),
                 remaining_estimate=time_tracking.get('remainingEstimate'),
@@ -53,7 +67,7 @@ class WorkItemFactory:
                 )
 
         attachments: list[Attachment] = []
-        for item in fields.get('attachment', []):
+        for item in fields.get(JiraWorkItemFields.ATTACHMENT.value, []):
             creator = None
             if author := item.get('author'):
                 creator = JiraUser(
@@ -73,11 +87,33 @@ class WorkItemFactory:
                 )
             )
 
+        # extract the components
+        components: list[JiraIssueComponent] = []
+        for component in fields.get('components', []) or []:
+            components.append(
+                JiraIssueComponent(
+                    id=component.get('id'),
+                    name=component.get('name'),
+                    description=component.get('description'),
+                )
+            )
+
+        # extract the value of the issue's custom fields
+        custom_fields_values: dict[str, Any] | None = None
+        if editmeta := data.get('editmeta', {}):
+            custom_fields_values = get_custom_fields_values(fields, editmeta.get('fields', {}))
+
+        # extract the value of the issue's additional fields
+        additional_fields: dict[str, Any] = get_additional_fields_values(
+            fields,
+            [item.value for item in JiraWorkItemFields],
+        )
+
         return JiraIssue(
             id=data.get('id'),
             key=data.get('key'),
-            summary=fields.get('summary', ''),
-            description=fields.get('description'),
+            summary=fields.get(JiraWorkItemFields.SUMMARY.value, ''),
+            description=fields.get(JiraWorkItemFields.DESCRIPTION.value),
             project=Project(
                 id=project.get('id'),
                 name=project.get('name'),
@@ -85,8 +121,16 @@ class WorkItemFactory:
             )
             if project
             else None,
-            created=isoparse(fields.get('created')) if fields.get('created') else None,
-            updated=isoparse(fields.get('updated')) if fields.get('updated') else None,
+            created=(
+                isoparse(fields.get(JiraWorkItemFields.CREATED.value))
+                if fields.get(JiraWorkItemFields.CREATED.value)
+                else None
+            ),
+            updated=(
+                isoparse(fields.get(JiraWorkItemFields.UPDATED.value))
+                if fields.get(JiraWorkItemFields.UPDATED.value)
+                else None
+            ),
             priority=IssuePriority(
                 id=priority.get('id'),
                 name=priority.get('name'),
@@ -111,28 +155,42 @@ class WorkItemFactory:
             if reporter
             else None,
             issue_type=IssueType(
-                id=fields.get('issuetype', {}).get('id'),
-                name=fields.get('issuetype', {}).get('name'),
-                hierarchy_level=fields.get('issuetype', {}).get('hierarchyLevel'),
+                id=fields.get(JiraWorkItemFields.ISSUE_TYPE.value, {}).get('id'),
+                name=fields.get(JiraWorkItemFields.ISSUE_TYPE.value, {}).get('name'),
+                hierarchy_level=fields.get(JiraWorkItemFields.ISSUE_TYPE.value, {}).get(
+                    'hierarchyLevel'
+                ),
             ),
-            comments=build_comments(fields.get('comment', {}).get('comments', [])),
-            related_issues=build_related_work_items(fields.get('issuelinks', [])),
+            comments=build_comments(
+                fields.get(JiraWorkItemFields.COMMENT.value, {}).get('comments', [])
+            ),
+            related_issues=build_related_work_items(
+                fields.get(JiraWorkItemFields.ISSUE_LINKS.value, [])
+            ),
             parent_issue_key=parent_issue_key,
             time_tracking=tracking,
-            resolution=fields.get('resolution').get('name') if fields.get('resolution') else None,
-            resolution_date=isoparse(fields.get('resolutiondate'))
-            if fields.get('resolutiondate')
+            resolution=(
+                fields.get(JiraWorkItemFields.RESOLUTION.value).get('name')
+                if fields.get(JiraWorkItemFields.RESOLUTION.value)
+                else None
+            ),
+            resolution_date=isoparse(fields.get(JiraWorkItemFields.RESOLUTION_DATE.value))
+            if fields.get(JiraWorkItemFields.RESOLUTION_DATE.value)
             else None,
-            labels=[label.lower() for label in fields.get('labels', [])]
-            if fields.get('labels')
+            labels=[label.lower() for label in fields.get(JiraWorkItemFields.LABELS.value, [])]
+            if fields.get(JiraWorkItemFields.LABELS.value)
             else None,
             attachments=attachments,
             sprint=sprint,
             edit_meta=data.get('editmeta', {}),
-            due_date=datetime.strptime(fields.get('duedate'), '%Y-%m-%d').date()
-            if fields.get('duedate')
+            due_date=datetime.strptime(
+                fields.get(JiraWorkItemFields.DUE_DATE.value), '%Y-%m-%d'
+            ).date()
+            if fields.get(JiraWorkItemFields.DUE_DATE.value)
             else None,
             custom_fields=custom_fields_values,
+            additional_fields=additional_fields,
+            components=components,
         )
 
 
