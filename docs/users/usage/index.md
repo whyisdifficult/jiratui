@@ -499,8 +499,9 @@ will pop up in the app indicating the work item key.
 
 ### Updating Work Items
 
-This contains the details of the selected work item. Some of these details can be edited/updated. Currently, the
-fields that can be updated are:
+The "Details" tab on the right-hand side shows the details of the currently selected work item. The tab displays a form
+with the fields that are supported by the app. Some of these fields can be updated. The list of fields that can be
+updated include the following:
 
 - Summary
 - Assignee
@@ -509,10 +510,38 @@ fields that can be updated are:
 - Due Date
 - Labels
 - Parent
+- Components
 
-To edit a field simply focus on it, change its value and then press `^s` to save the changes.
+In addition to the fields above the application supports updating (some) custom field types and some system field
+types. Currently, the list of custom fields that can be updated include the following:
 
-**Updating the parent of an issue**
+- `datepicker`: these fields allow the user to provide a date value, e.g. `2025-12-31`.
+- `datetime`: these fields allow the user to provide a date/time value, e.g. `2025-12-31 13:34:55`.
+- `float`: these fields allow the user to provide a number, e.g. `12.34`.
+- `textfield`: these fields allow the user to provide a simple string as value. No Markdown or ADF is supported by
+these fields. **Important**: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
+- `select`: these fields allow the user to select a single option out of a list of available options.
+- `multicheckboxes`: these fields allow the user to select multiple options out of a list of available options.
+
+By default, JiraTUI does not allow users to view and update the fields in the above. To enable this feature you can set
+the variable `enable_updating_additional_fields: True` in the config file. For more details refer to
+[Enable Updating Additional Fields](../configuration/configuration.md#enable-updating-additional-fields).
+
+In order to update a field simply focus on it, change its value and then press `^s` to save the changes. Some of the
+fields require a modal to pop up to allow the user to select values for the field. These fields include a tip that
+reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
+
+When the work items in your project support custom fields of the types above and this feature is enabled in jiraTUI,
+the details tab will look like this:
+
+```{figure} /_static/assets/images/details-with-custom-fields.png
+:align: center
+
+When `enable_updating_additional_fields: True` the details tab will show additional fields to edit. In this case the
+fields Test Field * are custom fields whose type is one of the types listed above.
+```
+
+**Updating the Parent of a Work Item**
 
 Jira arranges the type sof issues into a hierarchy. This hierarchy is used to determine whether an issue can have
 another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
@@ -522,11 +551,17 @@ Subtask do accept parents.
 JiraTUI disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
 ```
 
-**Updating priorities**
+**Updating the Priority of a Work Item**
 
 ```{important}
 Once an issue has a priority set up it can not be unset.
 ```
+
+**Updating the Components of a Work Item**
+
+If you Jira project configures a `components` field for the issues in the project then the application will allow you
+to view and update the components associated to a work item. If you do not see the input field to view and update this
+field then the probable reason is that your Jira project does not support this field.
 
 #### Comments
 
@@ -621,6 +656,17 @@ delete the entry. You can also press `^o` to open a worklog details in the brows
 
 You can add/remove a flag to a work item by pressing `^f` while in the details tab. When you add a flag to an item you
 can add an optional message to let your team know why the task is (not) flagged.
+
+The following images shows what happens when the user selects a work item and presses `^f` to flag/unflag the work
+item. Notice that in this example the work item has been flagged in the past. This is shown by an icon above the
+summary field that reads `Flagged!`.
+
+```{figure} /_static/assets/images/flag-unflag-work-items.png
+:align: center
+
+When the user clicks `^f`, JiraTUI opens a modal screen to allow the user to enter an optioinal message. The message
+will appear as a comment in the Comments tab.
+```
 
 ## CLI Interface
 

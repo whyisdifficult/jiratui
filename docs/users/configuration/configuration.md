@@ -154,3 +154,32 @@ git_repositories:
 
 Using this configuration JiraTUI will be able to display these repositories and, you will be able to choose the target
 repo for creating a new branch.
+
+## Enable Updating Additional Fields
+
+JiraTUI allows the users to update certain types of custom fields and system fields. Currently, the list of custom
+fields that can be updated include the following:
+
+- `datepicker`: these fields allow the user to provide a date value, e.g. `2025-12-31`.
+- `datetime`: these fields allow the user to provide a date/time value, e.g. `2025-12-31 13:34:55`.
+- `float`: these fields allow the user to provide a number, e.g. `12.34`.
+- `textfield`: these fields allow the user to provide a simple string as value. No Markdown or ADF is supported by
+these fields. Important: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
+- `select`: these fields allow the user to select a single option out of a list of available options.
+- `multicheckboxes`: these fields allow the user to select multiple options out of a list of available options.
+
+By default, JiraTUI does not allow users to view and update these fields. To enable this feature you can set
+the variable `enable_updating_additional_fields: True`.
+
+If, for whatever reason, you want to disable viewing/updating a specific system/custom field enabled by this feature,
+you can add the field's ID (or key) to a list of fields to ignore. To do so set the config variable
+`update_additional_fields_ignore_ids`.
+
+Example, the following configuration enables the feature to view/update custom fields but disables the feature for the
+field with ID `customfield_12345`.
+
+```yaml
+enable_updating_additional_fields: True
+update_additional_fields_ignore_ids:
+  - customfield_12345
+```

@@ -934,18 +934,21 @@ class IssueDetailsWidget(Vertical):
         # check if the work item has been flagged; and show a label at the top with a message for the user
         self.run_worker(self._determine_issue_flagged_status(work_item))
 
-        # populate the widget with the components associated to the work item
-        self.issue_components_field.data = {
-            'current_values': work_item.components,
-            'allowed_values': (
-                work_item.get_field_edit_metadata('components').get('allowedValues', [])
-                if work_item.get_field_edit_metadata('components')
-                else None
-            ),
-        }
-        self.issue_components_field.update_enabled = editable_fields.get(
-            self.issue_components_field.jira_field_key
-        )
+        if components_metadata := work_item.get_field_edit_metadata('components'):
+            # populate the widget with the components associated to the work item
+            self.issue_components_field.data = {
+                'current_values': work_item.components,
+                'allowed_values': components_metadata.get('allowedValues', []),
+            }
+            self.issue_components_field.update_enabled = editable_fields.get(
+                self.issue_components_field.jira_field_key
+            )
+        else:
+            # if the components field is not part of the edit metadata then we can't show the corresponding
+            # widget; let's disable it and hide it
+            self.issue_components_field.disabled = True
+            self.issue_components_field.update_enabled = False
+            self.issue_components_field.styles.display = 'none'
 
         if CONFIGURATION.get().enable_updating_additional_fields:
             # add dynamic widgets to support updating additional fields including custom fields and other system fields

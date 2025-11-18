@@ -1,5 +1,5 @@
 """
-This module contains the definitions of the widgets used for displaying and updating the information of a work item.
+This module contains the widgets used for displaying and updating some of the fields associated to a wrk item.
 """
 
 from typing import Any
@@ -18,7 +18,7 @@ from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInpu
 
 
 class IssueDetailsAssigneeSelection(UserSelectionInput):
-    """A select field that stores the user that acts as assignee of a work item."""
+    """A select widget that stores the assignee field of a work item."""
 
     WIDGET_ID = 'jira-users-assignee-selector-edit'
     update_enabled: Reactive[bool | None] = reactive(True)
@@ -37,7 +37,7 @@ class IssueDetailsAssigneeSelection(UserSelectionInput):
 
 
 class IssueDetailsStatusSelection(IssueStatusSelectionInput):
-    """A selection field that stores the status of a work item."""
+    """A selection field that stores the status field of a work item."""
 
     WIDGET_ID = 'jira-issue-status-selector-edit'
 
@@ -49,7 +49,7 @@ class IssueDetailsStatusSelection(IssueStatusSelectionInput):
 
 
 class IssueDetailsPrioritySelection(Select):
-    """A select field that stores the priority of a work item."""
+    """A widget to display and update the priority field of a work item."""
 
     update_enabled: Reactive[bool | None] = reactive(True)
 
@@ -75,7 +75,7 @@ class IssueDetailsPrioritySelection(Select):
 
 
 class ProjectIDField(ReadOnlyField):
-    """A text field that stores the ID of the project associated to a work item."""
+    """A widget to display and update the project field of a work item."""
 
     def __init__(self):
         super().__init__()
@@ -84,7 +84,7 @@ class ProjectIDField(ReadOnlyField):
 
 
 class ReporterField(ReadOnlyField):
-    """A text field that stores the user that act as reporter of a work item."""
+    """A widget to display and update the reporter field of a work item."""
 
     def __init__(self):
         super().__init__(placeholder='-')
@@ -93,7 +93,7 @@ class ReporterField(ReadOnlyField):
 
 
 class IssueSprintField(ReadOnlyField):
-    """A text field that stores the sprint of a work item."""
+    """A widget to display and update the sprint field of a work item."""
 
     def __init__(self):
         super().__init__()
@@ -102,7 +102,7 @@ class IssueSprintField(ReadOnlyField):
 
 
 class IssueKeyField(ReadOnlyField):
-    """A text field that stores the key of a work item."""
+    """A widget to display and update the key field of a work item."""
 
     def __init__(self):
         super().__init__()
@@ -111,7 +111,7 @@ class IssueKeyField(ReadOnlyField):
 
 
 class IssueParentField(Input):
-    """A text field that stores the key of the parent of a work item."""
+    """A widget to display and update the parent field of a work item."""
 
     update_enabled: Reactive[bool | None] = reactive(True)
 
@@ -139,7 +139,7 @@ class IssueParentField(Input):
 
 
 class IssueSummaryField(Input):
-    """A text field that stores the summary of a work item."""
+    """A widget to display and update the summary field of a work item."""
 
     update_enabled: Reactive[bool | None] = reactive(True)
 
@@ -188,6 +188,8 @@ class WorkItemFlagField(Label):
 
 
 class WorkItemLabelsField(Input):
+    """A widget to display and update the labels field of a work item."""
+
     update_enabled: Reactive[bool | None] = reactive(True)
 
     def __init__(self):
@@ -209,6 +211,8 @@ class WorkItemLabelsField(Input):
 
 
 class IssueTypeField(ReadOnlyField):
+    """A widget to display and update the type of work item."""
+
     def __init__(self):
         super().__init__()
         self.border_title = 'Type'
@@ -341,6 +345,8 @@ class IssueComponentsField(Widget):
 
 
 class WorkItemDetailsDueDate(DateInput):
+    """A widget to display the due date of a work item and to allow the user to update its value."""
+
     LABEL = 'Due Date'
     TOOLTIP = 'The due date for this work item'
     ID = 'input_due_date'
@@ -456,7 +462,8 @@ class WorkItemDynamicFieldUpdateWidget(Input):
 
 
 class WorkItemDynamicFieldUpdateNumericWidget(Input):
-    """A widget to hold (optional) numeric values."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:float`."""
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
@@ -506,7 +513,11 @@ class WorkItemDynamicFieldUpdateNumericWidget(Input):
 
 
 class WorkItemDynamicFieldUpdateTextWidget(Input):
-    """A widget to hold (optional) text values; non-ADF text."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:textfield`.
+
+    The custom type does not support ADF.
+    """
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
@@ -552,7 +563,8 @@ class WorkItemDynamicFieldUpdateTextWidget(Input):
 
 
 class WorkItemDynamicFieldUpdateDateWidget(MaskedInput):
-    """A widget to hold (optional) date values."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:datepicker`."""
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
@@ -606,7 +618,8 @@ class WorkItemDynamicFieldUpdateDateWidget(MaskedInput):
 
 
 class WorkItemDynamicFieldUpdateDateTimeWidget(MaskedInput):
-    """A widget to hold (optional) date values."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:datetime`."""
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
@@ -662,6 +675,9 @@ class WorkItemDynamicFieldUpdateDateTimeWidget(MaskedInput):
 
 
 class WorkItemDynamicFieldUpdateSelectionWidget(Select):
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:selection`."""
+
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', None)
@@ -703,7 +719,8 @@ class WorkItemDynamicFieldUpdateSelectionWidget(Select):
 
 
 class WorkItemDynamicFieldUpdateURLWidget(Input):
-    """A widget to hold a URL."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:url`."""
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
@@ -754,7 +771,8 @@ class WorkItemDynamicFieldUpdateURLWidget(Input):
 
 
 class WorkItemDynamicFieldUpdateLabelsWidget(Input):
-    """A widget to hold (optional) labels values."""
+    """A widget to show and allow updating custom fields whose schema type is
+    `com.atlassian.jira.plugin.system.customfieldtypes:labels`."""
 
     def __init__(self, jira_field_key: str, **kwargs):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
