@@ -251,8 +251,9 @@ will pop up in the app indicating the work item key.
 
 # Updating Work Items
 
-This contains the details of the selected work item. Some of these details can be edited/updated. Currently, the
-fields that can be updated are:
+The "Details" tab on the right-hand side shows the details of the currently selected work item. The tab displays a form
+with the fields that are supported by the app. Some of these fields can be updated. The list of fields that can be
+updated include the following:
 
 - Summary
 - Assignee
@@ -261,8 +262,29 @@ fields that can be updated are:
 - Due Date
 - Labels
 - Parent
+- Components
 
-To edit a field simply focus on it, change its value and then press `^s` to save the changes.
+In addition to the fields above the application supports updating (some) custom field types and some system field
+types. Currently, the list of custom fields that can be updated include the following:
+
+- `datepicker`: these fields allow the user to provide a date value, e.g. `2025-12-31`.
+- `datetime`: these fields allow the user to provide a date/time value, e.g. `2025-12-31 13:34:55`.
+- `float`: these fields allow the user to provide a number, e.g. `12.34`.
+- `textfield`: these fields allow the user to provide a simple string as value. No Markdown or ADF is supported by
+these fields. **Important**: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
+- `select`: these fields allow the user to select a single option out of a list of available options.
+- `multicheckboxes`: these fields allow the user to select multiple options out of a list of available options.
+- `url`: these fields allow the user to provide a URL.
+
+By default, JiraTUI does not allow users to view and update the fields in the above. To enable this feature you can set
+the variable `enable_updating_additional_fields: True` in the config file. For more details refer to
+[Enable Updating Additional Fields](https://jiratui.readthedocs.io/en/latest/users/configuration/configuration.html#enable-updating-additional-fields)
+in the official documentation page.
+
+In order to update a field simply focus on it, change its value and then press `^s` to save the changes.
+
+Some of the fields require a modal to pop up to allow the user to select values for the field. These fields include a
+tip that reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
 
 **Updating the parent of an issue**
 
@@ -275,6 +297,12 @@ Jiratui disables the parent field of an issue when its type does not allow paren
 **Updating priorities**
 
 Once an issue has a priority set up it can not be unset.
+
+**Updating the Components of a Work Item**
+
+If you Jira project configures a `components` field for the issues in the project then the application will allow you
+to view and update the components associated to a work item. If you do not see the input field to view and update this
+field then the probable reason is that your Jira project does not support this field.
 
 ## Comments
 

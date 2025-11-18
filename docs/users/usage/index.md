@@ -528,9 +528,10 @@ By default, JiraTUI does not allow users to view and update the fields in the ab
 the variable `enable_updating_additional_fields: True` in the config file. For more details refer to
 [Enable Updating Additional Fields](../configuration/configuration.md#enable-updating-additional-fields).
 
-In order to update a field simply focus on it, change its value and then press `^s` to save the changes. Some of the
-fields require a modal to pop up to allow the user to select values for the field. These fields include a tip that
-reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
+In order to update a field simply focus on it, change its value and then press `^s` to save the changes.
+
+Some of the fields require a modal to pop up to allow the user to select values for the field. These fields include a
+tip that reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
 
 When the work items in your project support custom fields of the types above and this feature is enabled in jiraTUI,
 the details tab will look like this:
