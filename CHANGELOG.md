@@ -5,14 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.6.0] - 2025-11-19
 
 ### Added
 
 - Support for Python 3.14; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/133
 - Fix for flagging issues when the "flagged" field is not part of any edit screen; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/137
-- Support for displaying and updating the system field `components`; by [@whyisdifficult](https://github.com/whyisdifficult)
-- Support for displaying and updating some custom field types; by [@whyisdifficult](https://github.com/whyisdifficult)
+- Support for displaying and updating the system field `components`; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/142
+- Support for displaying and updating some custom field types; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/142
   - `com.atlassian.jira.plugin.system.customfieldtypes:url`
   - `com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes`
   - `com.atlassian.jira.plugin.system.customfieldtypes:float`
@@ -21,11 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `com.atlassian.jira.plugin.system.customfieldtypes:textfield`
   - `com.atlassian.jira.plugin.system.customfieldtypes:datepicker`
   - `com.atlassian.jira.plugin.system.customfieldtypes:labels`
-- Support for displaying and updating some system field types; by [@whyisdifficult](https://github.com/whyisdifficult)
+- Support for displaying and updating some system field types; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/142
   - `date`
   - `number`
 - New config variable `enable_updating_additional_fields` to enable/disable the feature that allows users to view/update
-some custom fields and system fields types; by [@whyisdifficult](https://github.com/whyisdifficult)
+some custom fields and system fields types; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/142
 - Show the parent key (if present) in the search results table; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/141
 
 ### Minor Improvements
