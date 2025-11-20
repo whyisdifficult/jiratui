@@ -2,7 +2,6 @@ from io import BytesIO
 import json
 from typing import cast
 
-from PIL import UnidentifiedImageError
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -361,6 +360,7 @@ class FileAttachmentWidget:
             return Markdown(str(content.decode()))
 
         if is_image(file_type) and _image_support_is_enabled():
+            from PIL import UnidentifiedImageError
             from textual_image.widget import Image
 
             try:
