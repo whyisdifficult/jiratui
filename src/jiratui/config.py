@@ -165,6 +165,9 @@ class ApplicationConfiguration(BaseSettings):
     update_additional_fields_ignore_ids: list[str] | None = None
     """When `enable_updating_additional_fields = True`, some custom fields and system fields with these ids or keys
     will be ignored and not show in the Details tab and will not be updated."""
+    enable_images_support: bool = True
+    """When this is set to `True` JiraTUI will attempt to display images attached to a work item in the Attachments
+    tab."""
 
     model_config = SettingsConfigDict(
         extra='allow',

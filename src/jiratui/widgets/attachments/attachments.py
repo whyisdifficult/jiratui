@@ -2,7 +2,6 @@ from io import BytesIO
 import json
 from typing import cast
 
-from PIL import UnidentifiedImageError
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -11,7 +10,6 @@ from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import DataTable, LoadingIndicator, Markdown, Static, TextArea
-from textual_image.widget import Image
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -360,9 +358,17 @@ class FileAttachmentWidget:
             )
         if mime == SupportedAttachmentVisualizationMimeTypes.TEXT_MARKDOWN:
             return Markdown(str(content.decode()))
-        if is_image(file_type):
+
+        if is_image(file_type) and _image_support_is_enabled():
+            from PIL import UnidentifiedImageError
+            from textual_image.widget import Image
+
             try:
                 return Image(BytesIO(content))
             except UnidentifiedImageError:
                 return None
         return None
+
+
+def _image_support_is_enabled() -> bool:
+    return CONFIGURATION.get().enable_images_support
