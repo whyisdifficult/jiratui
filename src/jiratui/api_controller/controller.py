@@ -1302,7 +1302,7 @@ class APIController:
                     extra={'work_item_key': issue.key},
                 )
 
-        if 'due_date' in updates:
+        if 'duedate' in updates:
             # the issue's due date has changed
             if meta_due_date := metadata_fields.get('duedate', {}):
                 if 'set' not in meta_due_date.get('operations', {}):
@@ -1311,7 +1311,7 @@ class APIController:
                         extra={'work_item_key': issue.key},
                     )
                 fields_to_update[meta_due_date.get('key')] = [
-                    {'set': updates.get('due_date') or None}
+                    {'set': updates.get('duedate') or None}
                 ]
             else:
                 raise UpdateWorkItemException(
@@ -1398,7 +1398,7 @@ class APIController:
                 # ignore the fields updated above
                 if field_id in [
                     'summary',
-                    'due_date',
+                    'duedate',
                     'priority',
                     'parent',
                     'assignee_account_id',
