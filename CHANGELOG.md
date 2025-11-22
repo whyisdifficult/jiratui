@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.2] - 2025-11-22
 
-- Fix a bug when the app tries to generate the widgets for custom fields and the field doesn't have a key; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/147
+- Fix a bug when the app tries to generate the widgets for custom fields and the field doesn't have a key; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/149
 
 ## [1.6.1] - 2025-11-20
 
