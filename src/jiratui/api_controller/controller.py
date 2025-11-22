@@ -1315,7 +1315,7 @@ class APIController:
                 ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "due_date" can not be updated for the selected work item.',
+                    'The field "duedate" can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
