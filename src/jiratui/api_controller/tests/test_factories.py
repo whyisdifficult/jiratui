@@ -473,7 +473,6 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
             'aggregatetimeestimate': None,
             'aggregatetimeoriginalestimate': None,
             'aggregatetimespent': None,
-            'components': [],
             'creator': {
                 'accountId': 'abe10be',
                 'accountType': 'atlassian',
@@ -690,7 +689,6 @@ def test_build_issue_instance_with_more_details_no_adf(
             'aggregatetimeestimate': None,
             'aggregatetimeoriginalestimate': None,
             'aggregatetimespent': None,
-            'components': [],
             'creator': {
                 'accountId': 'abe10be',
                 'accountType': 'atlassian',
@@ -784,7 +782,6 @@ def test_build_issue_instance_with_more_details_no_adf(
         'aggregatetimeestimate': None,
         'aggregatetimeoriginalestimate': None,
         'aggregatetimespent': None,
-        'components': [],
         'creator': {
             'accountId': 'abe10be',
             'accountType': 'atlassian',
