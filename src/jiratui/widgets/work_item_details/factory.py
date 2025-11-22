@@ -107,22 +107,26 @@ def create_dynamic_widgets_for_updating_work_item(
 
     for __field_id, field in work_item.edit_meta.get('fields', {}).items():
         field_name = field.get('name', '')
+        field_key = field.get('key', '')
         # ignore fields that are updated via the static update form
-        if field.get('key', '').lower() in [x.value for x in WorkItemManualUpdateFieldKeys]:
+        if field_key and field_key.lower() in [x.value for x in WorkItemManualUpdateFieldKeys]:
             continue
 
-        if field.get('name', '').lower() in [x.value for x in WorkItemManualUpdateFieldNames]:
+        if field_name and field_name.lower() in [x.value for x in WorkItemManualUpdateFieldNames]:
             continue
 
         # ignore fields whose update is not supported
-        if field.get('key', '').lower() in [x.value for x in WorkItemUnsupportedUpdateFieldKeys]:
+        if field_key and field_key.lower() in [x.value for x in WorkItemUnsupportedUpdateFieldKeys]:
             continue
 
-        # ignore the field as requested by the app configuration
-        if (
-            field_name.lower() in field_ids_or_keys_to_skip
-            or field.get('key').lower() in field_ids_or_keys_to_skip
-        ):
+        # ignore fields as requested by the app configuration
+        if field_name and field_name.lower() in field_ids_or_keys_to_skip:
+            continue
+        if field_key and field_key.lower() in field_ids_or_keys_to_skip:
+            continue
+        if field.get('fieldId') and field.get('fieldId').lower() in field_ids_or_keys_to_skip:
+            continue
+        if __field_id.lower() in field_ids_or_keys_to_skip:
             continue
 
         if not (schema := field.get('schema')):
@@ -155,22 +159,22 @@ def create_dynamic_widgets_for_updating_work_item(
         if schema_custom_type:
             # process custom fields based on the schema custom type
             if schema_custom_type == WorkItemSupportedCustomFieldSchemas.FLOAT.value:
-                if field.get('key') in work_item.get_custom_fields():
+                if field_key in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    if (value := work_item.get_custom_field_value(field.get('key'))) is not None:
+                    if (value := work_item.get_custom_field_value(field_key)) is not None:
                         value = str(value)
                     widget = WorkItemDynamicFieldUpdateNumericWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value,
                         field_supports_update=field_supports_update,
                         original_value=value,
                     )
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.DATE_PICKER.value:
-                if field.get('key') in work_item.get_custom_fields():
+                if field_key in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_custom_field_value(field.get('key'))
+                    value = work_item.get_custom_field_value(field_key)
                     widget = WorkItemDynamicFieldUpdateDateWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value if value is not None else '',
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
@@ -178,12 +182,12 @@ def create_dynamic_widgets_for_updating_work_item(
                     if field.get('required'):
                         widget.valid_empty = False
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.DATETIME.value:
-                if field.get('key') in work_item.get_custom_fields():
+                if field_key in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    if value := work_item.get_custom_field_value(field.get('key')):
+                    if value := work_item.get_custom_field_value(field_key):
                         value = isoparse(value).strftime('%Y-%m-%d %H:%M:%S')
                     widget = WorkItemDynamicFieldUpdateDateTimeWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value if value is not None else '',
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
@@ -201,33 +205,33 @@ def create_dynamic_widgets_for_updating_work_item(
                         options.append((display_value, value.get('id')))
 
                     # get the current value of the field
-                    value = work_item.get_custom_field_value(field.get('key'))
+                    value = work_item.get_custom_field_value(field_key)
                     widget = WorkItemDynamicFieldUpdateSelectionWidget(
                         options=options,
                         value=value.get('id') if value is not None else Select.BLANK,
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         allow_blank=not field.get('required'),
                         prompt=f'Select {field.get("name")}',
                         field_supports_update=field_supports_update,
                         original_value=value.get('id') if value is not None else None,
                     )
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.URL.value:
-                if field.get('key') in work_item.get_custom_fields():
+                if field_key in work_item.get_custom_fields():
                     # get the current value of the field
-                    if (value := work_item.get_custom_field_value(field.get('key'))) is None:
+                    if (value := work_item.get_custom_field_value(field_key)) is None:
                         value = ''
                     widget = WorkItemDynamicFieldUpdateURLWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value,
                         field_supports_update=field_supports_update,
                         original_value=value,
                     )
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.MULTI_CHECKBOXES.value:
                 # get the current value of the field
-                if (value := work_item.get_custom_field_value(field.get('key'))) is None:
+                if (value := work_item.get_custom_field_value(field_key)) is None:
                     value = []
                 widget = WorkItemDynamicFieldUpdateMultiCheckboxesWidget(
-                    jira_field_key=field.get('key'),
+                    jira_field_key=field_key,
                     field_title=field.get('name'),
                     field_supports_update=field_supports_update,
                     allowed_values=field.get('allowedValues', []),
@@ -235,21 +239,21 @@ def create_dynamic_widgets_for_updating_work_item(
                     original_value=value,
                 )
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.TEXT_FIELD.value:
-                if field.get('key') in work_item.get_custom_fields():
+                if field_key in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_custom_field_value(field.get('key'))
+                    value = work_item.get_custom_field_value(field_key)
                     widget = WorkItemDynamicFieldUpdateTextWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value or '',
                         field_supports_update=field_supports_update,
                         original_value=value or '',
                     )
             elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.LABELS.value:
                 # get the current value of the field
-                if (value := work_item.get_custom_field_value(field.get('key'))) is None:
+                if (value := work_item.get_custom_field_value(field_key)) is None:
                     value = []
                 widget = WorkItemDynamicFieldUpdateLabelsWidget(
-                    jira_field_key=field.get('key'),
+                    jira_field_key=field_key,
                     field_supports_update=field_supports_update,
                     value=','.join(value),
                     original_value=value,
@@ -257,24 +261,22 @@ def create_dynamic_widgets_for_updating_work_item(
         else:
             # process the non-custom fields based on the schema type
             if schema.get('type', '').lower() == 'number':
-                if field.get('key') in work_item.get_additional_fields():
+                if field_key in work_item.get_additional_fields():
                     # get the current value of the field from the issue's additional fields
-                    if (
-                        value := work_item.get_additional_field_value(field.get('key'))
-                    ) is not None:
+                    if (value := work_item.get_additional_field_value(field_key)) is not None:
                         value = str(value)
                     widget = WorkItemDynamicFieldUpdateNumericWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value,
                         field_supports_update=field_supports_update,
                         original_value=value,
                     )
             elif schema.get('type', '').lower() == 'date':
-                if field.get('key') in work_item.get_additional_fields():
+                if field_key in work_item.get_additional_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_additional_field_value(field.get('key'))
+                    value = work_item.get_additional_field_value(field_key)
                     widget = WorkItemDynamicFieldUpdateDateWidget(
-                        jira_field_key=field.get('key'),
+                        jira_field_key=field_key,
                         value=value if value is not None else '',
                         field_supports_update=field_supports_update,
                         original_value=value if value is not None else '',
@@ -285,7 +287,7 @@ def create_dynamic_widgets_for_updating_work_item(
         if widget:
             widget.border_title = field.get('name').title()
             widget.tooltip = (
-                f'{widget.border_title} (Tip: to ignore use the field key: {field.get("key")})'
+                f'{widget.border_title} (Tip: to ignore use the field key: {field_key})'
             )
             if field.get('required'):
                 widget.add_class('required')
