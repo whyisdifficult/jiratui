@@ -98,8 +98,8 @@ class WorkItemInfoContainer(Vertical):
         # display all the editable custom fields with whose type is string-textarea
         self._has_extra_custom_fields = False
         if issue_edit_metadata := work_item.get_edit_metadata():
-            for field_key, field_data in issue_edit_metadata.items():
-                if field_data.get('key', '').startswith('customfield_') or field_key.startswith(
+            for field_id, field_data in issue_edit_metadata.items():
+                if field_data.get('key', '').startswith('customfield_') or field_id.startswith(
                     'customfield_'
                 ):
                     if field_schema := field_data.get('schema'):
@@ -109,7 +109,7 @@ class WorkItemInfoContainer(Vertical):
                             and field_schema.get('custom') == CustomFieldTypes.TEXTAREA.value
                         ):
                             # get the value of the custom field
-                            if custom_field_value := work_item.get_custom_field_value(field_key):
+                            if custom_field_value := work_item.get_custom_field_value(field_id):
                                 if isinstance(custom_field_value, str):
                                     content = custom_field_value.strip()
                                 else:

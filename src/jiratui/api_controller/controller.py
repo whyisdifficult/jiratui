@@ -1255,6 +1255,7 @@ class APIController:
         - Labels
         - Parent
         - Components
+        - (Some) Custom and System fields types
 
         Args:
             issue: the work item we want to update.
@@ -1393,9 +1394,9 @@ class APIController:
 
         # process additional fields
         if self.config.enable_updating_additional_fields:
-            for field_key, field_value in updates.items():
+            for field_id, field_value in updates.items():
                 # ignore the fields updated above
-                if field_key in [
+                if field_id in [
                     'summary',
                     'due_date',
                     'priority',
@@ -1406,12 +1407,12 @@ class APIController:
                 ]:
                     continue
                 else:
-                    if metadata := metadata_fields.get(field_key, {}):
+                    if metadata := metadata_fields.get(field_id, {}):
                         if 'set' in metadata.get('operations', {}):
-                            fields_to_update[metadata.get('key')] = [{'set': field_value}]
+                            fields_to_update[field_id] = [{'set': field_value}]
                     else:
                         raise UpdateWorkItemException(
-                            f'The field {field_key} can not be updated for the selected work item.',
+                            f'The field {field_id} can not be updated for the selected work item.',
                             extra={'work_item_key': issue.key},
                         )
 

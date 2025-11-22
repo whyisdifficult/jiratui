@@ -426,40 +426,40 @@ class JiraIssue(JiraBaseIssue):
             return None
         return self.edit_meta.get('fields')
 
-    def get_custom_field_value(self, key: str) -> Any | None:
+    def get_custom_field_value(self, field_id: str) -> Any | None:
         """Retrieves the value of a custom field.
 
         Args:
-            key: the key of a field.
+            field_id: the ID of a field.
 
         Returns:
             The value of the custom field.
         """
-        if not key:
+        if not field_id:
             return None
         if not self.custom_fields:
             return None
-        return self.custom_fields.get(key)
+        return self.custom_fields.get(field_id)
 
     def get_custom_fields(self) -> dict[str, Any]:
         if self.custom_fields is None:
             return {}
         return self.custom_fields
 
-    def get_additional_field_value(self, key: str) -> Any | None:
+    def get_additional_field_value(self, field_id: str) -> Any | None:
         """Retrieves the value of a "dynamic" field.
 
         Args:
-            key: the key of a field.
+            field_id: the ID of a field.
 
         Returns:
             The value of the "dynamic" field.
         """
-        if not key:
+        if not field_id:
             return None
         if not self.additional_fields:
             return None
-        return self.additional_fields.get(key)
+        return self.additional_fields.get(field_id)
 
     def get_additional_fields(self) -> dict[str, Any]:
         if self.additional_fields is None:

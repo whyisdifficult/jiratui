@@ -989,14 +989,6 @@ class IssueDetailsWidget(Vertical):
             )
         else:
             # extract the key of the field used for flagging items based on the name of the field
-            if not response.result[0].key:  # type:ignore
-                self._issue_supports_flagging = False
-                self.notify(
-                    'Unable to flag the work item. Missing required field configuration',
-                    severity='error',
-                    title='Flag Work Item',
-                )
-            else:
-                work_item_flag: Any = issue.get_custom_field_value(response.result[0].key)  # type:ignore
-                self._work_item_is_flagged = True if work_item_flag else False
-                self.work_item_flag_widget.show = self.issue_is_flagged
+            work_item_flag: Any = issue.get_custom_field_value(response.result[0].id)  # type:ignore
+            self._work_item_is_flagged = True if work_item_flag else False
+            self.work_item_flag_widget.show = self.issue_is_flagged
