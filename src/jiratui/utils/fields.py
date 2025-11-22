@@ -15,25 +15,27 @@ def get_custom_fields_values(fields_values: dict, edit_metadata_fields: dict) ->
     ```
 
     Args:
-        fields_values: the values of all the fields known to an issue.
-        edit_metadata_fields: an issue's edit metadata's fields attribute.
+        fields_values: the values of all the fields known to an issue. This is a dictionary whose keys are the ID of
+        the fields and values are a Python object.
+        edit_metadata_fields: an issue's edit metadata's fields attribute. This is a dictionary whose keys are the ID
+        of the fields and values are dictionaries.
 
     Returns:
-        A dictionary with the `key` of the custom field and the (current) value of the field.
+        A dictionary with the ID of the custom field and the (current) value of the field.
     """
 
     values: dict[str, Any] = {}
-    for _, field_data in edit_metadata_fields.items():
+    for field_id, field_data in edit_metadata_fields.items():
         schema = field_data.get('schema', {})
         if schema.get('customId') or schema.get('custom'):
             # the field is custom
-            values[field_data.get('key')] = fields_values.get(field_data.get('key'))
+            values[field_id] = fields_values.get(field_id)
     # extract the custom fields of the issue from the issue's current values
-    for field_key, field_value in fields_values.items():
-        if not field_key.lower().startswith('customfield_'):
+    for field_id, field_value in fields_values.items():
+        if not field_id.lower().startswith('customfield_'):
             continue
-        if field_key not in values:
-            values[field_key] = field_value
+        if field_id not in values:
+            values[field_id] = field_value
     return values
 
 
@@ -48,18 +50,18 @@ def get_additional_fields_values(
         ignored_fields: a list of field ids/keys to ignore.
 
     Returns:
-        A dictionary of field key/id to field value.
+        A dictionary with the ID of the field and the (current) value of the field.
     """
 
     additional_fields: dict[str, Any] = {}
-    for field_id_key, field_value in fields_values.items():
-        if field_id_key in ignored_fields:
+    for field_id, field_value in fields_values.items():
+        if field_id in ignored_fields:
             # this field's value is extracted by the factory separately
             continue
-        if field_id_key.lower().startswith('customfield_'):
+        if field_id.lower().startswith('customfield_'):
             # this field's value is extracted by the factory separately
             continue
-        additional_fields[field_id_key] = field_value
+        additional_fields[field_id] = field_value
     return additional_fields
 
 

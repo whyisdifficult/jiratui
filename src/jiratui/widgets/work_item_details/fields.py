@@ -27,7 +27,7 @@ class IssueDetailsAssigneeSelection(UserSelectionInput):
         super().__init__(users)
         self.border_subtitle = '(x)'
         self.jira_field_key = 'assignee'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled: bool = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -65,7 +65,7 @@ class IssueDetailsPrioritySelection(Select):
         self.border_title = 'Priority'
         self.border_subtitle = '(y)'
         self.jira_field_key = 'priority'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled: bool = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -120,7 +120,7 @@ class IssueParentField(Input):
         self.border_title = 'Parent'
         self.add_class(*['issue_details_input_field', 'work-item-key'])
         self.jira_field_key = 'parent'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -149,7 +149,7 @@ class IssueSummaryField(Input):
         self.border_subtitle = '(*)'
         self.add_class(*['issue_details_input_field', 'required', 'cols-3'])
         self.jira_field_key = 'summary'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -197,7 +197,7 @@ class WorkItemLabelsField(Input):
         self.border_title = 'Labels'
         self.add_class(*['issue_details_input_field', 'cols-3'])
         self.jira_field_key = 'labels'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -256,7 +256,7 @@ class IssueComponentsField(Widget):
 
     def __init__(self):
         self.jira_field_key = 'components'
-        """The ID/key of the field in Jira."""
+        """The id of the field in Jira."""
         super().__init__(id=self.jira_field_key)
         self.__allowed_values: list[dict] | None = None
         self.__current_selected_ids: list[str] = []
@@ -356,7 +356,7 @@ class WorkItemDetailsDueDate(DateInput):
     def __init__(self):
         super().__init__()
         self.jira_field_key = 'duedate'
-        """The key to used by Jira to identify this field in the edit-metadata."""
+        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
         """Indicates whether the work item allows editing/updating this field."""
 
@@ -427,6 +427,7 @@ class WorkItemDynamicFieldUpdateWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', '')
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key, **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
@@ -469,6 +470,7 @@ class WorkItemDynamicFieldUpdateNumericWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value')
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key, type='number', placeholder='123.45', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
@@ -523,6 +525,7 @@ class WorkItemDynamicFieldUpdateTextWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', None)
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key, placeholder='some string...', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
@@ -570,6 +573,7 @@ class WorkItemDynamicFieldUpdateDateWidget(MaskedInput):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', '')
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(
             id=self.jira_field_key, template='9999-99-99', placeholder='2025-12-23', **kwargs
         )
@@ -625,6 +629,7 @@ class WorkItemDynamicFieldUpdateDateTimeWidget(MaskedInput):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', '')
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(
             id=self.jira_field_key,
             template='9999-99-99 99:99:99',
@@ -682,6 +687,7 @@ class WorkItemDynamicFieldUpdateSelectionWidget(Select):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', None)
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key, **kwargs)
         self.compact = True
         self.add_class('create-work-item-generic-selector')
@@ -726,6 +732,7 @@ class WorkItemDynamicFieldUpdateURLWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value = kwargs.pop('original_value', '')
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(
             id=self.jira_field_key, type='text', placeholder='https://jiratui.sh', **kwargs
         )
@@ -778,6 +785,7 @@ class WorkItemDynamicFieldUpdateLabelsWidget(Input):
         self.__field_supports_update = kwargs.pop('field_supports_update', False)
         self.__original_value: list[str] = kwargs.pop('original_value', [])
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key, placeholder='labelA, labelB', **kwargs)
         self.add_class('issue_details_input_field')
         self.disabled = not self.__field_supports_update
@@ -863,6 +871,7 @@ class WorkItemDynamicFieldUpdateMultiCheckboxesWidget(Widget):
         """A list of dictionaries. Each dict is expected to have 'id' and 'value' attributes. This is the value as
         stored in Jira and as retrieved from the API."""
         self.jira_field_key = jira_field_key
+        """The id used by Jira to identify this field in the edit-metadata."""
         super().__init__(id=self.jira_field_key)
         self.__current_selected_ids: list[str] = [
             cv.get('id') for cv in self.__original_value or []

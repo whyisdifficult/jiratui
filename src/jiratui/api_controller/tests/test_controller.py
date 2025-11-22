@@ -2122,7 +2122,7 @@ async def test_update_issue_with_no_updates(
     assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
 
 
-@pytest.mark.parametrize('field_name', ['summary', 'due_date', 'priority', 'assignee_account_id'])
+@pytest.mark.parametrize('field_name', ['summary', 'duedate', 'priority', 'assignee_account_id'])
 @pytest.mark.asyncio
 async def test_update_issue_with_update_fields(
     field_name: str,
@@ -2135,7 +2135,7 @@ async def test_update_issue_with_update_fields(
     # WHEN/THEN
     with pytest.raises(
         UpdateWorkItemException,
-        match=f'The field "{field_name}" can not be updated for the selected work item.',
+        match=f'The field {field_name} can not be updated for the selected work item.',
     ):
         await jira_api_controller.update_issue(work_item, {field_name: 'value'})
 
@@ -2144,7 +2144,7 @@ async def test_update_issue_with_update_fields(
     'field_name, field_key',
     [
         ('summary', 'summary'),
-        ('due_date', 'duedate'),
+        ('duedate', 'duedate'),
         ('priority', 'priority'),
         ('assignee_account_id', 'assignee'),
     ],
@@ -2162,16 +2162,16 @@ async def test_update_issue_with_update_fields_no_update_allowed(
     # WHEN/THEN
     with pytest.raises(
         UpdateWorkItemException,
-        match=f'The field "{field_key}" can not be updated for the selected work item.',
+        match=f'The field {field_key} can not be updated for the selected work item.',
     ):
         await jira_api_controller.update_issue(work_item, {field_name: 'value'})
 
 
 @pytest.mark.parametrize(
-    'field_name, field_key, updated_fields',
+    'field_id, field_key, updated_fields',
     [
         ('summary', 'summary', ['summary']),
-        ('due_date', 'duedate', ['due_date']),
+        ('duedate', 'duedate', ['duedate']),
         ('priority', 'priority', ['priority']),
         ('assignee_account_id', 'assignee', ['assignee_account_id']),
     ],
@@ -2180,7 +2180,7 @@ async def test_update_issue_with_update_fields_no_update_allowed(
 @patch.object(JiraAPI, 'update_issue')
 async def test_update_issue_with_update_fields_update_allowed(
     update_issue_mock: Mock,
-    field_name: str,
+    field_id: str,
     field_key: str,
     updated_fields: list[str],
     work_item: JiraIssue,
@@ -2189,9 +2189,9 @@ async def test_update_issue_with_update_fields_update_allowed(
     # GIVEN
     work_item.edit_meta = {'fields': {field_key: {'operations': {'set': 'new value'}}}}
     work_item.key = 'WI1'
-    update_issue_mock.return_value = {'fields': {field_name: 'new value'}}
+    update_issue_mock.return_value = {'fields': {field_id: 'new value'}}
     # WHEN
-    result = await jira_api_controller.update_issue(work_item, {field_name: 'value'})
+    result = await jira_api_controller.update_issue(work_item, {field_id: 'value'})
     # THEN
     assert result == APIControllerResponse(
         result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)

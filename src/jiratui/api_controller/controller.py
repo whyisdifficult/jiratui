@@ -53,6 +53,7 @@ from jiratui.models import (
     JiraTimeTrackingConfiguration,
     JiraUser,
     JiraUserGroup,
+    JiraWorkItemFields,
     JiraWorklog,
     LinkIssueType,
     PaginatedJiraWorklog,
@@ -1255,6 +1256,7 @@ class APIController:
         - Labels
         - Parent
         - Components
+        - (Some) Custom and System fields types
 
         Args:
             issue: the work item we want to update.
@@ -1280,82 +1282,90 @@ class APIController:
                 'The selected work item does not include the required fields metadata.'
             )
 
-        if 'summary' in updates:
-            if not (summary := updates.get('summary')) or not summary.strip():
+        if JiraWorkItemFields.SUMMARY.value in updates:
+            if (
+                not (summary := updates.get(JiraWorkItemFields.SUMMARY.value))
+                or not summary.strip()
+            ):
                 raise ValidationError('The summary field can not be empty.')
 
         fields_to_update: dict[str, list] = {}
 
-        if 'summary' in updates:
+        if JiraWorkItemFields.SUMMARY.value in updates:
             # the issue's summary has changed
-            if meta_summary := metadata_fields.get('summary', {}):
+            if meta_summary := metadata_fields.get(JiraWorkItemFields.SUMMARY.value, {}):
                 if 'set' not in meta_summary.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "summary" can not be updated for the selected work item.',
+                        f'The field {JiraWorkItemFields.SUMMARY.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_summary.get('key')] = [{'set': updates.get('summary')}]
+                fields_to_update[JiraWorkItemFields.SUMMARY.value] = [
+                    {'set': updates.get(JiraWorkItemFields.SUMMARY.value)}
+                ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "summary" can not be updated for the selected work item.',
+                    f'The field {JiraWorkItemFields.SUMMARY.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
-        if 'due_date' in updates:
+        if JiraWorkItemFields.DUE_DATE.value in updates:
             # the issue's due date has changed
-            if meta_due_date := metadata_fields.get('duedate', {}):
+            if meta_due_date := metadata_fields.get(JiraWorkItemFields.DUE_DATE.value, {}):
                 if 'set' not in meta_due_date.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "duedate" can not be updated for the selected work item.',
+                        f'The field {JiraWorkItemFields.DUE_DATE.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_due_date.get('key')] = [
-                    {'set': updates.get('due_date') or None}
+                fields_to_update[JiraWorkItemFields.DUE_DATE.value] = [
+                    {'set': updates.get(JiraWorkItemFields.DUE_DATE.value) or None}
                 ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "due_date" can not be updated for the selected work item.',
+                    f'The field {JiraWorkItemFields.DUE_DATE.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
-        if 'priority' in updates:
+        if JiraWorkItemFields.PRIORITY.value in updates:
             # the issue's priority has changed
-            if meta_priority := metadata_fields.get('priority', {}):
+            if meta_priority := metadata_fields.get(JiraWorkItemFields.PRIORITY.value, {}):
                 if 'set' not in meta_priority.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "priority" can not be updated for the selected work item.',
+                        f'The field {JiraWorkItemFields.PRIORITY.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_priority.get('key')] = [
-                    {'set': {'id': updates.get('priority')}}
+                fields_to_update[JiraWorkItemFields.PRIORITY.value] = [
+                    {'set': {'id': updates.get(JiraWorkItemFields.PRIORITY.value)}}
                 ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "priority" can not be updated for the selected work item.',
+                    f'The field {JiraWorkItemFields.PRIORITY.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
-        if 'parent' in updates:
+        if JiraWorkItemFields.PARENT.value in updates:
             # the issue's parent has changed
-            if meta_parent := metadata_fields.get('parent', {}):
+            if meta_parent := metadata_fields.get(JiraWorkItemFields.PARENT.value, {}):
                 if 'set' not in meta_parent.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "parent" can not be updated for the selected work item.',
+                        f'The field {JiraWorkItemFields.PARENT.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_parent.get('key')] = [{'set': {'key': updates.get('parent')}}]
+                fields_to_update[JiraWorkItemFields.PARENT.value] = [
+                    {'set': {'key': updates.get(JiraWorkItemFields.PARENT.value)}}
+                ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "parent" can not be updated for the selected work item.',
+                    f'The field {JiraWorkItemFields.PARENT.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
+        # TODO use 'assignee' field id
         if 'assignee_account_id' in updates:
             # the issue's assignee has changed
             if meta_assignee := metadata_fields.get('assignee', {}):
                 if 'set' not in meta_assignee.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "assignee" can not be updated for the selected work item.',
+                        'The field assignee can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
                 if self.config.cloud:
@@ -1368,50 +1378,54 @@ class APIController:
                     ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "assignee_account_id" can not be updated for the selected work item.',
+                    'The field assignee_account_id can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
-        if 'labels' in updates:
-            if meta_labels := metadata_fields.get('labels', {}):
+        if JiraWorkItemFields.LABELS.value in updates:
+            if meta_labels := metadata_fields.get(JiraWorkItemFields.LABELS.value, {}):
                 if 'set' in meta_labels.get('operations', {}):
-                    fields_to_update[meta_labels.get('key')] = [{'set': updates.get('labels')}]
+                    fields_to_update[JiraWorkItemFields.LABELS.value] = [
+                        {'set': updates.get(JiraWorkItemFields.LABELS.value)}
+                    ]
 
-        if 'components' in updates:
-            if meta_components := metadata_fields.get('components', {}):
+        if JiraWorkItemFields.COMPONENTS.value in updates:
+            if meta_components := metadata_fields.get(JiraWorkItemFields.COMPONENTS.value, {}):
                 if 'set' not in meta_components.get('operations', {}):
                     raise UpdateWorkItemException(
-                        'The field "components" can not be updated for the selected work item.',
+                        f'The field {JiraWorkItemFields.COMPONENTS.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[meta_components.get('key')] = [{'set': updates.get('components')}]
+                fields_to_update[JiraWorkItemFields.COMPONENTS.value] = [
+                    {'set': updates.get(JiraWorkItemFields.COMPONENTS.value)}
+                ]
             else:
                 raise UpdateWorkItemException(
-                    'The field "components" can not be updated for the selected work item.',
+                    f'The field {JiraWorkItemFields.COMPONENTS.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
 
         # process additional fields
         if self.config.enable_updating_additional_fields:
-            for field_key, field_value in updates.items():
+            for field_id, field_value in updates.items():
                 # ignore the fields updated above
-                if field_key in [
-                    'summary',
-                    'due_date',
-                    'priority',
-                    'parent',
-                    'assignee_account_id',
-                    'labels',
-                    'components',
+                if field_id in [
+                    JiraWorkItemFields.SUMMARY.value,
+                    JiraWorkItemFields.DUE_DATE.value,
+                    JiraWorkItemFields.PRIORITY.value,
+                    JiraWorkItemFields.PARENT.value,
+                    'assignee_account_id',  # TODO use 'assignee' field id
+                    JiraWorkItemFields.LABELS.value,
+                    JiraWorkItemFields.COMPONENTS.value,
                 ]:
                     continue
                 else:
-                    if metadata := metadata_fields.get(field_key, {}):
+                    if metadata := metadata_fields.get(field_id, {}):
                         if 'set' in metadata.get('operations', {}):
-                            fields_to_update[metadata.get('key')] = [{'set': field_value}]
+                            fields_to_update[field_id] = [{'set': field_value}]
                     else:
                         raise UpdateWorkItemException(
-                            f'The field {field_key} can not be updated for the selected work item.',
+                            f'The field {field_id} can not be updated for the selected work item.',
                             extra={'work_item_key': issue.key},
                         )
 

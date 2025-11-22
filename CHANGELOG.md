@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2025-11-22
+
+- Fix a bug when the app tries to generate the widgets for custom fields and the field doesn't have a key; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/149
+
 ## [1.6.1] - 2025-11-20
 
 - Add a configuration variable `enable_images_support` to enable/disable image support. By default, this feature is

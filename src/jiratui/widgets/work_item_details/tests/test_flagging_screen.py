@@ -108,57 +108,6 @@ async def test_open_flag_screen_issue_has_no_metadata(
 
 
 @patch('jiratui.widgets.screens.APIController.get_fields')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_open_flag_screen_missing_metadata_for_flagged_field(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
-    search_work_items_mock: AsyncMock,
-    get_issue_mock: AsyncMock,
-    get_fields_mock: AsyncMock,
-    jira_issues: list[JiraIssue],
-    app,
-):
-    # GIVEN
-    app.config.search_results_truncate_work_item_summary = 10
-    app.config.search_results_style_work_item_status = False
-    app.config.search_results_style_work_item_type = False
-    app.config.search_results_per_page = 10
-    app.config.show_issue_web_links = False
-    selected_issue = jira_issues[1]
-    get_issue_mock.return_value = APIControllerResponse(
-        result=JiraIssueSearchResponse(issues=[selected_issue])
-    )
-    get_fields_mock.return_value = APIControllerResponse(
-        success=True, result=[JiraField(id='1', name='Flagged', key='', schema={}, custom=True)]
-    )
-    async with app.run_test() as pilot:
-        search_work_items_mock.return_value = WorkItemSearchResult(
-            total=2,
-            response=JiraIssueSearchResponse(
-                issues=jira_issues, next_page_token=None, is_last=None
-            ),
-        )
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        # WHEN/THEN
-        assert isinstance(app.screen, MainScreen)
-        await pilot.press('ctrl+r')
-        await pilot.press('down')
-        await pilot.press('enter')
-        await pilot.press('3')
-        await pilot.press('tab')
-        await pilot.press('ctrl+f')
-        assert isinstance(app.screen, MainScreen)
-
-
-@patch('jiratui.widgets.screens.APIController.get_fields')
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')

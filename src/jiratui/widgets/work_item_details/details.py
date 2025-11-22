@@ -531,6 +531,7 @@ class IssueDetailsWidget(Vertical):
         )
 
     def _build_payload_for_update(self) -> dict:
+        # maps field id to field value
         payload: dict[str, Any] = {}
         # process the "static" fields
         if self.issue_summary_field.update_enabled:
@@ -543,7 +544,9 @@ class IssueDetailsWidget(Vertical):
         if self.issue_due_date_field.update_enabled:
             # check if the due date has changed
             if work_item_due_date_has_changed(self.issue.due_date, self.issue_due_date_field.value):
-                payload['due_date'] = self.issue_due_date_field.value.strip()
+                payload[self.issue_due_date_field.jira_field_key] = (
+                    self.issue_due_date_field.value.strip()
+                )
 
         if self.priority_selector.update_enabled:
             if work_item_priority_has_changed(
@@ -571,6 +574,7 @@ class IssueDetailsWidget(Vertical):
             if work_item_assignee_has_changed(
                 self.issue.assignee, self.assignee_selector.selection
             ):
+                # TODO replace with self.assignee_selector.jira_field_key
                 payload['assignee_account_id'] = self.assignee_selector.selection
 
         if self.work_item_labels_widget.update_enabled and self.work_item_labels_widget.value:
@@ -989,14 +993,6 @@ class IssueDetailsWidget(Vertical):
             )
         else:
             # extract the key of the field used for flagging items based on the name of the field
-            if not response.result[0].key:  # type:ignore
-                self._issue_supports_flagging = False
-                self.notify(
-                    'Unable to flag the work item. Missing required field configuration',
-                    severity='error',
-                    title='Flag Work Item',
-                )
-            else:
-                work_item_flag: Any = issue.get_custom_field_value(response.result[0].key)  # type:ignore
-                self._work_item_is_flagged = True if work_item_flag else False
-                self.work_item_flag_widget.show = self.issue_is_flagged
+            work_item_flag: Any = issue.get_custom_field_value(response.result[0].id)  # type:ignore
+            self._work_item_is_flagged = True if work_item_flag else False
+            self.work_item_flag_widget.show = self.issue_is_flagged
