@@ -2135,7 +2135,7 @@ async def test_update_issue_with_update_fields(
     # WHEN/THEN
     with pytest.raises(
         UpdateWorkItemException,
-        match=f'The field "{field_name}" can not be updated for the selected work item.',
+        match=f'The field {field_name} can not be updated for the selected work item.',
     ):
         await jira_api_controller.update_issue(work_item, {field_name: 'value'})
 
@@ -2162,7 +2162,7 @@ async def test_update_issue_with_update_fields_no_update_allowed(
     # WHEN/THEN
     with pytest.raises(
         UpdateWorkItemException,
-        match=f'The field "{field_key}" can not be updated for the selected work item.',
+        match=f'The field {field_key} can not be updated for the selected work item.',
     ):
         await jira_api_controller.update_issue(work_item, {field_name: 'value'})
 

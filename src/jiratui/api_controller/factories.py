@@ -89,7 +89,7 @@ class WorkItemFactory:
 
         # extract the components
         components: list[JiraIssueComponent] = []
-        for component in fields.get('components', []) or []:
+        for component in fields.get(JiraWorkItemFields.COMPONENTS.value, []) or []:
             components.append(
                 JiraIssueComponent(
                     id=component.get('id'),

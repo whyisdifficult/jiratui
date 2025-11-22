@@ -30,7 +30,10 @@ def custom_as_json_dict_factory(data) -> dict:
 
 
 class JiraWorkItemFields(Enum):
-    """The fields supported by JiraTUI whose values can be extracted from the details of a work item."""
+    """The fields ids supported by JiraTUI whose values can be extracted from the details of a work item.
+
+    Each of these Ids are keys in the `fields` dictionary that is part of the API response that retrieves a work item.
+    """
 
     PROJECT = 'project'
     STATUS = 'status'
@@ -51,6 +54,7 @@ class JiraWorkItemFields(Enum):
     RESOLUTION = 'resolution'
     LABELS = 'labels'
     DUE_DATE = 'duedate'
+    COMPONENTS = 'components'
 
 
 class WorkItemsSearchOrderBy(enum.Enum):
