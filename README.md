@@ -17,9 +17,9 @@ A **Text User Interface (TUI)** for interacting with Atlassian Jira directly fro
 JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/)
 frameworks.
 
-It supports the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/). Starting
-with v1.1.0 JiraTUI supports [Jira REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/) as
-well.
+It supports the [Jira Cloud Platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
+Starting with [v1.1.0](https://github.com/whyisdifficult/jiratui/tree/v1.1.0) JiraTUI supports [Jira Cloud Platform REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/)
+as well.
 
 ## Installation
 
