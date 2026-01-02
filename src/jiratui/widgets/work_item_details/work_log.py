@@ -159,7 +159,8 @@ class WorkItemWorkLogScreen(Screen[dict]):
             worklog: JiraWorklog
             for worklog in result.logs:
                 comment_text = ''
-                if worklog.comment and not (comment_text := worklog.get_comment()):
+                base_url = getattr(getattr(self.app, 'config', None), 'jira_base_url', None)
+                if worklog.comment and not (comment_text := worklog.get_comment(base_url=base_url)):
                     # this may happen if we fail to parse the ADF data for Jira Cloud API
                     comment_text = 'Unable to display the description associated to the worklog.'
 

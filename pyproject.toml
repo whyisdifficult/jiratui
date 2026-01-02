@@ -31,6 +31,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
+    "atlas-doc-parser",
     "click==8.3.0",
     "gitpython>=3.1.45",
     "httpx>=0.28.1",
@@ -87,3 +88,6 @@ strict_optional = false
 ignore_missing_imports = true
 show_error_context = false
 exclude = ["docs", "test"]
+
+[tool.uv.sources]
+atlas-doc-parser = { git = "https://github.com/MacHu-GWU/atlas_doc_parser-project", rev = "5890609" }

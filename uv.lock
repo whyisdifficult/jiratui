@@ -204,6 +204,14 @@ wheels = [
 ]
 
 [[package]]
+name = "atlas-doc-parser"
+version = "0.1.2"
+source = { git = "https://github.com/MacHu-GWU/atlas_doc_parser-project?rev=5890609#5890609f7154af6a3f55b90174d917037cc384f9" }
+dependencies = [
+    { name = "func-args" },
+]
+
+[[package]]
 name = "attrs"
 version = "25.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -598,6 +606,15 @@ wheels = [
 ]
 
 [[package]]
+name = "func-args"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/f0/e3410fc39cb3b4d64206cb97c42a7ff1c2e4cd26516903069daf19b2102b/func_args-1.0.1.tar.gz", hash = "sha256:f07c2620fa446da54eb0888d5063167b1068d566e1f9a1879fe912c3d7497821", size = 14577, upload-time = "2025-05-08T03:45:43.549Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/04/51cce2f0ebe02fc7f15186658a9f129fba2d3b5055e3764d1bf087839988/func_args-1.0.1-py3-none-any.whl", hash = "sha256:4562f4eaa0d68142a6ab5ad1f212959fabc2c4cc029b77446bcc377d737e3db4", size = 15268, upload-time = "2025-05-08T03:45:41.982Z" },
+]
+
+[[package]]
 name = "gitdb"
 version = "4.0.12"
 source = { registry = "https://pypi.org/simple" }
@@ -711,6 +728,7 @@ name = "jiratui"
 version = "1.6.2"
 source = { editable = "." }
 dependencies = [
+    { name = "atlas-doc-parser" },
     { name = "click" },
     { name = "gitpython" },
     { name = "httpx" },
@@ -750,6 +768,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "atlas-doc-parser", git = "https://github.com/MacHu-GWU/atlas_doc_parser-project?rev=5890609" },
     { name = "click", specifier = "==8.3.0" },
     { name = "gitpython", specifier = ">=3.1.45" },
     { name = "httpx", specifier = ">=0.28.1" },
