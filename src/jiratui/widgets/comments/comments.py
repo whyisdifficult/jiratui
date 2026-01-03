@@ -162,7 +162,8 @@ class IssueCommentsWidget(VerticalScroll):
         items.sort(key=lambda x: x.updated, reverse=True)
         comment_text: Markdown | Static
         for comment in items:
-            if content := comment.get_body():
+            base_url = getattr(getattr(self.app, 'config', None), 'jira_base_url', None)
+            if content := comment.get_body(base_url=base_url):
                 comment_text = Markdown(content)
             else:
                 comment_text = Static(
