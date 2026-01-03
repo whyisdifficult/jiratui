@@ -10,7 +10,6 @@ class DateInput(MaskedInput):
     TEMPLATE = '9999-99-99'
     PLACEHOLDER = '2025-12-23'
     LABEL = 'Date'
-    TOOLTIP = ''
     ID: str | None = None
     CLASSES = 'input-date'
     BORDER_SUBTITLE = ''
@@ -21,7 +20,6 @@ class DateInput(MaskedInput):
             template=self.TEMPLATE,
             placeholder=self.PLACEHOLDER,
             classes=self.CLASSES,
-            tooltip=self.TOOLTIP,
             valid_empty=valid_empty,
         )
         self.border_title = self.LABEL

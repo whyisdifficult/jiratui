@@ -1,10 +1,9 @@
 from textual.app import ComposeResult
-from textual.containers import Container, Vertical, VerticalGroup, VerticalScroll
+from textual.containers import Center, Container, Vertical, VerticalGroup, VerticalScroll
 from textual.reactive import Reactive, reactive
-from textual.widgets import Markdown
+from textual.widgets import LoadingIndicator
 
-from jiratui.models import CustomFieldTypes, JiraIssue
-from jiratui.utils.adf2md.adf2md import adf2md
+from jiratui.models import JiraIssue
 from jiratui.widgets.summary import IssueDescriptionWidget, IssueSummaryWidget
 
 
@@ -28,7 +27,6 @@ class WorkItemInfoContainer(Vertical):
 
     def __init__(self):
         super().__init__(id='work_item_info_container')
-        self._has_extra_custom_fields = False
         self.can_focus = True
 
     @property
@@ -48,22 +46,28 @@ class WorkItemInfoContainer(Vertical):
         return self.query_one(WorkItemSummaryContainer)
 
     @property
-    def extra_fields_container(self) -> VerticalScroll:
-        return self.query_one('#work-item-info-extra-scroll-container', expect_type=VerticalScroll)
-
-    @property
     def description_container(self) -> VerticalScroll:
         return self.query_one(
             '#work-item-info-description-scroll-container', expect_type=VerticalScroll
         )
 
+    @property
+    def loading_container(self) -> Center:
+        return self.query_one('#work-item-info-loading-container', expect_type=Center)
+
+    @property
+    def content_container(self) -> VerticalGroup:
+        return self.query_one('#work-item-info-content', expect_type=VerticalGroup)
+
     def compose(self) -> ComposeResult:
-        with VerticalGroup():
+        with Center(id='work-item-info-loading-container') as loading_container:
+            loading_container.display = False
+            yield LoadingIndicator()
+        with VerticalGroup(id='work-item-info-content'):
             with WorkItemSummaryContainer():
                 yield IssueSummaryWidget()
             with VerticalScroll(id='work-item-info-description-scroll-container'):
                 yield IssueDescriptionWidget()
-            yield VerticalScroll(id='work-item-info-extra-scroll-container')
 
     async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
         if work_item.description:
@@ -74,7 +78,22 @@ class WorkItemInfoContainer(Vertical):
                 await self.issue_description_widget.update('Unable to display the description.')
             self.issue_description_widget.visible = True
             self.description_container.visible = True
-            self.description_container.border_title = 'Description'
+
+            # Check if description is required in the edit metadata
+            is_required = False
+            if issue_edit_metadata := work_item.get_edit_metadata():
+                description_field = issue_edit_metadata.get('description', {})
+                is_required = description_field.get('required', False)
+
+            # Set border title with required indicator if needed
+            if is_required:
+                self.description_container.border_title = 'Description'
+                self.description_container.border_subtitle = '(*)'
+                self.description_container.add_class('required')
+            else:
+                self.description_container.border_title = 'Description'
+                self.description_container.border_subtitle = ''
+                self.description_container.remove_class('required')
         else:
             self.description_container.visible = False
             self.issue_description_widget.visible = False
@@ -94,50 +113,10 @@ class WorkItemInfoContainer(Vertical):
 
         # set the description of the work item and make the widget visible
         self.run_worker(self._setup_work_item_description(work_item))
-
-        # display all the editable custom fields with whose type is string-textarea
-        self._has_extra_custom_fields = False
-        if issue_edit_metadata := work_item.get_edit_metadata():
-            for field_id, field_data in issue_edit_metadata.items():
-                if field_data.get('key', '').startswith('customfield_') or field_id.startswith(
-                    'customfield_'
-                ):
-                    if field_schema := field_data.get('schema'):
-                        # only extract abd process editable custom fields of type textarea
-                        if (
-                            field_schema.get('type') == 'string'
-                            and field_schema.get('custom') == CustomFieldTypes.TEXTAREA.value
-                        ):
-                            # get the value of the custom field
-                            if custom_field_value := work_item.get_custom_field_value(field_id):
-                                if isinstance(custom_field_value, str):
-                                    content = custom_field_value.strip()
-                                else:
-                                    content = self._extract_adf(custom_field_value)
-
-                                if content:
-                                    extra_field_markdown = Markdown(
-                                        content, classes='work-item-info-custom-field-textarea'
-                                    )
-                                    extra_field_markdown.border_title = field_data.get('name')
-                                    self.extra_fields_container.mount(extra_field_markdown)
-                                    self._has_extra_custom_fields = True
-
-        if self._has_extra_custom_fields:
-            self.extra_fields_container.visible = True
-            self.description_container.styles.height = '50%'
-        else:
-            self.description_container.styles.height = '92%'  # leave some space
         return None
 
-    @staticmethod
-    def _extract_adf(data) -> str:
-        try:
-            return adf2md(data)
-        except Exception:
-            return ''
-
     async def reset_description(self) -> None:
+        """Reset the description widget."""
         await self.issue_description_widget.update('')
 
     def watch_clear_information(self, clear: bool = False) -> None:
@@ -150,6 +129,13 @@ class WorkItemInfoContainer(Vertical):
             self.run_worker(self.reset_description())
             self.description_container.visible = False
             self.issue_description_widget.visible = False
-            # remove the extra fields and hide the widget
-            self.extra_fields_container.visible = False
-            self.extra_fields_container.remove_children()
+
+    def show_loading(self) -> None:
+        """Show the loading indicator and hide content."""
+        self.loading_container.display = True
+        self.content_container.display = False
+
+    def hide_loading(self) -> None:
+        """Hide the loading indicator and show content."""
+        self.loading_container.display = False
+        self.content_container.display = True

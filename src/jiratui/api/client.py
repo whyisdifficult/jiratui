@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import logging
 from typing import Any, Callable, cast
+import xml.etree.ElementTree as ET
 
 import httpx
 
@@ -115,7 +116,7 @@ class JiraTUIAsyncHTTPClient:
         try:
             response: httpx.Response = await method(
                 self.client,
-                url=url,
+                url,
                 headers=headers,
                 timeout=timeout,
                 auth=self.authentication,
@@ -307,3 +308,137 @@ class AsyncJiraClient(JiraTUIAsyncHTTPClient):
 
     def _parse_response(self, response: httpx.Response) -> Any:
         return response.json()
+
+    async def make_request(
+        self,
+        method: Callable,
+        url: str,
+        headers: dict | None = None,
+        timeout: int = 55,
+        **kwargs,
+    ) -> Any | None:
+        """Make an HTTP request to the Jira API.
+
+        Args:
+            method: The HTTP method to use (e.g., httpx.AsyncClient.post).
+            url: The API endpoint URL.
+            headers: Optional HTTP headers.
+            timeout: Request timeout in seconds.
+            **kwargs: Additional arguments to pass to the HTTP method (e.g., data, params).
+
+        Returns:
+            The parsed JSON response from the API, or None/empty dict for empty responses.
+
+        Raises:
+            ServiceInvalidRequestException: If the request fails.
+            ServiceUnavailableException: If the service is unavailable or times out.
+            ResourceNotFoundException: If the requested resource is not found (404).
+            AuthorizationException: If authentication fails (401).
+            PermissionException: If permission is denied (403).
+            ServiceInvalidResponseException: If the response cannot be parsed.
+        """
+        headers = self.set_headers(headers)
+        full_url = self.get_resource_url(url)
+
+        try:
+            response: httpx.Response = await method(
+                self.client,
+                full_url,
+                headers=headers,
+                timeout=timeout,
+                auth=self.authentication,
+                **kwargs,
+            )
+        except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.ConnectError) as e:
+            msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(msg, extra={'url': full_url})
+            raise ServiceUnavailableException(msg, extra={'url': full_url}) from e
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            # see https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#status-codes
+            error_details: dict | None = self._parse_error_response(response)
+
+            extra = {
+                'url': full_url,
+                'status_code': response.status_code,
+            }
+
+            message = str(e)
+            if error_details is not None and isinstance(error_details, dict):
+                if error_details.get('errorMessages', []):
+                    message = error_details.get('errorMessages', [])[0]
+                extra.update(**error_details)
+
+            self.logger.error(message, extra=extra)
+            if response.status_code == 404:
+                raise ResourceNotFoundException(message, extra=extra) from e
+            if response.status_code == 401:
+                raise AuthorizationException(message, extra=extra) from e
+            if response.status_code == 403:
+                raise PermissionException(message, extra=extra) from e
+            raise ServiceInvalidRequestException(message, extra=extra) from e
+
+        if response.status_code == 204:
+            return self._empty_response(response)
+
+        try:
+            return self._parse_response(response)
+        except Exception as e:
+            if response.status_code == 201:
+                return self._empty_response(response)
+            log_msg = f'{e.__class__.__name__}: {e}.'
+            self.logger.error(log_msg, extra={'url': full_url, 'status_code': response.status_code})
+            raise ServiceInvalidResponseException(log_msg, extra={}) from e
+
+    async def get_label_suggestions(self, query: str = '') -> Any | None:
+        """Get label suggestions from Jira.
+
+        Args:
+            query: Search query to filter label suggestions
+
+        Returns:
+            Dictionary with 'suggestions' key containing list of label strings,
+            or None if request fails.
+
+        Note:
+            The API returns XML in the format:
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+            <suggestionListStruct>
+                <token>label1</token>
+                <token>label2</token>
+                ...
+            </suggestionListStruct>
+        """
+
+        # NOTE: (vkhitrin) since this is the only endpoint using `1.0`,
+        #       we will not create a dedicated logic for it.
+        jira_base = self.base_url.rsplit('/rest/api/', 1)[0]
+        full_url = f'{jira_base}/rest/api/1.0/labels/suggest'
+        params = {'query': query} if query else {}
+
+        # Direct client call to avoid method binding issues
+        try:
+            http_response = await self.client.get(full_url, params=params, auth=self.authentication)
+            http_response.raise_for_status()
+            response = http_response.content
+
+        except Exception as e:
+            self.logger.error(f'Failed to get label suggestions: {e}')
+            return None
+
+        if not response:
+            return None
+
+        try:
+            xml_content = response.decode('utf-8') if isinstance(response, bytes) else response
+            root = ET.fromstring(xml_content)
+
+            suggestions = [
+                label.text for label in root.findall('.//suggestions/label') if label.text
+            ]
+            return {'suggestions': suggestions}
+        except (ET.ParseError, AttributeError) as e:
+            self.logger.error(f'Failed to parse XML response from label suggestions API: {e}')
+            return None

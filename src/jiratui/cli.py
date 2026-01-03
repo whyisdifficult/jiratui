@@ -481,12 +481,12 @@ def ui(
         console.print(e)
         sys.exit(1)
     except ValidationError as e:
-        console.print(
-            'There are undefined configuration values. Make sure your config file is correct.'
-        )
+        console.print('Configuration validation error. Make sure your config file is correct.')
         for _e in e.errors():
             if location := _e.get('loc'):
-                console.print(f'Missing or misconfigured setting {location[0]}: {_e.get("msg")}')
+                console.print(f'Configuration error at {location[0]}: {_e.get("msg")}')
+            else:
+                console.print(f'Configuration error: {_e.get("msg")}')
         sys.exit(1)
     JiraApp(
         settings,

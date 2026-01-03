@@ -1948,6 +1948,119 @@ async def test_get_issue_create_meta_with_parameters(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_get_issue_create_meta_with_required_fields(jira_api: JiraAPI):
+    """Test fetching and parsing required fields from create metadata API.
+
+    This test verifies that we can:
+    1. Fetch metadata from /rest/api/3/issue/createmeta endpoint
+    2. Parse required fields from the response
+    3. Identify components as a required field
+    4. Identify custom fields (e.g., customfield_10712) as required
+
+    This is the TDD RED phase - test should fail until parsing logic is implemented.
+    """
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/createmeta/PROJ/issuetypes/10'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json=load_json_response(__file__, 'issue_create_meta_required_fields.json'),
+        )
+    )
+
+    # WHEN
+    result = await jira_api.get_issue_create_meta('PROJ', '10')
+
+    # THEN
+    # Verify the API was called correctly
+    assert route.called
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/createmeta/PROJ/issuetypes/10'
+
+    # Verify response structure
+    assert isinstance(result, dict)
+    assert 'fields' in result
+    assert isinstance(result['fields'], list)
+    assert len(result['fields']) == 5
+
+    # Verify required fields are correctly identified
+    required_fields = [field for field in result['fields'] if field.get('required')]
+    assert len(required_fields) == 3, (
+        'Should have 3 required fields: summary, components, customfield_10712'
+    )
+
+    # Verify components field is required and properly structured
+    components_field = next((f for f in result['fields'] if f['key'] == 'components'), None)
+    assert components_field is not None, 'Components field should be present'
+    assert components_field['required'] is True, 'Components should be marked as required'
+    assert components_field['schema']['type'] == 'array'
+    assert components_field['schema']['items'] == 'component'
+    assert 'allowedValues' in components_field
+
+    # Verify custom field (customfield_10712 / Dev Group) is required
+    custom_field = next((f for f in result['fields'] if f['key'] == 'customfield_10712'), None)
+    assert custom_field is not None, 'Custom field customfield_10712 should be present'
+    assert custom_field['required'] is True, 'Custom field should be marked as required'
+    assert custom_field['name'] == 'Dev Group'
+    assert 'custom' in custom_field['schema'], 'Custom field should have custom schema property'
+    assert custom_field['schema']['customId'] == 10712
+
+    # Verify summary field is required
+    summary_field = next((f for f in result['fields'] if f['key'] == 'summary'), None)
+    assert summary_field is not None, 'Summary field should be present'
+    assert summary_field['required'] is True, 'Summary should be marked as required'
+
+    # Verify non-required fields are correctly identified
+    assignee_field = next((f for f in result['fields'] if f['key'] == 'assignee'), None)
+    assert assignee_field is not None, 'Assignee field should be present'
+    assert assignee_field['required'] is False, 'Assignee should not be required'
+
+    description_field = next((f for f in result['fields'] if f['key'] == 'description'), None)
+    assert description_field is not None, 'Description field should be present'
+    assert description_field['required'] is False, 'Description should not be required'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_parse_required_fields_from_create_meta(jira_api: JiraAPI):
+    """Test parsing helper function that extracts required field names from create metadata.
+
+    This test verifies the parsing logic that will be used by the TUI to:
+    1. Extract field keys/IDs that are marked as required
+    2. Return them in a format suitable for validation before API submission
+
+    This is the TDD RED phase - test will fail because parse_required_fields_from_meta
+    doesn't exist yet. Worker 2 will implement this function.
+    """
+    # Import the parsing function (will fail - function doesn't exist yet)
+    from jiratui.api.utils import parse_required_fields_from_meta
+
+    # GIVEN - mock response with required fields
+    route = respx.get(get_url_pattern('issue/createmeta/PROJ/issuetypes/10'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json=load_json_response(__file__, 'issue_create_meta_required_fields.json'),
+        )
+    )
+
+    # WHEN - fetch metadata and parse required fields
+    metadata = await jira_api.get_issue_create_meta('PROJ', '10')
+    required_fields = parse_required_fields_from_meta(metadata)
+
+    # THEN - verify required fields are correctly extracted
+    assert isinstance(required_fields, list), 'Should return a list of required field keys'
+    assert len(required_fields) == 3, 'Should identify 3 required fields'
+    assert 'summary' in required_fields, 'Summary should be identified as required'
+    assert 'components' in required_fields, 'Components should be identified as required'
+    assert 'customfield_10712' in required_fields, 'Custom field should be identified as required'
+
+    # Verify non-required fields are NOT included
+    assert 'assignee' not in required_fields, 'Assignee should not be in required fields'
+    assert 'description' not in required_fields, 'Description should not be in required fields'
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_delete_attachment(jira_api: JiraAPI):
     # GIVEN
     route = respx.delete(get_url_pattern('attachment/1'))
