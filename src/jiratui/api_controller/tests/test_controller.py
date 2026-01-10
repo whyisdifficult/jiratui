@@ -3313,3 +3313,402 @@ async def test_update_issue_flagged_status_updating_succeeds_without_note(
         '1', {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}
     )
     add_comment_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_integration_success(
+    create_work_item_mock: Mock, jira_api_controller: APIController, caplog
+):
+    """Integration test: Successful issue creation without reporter field.
+
+    Verifies that:
+    - Issue creation succeeds when reporter field is not included
+    - No errors are raised during the full creation flow
+    - Response contains valid work item data
+    """
+    # GIVEN
+    create_work_item_mock.return_value = {
+        'id': '10001',
+        'key': 'TEST-1',
+        'self': 'https://example.atlassian.net/rest/api/3/issue/10001',
+    }
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test issue without reporter field',
+        'issue_type_id': '10001',
+        'description': 'This is a test issue',
+    }
+
+    # WHEN
+    result = await jira_api_controller.create_work_item(data)
+
+    # THEN
+    assert result.success is True
+    assert result.error is None
+    assert result.result is not None
+    assert result.result.id == '10001'
+    assert result.result.key == 'TEST-1'
+
+    # Verify the API was called with correct fields (no reporter)
+    call_args = create_work_item_mock.call_args
+    assert call_args is not None
+    fields = call_args[0][0]  # First positional argument
+    assert 'reporter' not in fields
+    assert fields['project'] == {'key': 'TEST'}
+    assert fields['summary'] == 'Test issue without reporter field'
+
+
+@pytest.mark.asyncio
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_integration_reporter_field_included_when_provided(
+    create_work_item_mock: Mock, jira_api_controller: APIController
+):
+    """Integration test: Reporter field is included when provided.
+
+    Verifies that:
+    - reporter_account_id in input data is properly passed to the API
+    - Users with appropriate privileges can set the reporter
+    - Issue creation succeeds with reporter field
+    - Reporter field is included in the API call
+    """
+    # GIVEN
+    create_work_item_mock.return_value = {
+        'id': '10002',
+        'key': 'TEST-2',
+        'self': 'https://example.atlassian.net/rest/api/3/issue/10002',
+    }
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test issue with reporter field',
+        'issue_type_id': '10001',
+        'description': 'This issue includes reporter_account_id',
+        'reporter_account_id': '5e12345abcdef',
+    }
+
+    # WHEN
+    result = await jira_api_controller.create_work_item(data)
+
+    # THEN
+    assert result.success is True
+    assert result.error is None
+
+    # Verify the API was called WITH reporter field
+    call_args = create_work_item_mock.call_args
+    assert call_args is not None
+    fields = call_args[0][0]
+    assert 'reporter' in fields, 'Reporter field should be sent to API'
+    assert fields['reporter'] == {'id': '5e12345abcdef'}
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_integration_field_validation_error_handling(
+    create_work_item_mock: Mock, jira_api_controller: APIController
+):
+    """Integration test: Enhanced error messages for field validation errors.
+
+    Verifies that:
+    - Field validation errors from Jira API are caught
+    - Error messages are enhanced with user-friendly context
+    - The error response includes actionable information
+    """
+    # GIVEN
+    from jiratui.exceptions import ServiceInvalidRequestException
+
+    # Simulate a field validation error from Jira API
+    error = ServiceInvalidRequestException(
+        "Field 'priority' cannot be set. It is not on the appropriate screen, or unknown."
+    )
+    error.extra = {
+        'errors': {
+            'priority': "Field 'priority' cannot be set. It is not on the appropriate screen, or unknown."
+        },
+        'errorMessages': [],
+    }
+    create_work_item_mock.side_effect = error
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test issue with invalid priority',
+        'issue_type_id': '10001',
+        'priority': '999',  # Invalid priority
+    }
+
+    # WHEN
+    result = await jira_api_controller.create_work_item(data)
+
+    # THEN
+    assert result.success is False
+    assert result.result is None
+    assert result.error is not None
+    # Error should contain the field name and problem description
+    assert 'priority' in result.error.lower()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_integration_multiple_validation_errors(
+    create_work_item_mock: Mock, jira_api_controller: APIController
+):
+    """Integration test: Multiple field validation errors are handled.
+
+    Verifies that:
+    - Multiple validation errors are caught and reported
+    - Error response includes all field-specific errors
+    """
+    # GIVEN
+    from jiratui.exceptions import ServiceInvalidRequestException
+
+    error = ServiceInvalidRequestException('Multiple fields have errors')
+    error.extra = {
+        'errors': {
+            'priority': "Field 'priority' cannot be set.",
+            'customfield_10001': 'Custom field is required.',
+        },
+        'errorMessages': ['Issue type is missing'],
+    }
+    create_work_item_mock.side_effect = error
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test issue with multiple errors',
+        'issue_type_id': '10001',
+    }
+
+    # WHEN
+    result = await jira_api_controller.create_work_item(data)
+
+    # THEN
+    assert result.success is False
+    assert result.result is None
+    assert result.error is not None
+    # Error message should contain indication of validation failure
+    assert len(result.error) > 0
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_integration_full_flow_with_all_fields(
+    create_work_item_mock: Mock, jira_api_controller: APIController
+):
+    """Integration test: Full creation flow with all supported fields including reporter.
+
+    Verifies that:
+    - All supported fields are properly passed through
+    - Reporter field is included when provided
+    - Issue creation completes successfully with all fields
+    """
+    # GIVEN
+    create_work_item_mock.return_value = {
+        'id': '10003',
+        'key': 'TEST-3',
+        'self': 'https://example.atlassian.net/rest/api/3/issue/10003',
+    }
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Complete test issue',
+        'issue_type_id': '10001',
+        'description': 'Full test with all fields',
+        'reporter_account_id': '5e12345abcdef',
+        'assignee_account_id': '5e67890ghijkl',
+        'priority': '2',
+        'parent_key': 'TEST-1',
+    }
+
+    # WHEN
+    result = await jira_api_controller.create_work_item(data)
+
+    # THEN
+    assert result.success is True
+
+    # Verify the API was called with correct fields
+    call_args = create_work_item_mock.call_args
+    assert call_args is not None
+    fields = call_args[0][0]
+
+    # Reporter should be present
+    assert 'reporter' in fields
+    assert fields['reporter'] == {'id': '5e12345abcdef'}
+
+    # Other fields should be present
+    assert fields['project'] == {'key': 'TEST'}
+    assert fields['summary'] == 'Complete test issue'
+    assert fields['issuetype'] == {'id': '10001'}
+    assert fields['assignee'] == {'id': '5e67890ghijkl'}
+    assert fields['priority'] == {'id': '2'}
+    assert fields['parent'] == {'key': 'TEST-1'}
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_issue_create_meta')
+async def test_get_required_fields_for_issue_type_different_cache_keys(
+    get_issue_create_meta_mock,
+    jira_api_controller,
+):
+    """Test that different project/issue type combinations have separate cache entries."""
+    # GIVEN
+    metadata1 = {'fields': [{'key': 'summary', 'required': True}]}
+    metadata2 = {'fields': [{'key': 'description', 'required': True}]}
+    get_issue_create_meta_mock.side_effect = [metadata1, metadata2]
+
+    # WHEN - Different project
+    result1 = await jira_api_controller.get_required_fields_for_issue_type('TEST', '10001')
+    result2 = await jira_api_controller.get_required_fields_for_issue_type('PROJ', '10001')
+
+    # THEN
+    assert result1.result == ['summary']
+    assert result2.result == ['description']
+    assert get_issue_create_meta_mock.call_count == 2
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_issue_create_meta')
+async def test_get_required_fields_for_issue_type_api_error(
+    get_issue_create_meta_mock,
+    jira_api_controller,
+):
+    """Test error handling when API call fails."""
+    # GIVEN
+    get_issue_create_meta_mock.side_effect = Exception('API Error')
+
+    # WHEN
+    result = await jira_api_controller.get_required_fields_for_issue_type('TEST', '10001')
+
+    # THEN
+    assert result.success is False
+    assert 'API Error' in result.error
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_with_dynamic_fields(
+    create_work_item_mock,
+    jira_api_controller,
+):
+    """Test create_work_item with dynamic required fields."""
+    # GIVEN
+    create_work_item_mock.return_value = {'id': '10004', 'key': 'TEST-4'}
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test with dynamic fields',
+        'issue_type_id': '10001',
+    }
+
+    # WHEN - Pass dynamic fields as kwargs
+    result = await jira_api_controller.create_work_item(
+        data,
+        customfield_10712='test value',
+        customfield_10713={'id': '123'},
+    )
+
+    # THEN
+    assert result.success is True
+    call_args = create_work_item_mock.call_args
+    fields = call_args[0][0]
+
+    # Standard fields
+    assert fields['project'] == {'key': 'TEST'}
+    assert fields['summary'] == 'Test with dynamic fields'
+
+    # Dynamic custom fields
+    assert fields['customfield_10712'] == 'test value'
+    assert fields['customfield_10713'] == {'id': '123'}
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_with_components_list_of_ids(
+    create_work_item_mock,
+    jira_api_controller,
+):
+    """Test create_work_item handles components as list of IDs correctly."""
+    # GIVEN
+    create_work_item_mock.return_value = {'id': '10005', 'key': 'TEST-5'}
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test with components',
+        'issue_type_id': '10001',
+    }
+
+    # WHEN - Pass components as list of IDs
+    result = await jira_api_controller.create_work_item(
+        data,
+        components=['10100', '10101'],
+    )
+
+    # THEN
+    assert result.success is True
+    call_args = create_work_item_mock.call_args
+    fields = call_args[0][0]
+
+    # Components should be converted to array of objects
+    assert fields['components'] == [{'id': '10100'}, {'id': '10101'}]
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_with_components_single_id(
+    create_work_item_mock,
+    jira_api_controller,
+):
+    """Test create_work_item handles single component ID correctly."""
+    # GIVEN
+    create_work_item_mock.return_value = {'id': '10006', 'key': 'TEST-6'}
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test with single component',
+        'issue_type_id': '10001',
+    }
+
+    # WHEN - Pass single component ID
+    result = await jira_api_controller.create_work_item(
+        data,
+        components='10100',
+    )
+
+    # THEN
+    assert result.success is True
+    call_args = create_work_item_mock.call_args
+    fields = call_args[0][0]
+
+    # Single component should be converted to array with one object
+    assert fields['components'] == [{'id': '10100'}]
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'create_work_item')
+async def test_create_work_item_with_components_already_formatted(
+    create_work_item_mock,
+    jira_api_controller,
+):
+    """Test create_work_item handles pre-formatted components correctly."""
+    # GIVEN
+    create_work_item_mock.return_value = {'id': '10007', 'key': 'TEST-7'}
+
+    data = {
+        'project_key': 'TEST',
+        'summary': 'Test with pre-formatted components',
+        'issue_type_id': '10001',
+    }
+
+    # WHEN - Pass components already in correct format
+    result = await jira_api_controller.create_work_item(
+        data,
+        components=[{'id': '10100'}, {'id': '10101'}],
+    )
+
+    # THEN
+    assert result.success is True
+    call_args = create_work_item_mock.call_args
+    fields = call_args[0][0]
+
+    # Pre-formatted components should be passed through as-is
+    assert fields['components'] == [{'id': '10100'}, {'id': '10101'}]

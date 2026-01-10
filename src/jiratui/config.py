@@ -165,6 +165,13 @@ class ApplicationConfiguration(BaseSettings):
     update_additional_fields_ignore_ids: list[str] | None = None
     """When `enable_updating_additional_fields = True`, some custom fields and system fields with these ids or keys
     will be ignored and not show in the Details tab and will not be updated."""
+    enable_creating_additional_fields: bool = False
+    """If True the app will allow the user to populate additional optional fields when creating work items.
+    When False (default), only 'duedate' and 'priority' optional fields are shown."""
+    create_additional_fields_ignore_ids: list[str] | None = None
+    """When `enable_creating_additional_fields = True`, optional fields with these IDs will be excluded from rendering.
+    Example: ['customfield_10050', 'customfield_10051']
+    When `enable_creating_additional_fields = False`, this is also used to exclude specific fields from the default set."""
     enable_images_support: bool = True
     """When this is set to `True` JiraTUI will attempt to display images attached to a work item in the Attachments
     tab."""

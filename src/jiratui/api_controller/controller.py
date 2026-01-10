@@ -105,13 +105,13 @@ class APIController:
             )
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)
+        self._required_fields_cache: dict[str, list[str]] = {}
 
     @staticmethod
     def _extract_exception_details(exception: Exception) -> dict:
-        extra: dict = exception.extra or {} if hasattr(exception, 'extra') else {}
-        message = (
-            extra.get('errorMessages', [])[0] if extra.get('errorMessages', []) else str(exception)
-        )
+        extra: dict = getattr(exception, 'extra', {}) or {}
+        error_messages = extra.get('errorMessages', [])
+        message = error_messages[0] if error_messages else str(exception)
         return {'message': message, 'extra': extra}
 
     async def get_project(self, key: str) -> APIControllerResponse:
@@ -139,7 +139,9 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=Project(
-                id=str(response.get('id')), name=response.get('name'), key=response.get('key')
+                id=str(response.get('id', '')),
+                name=response.get('name', ''),
+                key=response.get('key', ''),
             ),
         )
 
@@ -1821,7 +1823,50 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
-    async def create_work_item(self, data: dict) -> APIControllerResponse:
+    async def get_required_fields_for_issue_type(
+        self, project_key: str, issue_type_id: str
+    ) -> APIControllerResponse:
+        """Get required fields for a project and issue type combination.
+
+        Note: Results are cached in memory for the lifetime of the APIController instance.
+        The cache uses '{project_key}:{issue_type_id}' as the key and has no explicit
+        invalidation mechanism.
+
+        Args:
+            project_key: The case-sensitive key of the project.
+            issue_type_id: The ID of the issue type.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of required field keys in the result;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
+        from jiratui.api.utils import parse_required_fields_from_meta
+
+        # Check cache first
+        cache_key = f'{project_key}:{issue_type_id}'
+        if cache_key in self._required_fields_cache:
+            return APIControllerResponse(result=self._required_fields_cache[cache_key])
+
+        # Fetch from API
+        try:
+            metadata = await self.api.get_issue_create_meta(project_key, issue_type_id)
+            required_fields = parse_required_fields_from_meta(metadata)
+            self._required_fields_cache[cache_key] = required_fields
+
+            return APIControllerResponse(result=required_fields)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to get required fields for issue type',
+                extra={
+                    'project_key': project_key,
+                    'issue_type_id': issue_type_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+    async def create_work_item(self, data: dict, **dynamic_fields) -> APIControllerResponse:
         """Creates a work item.
 
         The description field of a work item may be an ADF document or, if API v2 is used then a simple string. This
@@ -1839,13 +1884,27 @@ class APIController:
             item id and key. If an error occurs then  `APIControllerResponse.success == False` and
             `APIControllerResponse.error` indicates the error.
         """
-        fields = {}
+        fields: dict[str, Any] = {}
+
+        # Fetch create metadata to check which fields are available for this project/issue type
+        project_key = data.get('project_key')
+        issue_type_id = data.get('issue_type_id')
+        available_fields: set[str] = set()
+
+        if project_key and issue_type_id:
+            metadata_response = await self.get_issue_create_metadata(project_key, issue_type_id)
+            if metadata_response.success and metadata_response.result:
+                metadata_fields = metadata_response.result.get('fields', [])
+                available_fields = {
+                    field.get('key') for field in metadata_fields if field.get('key')
+                }
 
         if assignee_account_id := data.get('assignee_account_id'):
             fields['assignee'] = {'id': assignee_account_id}
 
         if reporter_account_id := data.get('reporter_account_id'):
-            fields['reporter'] = {'id': reporter_account_id}
+            if not available_fields or 'reporter' in available_fields:
+                fields['reporter'] = {'id': reporter_account_id}
 
         if issue_type_id := data.get('issue_type_id'):
             fields['issuetype'] = {'id': issue_type_id}
@@ -1891,16 +1950,50 @@ class APIController:
                 error='The work item was not created because there are no details to create it.',
             )
 
+        # Process dynamic required fields from **kwargs
+        # Handle special field formats (components, custom fields)
+        for field_key, field_value in dynamic_fields.items():
+            # Special handling for components - needs array of objects with 'id' key
+            if field_key == 'components':
+                if isinstance(field_value, list):
+                    # If it's a list of IDs, convert to proper format
+                    if field_value and isinstance(field_value[0], str):
+                        fields['components'] = [{'id': comp_id} for comp_id in field_value]
+                    else:
+                        # Already in correct format or empty list
+                        fields['components'] = field_value
+                else:
+                    # Single component ID
+                    fields['components'] = [{'id': field_value}]
+            else:
+                # For all other fields (including custom fields), pass as-is
+                # The caller is responsible for proper formatting
+                fields[field_key] = field_value
+
         try:
             result: dict = await self.api.create_work_item(fields)
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
+
+            error_message = exception_details.get('message', str(e))
+
+            if 'cannot be set' in str(e).lower() or (
+                exception_details.get('extra', {}).get('errors')
+                and any(
+                    'cannot be set' in str(err).lower()
+                    for err in exception_details.get('extra', {}).get('errors', {}).values()
+                )
+            ):
+                error_message = (
+                    f'{error_message}. Note: Some fields may not be available based on your '
+                    'project configuration. Check your project screens and field configurations.'
+                )
+
             self.logger.error(
                 'An error occurred while trying to create an item',
                 extra={
                     'error_message': str(e),
                     'assignee_account_id': data.get('assignee_account_id'),
-                    'reporter_account_id': data.get('reporter_account_id'),
                     'issue_type_id': data.get('issue_type_id'),
                     'parent_key': data.get('parent_key'),
                     'project_key': data.get('project_key'),
@@ -1910,7 +2003,7 @@ class APIController:
                     **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=exception_details.get('message'))
+            return APIControllerResponse(success=False, error=error_message)
         return APIControllerResponse(
             result=JiraBaseIssue(id=result.get('id'), key=result.get('key'))
         )
@@ -2396,3 +2489,35 @@ class APIController:
             return APIControllerResponse(
                 result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
             )
+
+    async def get_label_suggestions(self, query: str = '') -> APIControllerResponse:
+        """Get label suggestions from Jira.
+
+        Args:
+            query: Optional query string to filter label suggestions.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of label suggestions and `success = True`.
+            If an error occurs then `success = False` and the error message in the `error` key.
+        """
+        try:
+            response: Any | None = await self.api.get_label_suggestions(query=query)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to get label suggestions',
+                extra={
+                    'query': query,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        if not response or not isinstance(response, dict):
+            return APIControllerResponse(
+                success=False, error='Invalid response from label suggestions API'
+            )
+
+        suggestions = response.get('suggestions', [])
+
+        return APIControllerResponse(result=suggestions)

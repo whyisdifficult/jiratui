@@ -3,18 +3,16 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 from textual.widget import Widget
-from textual.widgets import Select
 
 from jiratui.models import JiraIssue
-from jiratui.widgets.work_item_details.fields import (
-    WorkItemDynamicFieldUpdateDateTimeWidget,
-    WorkItemDynamicFieldUpdateDateWidget,
-    WorkItemDynamicFieldUpdateLabelsWidget,
-    WorkItemDynamicFieldUpdateMultiCheckboxesWidget,
-    WorkItemDynamicFieldUpdateNumericWidget,
-    WorkItemDynamicFieldUpdateSelectionWidget,
-    WorkItemDynamicFieldUpdateTextWidget,
-    WorkItemDynamicFieldUpdateURLWidget,
+from jiratui.widgets.common import (
+    AllowedValuesParser,
+    CustomFieldType,
+    FieldMetadata,
+    FieldMode,
+    LabelsWidget,
+    MultiSelectWidget,
+    WidgetBuilder,
 )
 
 
@@ -33,7 +31,6 @@ class WorkItemManualUpdateFieldKeys(Enum):
     PRIORITY = 'priority'
     FLAGGED = 'flagged'
     TIME_TRACKING = 'timetracking'
-    COMPONENTS = 'components'
 
 
 class WorkItemManualUpdateFieldNames(Enum):
@@ -51,7 +48,6 @@ class WorkItemManualUpdateFieldNames(Enum):
     PRIORITY = 'priority'
     FLAGGED = 'flagged'
     TIME_TRACKING = 'timetracking'
-    COMPONENTS = 'components'
 
 
 class WorkItemUnsupportedUpdateFieldKeys(Enum):
@@ -66,48 +62,47 @@ class WorkItemUnsupportedUpdateFieldKeys(Enum):
     ENVIRONMENT = 'environment'
 
 
-class WorkItemSupportedCustomFieldSchemas(Enum):
-    """The types of custom fields for which the app supports updates."""
-
-    URL = 'com.atlassian.jira.plugin.system.customfieldtypes:url'
-    MULTI_CHECKBOXES = 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes'
-    FLOAT = 'com.atlassian.jira.plugin.system.customfieldtypes:float'
-    SELECT = 'com.atlassian.jira.plugin.system.customfieldtypes:select'
-    DATETIME = 'com.atlassian.jira.plugin.system.customfieldtypes:datetime'
-    TEXT_FIELD = 'com.atlassian.jira.plugin.system.customfieldtypes:textfield'
-    DATE_PICKER = 'com.atlassian.jira.plugin.system.customfieldtypes:datepicker'
-    LABELS = 'com.atlassian.jira.plugin.system.customfieldtypes:labels'
-
-
 def create_dynamic_widgets_for_updating_work_item(
     work_item: JiraIssue,
     skip_fields_ids_or_keys: list[str] | None = None,
+    ignore_filter_ids: list[str] | None = None,
 ) -> list[Widget]:
     """Generates a list of widgets to support updating (some) fields of a work item based on the issue's edit metadata
     and the current values.
 
+    This function now uses the unified widget factory from common.factory_utils to create mode-aware widgets.
+
     Args:
         work_item: the work item details.
-        skip_fields_ids_or_keys: a list of field names or keys to ignore.
+        skip_fields_ids_or_keys: (DEPRECATED) a list of field names or keys to ignore. Use ignore_filter_ids instead.
+        ignore_filter_ids: list of field IDs to ignore/exclude from rendering.
 
     Returns:
         A list of `textual.widget.Widget` instances to support updating fields.
     """
 
-    if not work_item.edit_meta:
-        return []
-
+    # Handle deprecated skip_fields_ids_or_keys parameter
     field_ids_or_keys_to_skip: list[str]
     if skip_fields_ids_or_keys is None:
         field_ids_or_keys_to_skip = []
     else:
         field_ids_or_keys_to_skip = [item.lower() for item in skip_fields_ids_or_keys]
 
-    widgets: list[Widget] = []
+    # Prepare ignore filter
+    ignore_filter_lowercase: set[str] = set()
+    if ignore_filter_ids:
+        ignore_filter_lowercase = {item.lower() for item in ignore_filter_ids}
 
-    for __field_id, field in work_item.edit_meta.get('fields', {}).items():
+    widgets: list[Widget] = []
+    builder = WidgetBuilder()
+
+    # Get fields from edit metadata (if available)
+    edit_meta_fields = work_item.edit_meta.get('fields', {}) if work_item.edit_meta else {}
+
+    for __field_id, field in edit_meta_fields.items():
         field_name = field.get('name', '')
         field_key = field.get('key', '')
+
         # ignore fields that are updated via the static update form
         if field_key and field_key.lower() in [x.value for x in WorkItemManualUpdateFieldKeys]:
             continue
@@ -119,7 +114,7 @@ def create_dynamic_widgets_for_updating_work_item(
         if field_key and field_key.lower() in [x.value for x in WorkItemUnsupportedUpdateFieldKeys]:
             continue
 
-        # ignore fields as requested by the app configuration
+        # ignore fields as requested by the app configuration (DEPRECATED)
         if __field_id.lower() in field_ids_or_keys_to_skip:
             continue
         if field_name and field_name.lower() in field_ids_or_keys_to_skip:
@@ -129,169 +124,235 @@ def create_dynamic_widgets_for_updating_work_item(
         if field.get('fieldId') and field.get('fieldId').lower() in field_ids_or_keys_to_skip:
             continue
 
+        # Apply ignore filter
+        field_identifiers = {__field_id.lower()}
+        if field_name:
+            field_identifiers.add(field_name.lower())
+        if field_key:
+            field_identifiers.add(field_key.lower())
+        if field.get('fieldId'):
+            field_identifiers.add(field.get('fieldId').lower())
+
+        # Ignore mode: skip fields in the ignore list
+        if ignore_filter_lowercase and any(
+            fid in ignore_filter_lowercase for fid in field_identifiers
+        ):
+            continue
+
         if not (schema := field.get('schema')):
             continue
 
-        # exclude custom fields whose schema is not one of the schemas supported by the app
-        if schema_custom_type := schema.get('custom'):
-            if schema_custom_type.lower() not in [
-                custom_type.value for custom_type in WorkItemSupportedCustomFieldSchemas
-            ]:
-                continue
-
-        # exclude fields by type; fields of type array allow multiple values at the same time. This requires special
-        # treatment via a custom widget to make it easier/nicer in the UI
-        # if schema.get('type', '') == 'array':
-        #     continue
+        schema_custom_type = schema.get('custom')
 
         widget: Widget | None = None
 
-        # determine if the widget's value can be updated based on the operations supported by the field
-        operations = field.get('operations', [])
-        field_supports_update = (
-            'set' in operations
-            or 'add' in operations
-            or 'edit' in operations
-            or 'remove' in operations
-        )
+        # Parse field metadata using the unified FieldMetadata class
+        metadata = FieldMetadata(field)
+        metadata.field_id = __field_id  # Override with the actual field ID
 
         value: Any
         if schema_custom_type:
             # process custom fields based on the schema custom type
-            if schema_custom_type == WorkItemSupportedCustomFieldSchemas.FLOAT.value:
-                if __field_id in work_item.get_custom_fields():
-                    # get the current value of the field from the issue's custom field data
-                    if (value := work_item.get_custom_field_value(__field_id)) is not None:
-                        value = str(value)
-                    widget = WorkItemDynamicFieldUpdateNumericWidget(
-                        jira_field_key=__field_id,
-                        value=value,
-                        field_supports_update=field_supports_update,
-                        original_value=value,
-                    )
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.DATE_PICKER.value:
+            if schema_custom_type == CustomFieldType.FLOAT.value:
                 if __field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
                     value = work_item.get_custom_field_value(__field_id)
-                    widget = WorkItemDynamicFieldUpdateDateWidget(
-                        jira_field_key=__field_id,
-                        value=value if value is not None else '',
-                        field_supports_update=field_supports_update,
-                        original_value=value if value is not None else '',
+                    widget = builder.build_numeric(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
-                    if field.get('required'):
-                        widget.valid_empty = False
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.DATETIME.value:
+            elif schema_custom_type == CustomFieldType.DATE_PICKER.value:
+                if __field_id in work_item.get_custom_fields():
+                    # get the current value of the field from the issue's custom field data
+                    value = work_item.get_custom_field_value(__field_id)
+                    widget = builder.build_date(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
+                    )
+            elif schema_custom_type == CustomFieldType.DATETIME.value:
                 if __field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
                     if value := work_item.get_custom_field_value(__field_id):
                         value = isoparse(value).strftime('%Y-%m-%d %H:%M:%S')
-                    widget = WorkItemDynamicFieldUpdateDateTimeWidget(
-                        jira_field_key=__field_id,
-                        value=value if value is not None else '',
-                        field_supports_update=field_supports_update,
-                        original_value=value if value is not None else '',
+                    widget = builder.build_datetime(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
-                    if field.get('required'):
-                        widget.valid_empty = False
 
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.SELECT.value:
+            elif schema_custom_type == CustomFieldType.SELECT.value:
                 # fields of type option allow a single value from a list of options
                 if allowed_values := field.get('allowedValues'):
-                    options: list[tuple[str, str]] = []
-                    for value in allowed_values:
-                        if not (display_value := value.get('name')):
-                            display_value = value.get('value')
-                        options.append((display_value, value.get('id')))
-
+                    options = AllowedValuesParser.parse_options(allowed_values)
                     # get the current value of the field
                     value = work_item.get_custom_field_value(__field_id)
-                    widget = WorkItemDynamicFieldUpdateSelectionWidget(
+                    widget = builder.build_selection(
+                        mode=FieldMode.UPDATE,
+                        metadata=metadata,
                         options=options,
-                        value=value.get('id') if value is not None else Select.BLANK,
-                        jira_field_key=__field_id,
-                        allow_blank=not field.get('required'),
-                        prompt=f'Select {field.get("name")}',
-                        field_supports_update=field_supports_update,
-                        original_value=value.get('id') if value is not None else None,
+                        current_value=value,
                     )
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.URL.value:
+            elif schema_custom_type == CustomFieldType.URL.value:
                 if __field_id in work_item.get_custom_fields():
                     # get the current value of the field
                     if (value := work_item.get_custom_field_value(__field_id)) is None:
                         value = ''
-                    widget = WorkItemDynamicFieldUpdateURLWidget(
-                        jira_field_key=__field_id,
-                        value=value,
-                        field_supports_update=field_supports_update,
-                        original_value=value,
+                    widget = builder.build_url(
+                        mode=FieldMode.UPDATE,
+                        metadata=metadata,
+                        current_value=value,
                     )
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.MULTI_CHECKBOXES.value:
+            elif schema_custom_type == CustomFieldType.MULTI_CHECKBOXES.value:
                 # get the current value of the field
                 if (value := work_item.get_custom_field_value(field_key)) is None:
                     value = []
-                widget = WorkItemDynamicFieldUpdateMultiCheckboxesWidget(
-                    jira_field_key=__field_id,
-                    field_title=field.get('name'),
-                    field_supports_update=field_supports_update,
-                    allowed_values=field.get('allowedValues', []),
-                    current_value=value,
-                    original_value=value,
+
+                # Convert value to list of IDs for multi-select widget
+                current_ids = []
+                if value:
+                    for item in value:
+                        if isinstance(item, dict) and 'id' in item:
+                            current_ids.append(item['id'])
+                        elif hasattr(item, 'id'):
+                            current_ids.append(item.id)
+
+                # Parse options from allowedValues
+                options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
+
+                widget = MultiSelectWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=__field_id,
+                    options=options,
+                    title=field.get('name'),
+                    required=field.get('required', False),
+                    original_value=current_ids,
+                    field_supports_update=metadata.supports_update,
                 )
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.TEXT_FIELD.value:
+            elif schema_custom_type == CustomFieldType.TEXT_FIELD.value:
                 if __field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
                     value = work_item.get_custom_field_value(__field_id)
-                    widget = WorkItemDynamicFieldUpdateTextWidget(
-                        jira_field_key=__field_id,
-                        value=value or '',
-                        field_supports_update=field_supports_update,
-                        original_value=value or '',
+                    widget = builder.build_text(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
-            elif schema_custom_type == WorkItemSupportedCustomFieldSchemas.LABELS.value:
+            elif schema_custom_type == CustomFieldType.LABELS.value:
                 # get the current value of the field
                 if (value := work_item.get_custom_field_value(__field_id)) is None:
                     value = []
-                widget = WorkItemDynamicFieldUpdateLabelsWidget(
-                    jira_field_key=__field_id,
-                    field_supports_update=field_supports_update,
-                    value=','.join(value),
+                widget = LabelsWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=__field_id,
+                    title=field.get('name'),
                     original_value=value,
+                    supports_update=metadata.supports_update,
                 )
+            elif schema_custom_type == CustomFieldType.USER_PICKER.value:
+                # get the current value of the field
+                current_user = work_item.get_custom_field_value(__field_id)
+                widget = builder.build_user_picker(
+                    mode=FieldMode.UPDATE, metadata=metadata, current_value=current_user
+                )
+            elif schema_custom_type == CustomFieldType.MULTI_SELECT.value:
+                # Multi-select field - similar to multi-checkboxes but different widget type
+                if (value := work_item.get_custom_field_value(field_key)) is None:
+                    value = []
+
+                # Convert value to list of IDs for multi-select widget
+                current_ids = []
+                if value:
+                    for item in value:
+                        if isinstance(item, dict) and 'id' in item:
+                            current_ids.append(item['id'])
+                        elif hasattr(item, 'id'):
+                            current_ids.append(item.id)
+
+                # Parse options from allowedValues
+                options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
+
+                widget = MultiSelectWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=__field_id,
+                    options=options,
+                    title=field.get('name'),
+                    required=field.get('required', False),
+                    original_value=current_ids,
+                    field_supports_update=metadata.supports_update,
+                )
+            elif schema_custom_type == CustomFieldType.TEXTAREA.value:
+                # Textarea fields are read-only and not supported for updates
+                # Skip creating a widget for this field type
+                pass
+            elif schema_custom_type == CustomFieldType.SD_REQUEST_LANGUAGE.value:
+                # Service Desk request language picker - treated as a select field
+                if __field_id in work_item.get_custom_fields():
+                    value = work_item.get_custom_field_value(__field_id)
+
+                    # Extract the language code if it's a dict with 'languageCode' key
+                    if value and isinstance(value, dict) and 'languageCode' in value:
+                        value = value['languageCode']
+
+                    # Parse options from allowedValues if available
+                    options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
+
+                    widget = builder.build_selection(
+                        mode=FieldMode.UPDATE,
+                        metadata=metadata,
+                        options=options,
+                        current_value=value,
+                    )
         else:
             # process the non-custom fields based on the schema type
             if schema.get('type', '').lower() == 'number':
                 if __field_id in work_item.get_additional_fields():
                     # get the current value of the field from the issue's additional fields
-                    if (value := work_item.get_additional_field_value(__field_id)) is not None:
-                        value = str(value)
-                    widget = WorkItemDynamicFieldUpdateNumericWidget(
-                        jira_field_key=__field_id,
-                        value=value,
-                        field_supports_update=field_supports_update,
-                        original_value=value,
+                    value = work_item.get_additional_field_value(__field_id)
+                    widget = builder.build_numeric(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
             elif schema.get('type', '').lower() == 'date':
                 if __field_id in work_item.get_additional_fields():
                     # get the current value of the field from the issue's custom field data
                     value = work_item.get_additional_field_value(__field_id)
-                    widget = WorkItemDynamicFieldUpdateDateWidget(
-                        jira_field_key=__field_id,
-                        value=value if value is not None else '',
-                        field_supports_update=field_supports_update,
-                        original_value=value if value is not None else '',
+                    widget = builder.build_date(
+                        mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
-                    if field.get('required'):
-                        widget.valid_empty = False
+            elif schema.get('type', '').lower() == 'array' and field.get('allowedValues'):
+                # Handle non-custom array fields with allowedValues (like components)
+                # Use native SelectionList widget for multi-select support
+                # Check if field_key is a direct attribute on work_item (like 'components')
+                if hasattr(work_item, field_key) and field_key:
+                    value = getattr(work_item, field_key)
+                elif __field_id in work_item.get_additional_fields():
+                    value = work_item.get_additional_field_value(__field_id)
+                else:
+                    value = None
+
+                # Convert value to list of IDs for multi-select widget
+                current_ids = []
+                if value:
+                    for item in value:
+                        if isinstance(item, dict) and 'id' in item:
+                            current_ids.append(item['id'])
+                        elif hasattr(item, 'id'):
+                            current_ids.append(item.id)
+
+                # Parse options from allowedValues
+                options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
+
+                widget = MultiSelectWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=__field_id,
+                    options=options,
+                    title=field.get('name'),
+                    required=field.get('required', False),
+                    original_value=current_ids,
+                    field_supports_update=metadata.supports_update,
+                )
 
         if widget:
             widget.border_title = field.get('name').title()
-            widget.tooltip = (
-                f'{widget.border_title} (Tip: to ignore use the field key: {field_key})'
-            )
+            if __field_id.startswith('customfield'):
+                widget.tooltip = f'{widget.border_title} (Tip: to ignore use id: {__field_id})'
             if field.get('required'):
                 widget.add_class('required')
                 widget.border_subtitle = '(*)'
 
             widgets.append(widget)
+
     return widgets

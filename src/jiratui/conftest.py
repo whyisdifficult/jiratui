@@ -45,6 +45,8 @@ def config_for_testing() -> ApplicationConfiguration:
         search_on_startup=False,
         enable_updating_additional_fields=False,
         update_additional_fields_ignore_ids=None,
+        enable_creating_additional_fields=False,
+        create_additional_fields_ignore_ids=None,
     )
     return config_mock
 
@@ -72,6 +74,8 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         ssl=None,
         enable_updating_additional_fields=False,
         update_additional_fields_ignore_ids=None,
+        enable_creating_additional_fields=False,
+        create_additional_fields_ignore_ids=None,
     )
     return config_mock
 
@@ -159,6 +163,8 @@ def app() -> JiraApp:
         search_on_startup=False,
         enable_updating_additional_fields=False,
         update_additional_fields_ignore_ids=None,
+        enable_creating_additional_fields=False,
+        create_additional_fields_ignore_ids=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
