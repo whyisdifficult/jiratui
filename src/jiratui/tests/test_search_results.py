@@ -24,6 +24,7 @@ def app() -> JiraApp:
         cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
+        active_sprint_on_startup=False,
         jira_account_id=None,
         jira_user_group_id='qwerty',
         tui_title=None,

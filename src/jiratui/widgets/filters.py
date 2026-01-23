@@ -196,11 +196,11 @@ class OrderByWidget(Select):
 class ActiveSprintCheckbox(Checkbox):
     HELP = 'See Search by Active Sprint section in the help'
 
-    def __init__(self):
+    def __init__(self, value: bool = False):
         super().__init__(
             id='active-sprint-checkbox',
             label='Active Sprint',
-            value=False,
+            value=value,
             classes='active-sprint-checkbox',
         )
         self.border_subtitle = '(v)'

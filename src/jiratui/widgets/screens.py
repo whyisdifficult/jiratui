@@ -385,7 +385,7 @@ class MainScreen(Screen):
                     WorkItemsSearchOrderBy.to_choices(),
                     initial_value=CONFIGURATION.get().search_results_default_order.value,
                 )
-                yield ActiveSprintCheckbox()
+                yield ActiveSprintCheckbox(value=CONFIGURATION.get().active_sprint_on_startup)
                 yield JQLSearchWidget()
                 yield Button(
                     'Search',
