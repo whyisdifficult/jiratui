@@ -1,6 +1,16 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
+
+
+@pytest.fixture()
+def mock_configuration():
+    with patch('jiratui.config.CONFIGURATION') as mock_config_var:
+        mock_config = MagicMock()
+        mock_config_var.get.return_value = mock_config
+        yield mock_config
 
 
 @pytest.mark.parametrize(
@@ -13,7 +23,26 @@ from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_
         ('other', ''),
     ],
 )
-def test_get_style_for_work_item_status(status_name, expected_result):
+def test_get_style_for_work_item_status(mock_configuration, status_name, expected_result):
+    mock_configuration.work_item_status_styles = None
+    result = get_style_for_work_item_status(status_name)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    'custom_styles, status_name, expected_result',
+    [
+        ({'done': 'bright_green'}, 'done', 'bright_green'),  # custom overrides default
+        ({'blocked': 'red'}, 'blocked', 'red'),  # custom adds new status
+        ({'blocked': 'red'}, 'done', 'green'),  # default preserved when not overridden
+        (None, 'done', 'green'),  # fallback to defaults when config is None
+        ({'blocked': 'red'}, 'unknown_status', ''),  # unknown returns empty string
+    ],
+)
+def test_get_style_for_work_item_status_with_custom_config(
+    mock_configuration, custom_styles, status_name, expected_result
+):
+    mock_configuration.work_item_status_styles = custom_styles
     result = get_style_for_work_item_status(status_name)
     assert result == expected_result
 

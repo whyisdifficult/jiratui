@@ -168,6 +168,17 @@ class ApplicationConfiguration(BaseSettings):
     enable_images_support: bool = True
     """When this is set to `True` JiraTUI will attempt to display images attached to a work item in the Attachments
     tab."""
+    work_item_status_styles: dict[str, str] | None = None
+    """Custom color mappings for work item statuses. Keys are lowercase status names,
+    values are color names (e.g., 'green', 'blue') or hex codes (e.g., '#FF0000').
+    These merge with built-in defaults.
+
+    Example:
+      work_item_status_styles:
+        closed: green
+        development: blue
+        blocked: '#FF0000'
+    """
 
     model_config = SettingsConfigDict(
         extra='allow',

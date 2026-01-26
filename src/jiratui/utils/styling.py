@@ -21,7 +21,10 @@ def get_style_for_work_item_status(status_name: str) -> str:
     Returns:
         A color name or CSS-style definition; e.g. #FF0000 or 'red'
     """
-    return WORK_ITEM_STATUS_STYLES.get(status_name, '') or ''
+    from jiratui.config import CONFIGURATION
+
+    custom_styles = CONFIGURATION.get().work_item_status_styles or {}
+    return custom_styles.get(status_name, WORK_ITEM_STATUS_STYLES.get(status_name, ''))
 
 
 def get_style_for_work_item_type(status_name: str) -> str:
