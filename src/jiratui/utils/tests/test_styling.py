@@ -7,7 +7,7 @@ from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_
 
 @pytest.fixture()
 def mock_configuration():
-    with patch('jiratui.config.CONFIGURATION') as mock_config_var:
+    with patch('jiratui.utils.styling.CONFIGURATION') as mock_config_var:
         mock_config = MagicMock()
         mock_config_var.get.return_value = mock_config
         yield mock_config
@@ -48,7 +48,7 @@ def test_get_style_for_work_item_status_with_custom_config(
 
 
 @pytest.mark.parametrize(
-    'status_name, expected_result',
+    'type_name, expected_result',
     [
         ('bug', 'red'),
         ('epic', 'yellow'),
@@ -56,6 +56,25 @@ def test_get_style_for_work_item_status_with_custom_config(
         ('other', ''),
     ],
 )
-def test_get_style_for_work_item_type(status_name, expected_result):
-    result = get_style_for_work_item_type(status_name)
+def test_get_style_for_work_item_type(mock_configuration, type_name, expected_result):
+    mock_configuration.work_item_type_styles = None
+    result = get_style_for_work_item_type(type_name)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    'custom_styles, type_name, expected_result',
+    [
+        ({'bug': 'bright_red'}, 'bug', 'bright_red'),  # custom overrides default
+        ({'story': 'cyan'}, 'story', 'cyan'),  # custom adds new type
+        ({'story': 'cyan'}, 'bug', 'red'),  # default preserved when not overridden
+        (None, 'bug', 'red'),  # fallback to defaults when config is None
+        ({'story': 'cyan'}, 'unknown_type', ''),  # unknown returns empty string
+    ],
+)
+def test_get_style_for_work_item_type_with_custom_config(
+    mock_configuration, custom_styles, type_name, expected_result
+):
+    mock_configuration.work_item_type_styles = custom_styles
+    result = get_style_for_work_item_type(type_name)
     assert result == expected_result

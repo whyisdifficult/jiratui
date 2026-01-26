@@ -179,6 +179,16 @@ class ApplicationConfiguration(BaseSettings):
         development: blue
         blocked: '#FF0000'
     """
+    work_item_type_styles: dict[str, str] | None = None
+    """Custom color mappings for work item types. Keys are lowercase type names,
+    values are color names (e.g., 'green', 'blue') or hex codes (e.g., '#FF0000').
+    These merge with built-in defaults.
+
+    Example:
+      work_item_type_styles:
+        epic: dark_orange
+        story: '#FF8888'
+    """
 
     model_config = SettingsConfigDict(
         extra='allow',
