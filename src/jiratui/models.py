@@ -6,7 +6,15 @@ import enum
 from enum import Enum
 from typing import Any
 
-from jiratui.utils.adf2md.adf2md import adf2md
+from atlas_doc_parser.api import parse_node
+
+from jiratui.utils.adf_helpers import (
+    extract_mention_references,
+    fix_adf_text_with_marks,
+    fix_codeblock_in_list,
+    format_mention_as_link,
+    replace_media_with_text,
+)
 
 
 def custom_as_dict_factory(data) -> dict:
@@ -162,29 +170,42 @@ class IssueComment(BaseModel):
     body: dict | str | None = None
 
     def short_metadata(self) -> str:
-        if self.update_author:
-            return (
-                f'{datetime.strftime(self.created, "%Y-%m-%d %H:%M")} - {self.author.display_name}'
-            )
-        return datetime.strftime(self.created, '%Y-%m-%d %H:%M')
+        if self.update_author and self.created:
+            return f'{self.created.strftime("%Y-%m-%d %H:%M")} - {self.author.display_name}'
+        return self.created.strftime('%Y-%m-%d %H:%M') if self.created else ''
 
     def updated_on(self) -> str:
         if not self.update_author:
-            return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
-        return f'{datetime.strftime(self.updated, "%Y-%m-%d %H:%M")} by {self.update_author.display_name}'
+            return self.updated.strftime('%Y-%m-%d %H:%M') if self.updated else ''
+        return (
+            f'{self.updated.strftime("%Y-%m-%d %H:%M")} by {self.update_author.display_name}'
+            if self.updated
+            else ''
+        )
 
     def created_on(self) -> str:
-        return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
+        return self.updated.strftime('%Y-%m-%d %H:%M') if self.updated else ''
 
-    def get_body(self) -> str:
+    def get_body(self, base_url: str | None = None) -> str:
         if not self.body:
             return ''
         if isinstance(self.body, str):
             return self.body.strip()
-        try:
-            return adf2md(self.body)
-        except Exception:
-            return ''
+
+        # Pre-process ADF: replace mediaSingle with inline text, fix strong/em marks, fix codeblocks in lists
+        fixed_body = replace_media_with_text(self.body)
+        fixed_body = fix_adf_text_with_marks(fixed_body)
+        fixed_body = fix_codeblock_in_list(fixed_body)
+        markdown = parse_node(fixed_body).to_markdown(ignore_error=True)
+
+        # Post-process mentions: replace plain @Name with [@Name](url)
+        mentions = extract_mention_references(self.body)
+        for mention in mentions:
+            plain_text = mention['text']
+            link_text = format_mention_as_link(mention, base_url)
+            markdown = markdown.replace(plain_text, link_text)
+
+        return markdown
 
 
 @dataclass
@@ -396,7 +417,7 @@ class JiraIssue(JiraBaseIssue):
     @property
     def display_due_date(self) -> str:
         if self.due_date:
-            return datetime.strftime(self.due_date, '%Y-%m-%d')
+            return self.due_date.strftime('%Y-%m-%d')
         return ''
 
     @property
@@ -470,15 +491,26 @@ class JiraIssue(JiraBaseIssue):
             return {}
         return self.additional_fields
 
-    def get_description(self) -> str:
+    def get_description(self, base_url: str | None = None) -> str:
         if not self.description:
             return ''
         if isinstance(self.description, str):
             return self.description.strip()
-        try:
-            return adf2md(self.description)
-        except Exception:
-            return ''
+
+        # Pre-process ADF: replace mediaSingle with inline text, fix strong/em marks, fix codeblocks in lists
+        fixed_description = replace_media_with_text(self.description)
+        fixed_description = fix_adf_text_with_marks(fixed_description)
+        fixed_description = fix_codeblock_in_list(fixed_description)
+        markdown = parse_node(fixed_description).to_markdown(ignore_error=True)
+
+        # Post-process mentions: replace plain @Name with [@Name](url)
+        mentions = extract_mention_references(self.description)
+        for mention in mentions:
+            plain_text = mention['text']
+            link_text = format_mention_as_link(mention, base_url)
+            markdown = markdown.replace(plain_text, link_text)
+
+        return markdown
 
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'
@@ -721,20 +753,23 @@ class JiraWorklog(BaseModel):
     def display(self) -> str:
         if self.author:
             if self.updated:
-                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(self.updated, "%Y-%m-%d %H:%M")}'
+                return f'{self.author.display_user} logged {self.time_spent} on {self.updated.strftime("%Y-%m-%d %H:%M")}'
             else:
                 return f'{self.author.display_user} logged {self.time_spent}'
         else:
             if self.updated:
-                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(self.updated, "%Y-%m-%d %H:%M")}'
+                return f'Logged {self.time_spent} on {self.updated.strftime("%Y-%m-%d %H:%M")}'
             else:
-                return f'{self.author.display_user} logged {self.time_spent}'
+                return f'Logged {self.time_spent}'
 
-    def get_comment(self) -> str:
+    def get_comment(self, base_url: str | None = None) -> str:
         """Gets the value of the worklog's comment.
 
         Jira DC API uses strings instead of ADF. In these cases we simply return the string value. For Jira Cloud API
         the value of the comment is an ADF dictionary and, in these cases we need to convert it to Markdown.
+
+        Args:
+            base_url: Optional base URL of Jira instance for formatting mentions as links
 
         Returns:
             A string representation of the worklog's description.
@@ -743,10 +778,20 @@ class JiraWorklog(BaseModel):
             return ''
         if isinstance(self.comment, str):
             return self.comment.strip()
-        try:
-            return adf2md(self.comment)
-        except Exception:
-            return ''
+        # Pre-process ADF: replace mediaSingle with inline text, fix strong/em marks, fix codeblocks in lists
+        fixed_comment = replace_media_with_text(self.comment)
+        fixed_comment = fix_adf_text_with_marks(fixed_comment)
+        fixed_comment = fix_codeblock_in_list(fixed_comment)
+        markdown = parse_node(fixed_comment).to_markdown(ignore_error=True)
+
+        # Post-process mentions: replace plain @Name with [@Name](url)
+        mentions = extract_mention_references(self.comment)
+        for mention in mentions:
+            plain_text = mention['text']
+            link_text = format_mention_as_link(mention, base_url)
+            markdown = markdown.replace(plain_text, link_text)
+
+        return markdown
 
 
 @dataclass
