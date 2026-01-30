@@ -1,6 +1,7 @@
 <style>
 .wy-nav-content{ max-width: 100%;}
 </style>
+
 # Settings
 
 The following table describe all the configuration options you can set for the application. All the settings can be set
@@ -53,6 +54,7 @@ file in the following way:
 | `enable_advanced_full_text_search`                  | `bool`             | No                | `True`                                | If `True` full-text search works on any text-based Jira field; otherwise it searches only on summary and description.                                                                                                                                                            |
 | `cloud`                                             | `bool`             | No                | `True`                                | Set this to False if you are using Jira Data Center (aka. on-premises)                                                                                                                                                                                                           |
 | `use_bearer_authentication`                         | `bool`             | No                | `False`                               | Set this to True if your Jira instance uses Bearer authentication instead of Basic authentication.                                                                                                                                                                               |
+| `use_cert_authentication`                         | `bool`             | No                | `False`                               | Set this to True if your Jira instance uses certificate-based authentication instead of Bearer authentication or Basic authentication. |
 | `search_results_default_order`                      | `str`              | No                | `WorkItemsSearchOrderBy.CREATED_DESC` | The default order for search results.                                                                                                                                                                                                                                            |
 | `ssl`                                               | `SSLConfiguration` | No                | `None`                                | The settings for SSL.                                                                                                                                                                                                                                                            |
 | `git_repositories`                                  | `dict`             | No                | `None`                                | Configure the Git repos that are available for creating branches from the UI. [See Setting Git Repositories](configuration.md#setting-git-repositories)                                                                                                                          |
