@@ -72,6 +72,9 @@ class ApplicationConfiguration(BaseSettings):
     default_project_key_or_id: str | None = None
     """A case-sensitive string that identifies a Jira project. If set then the app will use is as the default selected
     project in the projects dropdown and will only fetch this project from your Jira instance."""
+    active_sprint_on_startup: bool = False
+    """If True, the Active Sprint checkbox will be enabled by default when the application starts, filtering search
+    results to show only work items in the currently active sprint."""
     custom_field_id_sprint: str | None = None
     """The name of the custom field used by your Jira application to identify the sprints. Example: customfield_12345"""
     fetch_attachments_on_delete: bool = True
