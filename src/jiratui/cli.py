@@ -476,7 +476,9 @@ def ui(
 
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
-        settings.search_on_startup = search_on_startup
+        # Only override config file value if CLI flag is explicitly set to True
+        if search_on_startup:
+            settings.search_on_startup = search_on_startup
     except FileNotFoundError as e:
         console.print(e)
         sys.exit(1)
