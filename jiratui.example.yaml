@@ -15,3 +15,11 @@ pre_defined_jql_expressions:
     label: "Work in the current sprint"
     expression: 'sprint in openSprints()'
 jql_expression_id_for_work_items_search: 1
+styling:
+  work_item_status_colors:
+    closed: green
+    development: blue
+    blocked: '#FF0000'
+  work_item_type_colors:
+    epic: dark_orange
+    story: '#FF8888'

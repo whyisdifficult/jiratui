@@ -23,8 +23,9 @@ def get_style_for_work_item_status(status_name: str) -> str:
     Returns:
         A color name or CSS-style definition; e.g. #FF0000 or 'red'
     """
-    custom_styles = CONFIGURATION.get().work_item_status_styles or {}
-    return custom_styles.get(status_name, WORK_ITEM_STATUS_STYLES.get(status_name, ''))
+    styling = CONFIGURATION.get().styling
+    custom_colors = styling.work_item_status_colors if styling else None
+    return (custom_colors or {}).get(status_name, WORK_ITEM_STATUS_STYLES.get(status_name, ''))
 
 
 def get_style_for_work_item_type(type_name: str) -> str:
@@ -36,5 +37,6 @@ def get_style_for_work_item_type(type_name: str) -> str:
     Returns:
         A color name or CSS-style definition; e.g. #FF0000 or 'red'
     """
-    custom_styles = CONFIGURATION.get().work_item_type_styles or {}
-    return custom_styles.get(type_name, WORK_ITEM_TYPE_STYLES.get(type_name, ''))
+    styling = CONFIGURATION.get().styling
+    custom_colors = styling.work_item_type_colors if styling else None
+    return (custom_colors or {}).get(type_name, WORK_ITEM_TYPE_STYLES.get(type_name, ''))

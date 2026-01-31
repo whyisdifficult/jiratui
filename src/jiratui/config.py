@@ -34,6 +34,18 @@ class SSLConfiguration(BaseModel):
     """The password for the key file."""
 
 
+class StylingConfiguration(BaseModel):
+    """Configuration for styling components."""
+
+    work_item_status_colors: dict[str, str] | None = None
+    """Color definitions for displaying the status of work items in the search results.
+    Keys are lowercase status names, values are color names or hex codes."""
+
+    work_item_type_colors: dict[str, str] | None = None
+    """Color definitions for displaying the type of work items in the search results.
+    Keys are lowercase type names, values are color names or hex codes."""
+
+
 class ApplicationConfiguration(BaseSettings):
     """The configuration for the JiraTUI application and CLI tool."""
 
@@ -168,27 +180,8 @@ class ApplicationConfiguration(BaseSettings):
     enable_images_support: bool = True
     """When this is set to `True` JiraTUI will attempt to display images attached to a work item in the Attachments
     tab."""
-    work_item_status_styles: dict[str, str] | None = None
-    """Custom color mappings for work item statuses. Keys are lowercase status names,
-    values are color names (e.g., 'green', 'blue') or hex codes (e.g., '#FF0000').
-    These merge with built-in defaults.
-
-    Example:
-      work_item_status_styles:
-        closed: green
-        development: blue
-        blocked: '#FF0000'
-    """
-    work_item_type_styles: dict[str, str] | None = None
-    """Custom color mappings for work item types. Keys are lowercase type names,
-    values are color names (e.g., 'green', 'blue') or hex codes (e.g., '#FF0000').
-    These merge with built-in defaults.
-
-    Example:
-      work_item_type_styles:
-        epic: dark_orange
-        story: '#FF8888'
-    """
+    styling: StylingConfiguration = Field(default_factory=StylingConfiguration)
+    """Configuration for styling components like work item status and type colors."""
 
     model_config = SettingsConfigDict(
         extra='allow',

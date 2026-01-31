@@ -9,8 +9,10 @@ from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_
 def mock_configuration():
     with patch('jiratui.utils.styling.CONFIGURATION') as mock_config_var:
         mock_config = MagicMock()
+        mock_styling = MagicMock()
+        mock_config.styling = mock_styling
         mock_config_var.get.return_value = mock_config
-        yield mock_config
+        yield mock_styling
 
 
 @pytest.mark.parametrize(
@@ -24,13 +26,13 @@ def mock_configuration():
     ],
 )
 def test_get_style_for_work_item_status(mock_configuration, status_name, expected_result):
-    mock_configuration.work_item_status_styles = None
+    mock_configuration.work_item_status_colors = None
     result = get_style_for_work_item_status(status_name)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'custom_styles, status_name, expected_result',
+    'custom_colors, status_name, expected_result',
     [
         ({'done': 'bright_green'}, 'done', 'bright_green'),  # custom overrides default
         ({'blocked': 'red'}, 'blocked', 'red'),  # custom adds new status
@@ -40,9 +42,9 @@ def test_get_style_for_work_item_status(mock_configuration, status_name, expecte
     ],
 )
 def test_get_style_for_work_item_status_with_custom_config(
-    mock_configuration, custom_styles, status_name, expected_result
+    mock_configuration, custom_colors, status_name, expected_result
 ):
-    mock_configuration.work_item_status_styles = custom_styles
+    mock_configuration.work_item_status_colors = custom_colors
     result = get_style_for_work_item_status(status_name)
     assert result == expected_result
 
@@ -57,13 +59,13 @@ def test_get_style_for_work_item_status_with_custom_config(
     ],
 )
 def test_get_style_for_work_item_type(mock_configuration, type_name, expected_result):
-    mock_configuration.work_item_type_styles = None
+    mock_configuration.work_item_type_colors = None
     result = get_style_for_work_item_type(type_name)
     assert result == expected_result
 
 
 @pytest.mark.parametrize(
-    'custom_styles, type_name, expected_result',
+    'custom_colors, type_name, expected_result',
     [
         ({'bug': 'bright_red'}, 'bug', 'bright_red'),  # custom overrides default
         ({'story': 'cyan'}, 'story', 'cyan'),  # custom adds new type
@@ -73,8 +75,8 @@ def test_get_style_for_work_item_type(mock_configuration, type_name, expected_re
     ],
 )
 def test_get_style_for_work_item_type_with_custom_config(
-    mock_configuration, custom_styles, type_name, expected_result
+    mock_configuration, custom_colors, type_name, expected_result
 ):
-    mock_configuration.work_item_type_styles = custom_styles
+    mock_configuration.work_item_type_colors = custom_colors
     result = get_style_for_work_item_type(type_name)
     assert result == expected_result
