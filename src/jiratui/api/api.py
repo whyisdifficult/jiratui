@@ -1241,6 +1241,17 @@ class JiraAPI:
         """
         return await self._client.make_request(method=httpx.AsyncClient.get, url='field')
 
+    async def get_label_suggestions(self, query: str = '') -> Any | None:
+        """Get label suggestions from Jira.
+
+        Args:
+            query: search query to filter label suggestions
+
+        Returns:
+            List of label suggestions or None if request fails
+        """
+        return await self._client.get_label_suggestions(query)
+
 
 class JiraAPIv2(JiraAPI):
     """Implements methods to connect to the REST API v2 exposed by the Jira Cloud Platform.

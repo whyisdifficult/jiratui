@@ -177,7 +177,7 @@ class WorkItemFactory:
             resolution_date=isoparse(fields.get(JiraWorkItemFields.RESOLUTION_DATE.value))
             if fields.get(JiraWorkItemFields.RESOLUTION_DATE.value)
             else None,
-            labels=[label.lower() for label in fields.get(JiraWorkItemFields.LABELS.value, [])]
+            labels=fields.get(JiraWorkItemFields.LABELS.value, [])
             if fields.get(JiraWorkItemFields.LABELS.value)
             else None,
             attachments=attachments,

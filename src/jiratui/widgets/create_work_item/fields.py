@@ -1,118 +1,69 @@
 from textual import on
 from textual.reactive import Reactive, reactive
-from textual.widgets import Input, Select, TextArea
+from textual.widgets import Input
 
-from jiratui.widgets.base import DateInput
+from jiratui.widgets.common.base_fields import (
+    FieldMode,
+    IssueTypeSelectionWidget,
+    ProjectSelectionWidget,
+    UserPickerWidget,
+)
 
 
-class CreateWorkItemProjectSelectionInput(Select):
-    projects: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys: projects: list and selection: str | None"""
+class CreateWorkItemProjectSelectionInput(ProjectSelectionWidget):
+    """Select for choosing a project."""
 
-    def __init__(self, projects: list, **kwargs):
+    def __init__(self):
         super().__init__(
-            options=projects,
-            prompt='Select a project',
-            name='project',
-            id='create-work-item-project-selector',
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-select-project',
+            title='Project',
+            required=True,
         )
-        self.border_title = 'Project'
-        self.border_subtitle = '(*)'
-
-    def watch_projects(self, projects: dict | None = None) -> None:
-        self.clear()
-        if projects and (items := projects.get('projects', []) or []):
-            options = [(f'({project.key}) {project.name}', project.key) for project in items]
-            self.set_options(options)
-            if selection := projects.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
 
 
-class CreateWorkItemIssueTypeSelectionInput(Select):
-    def __init__(self, types: list, **kwargs):
+class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
+    """Select for choosing an issue type."""
+
+    def __init__(self, options: list[tuple[str, str]]):
         super().__init__(
-            options=types,
-            prompt='Select issue type',
-            name='issue_types',
-            id='create-work-item-issue-types-selector',
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-select-issue-type',
+            title='Issue Type',
+            required=True,
+            options=options,
         )
-        self.border_title = 'Issue Type'
-        self.border_subtitle = '(*)'
 
 
-class CreateWorkItemAssigneeSelectionInput(Select):
-    WIDGET_ID = 'create-work-item-assignee-selector'
-    users: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys:
-    - users: list
-    - selection: str | None
-    """
-    BORDER_TITLE = 'Assignee'
-    BORDER_SUB_TITLE = None
+class CreateWorkItemAssigneeSelectionInput(UserPickerWidget):
+    """Select for choosing an assignee."""
 
-    def __init__(self, users: list, **kwargs):
+    def __init__(self):
         super().__init__(
-            options=users,
-            prompt='Select a user',
-            id=self.WIDGET_ID,
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-select-assignee',
+            title='Assignee',
+            required=False,
         )
-        self.border_title = self.BORDER_TITLE
-        if self.BORDER_SUB_TITLE:
-            self.border_subtitle = self.BORDER_SUB_TITLE
-
-    def watch_users(self, users: dict | None = None) -> None:
-        self.clear()
-        if users and (items := users.get('users', []) or []):
-            options = [(item.display_name, item.account_id) for item in items]
-            self.set_options(options)
-            if selection := users.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
+        self.prompt = 'Select an assignee'
 
 
-class CreateWorkItemReporterSelectionInput(Select):
-    WIDGET_ID = 'create-work-item-reporter-selector'
-    BORDER_TITLE = 'Reporter'
-    BORDER_SUB_TITLE = '(*)'
+class CreateWorkItemReporterSelectionInput(UserPickerWidget):
+    """Select for choosing a reporter."""
+
     reporters: Reactive[dict | None] = reactive(None, always_update=True)
 
-    def __init__(self, users: list, **kwargs):
+    def __init__(self):
         super().__init__(
-            options=users,
-            prompt='Select a user',
-            id=self.WIDGET_ID,
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-select-reporter',
+            title='Reporter',
+            required=True,
         )
-        self.border_title = self.BORDER_TITLE
-        if self.BORDER_SUB_TITLE:
-            self.border_subtitle = self.BORDER_SUB_TITLE
+        self.prompt = 'Select a reporter (*)'
 
-    def watch_reporters(self, users: dict | None = None) -> None:
-        self.clear()
-        if users and (items := users.get('users', []) or []):
-            options = [(item.display_name, item.account_id) for item in items]
-            self.set_options(options)
-            if selection := users.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
+    def watch_reporters(self, reporters: dict | None = None) -> None:
+        self.users = reporters
 
 
 class CreateWorkItemIssueSummaryField(Input):
@@ -126,17 +77,6 @@ class CreateWorkItemIssueSummaryField(Input):
     def clean_value(self, event: Input.Blurred) -> None:
         if event.value is not None:
             self.value = event.value.strip()
-
-
-class CreateWorkItemDescription(TextArea):
-    def __init__(self):
-        super().__init__(
-            '',
-            id='description',
-            compact=True,
-            classes='create-work-item-description',
-        )
-        self.border_title = 'Description'
 
 
 class CreateWorkItemParentKeyField(Input):
@@ -155,27 +95,3 @@ class CreateWorkItemParentKeyField(Input):
     def clean_value(self, event: Input.Changed) -> None:
         if event.value is not None:
             self.value = event.value.strip()
-
-
-class CreateWorkItemDueDate(DateInput):
-    LABEL = 'Due Date'
-    TOOLTIP = 'Enter the due date for this work item.'
-    CLASSES = 'create-work-item-input-date'
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.compact = True
-
-
-class CreateWorkItemTextField(Input):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.compact = True
-        self.add_class('create-work-item-generic-input-field')
-
-
-class CreateWorkItemSelectionInput(Select):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.compact = True
-        self.add_class('create-work-item-generic-selector')

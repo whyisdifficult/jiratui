@@ -719,6 +719,7 @@ dependencies = [
     { name = "python-json-logger" },
     { name = "python-magic" },
     { name = "textual", extra = ["syntax"] },
+    { name = "textual-autocomplete" },
     { name = "textual-image" },
     { name = "xdg-base-dirs" },
 ]
@@ -758,6 +759,7 @@ requires-dist = [
     { name = "python-json-logger", specifier = ">=4.0.0" },
     { name = "python-magic", specifier = ">=0.4.27" },
     { name = "textual", extras = ["syntax"], specifier = ">=6.4.0" },
+    { name = "textual-autocomplete", specifier = ">=4.0.6" },
     { name = "textual-image", specifier = ">=0.8.4" },
     { name = "xdg-base-dirs", specifier = ">=6.0.2" },
 ]
@@ -2069,6 +2071,19 @@ syntax = [
     { name = "tree-sitter-toml" },
     { name = "tree-sitter-xml" },
     { name = "tree-sitter-yaml" },
+]
+
+[[package]]
+name = "textual-autocomplete"
+version = "4.0.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "textual" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/3a/80411bc7b94969eb116ad1b18db90f8dce8a1de441278c4a81fee55a27ca/textual_autocomplete-4.0.6.tar.gz", hash = "sha256:2ba2f0d767be4480ecacb3e4b130cf07340e033c3500fc424fed9125d27a4586", size = 97967, upload-time = "2025-09-24T21:19:20.213Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9f/66/ebe744d79c87f25a42d2654dddbd09462edd595f2ded715245a51a546461/textual_autocomplete-4.0.6-py3-none-any.whl", hash = "sha256:bff69c19386e2cbb4a007503b058dc37671d480a4fa2ddb3959c15ceb4aff9b5", size = 16499, upload-time = "2025-09-24T21:19:18.489Z" },
 ]
 
 [[package]]

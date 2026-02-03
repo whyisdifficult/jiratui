@@ -265,6 +265,16 @@ WorkItemDetailsDueDate {
     }
 }
 
+.adf-textarea-readonly {
+    border: round $panel;
+    padding: 1 2;
+    background: $background;
+    column-span: 2;
+    &.required {
+        border: round red;
+    }
+}
+
 WorkItemComponentsScreen {
     align: center middle;
     background: $background 80%;
@@ -283,31 +293,6 @@ WorkItemComponentsScreen > SelectionList {
     }
     background: transparent;
     scrollbar-size-vertical: 1;
-}
-
-IssueComponentsField {
-    box_sizing: content-box;
-    height: 1;
-    margin: 0 0;
-    padding: 0 0;
-    background: $background;
-    column-span: 3;
-}
-
-IssueComponentsField > #input-field-components {
-    box_sizing: border-box;
-    height: 3;
-    width: 100%;
-    border: round $primary-lighten-3;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
 }
 
 /* Help Screen */
@@ -564,6 +549,11 @@ LinkedWorkItemInputWidget {
 
 #add-work-item-form {
     width: 100%;
+    height: 1fr;
+}
+
+#additional_fields {
+    height: auto;
 }
 
 AddWorkItemScreen {
@@ -637,22 +627,6 @@ AddWorkItemScreen > Vertical {
     }
 }
 
-.create-work-item-input-date {
-    box_sizing: content-box;
-    height: 1;
-    border: round $primary-lighten-3;
-    width: 20;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
 .create-work-item-generic-input-field {
     box_sizing: content-box;
     height: 1;
@@ -698,9 +672,40 @@ CreateWorkItemReporterSelectionInput {
     padding: 0 1;
 }
 
-CreateWorkItemAssigneeSelectionInput {
+CreateWorkItemAssigneeSelectionInput,
+CreateWorkItemUserPickerInput,
+.create-work-item-user-picker {
     border: round $primary-lighten-3;
     padding: 0 1;
+}
+
+/* Labels input field (plain Input with id='labels') */
+Input#labels {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    background: $background;
+}
+
+CreateWorkItemFloatInput,
+.create-work-item-float-input {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+CreateWorkItemFloatInput.-invalid,
+.create-work-item-float-input.-invalid {
+    border: round red;
 }
 
 CreateWorkItemIssueTypeSelectionInput {
@@ -931,14 +936,21 @@ JQLEditorScreen > Vertical {
 
 /* Work Item Information (description, summary and custom fields) */
 
+#work-item-info-loading-container {
+    align: center middle;
+    height: 100%;
+    width: 100%;
+    display: none;
+}
+
 #work-item-info-description-scroll-container {
-    border: solid $secondary-lighten-3;
+    border: round $secondary-lighten-3;
     padding: 0 0 0 0;
     scrollbar-size-vertical: 1;
 }
 
 #work-item-info-extra-scroll-container {
-    border: solid $secondary;
+    border: round $secondary;
     scrollbar-size-vertical: 1;
 }
 
@@ -1184,31 +1196,6 @@ WorkItemFlagField {
 
 /* Multi-checkbox field and screen */
 
-WorkItemDynamicFieldUpdateMultiCheckboxesWidget {
-    box_sizing: content-box;
-    height: 1;
-    margin: 0 0;
-    padding: 0 0;
-    background: $background;
-    column-span: 3;
-}
-
-WorkItemDynamicFieldUpdateMultiCheckboxesWidget > Input {
-    box_sizing: border-box;
-    height: 3;
-    width: 100%;
-    border: round $primary-lighten-3;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
 SelectionsScreen {
     align: center middle;
     background: $background 80%;
@@ -1227,4 +1214,21 @@ SelectionsScreen > SelectionList {
     }
     border: round $primary-lighten-3;
     background: transparent;
+}
+
+/* MultiSelectWidget - inline multi-select for array fields */
+
+MultiSelectWidget {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    height: auto;
+    max-height: 12;
+    background: $background;
+    scrollbar-size-vertical: 1;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }

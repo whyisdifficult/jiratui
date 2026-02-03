@@ -16,7 +16,7 @@ used as the default.
 You can set the theme using the configuration variable `theme`.
 
 ```yaml
-theme: 'monokai'
+theme: "monokai"
 ```
 
 **Setting the theme on start up**
@@ -66,13 +66,15 @@ label and, a string with the JQL expression value. The label wil be used as the 
 
 ```yaml
 pre_defined_jql_expressions:
-    1:  {
-            "label": "Find work created by John and sort it by created date asc",
-            "expression": "creator = 'john' order by created asc"
+  1:
+    {
+      "label": "Find work created by John and sort it by created date asc",
+      "expression": "creator = 'john' order by created asc",
     }
-    2:  {
-          "label": "Find work due on 2100-12-31 and for the production environment",
-          "expression": "dueDate = '2100-12-31' AND environment = 'production'"
+  2:
+    {
+      "label": "Find work due on 2100-12-31 and for the production environment",
+      "expression": "dueDate = '2100-12-31' AND environment = 'production'",
     }
 ```
 
@@ -90,7 +92,6 @@ API instance and use the server's title or server base URL to build the title of
 `False` the title will set to the default, or to the value of the `tui_custom_title` setting; if defined.
 
 You can use `tui_custom_title` to set a custom title for the application. If `tui_custom_title` is set to an empty string (`""`), no title will be rendered at all. If `tui_custom_title` is not set, the application will fall back to using `tui_title`.
-
 
 ## Enable Filtering Search Results
 
@@ -111,6 +112,7 @@ You can control the default sort order for search results using the `search_resu
 option. This determines how issues are ordered when you perform a search in JiraTUI.
 
 **Accepted values:**
+
 - `created asc`
 - `created desc`
 - `priority asc`
@@ -121,8 +123,9 @@ option. This determines how issues are ordered when you perform a search in Jira
 These correspond to the available sort orders in JiraTUI. The value you set must match one of the above exactly.
 
 **Example:**
+
 ```yaml
-search_results_default_order: 'created desc'
+search_results_default_order: "created desc"
 ```
 
 You can still change the order interactively in the UI; this setting only controls the initial/default value.
@@ -144,12 +147,12 @@ specifying an ID, a name and a path to the repository's `.git` directory.
 
 ```yaml
 git_repositories:
-   1:
-      name: 'My Project A'
-      path: '/projects/project-a/.git'
-   2:
-      name: 'My Project B'
-      path: '/projects/project-b/.git'
+  1:
+    name: "My Project A"
+    path: "/projects/project-a/.git"
+  2:
+    name: "My Project B"
+    path: "/projects/project-b/.git"
 ```
 
 Using this configuration JiraTUI will be able to display these repositories and, you will be able to choose the target
@@ -164,7 +167,7 @@ fields that can be updated include the following:
 - `datetime`: these fields allow the user to provide a date/time value, e.g. `2025-12-31 13:34:55`.
 - `float`: these fields allow the user to provide a number, e.g. `12.34`.
 - `textfield`: these fields allow the user to provide a simple string as value. No Markdown or ADF is supported by
-these fields. Important: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
+  these fields. Important: this is a restriction of the type as defined by Jira and not a restriction of JraTUI.
 - `select`: these fields allow the user to select a single option out of a list of available options.
 - `multicheckboxes`: these fields allow the user to select multiple options out of a list of available options.
 - `url`: these fields allow the user to provide a URL.
@@ -184,3 +187,20 @@ enable_updating_additional_fields: True
 update_additional_fields_ignore_ids:
   - customfield_12345
 ```
+
+## Configuring Optional Fields in Create Work Item Form
+
+By default, JiraTUI does not allow users to view and update these fields. To enable this feature you can set
+the variable `enable_creating_additional_fields: True`.
+
+### Hiding Specific Optional Fields
+
+Use `create_additional_fields_ignore_ids` to hide specific fields from the default set. This is useful when you want to hide problematic fields.
+
+```yaml
+create_additional_fields_ignore_ids:
+  - customfield_10001
+  - customfield_10002
+```
+
+This configuration will show the default optional fields (`duedate` and `priority`) except for any fields in the ignore list.
