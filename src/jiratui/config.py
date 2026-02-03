@@ -39,11 +39,25 @@ class StylingConfiguration(BaseModel):
 
     work_item_status_colors: dict[str, str] | None = None
     """Color definitions for displaying the status of work items in the search results.
-    Keys are lowercase status names, values are color names or hex codes."""
+
+    Keys are lowercase status names w/o blank spaces. Values are color names or hex codes.
+
+    Example:
+    work_item_status_colors:
+        done: red
+        in_review: green
+    """
 
     work_item_type_colors: dict[str, str] | None = None
     """Color definitions for displaying the type of work items in the search results.
-    Keys are lowercase type names, values are color names or hex codes."""
+
+    Keys are lowercase status names w/o blank spaces. Values are color names or hex codes.
+
+    Example:
+    work_item_type_colors:
+        task: red
+        bug: green
+    """
 
 
 class ApplicationConfiguration(BaseSettings):

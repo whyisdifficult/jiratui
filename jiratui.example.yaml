@@ -20,6 +20,7 @@ styling:
     closed: green
     development: blue
     blocked: '#FF0000'
+    in_review: yellow
   work_item_type_colors:
     epic: dark_orange
     story: '#FF8888'
