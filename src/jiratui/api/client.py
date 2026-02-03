@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import logging
-from typing import Any, Callable, cast
+import ssl
+from typing import Any, Callable
 
 import httpx
 
@@ -25,38 +25,33 @@ class JiraTUIBearerAuth(httpx.Auth):
         yield request
 
 
-@dataclass
-class SSLCertificateSettings:
-    cert: str | tuple[str, str] | tuple[str, str, str] | None = None
-    verify_ssl: str | bool = True
-
-
-def _setup_ssl_certificates(configuration: ApplicationConfiguration) -> SSLCertificateSettings:
-    cert: str | tuple[str, str] | tuple[str, str, str] | None = None
-    verify_ssl: str | bool = True
-
+def _setup_ssl_certificates(
+    configuration: ApplicationConfiguration,
+) -> ssl.SSLContext | bool | None:
+    """
+    Returns a value that can be passed to the `verify` kwarg of an httpx client
+    Either:
+        False to disable verification,
+        True if no SSL config block is defined (default behavior),
+        or an instance of ssl.SSLContext with client cert/key/CA loaded (if specified. Otherwise, an SSLContext with the default CA bundle).
+    """
     if ssl_certificate_configuration := configuration.ssl:
-        verify_ssl = ssl_certificate_configuration.verify_ssl
-        httpx_certificate_configuration: list[str] = []
-        if certificate_path := ssl_certificate_configuration.certificate_file:
-            httpx_certificate_configuration.append(certificate_path)
-        if key_file := ssl_certificate_configuration.key_file:
-            httpx_certificate_configuration.append(key_file)
-        if password := ssl_certificate_configuration.password:
-            httpx_certificate_configuration.append(password.get_secret_value())
+        if ssl_certificate_configuration.verify_ssl is False:
+            return False
+        ctx = ssl.create_default_context(cafile=ssl_certificate_configuration.ca_bundle)
+        # Only load the client cert if certificate_file is set
+        # `load_cert_chain` is safe to run even if key_file is None or password is None
+        if ssl_certificate_configuration.certificate_file:
+            ctx.load_cert_chain(
+                certfile=ssl_certificate_configuration.certificate_file,
+                keyfile=ssl_certificate_configuration.key_file,
+                password=ssl_certificate_configuration.password.get_secret_value()
+                if ssl_certificate_configuration.password
+                else None,
+            )
 
-        if verify_ssl and ssl_certificate_configuration.ca_bundle:
-            verify_ssl = ssl_certificate_configuration.ca_bundle
-
-        # expects:
-        # (certificate file) or,
-        # (certificate file, key file) or,
-        # (certificate file, key file, password)
-        cert = cast(
-            str | tuple[str, str] | tuple[str, str, str], tuple(httpx_certificate_configuration)
-        )
-
-    return SSLCertificateSettings(cert=cert, verify_ssl=verify_ssl)
+        return ctx
+    return True
 
 
 class JiraTUIAsyncHTTPClient:
@@ -72,15 +67,16 @@ class JiraTUIAsyncHTTPClient:
         api_token: str,
         configuration: ApplicationConfiguration,
     ):
-        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
+        ssl_certificate_settings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         if configuration.use_bearer_authentication:
             self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
+        elif configuration.use_cert_authentication:
+            self.authentication = None
         else:
             self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.AsyncClient = httpx.AsyncClient(
-            verify=ssl_certificate_settings.verify_ssl,
-            cert=ssl_certificate_settings.cert,
+            verify=ssl_certificate_settings,
             timeout=None,
         )
         self.logger = logging.getLogger(LOGGER_NAME)
@@ -188,15 +184,16 @@ class JiraClient:
         api_token: str,
         configuration: ApplicationConfiguration,
     ):
-        ssl_certificate_settings: SSLCertificateSettings = _setup_ssl_certificates(configuration)
+        ssl_certificate_settings = _setup_ssl_certificates(configuration)
         self.base_url: str = base_url.rstrip('/')
         if configuration.use_bearer_authentication:
             self.authentication: httpx.Auth = JiraTUIBearerAuth(api_token, api_username)
+        elif configuration.use_cert_authentication:
+            self.authentication = None
         else:
             self.authentication = httpx.BasicAuth(api_username, api_token.strip())
         self.client: httpx.Client = httpx.Client(
-            verify=ssl_certificate_settings.verify_ssl,
-            cert=ssl_certificate_settings.cert,
+            verify=ssl_certificate_settings,
             timeout=None,
         )
         self.logger = logging.getLogger(LOGGER_NAME)
