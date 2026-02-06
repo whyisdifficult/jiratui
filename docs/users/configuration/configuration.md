@@ -184,3 +184,88 @@ enable_updating_additional_fields: True
 update_additional_fields_ignore_ids:
   - customfield_12345
 ```
+
+## Customize the Styling of Components
+
+JiraTUI allows you to customize the styling of some components in the UI. Among these you can set the color the UI uses
+to display tasks based on their status, priority or type.
+
+To do this you can use the `styling` setting in the configuration file. Using this you can customize 3 things:
+
+- **Work Item Status**: the color used by the UI to display tasks of a certain status. For this you can use the
+configuration variable `work_item_status_colors`. This variable accepts keys that refer to the status of tasks. Each
+key can contain the RGB color you want to use to highlight tasks of a certain status. For example, the following
+configuration sets the colors of some statuses.
+
+```yaml
+styling:
+  work_item_status_colors:
+    in_progress: blue
+    done: '#FFFF00'
+```
+
+This configuration tells JiraTUI to use `blue` to highlight tasks whose status is "In Progress" and to use `yellow` to
+highlight tasks with status "Done".
+
+```{important}
+Colors can be specified using RGB codes (more flexible) or their names. The name of the statuses MUST be written in
+lowercase and w/o spaces.
+```
+
+```{important}
+If a status is not defined under `work_item_status_colors` then JiraTUI chooses the value.
+```
+
+- **Work Item Type**: the color used by the UI to display tasks of a certain type. For this you can use the
+configuration variable `work_item_type_colors`. This variable accepts keys that refer to the types of tasks. Each
+key can contain as value the RGB color you want to use to highlight tasks of a certain type. For example, the following
+configuration sets the colors of some types of tasks.
+
+```yaml
+styling:
+  work_item_type_colors:
+    bug: blue
+    task: '#FFFF00'
+```
+
+This configuration tells JiraTUI to use `blue` to highlight tasks whose type is "Bug" and to use `yellow` to
+highlight tasks with type "Task".
+
+```{important}
+Colors can be specified using RGB codes (more flexible) or their names. The name of the types MUST be written in
+lowercase and w/o spaces.
+```
+
+```{important}
+If a type is not defined under `work_item_type_colors` then JiraTUI chooses the value.
+```
+
+- **Work Item Priority**: the color used by the UI to display tasks of a certain priority. For this you can use the
+configuration variable `work_item_priority_colors`. This variable accepts keys that refer to the priorities of
+tasks. Each key can contain as value the RGB color you want to use to highlight tasks of a certain priority. For
+example, the following configuration sets the colors of some tasks base don their priority.
+
+```yaml
+styling:
+  work_item_priority_colors:
+    high: blue
+    highest: '#FFFF00'
+```
+
+This configuration tells JiraTUI to use `blue` to highlight tasks whose priority is "High" and to use `yellow` to
+highlight tasks with priority "Highest".
+
+```{important}
+Colors can be specified using RGB codes (more flexible) or their names. The name of the priorities MUST be written in
+lowercase and w/o spaces.
+```
+
+```{important}
+If a priority is not defined under `work_item_priority_colors` then JiraTUI chooses the value.
+```
+
+## Searching Work Items in Active Sprint on Startup
+
+You can instruct JiraTUI to start with the checkbox `Active Sprint` checked. This is useful if you want to always
+search tasks in the current sprints w/o having to check the box manually when needed. The default is `False` which
+means the checkbox will be unchecked.
