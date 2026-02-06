@@ -190,7 +190,7 @@ class RelatedIssuesWidget(VerticalScroll):
                 link_id=issue.id,
             )
             if issue.priority_name:
-                collapsible.border_subtitle = f'{issue.priority_name} priority'
+                collapsible.border_subtitle = f'Priority: {issue.priority_name}'
 
                 if collapsible_color := get_style_for_work_item_priority(issue.priority_name):
                     collapsible.styles.border = ('round', collapsible_color)
