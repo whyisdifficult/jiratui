@@ -866,21 +866,6 @@ RelatedIssueCollapsible {
     border: round $primary;
     background: transparent;
     padding: 0 0 0 0;
-    &.lowes-priority {
-        border: round grey;
-    }
-    &.low-priority {
-        border: round yellow;
-    }
-    &.medium-priority {
-        border: round purple;
-    }
-    &.high-priority {
-        border: round orange;
-    }
-    &.highest-priority {
-        border: round red;
-    }
 }
 
 /* Comments */

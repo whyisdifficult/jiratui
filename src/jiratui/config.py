@@ -46,6 +46,7 @@ class StylingConfiguration(BaseModel):
     work_item_status_colors:
         done: red
         in_review: green
+        in_progress: '#FF0000'
     """
 
     work_item_type_colors: dict[str, str] | None = None
@@ -56,7 +57,18 @@ class StylingConfiguration(BaseModel):
     Example:
     work_item_type_colors:
         task: red
-        bug: green
+        bug: '#FF0000'
+    """
+
+    work_item_priority_colors: dict[str, str] | None = None
+    """Color definitions for displaying the priority of work items in the search results and in other components.
+
+    Keys are lowercase status names w/o blank spaces. Values are color names or hex codes.
+
+    Example:
+    work_item_priority_colors:
+        high: red
+        highest: '#FF0000'
     """
 
 
@@ -198,7 +210,7 @@ class ApplicationConfiguration(BaseSettings):
     """When this is set to `True` JiraTUI will attempt to display images attached to a work item in the Attachments
     tab."""
     styling: StylingConfiguration = Field(default_factory=StylingConfiguration)
-    """Configuration for styling components like work item status and type colors."""
+    """Configuration for styling components like work item status, priorities and type colors."""
 
     model_config = SettingsConfigDict(
         extra='allow',

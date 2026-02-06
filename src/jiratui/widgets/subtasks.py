@@ -5,10 +5,11 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import Reactive, reactive
 from textual.widget import Widget
-from textual.widgets import Collapsible, Link, Static
+from textual.widgets import Collapsible, Link, Rule, Static
 
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
+from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
@@ -98,7 +99,6 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         rows: list[ChildWorkItemCollapsible] = []
         for issue in items:
             children: list[Widget] = [
-                Static(Text(f'Status: {issue.status_name}')),
                 Static(Text(f'Type: {issue.issue_type.name}')),
                 Static(Text(f'Assignee: {issue.display_assignee()}')),
             ]
@@ -108,11 +108,19 @@ class IssueChildWorkItemsWidget(VerticalScroll):
                         browsable_url, url=browsable_url, tooltip='open link in the default browser'
                     )
                 )
-            item_collapsible = ChildWorkItemCollapsible(
+            children.append(
+                Rule(classes='rule-horizontal-compact-70'),
+            )
+            children.append(Static(Text(issue.cleaned_summary())))
+
+            collapsible = ChildWorkItemCollapsible(
                 *children,
-                title=Text(issue.cleaned_summary()),
+                title=Text(issue.cleaned_summary(max_length=70)),
                 work_item_key=issue.key,
             )
-            item_collapsible.border_subtitle = issue.status_name
-            rows.append(item_collapsible)
+            collapsible.border_subtitle = issue.status_name
+            if collapsible_color := get_style_for_work_item_status(issue.status_name):
+                collapsible.styles.border = ('round', collapsible_color)
+
+            rows.append(collapsible)
         self.mount_all(rows)

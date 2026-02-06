@@ -9,9 +9,9 @@ from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraIssue, RelatedJiraIssue
+from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
-from jiratui.widgets.constants import RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
 from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
 
@@ -191,10 +191,9 @@ class RelatedIssuesWidget(VerticalScroll):
             )
             if issue.priority_name:
                 collapsible.border_subtitle = f'{issue.priority_name} priority'
-            styles: dict | None = RELATED_WORK_ITEMS_PRIORITY_BASED_STYLING.get(
-                issue.priority_name.lower(), {}
-            )
-            if styles and (collapsible_class := styles.get('collapsible_class')):
-                collapsible.add_class(collapsible_class)
+
+                if collapsible_color := get_style_for_work_item_priority(issue.priority_name):
+                    collapsible.styles.border = ('round', collapsible_color)
+
             rows.append(collapsible)
         self.mount_all(rows)
