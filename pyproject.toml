@@ -39,7 +39,7 @@ dependencies = [
     "python-json-logger>=4.0.0",
     "python-magic>=0.4.27",
     "textual-image>=0.8.4",
-    "textual[syntax]>=6.4.0",
+    "textual[syntax]>=6.4.0,<8.0.0",
     "xdg-base-dirs>=6.0.2",
 ]
 
