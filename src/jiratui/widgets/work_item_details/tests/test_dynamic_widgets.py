@@ -122,9 +122,9 @@ async def test_date_widget_values(app, original_value, value, has_changed):
 @pytest.mark.parametrize(
     'original_value, value, has_changed',
     [
-        (None, Select.BLANK, False),
+        (None, Select.NULL, False),
         (None, '0', True),
-        ('0', Select.BLANK, True),
+        ('0', Select.NULL, True),
         ('0', '0', False),
     ],
 )

@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for defining custom styles for work item status and type colors via the `styling` configuration key; by [@stianse](https://github.com/stianse) in https://github.com/whyisdifficult/jiratui/pull/169
 
+### Minor Improvements
+
+- Upgrade `textual` to `v8.2.0`
+- Upgrade `pydantic-settings[yaml]`
+- Upgrade `gitpython`
+- Upgrade `click`
+- Upgrade `textual-image`
+- Upgrade `pytest-cov`
+- Upgrade `pytest`
+- Upgrade `pytest-asyncio`
+- Upgrade `mypy`
+- Upgrade `pre-commit`
+- Upgrade `ruff`
+
 ## [1.6.2] - 2025-11-22
 
 - Fix a bug when the app tries to generate the widgets for custom fields and the field doesn't have a key; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/149
