@@ -726,13 +726,17 @@ class TableNode(Node):
     def header(self) -> Optional[TableRow]:
         headers = list(
             filter(
-                lambda node: node.type == NodeType.TABLE_ROW
-                and len(
-                    list(
-                        filter(lambda child: child.type == NodeType.TABLE_HEADER, node.child_nodes)
+                lambda node: (
+                    node.type == NodeType.TABLE_ROW
+                    and len(
+                        list(
+                            filter(
+                                lambda child: child.type == NodeType.TABLE_HEADER, node.child_nodes
+                            )
+                        )
                     )
-                )
-                > 0,
+                    > 0
+                ),
                 self.child_nodes,
             )
         )
