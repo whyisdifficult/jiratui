@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for defining custom styles for work item status and type colors via the `styling` configuration key; by [@stianse](https://github.com/stianse) in https://github.com/whyisdifficult/jiratui/pull/169
 
+### Changed
+
+- Drop support for Python 3.10
+- Drop support for Python 3.11
+
 ### Minor Improvements
 
 - Upgrade `textual` to `v8.2.0`
@@ -24,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade `mypy`
 - Upgrade `pre-commit`
 - Upgrade `ruff`
+- Upgrade Independence used for generating documentation
 
 ## [1.6.2] - 2025-11-22
 
