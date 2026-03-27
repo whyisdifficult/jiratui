@@ -938,7 +938,6 @@ JQLEditorScreen > Vertical {
 }
 
 #work-item-info-extra-scroll-container {
-    border: solid $secondary;
     scrollbar-size-vertical: 1;
 }
 
@@ -948,10 +947,12 @@ JQLEditorScreen > Vertical {
     padding: 0 0;
 }
 
-.work-item-info-custom-field-textarea {
-    border-top: solid $secondary-lighten-3;
+.work-item-info-text-field {
+    border: solid $secondary-lighten-3;
     margin: 0 0;
     padding: 0 0;
+    height: auto;
+    background: transparent;
 }
 
 MarkdownFence {

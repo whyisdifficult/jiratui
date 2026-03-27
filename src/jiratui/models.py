@@ -475,10 +475,12 @@ class JiraIssue(JiraBaseIssue):
             return ''
         if isinstance(self.description, str):
             return self.description.strip()
-        try:
-            return adf2md(self.description)
-        except Exception:
-            return ''
+        elif isinstance(self.description, dict) or isinstance(self.description, list):
+            try:
+                return adf2md(self.description)
+            except Exception:
+                return ''
+        return ''
 
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'

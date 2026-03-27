@@ -380,10 +380,11 @@ class IssueDetailsWidget(Vertical):
             self.run_worker(self._refresh_work_item_details)
 
     async def _refresh_work_item_details(self) -> None:
-        """Fetches the details of the work item to retrieve the latest changes and update the details form.
+        """Fetches the work item details and triggers the update of the fields in this widget.
 
         This is useful for operations that update the details, e.g. saving the work item's details or, deleting a
-        worklog."""
+        worklog.
+        """
 
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         issue_details_response = await application.api.get_issue(issue_id_or_key=self.issue.key)
@@ -531,9 +532,16 @@ class IssueDetailsWidget(Vertical):
         )
 
     def _build_payload_for_update(self) -> dict:
+        """Builds the payload with the fields and values to update the work item.
+
+        Returns:
+            A dictionary with a mapping between field ids and their values.
+        """
+
         # maps field id to field value
         payload: dict[str, Any] = {}
-        # process the "static" fields
+
+        # step 1: process the "static" fields
         if self.issue_summary_field.update_enabled:
             # check if the summary is not empty and has changed
             if (
@@ -598,7 +606,7 @@ class IssueDetailsWidget(Vertical):
                     self.issue_components_field.get_value_for_update()
                 )
 
-        # process dynamically-generated field widgets; e.g. additional system fields and custom fields
+        # step 2: process dynamically-generated field widgets; e.g. additional system and custom fields
         if CONFIGURATION.get().enable_updating_additional_fields:
             # process the "dynamic" fields, which include custom and system fields
             for dynamic_widget in self.dynamic_fields_widgets_container.children:

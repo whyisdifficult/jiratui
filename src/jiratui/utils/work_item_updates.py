@@ -1,6 +1,7 @@
 from datetime import date
 
-from jiratui.models import IssuePriority, JiraIssueComponent, JiraUser
+from jiratui.config import CONFIGURATION
+from jiratui.models import CustomFieldTypes, IssuePriority, JiraIssueComponent, JiraUser
 
 
 def work_item_priority_has_changed(
@@ -131,3 +132,48 @@ def work_item_components_has_changed(
     if current_set.intersection({x.get('id') for x in target_components}) == current_set:
         return False
     return True
+
+
+def updating_text_fields_is_supported() -> bool:
+    """Determines whether the application supports editing rich/full text fields. These would include custom fields
+    of type textarea or other system fields, e.g. environment.
+
+    Jira Cloud Platform API v2 supports rich/full text fields; i.e. no ADF support; these fields are editable in
+    JiraTUI.
+    Jira Cloud Platform API v3 supports ADF; these fields are not editable in JiraTUI (yet).
+    Jira Software Platform API v2 supports rich/full text fields; i.e. no ADF support; these fields are editable in
+    JiraTUI.
+    """
+
+    # TODO add config variable to enable editing: config.enable_editing_rich_text_fields
+    return (
+        True  # CONFIGURATION.get().enable_editing_text_fields
+        or not CONFIGURATION.get().cloud
+        or (CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 2)
+    )
+
+
+def field_supports_text_value(field_id: str, field_edit_metadata: dict) -> bool:
+    """Determines if a Jira field supports rich/full text as value.
+
+    Args:
+        field_id: the ID of the field.
+        field_edit_metadata: the field's edit metadata.
+
+    Returns:
+        `True` id the value of the field can be full-text (not simple strings); `False` otherwise.
+    """
+
+    schema = field_edit_metadata.get('schema', {})
+    if field_id.startswith('customfield_') or field_edit_metadata.get('key', '').startswith(
+        'customfield_'
+    ):
+        if schema.get('custom') == CustomFieldTypes.TEXTAREA.value:
+            return True
+        return False
+    # TODO use enum for the list of field ids that support rich-text data, e.g. environment
+    if schema.get('type') == 'string' and (
+        (key := field_edit_metadata.get('key')) and key.lower() == 'environment'
+    ):
+        return True
+    return False

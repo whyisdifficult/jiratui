@@ -9,7 +9,7 @@ from textual.widgets import DataTable, Rule
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraIssueSearchResponse
-from jiratui.widgets.summary import IssueDescriptionWidget
+from jiratui.widgets.text import IssueDescriptionWidget
 
 
 class WorkItemReadOnlyDetailsScreen(ModalScreen):
