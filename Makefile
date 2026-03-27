@@ -3,6 +3,7 @@ help:
 	@echo "Available targets:"
 	@echo "  env                        - Synchronize the uv environment"
 	@echo "  install_pre_commit_hooks   - Install pre-commit hooks"
+	@echo "  update_pre_commit_hooks    - Upgrade pre-commit hooks"
 	@echo "  lint                       - Lint the code"
 	@echo "  lint-fix                   - Lint the code and apply fixes"
 	@echo "  test                       - Run tests"
@@ -19,6 +20,10 @@ env:
 install_pre_commit_hooks:
 	pre-commit install -t pre-commit
 	pre-commit install -t pre-push
+
+.PHONY: update_pre_commit_hooks
+update_pre_commit_hooks:
+	pre-commit autoupdate
 
 .PHONY: lint
 lint:

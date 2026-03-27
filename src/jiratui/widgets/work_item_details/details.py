@@ -502,9 +502,9 @@ class IssueDetailsWidget(Vertical):
             self.project_id_field.value = ''
             self.issue_type_field.value = ''
             self.issue_sprint_field.value = ''
-            self.issue_status_selector.value = Select.BLANK
-            self.assignee_selector.value = Select.BLANK
-            self.priority_selector.value = Select.BLANK
+            self.issue_status_selector.value = Select.NULL
+            self.assignee_selector.value = Select.NULL
+            self.priority_selector.value = Select.NULL
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
             self.work_item_labels_widget.value = ''

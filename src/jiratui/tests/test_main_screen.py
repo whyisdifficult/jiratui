@@ -152,7 +152,7 @@ async def test_fetch_projects(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert main_screen.project_selector.selection is None
         assert main_screen.project_selector._options == [
-            ('', Select.BLANK),
+            ('', Select.NULL),
             ('(P1) Project A', 'P1'),
             ('(P2) Project B', 'P2'),
         ]
@@ -365,7 +365,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_without
             'selection': None,
         }
         assert main_screen.users_selector._options == [
-            ('', Select.BLANK),
+            ('', Select.NULL),
             ('Bart Simpson', '12345'),
         ]
 
@@ -405,7 +405,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_using_p
         assert main_screen.available_users == []
         assert main_screen.users_selector.users is None
         assert main_screen.users_selector._options == [
-            ('', Select.BLANK),
+            ('', Select.NULL),
         ]
 
 
@@ -434,7 +434,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
         list_all_active_users_in_group_mock.assert_called_once_with(group_id='1')
         assert main_screen.available_users == []
         assert main_screen.users_selector.users == {'users': [], 'selection': None}
-        assert main_screen.users_selector._options == [('', Select.BLANK)]
+        assert main_screen.users_selector._options == [('', Select.NULL)]
 
 
 @patch('jiratui.widgets.screens.APIController.list_all_active_users_in_group')
@@ -462,7 +462,7 @@ async def test_fetch_users_without_project_selection_with_users_group_id_user_li
         list_all_active_users_in_group_mock.assert_not_called()
         assert main_screen.available_users == []
         assert main_screen.users_selector.users is None
-        assert main_screen.users_selector._options == [('', Select.BLANK)]
+        assert main_screen.users_selector._options == [('', Select.NULL)]
 
 
 @patch('jiratui.widgets.screens.APIController.status')
@@ -587,7 +587,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key(
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
         get_issue_types_mock.assert_called_once()
-        assert main_screen.issue_type_selector._options == [('', Select.BLANK), ('Task', '1')]
+        assert main_screen.issue_type_selector._options == [('', Select.NULL), ('Task', '1')]
 
 
 @patch('jiratui.widgets.screens.APIController.get_issue_types')
@@ -613,7 +613,7 @@ async def test_mount_fetch_issues_types_without_initial_project_key_fetch_types_
         assert main_screen.initial_project_key is None
         assert main_screen.project_selector.selection is None
         get_issue_types_mock.assert_called_once()
-        assert main_screen.issue_type_selector._options == [('', Select.BLANK)]
+        assert main_screen.issue_type_selector._options == [('', Select.NULL)]
 
 
 @pytest.mark.parametrize('expression_id, expected_expression', [(1, 'sprint=2'), (2, None)])
@@ -681,7 +681,7 @@ async def test_select_project(
         fetch_issue_types_mock.assert_called_once()
         fetch_statuses_mock.assert_called_once()
         fetch_users_mock.assert_called_once()
-        assert main_screen.issue_type_selector._options == [('', Select.BLANK)]
+        assert main_screen.issue_type_selector._options == [('', Select.NULL)]
         assert main_screen.issue_status_selector.statuses is None
         assert main_screen.available_issues_status == []
         assert main_screen.project_selector.selection == 'P1'
