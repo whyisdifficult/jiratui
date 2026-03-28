@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 import magic
+import puremagic
 
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
@@ -1043,8 +1044,11 @@ class JiraAPI:
             )
 
     @staticmethod
-    def _detect_file_mime_type(file_to_upload: BufferedReader) -> str:
-        return magic.from_buffer(file_to_upload.read(2028), mime=True)
+    def _detect_file_mime_type(file_to_upload: BufferedReader) -> str | None:
+        puremagic_result: list[puremagic.PureMagicWithConfidence] = puremagic.magic_string(file_to_upload.read(2028))
+        for result in puremagic_result:
+            if result.mime_type:
+                return result.mime_type
 
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.

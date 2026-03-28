@@ -570,6 +570,7 @@ dependencies = [
     { name = "click" },
     { name = "gitpython" },
     { name = "httpx" },
+    { name = "puremagic" },
     { name = "pydantic-settings", extra = ["yaml"] },
     { name = "python-dateutil" },
     { name = "python-json-logger" },
@@ -609,6 +610,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.3.1,<9.0.0" },
     { name = "gitpython", specifier = ">=3.1.46,<3.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "puremagic", specifier = ">=2.1.1" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.13.1,<3.0.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "python-json-logger", specifier = ">=4.0.0" },
@@ -1205,6 +1207,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/ef/3c6ecf8b317aa982f309835e8f96987466123c6e596646d4e6a1dfcd080f/propcache-0.4.1-cp314-cp314t-win_amd64.whl", hash = "sha256:990f6b3e2a27d683cb7602ed6c86f15ee6b43b1194736f9baaeb93d0016633b1", size = 46259, upload-time = "2025-10-08T19:48:34.226Z" },
     { url = "https://files.pythonhosted.org/packages/c4/2d/346e946d4951f37eca1e4f55be0f0174c52cd70720f84029b02f296f4a38/propcache-0.4.1-cp314-cp314t-win_arm64.whl", hash = "sha256:ecef2343af4cc68e05131e45024ba34f6095821988a9d0a02aa7c73fcc448aa9", size = 40428, upload-time = "2025-10-08T19:48:35.441Z" },
     { url = "https://files.pythonhosted.org/packages/5b/5a/bc7b4a4ef808fa59a816c17b20c4bef6884daebbdf627ff2a161da67da19/propcache-0.4.1-py3-none-any.whl", hash = "sha256:af2a6052aeb6cf17d3e46ee169099044fd8224cbaf75c76a2ef596e8163e2237", size = 13305, upload-time = "2025-10-08T19:49:00.792Z" },
+]
+
+[[package]]
+name = "puremagic"
+version = "2.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/df/3725f4b848095ef634c0b2226c97901e64ee2d5a82981d89d4b784ae8ce1/puremagic-2.1.1.tar.gz", hash = "sha256:b156c4ae63d84842f92a85cd49c9b9029a4f107f98ad14e7584ed652954feff4", size = 1133417, upload-time = "2026-03-23T19:08:46.929Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/d0/12b1d4113fd6660a0a75e8c40500c5d1c4febd8e24dc85aaf20cfd93e9d6/puremagic-2.1.1-py3-none-any.whl", hash = "sha256:b8862451f96254358a6e2ea7fba46e0600cf8b13ebe917d6eecdb18fc22db964", size = 68025, upload-time = "2026-03-23T19:08:45.872Z" },
 ]
 
 [[package]]
