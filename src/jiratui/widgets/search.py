@@ -304,7 +304,7 @@ class IssuesSearchResultsTable(DataTable):
         """
 
         if delete_item and self.current_work_item_key:
-            response: APIControllerResponse = await self.app.api.delete_work_item(
+            response: APIControllerResponse = await self.app.api.delete_work_item(  # type:ignore[attr-defined]
                 self.current_work_item_key
             )
             if response.success:
