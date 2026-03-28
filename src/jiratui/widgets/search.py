@@ -4,16 +4,17 @@ from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Vertical, ItemGrid
+from textual.containers import Container, ItemGrid, Vertical
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Input, Static, Button, Rule
+from textual.widgets import Button, DataTable, Input, Rule, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.urls import build_external_url_for_issue
+
 
 class ConfirmDeleteItemScreen(ModalScreen[bool]):
     """A modal screen that allows the user to confirm deleting an item."""
@@ -31,7 +32,7 @@ class ConfirmDeleteItemScreen(ModalScreen[bool]):
             yield Static(
                 Text(
                     f'Warning: deleting the work item with key {self._work_item_key} will also delete all its subtasks!',
-                     style='italic orange'
+                    style='italic orange',
                 )
             )
             yield Rule()
@@ -47,6 +48,7 @@ class ConfirmDeleteItemScreen(ModalScreen[bool]):
     @on(Button.Pressed, '#delete-work-item-button-cancel')
     def cancel_deleting_item(self) -> None:
         self.dismiss(False)
+
 
 class DataTableSearchInput(Input):
     """An input field that allows users to perform searches in the currently active search results page.
@@ -125,6 +127,7 @@ class DataTableSearchInput(Input):
                     issues=filtered
                 )
                 self.total = len(filtered)
+
 
 class IssuesSearchResultsTable(DataTable):
     """The widgets that displays the results of a search."""
@@ -271,7 +274,9 @@ class IssuesSearchResultsTable(DataTable):
         """Deletes the currently-selected item."""
 
         if self.current_work_item_key:
-            self.run_worker(self._open_work_item_deletion_screen(self.current_work_item_key), exclusive=True)
+            self.run_worker(
+                self._open_work_item_deletion_screen(self.current_work_item_key), exclusive=True
+            )
 
     async def _open_work_item_deletion_screen(self, work_item_key: str) -> None:
         """Opens a modal screen to let the user decided whether to delete the work item or not.
@@ -283,7 +288,9 @@ class IssuesSearchResultsTable(DataTable):
             None
         """
 
-        await self.app.push_screen(ConfirmDeleteItemScreen(work_item_key), callback=self._delete_work_item)
+        await self.app.push_screen(
+            ConfirmDeleteItemScreen(work_item_key), callback=self._delete_work_item
+        )
 
     async def _delete_work_item(self, delete_item: bool = False) -> None:
         """Deletes the currently-selected item.
@@ -297,9 +304,13 @@ class IssuesSearchResultsTable(DataTable):
         """
 
         if delete_item and self.current_work_item_key:
-            response: APIControllerResponse = await self.app.api.delete_work_item(self.current_work_item_key)
+            response: APIControllerResponse = await self.app.api.delete_work_item(
+                self.current_work_item_key
+            )
             if response.success:
-                self.notify(f'{self.current_work_item_key} deleted successfully', title='Delete Work Item')
+                self.notify(
+                    f'{self.current_work_item_key} deleted successfully', title='Delete Work Item'
+                )
             else:
                 self.notify(
                     f'Failed to delete the item {self.current_work_item_key}.',
@@ -368,6 +379,7 @@ class IssuesSearchResultsTable(DataTable):
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         await screen.search_issues(next_page_token, page=self.page)
         self.refresh_bindings()
+
 
 class SearchResultsContainer(Container):
     pagination: Reactive[dict | None] = reactive(None)

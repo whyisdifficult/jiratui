@@ -8,8 +8,8 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, WorkItemsSearchOrderBy
-from jiratui.widgets.screens import WorkItemSearchResult, MainScreen
-from jiratui.widgets.search import IssuesSearchResultsTable, ConfirmDeleteItemScreen
+from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.search import ConfirmDeleteItemScreen, IssuesSearchResultsTable
 
 
 @pytest.fixture()
@@ -418,6 +418,7 @@ async def test_select_issue_in_search_results_datatable(
         assert main_screen.search_results_container.border_subtitle == 'Page 1 of 1 (total: 2)'
         fetch_issue_mock.assert_called_once_with('key-2')
 
+
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
@@ -460,6 +461,7 @@ async def test_open_delete_issue_modal_screen(
         )
         assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
         assert isinstance(app.screen, ConfirmDeleteItemScreen)
+
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.get_users')
@@ -505,6 +507,7 @@ async def test_delete_issue_modal_screen_click_cancel(
         )
         assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
         assert isinstance(app.screen, MainScreen)
+
 
 @patch.object(APIController, 'delete_work_item')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')

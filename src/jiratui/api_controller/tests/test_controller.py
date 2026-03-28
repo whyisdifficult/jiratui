@@ -3314,11 +3314,10 @@ async def test_update_issue_flagged_status_updating_succeeds_without_note(
     )
     add_comment_mock.assert_not_called()
 
+
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'delete_work_item')
-async def test_delete_issue(
-    delete_work_item_mock: Mock, jira_api_controller: APIController
-):
+async def test_delete_issue(delete_work_item_mock: Mock, jira_api_controller: APIController):
     # GIVEN
     delete_work_item_mock.return_value = None
     # WHEN
@@ -3329,6 +3328,7 @@ async def test_delete_issue(
     assert response.error is None
     assert response.result is None
     delete_work_item_mock.assert_called_once_with('1', True)
+
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'delete_work_item')

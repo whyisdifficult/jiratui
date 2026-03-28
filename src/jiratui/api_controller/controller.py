@@ -669,7 +669,6 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
-
     async def get_issue(
         self,
         issue_id_or_key: str,

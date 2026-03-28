@@ -893,7 +893,9 @@ class JiraAPI:
             `None` if successful (HTTP 204 was returned); an exception otherwise.
         """
         await self._client.make_request(
-            method=httpx.AsyncClient.delete, url=f'issue/{issue_id_or_key}', params={'deleteSubtasks': delete_subtasks}
+            method=httpx.AsyncClient.delete,
+            url=f'issue/{issue_id_or_key}',
+            params={'deleteSubtasks': delete_subtasks},
         )
         return None
 
