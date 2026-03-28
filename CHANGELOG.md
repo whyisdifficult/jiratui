@@ -5,16 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.0] - 2026-03-28
 
 ### Added
 
 - Add support for defining custom styles for work item status and type colors via the `styling` configuration key; by [@stianse](https://github.com/stianse) in https://github.com/whyisdifficult/jiratui/pull/169
+- Implement `active_sprint_on_startup` config flag by @spomata in https://github.com/whyisdifficult/jiratui/pull/170
+- Add styles configuration by @stianse in https://github.com/whyisdifficult/jiratui/pull/169
+- Allow customization of some components styling: priority, status and type by @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/173
+- Use canonical value for styling work item statuses and types by @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/172
+
+### Bug Fixes
+
+- `search_on_startup` config value was always overridden by CLI by @spomata in https://github.com/whyisdifficult/jiratui/pull/168
 
 ### Changed
 
-- Drop support for Python 3.10
-- Drop support for Python 3.11
+- Drop support for Python 3.10 and 3.11 by @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/184
 
 ### Minor Improvements
 
@@ -29,7 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade `mypy`
 - Upgrade `pre-commit`
 - Upgrade `ruff`
+- Bump requests from 2.32.4 to 2.33.0 by @dependabot[bot] in https://github.com/whyisdifficult/jiratui/pull/182
+- Bump urllib3 from 2.5.0 to 2.6.3 by @dependabot[bot] in https://github.com/whyisdifficult/jiratui/pull/183
+- Bump aiohttp from 3.13.1 to 3.13.3 by @dependabot[bot] in https://github.com/whyisdifficult/jiratui/pull/185
 - Upgrade Independence used for generating documentation
+- Improve SEO for the official website by @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/171
 
 ## [1.6.2] - 2025-11-22
 
