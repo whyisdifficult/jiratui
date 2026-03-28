@@ -45,7 +45,7 @@ def create_widgets_for_work_item_creation(data: list[dict]) -> list[Widget]:
                     options.append((display_value, value.get('id')))
 
                 allow_blank = True
-                initial_value = Select.BLANK
+                initial_value = Select.NULL
                 if item.get('hasDefaultValue') and (default_value := item.get('defaultValue')):
                     allow_blank = False
                     initial_value = default_value.get('id')
@@ -53,7 +53,7 @@ def create_widgets_for_work_item_creation(data: list[dict]) -> list[Widget]:
                 widget = CreateWorkItemSelectionInput(
                     options,
                     id=item.get('fieldId'),
-                    allow_blank=allow_blank or (initial_value == Select.BLANK or not initial_value),
+                    allow_blank=allow_blank or (initial_value == Select.NULL or not initial_value),
                     value=initial_value,
                     prompt=f'Select {item.get("name")}',
                 )

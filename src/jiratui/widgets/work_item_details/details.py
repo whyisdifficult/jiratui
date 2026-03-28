@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
 from textual.reactive import Reactive, reactive
-from textual.widgets import ProgressBar, Select
+from textual.widgets import ProgressBar
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -502,9 +502,9 @@ class IssueDetailsWidget(Vertical):
             self.project_id_field.value = ''
             self.issue_type_field.value = ''
             self.issue_sprint_field.value = ''
-            self.issue_status_selector.value = Select.BLANK
-            self.assignee_selector.value = Select.BLANK
-            self.priority_selector.value = Select.BLANK
+            self.issue_status_selector.clear()
+            self.assignee_selector.clear()
+            self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
             self.work_item_labels_widget.value = ''

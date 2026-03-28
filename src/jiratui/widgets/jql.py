@@ -60,7 +60,7 @@ class JQLEditorScreen(ModalScreen[str]):
 
     @on(PreDefinedJQLExpressionsWidget.Changed)
     def select_pre_defined_expression(self, event: Select.Changed) -> None:
-        if event.value != Select.BLANK:
+        if event.value != Select.NULL:
             if (data := self.predefined_jql_expressions.get(event.value)) and (
                 expression := data.get('expression')
             ):

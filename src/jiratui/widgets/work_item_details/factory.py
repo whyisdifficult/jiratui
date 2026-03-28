@@ -208,7 +208,7 @@ def create_dynamic_widgets_for_updating_work_item(
                     value = work_item.get_custom_field_value(__field_id)
                     widget = WorkItemDynamicFieldUpdateSelectionWidget(
                         options=options,
-                        value=value.get('id') if value is not None else Select.BLANK,
+                        value=value.get('id') if value is not None else Select.NULL,
                         jira_field_key=__field_id,
                         allow_blank=not field.get('required'),
                         prompt=f'Select {field.get("name")}',
