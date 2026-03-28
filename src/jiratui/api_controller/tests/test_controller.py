@@ -3313,3 +3313,35 @@ async def test_update_issue_flagged_status_updating_succeeds_without_note(
         '1', {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}
     )
     add_comment_mock.assert_not_called()
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_item')
+async def test_delete_issue(
+    delete_work_item_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_work_item_mock.return_value = None
+    # WHEN
+    response = await jira_api_controller.delete_work_item('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result is None
+    delete_work_item_mock.assert_called_once_with('1', True)
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_item')
+async def test_delete_issue_with_api_error(
+    delete_work_item_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_work_item_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.delete_work_item('1')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
+    delete_work_item_mock.assert_called_once_with('1', True)

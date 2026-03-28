@@ -643,6 +643,33 @@ class APIController:
             result=sorted(users, key=lambda item: item.display_name or item.account_id)
         )
 
+    async def delete_work_item(self, issue_id_or_key: str) -> APIControllerResponse:
+        """Deletes a work item.
+
+        Args:
+            issue_id_or_key: the id of the work item we want to delete.
+
+        Returns:
+            An instance of `APIControllerResponse` with `success = True` if the item was deleted successfully;
+            `success = False` and the error message in the `error` key if the issue could not be deleted.
+        """
+
+        try:
+            await self.api.delete_work_item(issue_id_or_key, True)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to delete the work item',
+                extra={
+                    'issue_id_or_key': issue_id_or_key,
+                    'delete_subtasks': True,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse()
+
+
     async def get_issue(
         self,
         issue_id_or_key: str,
