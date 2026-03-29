@@ -3009,3 +3009,29 @@ async def test_delete_work_log(jira_api: JiraAPI):
     await jira_api.delete_work_log('1', '2')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog/2'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_delete_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.delete(get_url_pattern('issue/task-1'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    await jira_api.delete_work_item('task-1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1'
+    assert route.calls.last.request.url.params.get('deleteSubtasks') == 'true'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_delete_issue_without_deleting_subs_tasks(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.delete(get_url_pattern('issue/task-1'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    await jira_api.delete_work_item('task-1', delete_subtasks=False)
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1'
+    assert route.calls.last.request.url.params.get('deleteSubtasks') == 'false'

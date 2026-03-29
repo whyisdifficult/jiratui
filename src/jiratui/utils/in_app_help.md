@@ -36,33 +36,34 @@ table summaries the hot-keys and the component they activate.
 When you select a work item from the Work Items search results pane and click `enter` the information of the work item
 is loaded into the tabs on the right-hand side. Depending on the tab that is active certain hot-keys are enabled:
 
-| Key        | Active Tab/Component | Action                                                                     |
-|------------|----------------------|----------------------------------------------------------------------------|
-| `^s`       | Details              | Saves change to a work item                                                |
-| `^k`       | Details              | Copies the key of the work item currently selected                         |
-| `^j`       | Details              | Copies the URL of the work item currently selected                         |
-| `^l`       | Details              | View the work log                                                          |
-| `^t`       | Details              | Log work for a work item                                                   |
-| `^f`       | Details              | Add/Remove flag to work items                                              |
-| `d`        | Worklogs             | Delete a work log                                                          |
-| `^o`       | Worklogs             | Open worklog in the browser                                                |
-| `n`        | Comments             | Add a new comment to the work item                                         |
-| `n`        | Related              | Add a new related item to the work item                                    |
-| `enter`    | Related              | View the related item                                                      |
-| `d`        | Related              | Deletes the related item                                                   |
-| `^o`       | Related              | Opens file in the browser                                                  |
-| `^u`       | Attachments          | Attach file to the work item                                               |
-| `d`        | Attachments          | Deletes an attachment                                                      |
-| `v`        | Attachments          | View the content of the attached file                                      |
-| `n`        | Links                | Link item to the work item                                                 |
-| `d`        | Links                | Deletes a link                                                             |
-| `^n`       | Subtasks             | Create a new subtask of the work item                                      |
-| `.`        | Search Results       | Enables filtering of results in the results table                          |
-| `alt+right`| Search Results       | Retrieves the next page of results                                         |
-| `alt+left` | Search Results       | Retrieves the previous page of results. This is only enabled when page > 1 |
-| `^k`       | Search Results       | Copies the key of the work item currently selected                         |
-| `^j`       | Search Results       | Copies the URL of the work item currently selected                         |
-| `^e`       | JQL Query field      | Opens the JQL Query Editor                                                 |
+| Key         | Active Tab/Component  | Action                                                                     |
+|-------------|-----------------------|----------------------------------------------------------------------------|
+| `^s`        | Details               | Saves change to a work item                                                |
+| `^k`        | Details               | Copies the key of the work item currently selected                         |
+| `^j`        | Details               | Copies the URL of the work item currently selected                         |
+| `^l`        | Details               | View the work log                                                          |
+| `^t`        | Details               | Log work for a work item                                                   |
+| `^f`        | Details               | Add/Remove flag to work items                                              |
+| `d`         | Worklogs              | Delete a work log                                                          |
+| `^o`        | Worklogs              | Open worklog in the browser                                                |
+| `n`         | Comments              | Add a new comment to the work item                                         |
+| `n`         | Related               | Add a new related item to the work item                                    |
+| `enter`     | Related               | View the related item                                                      |
+| `d`         | Related               | Deletes the related item                                                   |
+| `^o`        | Related               | Opens file in the browser                                                  |
+| `^u`        | Attachments           | Attach file to the work item                                               |
+| `d`         | Attachments           | Deletes an attachment                                                      |
+| `v`         | Attachments           | View the content of the attached file                                      |
+| `n`         | Links                 | Link item to the work item                                                 |
+| `d`         | Links                 | Deletes a link                                                             |
+| `^n`        | Subtasks              | Create a new subtask of the work item                                      |
+| `.`         | Search Results        | Enables filtering of results in the results table                          |
+| `alt+right` | Search Results        | Retrieves the next page of results                                         |
+| `alt+left`  | Search Results        | Retrieves the previous page of results. This is only enabled when page > 1 |
+| `^k`        | Search Results        | Copies the key of the work item currently selected                         |
+| `^j`        | Search Results        | Copies the URL of the work item currently selected                         |
+| `^e`        | JQL Query field       | Opens the JQL Query Editor                                                 |
+| `d`         | Search Results        | Deletes a work item                                                        |
 
 Besides the hot-keys above the following are always available.
 
@@ -361,3 +362,10 @@ delete the entry. You can also press `^o` to open a worklog details in the brows
 
 You can add/remove a flag to a work item by pressing `^f` while in the details tab. When you add a flag to an item you
 can add an optional message to let your team know why the task is (not) flagged.
+
+# Deleting Work Items
+
+To delete a work item you can select an item from the search results pane on the left and then click `d`. This will 
+open a modal screen that will let you confirm the deletion.
+
+Important: if an item has subtasks all of them will also be deleted.
