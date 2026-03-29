@@ -3011,6 +3011,18 @@ async def test_delete_work_log(jira_api: JiraAPI):
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/worklog/2'
 
 
+@patch.object(JiraAPI, '_detect_file_mime_type')
+def test_add_attachment_to_issue_mime_detection_returns_empty_mime_type(
+    detect_file_mime_type_mock: Mock, jira_api: JiraAPI
+):
+    # GIVEN
+    detect_file_mime_type_mock.return_value = None
+    with patch('builtins.open', mock_open(read_data=DATA)):
+        # WHEN/THEN
+        with pytest.raises(FileUploadException, match=r'^Unable to determine the type of file:'):
+            jira_api.add_attachment_to_issue('key-1', 'test-file.txt', 'test-file.txt')
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_delete_issue(jira_api: JiraAPI):
