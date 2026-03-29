@@ -17,7 +17,7 @@ from jiratui.utils.urls import build_external_url_for_issue
 
 
 class ConfirmDeleteItemScreen(ModalScreen[bool]):
-    """A modal screen that allows the user to confirm deleting an item."""
+    """A modal screen that allows users to confirm deleting an item."""
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close Screen')]
 
@@ -31,7 +31,7 @@ class ConfirmDeleteItemScreen(ModalScreen[bool]):
         with vertical:
             yield Static(
                 Text(
-                    f'Warning: deleting the work item with key {self._work_item_key} will also delete all its subtasks!',
+                    f'Warning: if the work item {self._work_item_key} has subtasks, deleting it will also delete all its subtasks!',
                     style='italic orange',
                 )
             )
@@ -349,6 +349,7 @@ class IssuesSearchResultsTable(DataTable):
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
+
         if action == 'filter' and not CONFIGURATION.get().search_results_page_filtering_enabled:
             return False
         if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
@@ -382,6 +383,8 @@ class IssuesSearchResultsTable(DataTable):
 
 
 class SearchResultsContainer(Container):
+    """The container that holds the search results."""
+
     pagination: Reactive[dict | None] = reactive(None)
 
     def __init__(self, *args, **kwargs):
