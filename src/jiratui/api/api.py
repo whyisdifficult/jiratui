@@ -1072,7 +1072,9 @@ class JiraAPI:
 
     @staticmethod
     def _detect_file_mime_type(file_to_upload: BufferedReader) -> str | None:
-        puremagic_result: list[puremagic.PureMagicWithConfidence] = puremagic.magic_string(file_to_upload.read(2028))
+        puremagic_result: list[puremagic.PureMagicWithConfidence] = puremagic.magic_string(
+            file_to_upload.read(2028)
+        )
         for result in puremagic_result:
             if result.mime_type:
                 return result.mime_type
