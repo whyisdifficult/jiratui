@@ -3019,7 +3019,7 @@ def test_add_attachment_to_issue_mime_detection_returns_empty_mime_type(
     detect_file_mime_type_mock.return_value = None
     with patch('builtins.open', mock_open(read_data=DATA)):
         # WHEN/THEN
-        with pytest.raises(FileUploadException, match=r"^Unable to determine the type of file:"):
+        with pytest.raises(FileUploadException, match=r'^Unable to determine the type of file:'):
             jira_api.add_attachment_to_issue('key-1', 'test-file.txt', 'test-file.txt')
 
 
