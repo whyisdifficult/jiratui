@@ -876,6 +876,29 @@ class JiraAPI:
             method=httpx.AsyncClient.post, url='issue', data=json.dumps(payload)
         )
 
+    async def delete_work_item(self, issue_id_or_key: str, delete_subtasks: bool = True) -> None:
+        """Deletes a work item.
+
+        An issue cannot be deleted if it has one or more subtasks. To delete an issue with subtasks, set the query
+        parameter `deleteSubtasks`. This causes the issue's subtasks to be deleted with the issue.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-delete
+
+        Args:
+            issue_id_or_key: the id of the work item we want to delete.
+            delete_subtasks: if `True` (default) any subtask associated to the work item will also be deleted.
+
+        Returns:
+            `None` if successful (HTTP 204 was returned); an exception otherwise.
+        """
+        await self._client.make_request(
+            method=httpx.AsyncClient.delete,
+            url=f'issue/{issue_id_or_key}',
+            params={'deleteSubtasks': delete_subtasks},
+        )
+        return None
+
     async def transitions(self, issue_id_or_key: str) -> dict:
         """Retrieves the applicable transitions for a work item.
 

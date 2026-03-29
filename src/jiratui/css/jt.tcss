@@ -371,6 +371,43 @@ QuitScreen > Grid {
     width: 100%;
 }
 
+/* Delete Work Item Screen */
+
+ConfirmDeleteItemScreen {
+    align: center middle;
+    background: $background 80%;
+}
+ConfirmDeleteItemScreen > Vertical {
+    width: 60%;
+    width: 60%;
+    height: auto;
+    border: round $foreground;
+    padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
+}
+#delete-work-item-button {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+#delete-work-item-button-cancel {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.delete-work-item-grid-buttons {
+    grid-size: 4 1;
+    grid-columns: 25% 25%;
+    align: center middle;
+}
+
 /* Work Item (read-only) Details Screen */
 
 WorkItemReadOnlyDetailsScreen {

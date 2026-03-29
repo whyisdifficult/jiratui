@@ -2,15 +2,52 @@ from typing import cast
 
 from rich.text import Text
 from textual import on
+from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
+from textual.containers import Container, ItemGrid, Vertical
 from textual.reactive import Reactive, reactive
-from textual.widgets import DataTable, Input
+from textual.screen import ModalScreen
+from textual.widgets import Button, DataTable, Input, Rule, Static
 
+from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.urls import build_external_url_for_issue
+
+
+class ConfirmDeleteItemScreen(ModalScreen[bool]):
+    """A modal screen that allows users to confirm deleting an item."""
+
+    BINDINGS = [('escape', 'app.pop_screen', 'Close Screen')]
+
+    def __init__(self, work_item_key: str):
+        super().__init__()
+        self._work_item_key = work_item_key
+
+    def compose(self) -> ComposeResult:
+        vertical = Vertical()
+        vertical.border_title = f'Delete Work Item {self._work_item_key}'
+        with vertical:
+            yield Static(
+                Text(
+                    f'Warning: if the work item {self._work_item_key} has subtasks, deleting it will also delete all its subtasks!',
+                    style='italic orange',
+                )
+            )
+            yield Rule()
+            with ItemGrid(classes='delete-work-item-grid-buttons'):
+                yield Button('Delete', variant='success', id='delete-work-item-button')
+                yield Button('Cancel', variant='error', id='delete-work-item-button-cancel')
+
+    @on(Button.Pressed, '#delete-work-item-button')
+    def delete_item(self) -> None:
+        if self._work_item_key:
+            self.dismiss(True)
+
+    @on(Button.Pressed, '#delete-work-item-button-cancel')
+    def cancel_deleting_item(self) -> None:
+        self.dismiss(False)
 
 
 class DataTableSearchInput(Input):
@@ -129,6 +166,14 @@ class IssuesSearchResultsTable(DataTable):
             key_display='^o',
             tooltip='Open item in the browser',
         ),
+        Binding(
+            key='d',
+            action='delete_work_item',
+            description='Delete Issue',
+            show=True,
+            key_display='d',
+            tooltip='Delete the work item currently highlighted.',
+        ),
     ]
 
     SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN = 30
@@ -225,6 +270,60 @@ class IssuesSearchResultsTable(DataTable):
             self.notify('Opening Work Item in the browser...')
             self.app.open_url(build_external_url_for_issue(self.current_work_item_key))
 
+    def action_delete_work_item(self) -> None:
+        """Deletes the currently-selected item."""
+
+        if self.current_work_item_key:
+            self.run_worker(
+                self._open_work_item_deletion_screen(self.current_work_item_key), exclusive=True
+            )
+
+    async def _open_work_item_deletion_screen(self, work_item_key: str) -> None:
+        """Opens a modal screen to let the user decided whether to delete the work item or not.
+
+        Args:
+            work_item_key: key of the work item to delete.
+
+        Returns:
+            None
+        """
+
+        await self.app.push_screen(
+            ConfirmDeleteItemScreen(work_item_key), callback=self._delete_work_item
+        )
+
+    async def _delete_work_item(self, delete_item: bool = False) -> None:
+        """Deletes the currently-selected item.
+
+        Args:
+            delete_item: if `True` the user confirmed deleting the item in the modal screen; otherwise the user
+            canceled the operation.
+
+        Returns:
+            None.
+        """
+
+        if delete_item and self.current_work_item_key:
+            response: APIControllerResponse = await self.app.api.delete_work_item(  # type:ignore[attr-defined]
+                self.current_work_item_key
+            )
+            if response.success:
+                self.notify(
+                    f'{self.current_work_item_key} deleted successfully', title='Delete Work Item'
+                )
+            else:
+                self.notify(
+                    f'Failed to delete the item {self.current_work_item_key}.',
+                    title='Delete Work Item',
+                    severity='error',
+                )
+                if response.error:
+                    self.notify(
+                        response.error,
+                        title='Delete Work Item',
+                        severity='error',
+                    )
+
     def action_filter(self) -> None:
         if not CONFIGURATION.get().search_results_page_filtering_enabled:
             return
@@ -250,6 +349,7 @@ class IssuesSearchResultsTable(DataTable):
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
+
         if action == 'filter' and not CONFIGURATION.get().search_results_page_filtering_enabled:
             return False
         if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
@@ -283,6 +383,8 @@ class IssuesSearchResultsTable(DataTable):
 
 
 class SearchResultsContainer(Container):
+    """The container that holds the search results."""
+
     pagination: Reactive[dict | None] = reactive(None)
 
     def __init__(self, *args, **kwargs):
