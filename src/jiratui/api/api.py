@@ -1078,6 +1078,7 @@ class JiraAPI:
         for result in puremagic_result:
             if result.mime_type:
                 return result.mime_type
+        return None
 
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.
