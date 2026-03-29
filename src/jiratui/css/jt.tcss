@@ -379,6 +379,7 @@ ConfirmDeleteItemScreen {
 }
 ConfirmDeleteItemScreen > Vertical {
     width: 60%;
+    width: 60%;
     height: auto;
     border: round $foreground;
     padding: 0 1;
@@ -402,8 +403,8 @@ ConfirmDeleteItemScreen > Vertical {
 }
 
 .delete-work-item-grid-buttons {
-    grid-size: 2 1;
-    grid-columns: 50% 50%;
+    grid-size: 4 1;
+    grid-columns: 25% 25%;
     align: center middle;
 }
 
