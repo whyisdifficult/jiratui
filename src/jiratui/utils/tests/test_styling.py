@@ -19,7 +19,7 @@ def mock_configuration():
     'status_name, expected_result',
     [
         ('done', 'green'),
-        ('in review', 'dark_olive_green'),
+        ('in review', 'darkolivegreen'),
         ('in progress', 'blue'),
         ('to do', 'yellow'),
         ('other', ''),
