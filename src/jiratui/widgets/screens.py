@@ -24,6 +24,7 @@ from jiratui.models import (
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
+from jiratui.widgets.commons.users import UsersAutoComplete, JiraUserInput
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
@@ -34,7 +35,6 @@ from jiratui.widgets.filters import (
     JQLSearchWidget,
     OrderByWidget,
     ProjectSelectionInput,
-    UserSelectionInput,
     WorkItemInputWidget,
 )
 from jiratui.widgets.git_screen import GitScreen
@@ -230,15 +230,13 @@ class MainScreen(Screen):
         super().__init__()
         self.api = APIController() if not api else api
         """The API instance used by the screen to interact with the Jira REST API via a an API controller."""
-        self.available_users: list[tuple[str, str]] = []
-        """The list of available users."""
         self.available_issues_status: list[tuple[str, str]] = []
         self.initial_project_key = project_key
         """A project key to set as the initial value of the projects dropdown widget."""
         self.initial_work_item_key = work_item_key
         """A work item key to set as the initial value of the work-item-key widget."""
         """Pre-selected project key. This is passed during the initialization of the application."""
-        self.initial_assignee_account_id = user_account_id
+        self.initial_assignee_account_id = user_account_id  # TODO check how to use it with autocomplete feature mow
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
@@ -251,7 +249,7 @@ class MainScreen(Screen):
             'p': '#jira-project-selector',
             't': '#jira-issue-types-selector',
             's': '#jira-issue-status-selector',
-            'a': '#jira-users-selector',
+            'a': '#search-filters-input-assignee',
             'k': '#input_issue_key',
             'f': '#input_date_from',
             'u': '#input_date_until',
@@ -281,8 +279,8 @@ class MainScreen(Screen):
         return self.query_one(IssueTypeSelectionInput)
 
     @property
-    def users_selector(self) -> UserSelectionInput:
-        return self.query_one(UserSelectionInput)
+    def users_selector(self) -> JiraUserInput:
+        return self.query_one(JiraUserInput)
 
     @property
     def run_button(self) -> Button:
@@ -376,7 +374,9 @@ class MainScreen(Screen):
                 yield ProjectSelectionInput(projects=[])
                 yield IssueTypeSelectionInput(types=[])
                 yield IssueStatusSelectionInput(statuses=[])
-                yield UserSelectionInput(users=[])
+                assignee_input = JiraUserInput(id='search-filters-input-assignee', border_subtitle='(a)')
+                yield assignee_input
+                yield UsersAutoComplete(assignee_input, self.api, title='Assignee')
             with ItemGrid(classes='bottom-search-bar'):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
@@ -417,16 +417,109 @@ class MainScreen(Screen):
         yield Footer(show_command_palette=False)
 
     async def on_mount(self) -> None:
+        """Mounts the widgets on the screen.
+
+        This method orchestrates the initial data loading and UI population based on configuration
+        settings and launch arguments. It performs the following operations in sequence:
+
+        **Workers (Asynchronous Tasks):**
+        - Fetch projects: always runs as a worker to populate the project dropdown.
+        - Fetch issue types: runs as a worker unless configured to only fetch projects on startup
+          or an initial project key is provided.
+        - Fetch statuses: runs as a worker unless configured to only fetch projects on startup
+          or an initial project key is provided.
+        - Fetch work items (search): runs as a worker if `search_on_startup` is enabled, after
+          waiting for dependent workers to complete.
+        - Focus item: Runs as a worker if `focus_item_on_startup` is specified, after waiting
+          for the search to complete.
+
+        **API Calls (Direct):**
+        - `get_user(account_id)`: Fetches user details if `initial_assignee_account_id` is provided. Used to validate
+        the user exists and retrieve their display name.
+
+        **Widgets Populated:**
+        - users_selector: set with the user account ID and display name if `initial_assignee_account_id`
+          is provided and the user is found via API.
+        - jql_expression_input: set with the JQL expression if `initial_jql_expression_id` is provided
+          and a matching pre-defined expression exists in configuration.
+        - Project dropdown: populated by the `fetch_projects` worker.
+        - Issue types dropdown: Populated by the `fetch_issue_types` worker (if applicable).
+        - Status filter: Populated by the `fetch_statuses` worker (if applicable).
+        - Work items list: Populated by the search worker (if `search_on_startup` is enabled).
+
+        **Configuration Dependencies:**
+        - `on_start_up_only_fetch_projects`: If True, skips fetching issue types and statuses.
+        - `search_on_startup`: If True, triggers a work item search after initial data is loaded.
+        - `pre_defined_jql_expressions`: Dictionary of JQL expressions keyed by expression ID.
+
+        **Execution Order:**
+        1. Fetch projects (always).
+        2. Fetch issue types and statuses (conditionally, in parallel).
+        3. Fetch and set user details (conditionally).
+        4. Load and set JQL expression (conditionally).
+        5. Trigger search and focus item (conditionally, with proper await sequencing).
+
+        See the following workflow diagram for an overview.
+
+        ```{mermaid}
+        flowchart TD
+            Start([Start]) --> FetchProjects["Run Worker: Fetch Projects<br/>(Add to workers list)"]
+            FetchProjects --> CheckOnStartup{"on_start_up_only_fetch_projects<br/>is False AND<br/>initial_project_key is None?"}
+            CheckOnStartup -->|Yes| FetchIssueTypes["Run Worker: Fetch Issue Types"]
+            CheckOnStartup -->|Yes| FetchStatuses["Run Worker: Fetch Statuses"]
+            CheckOnStartup -->|No| CheckAssignee
+            FetchIssueTypes --> CheckAssignee
+            FetchStatuses --> CheckAssignee
+            CheckAssignee{"initial_assignee_account_id<br/>is set?"}
+            CheckAssignee -->|Yes| GetUser["API Call: get_user<br/>(initial_assignee_account_id)"]
+            CheckAssignee -->|No| CheckJQL
+            GetUser --> UserSuccess{"user_response<br/>success?"}
+            UserSuccess -->|Yes| SetUserWidget["Set users_selector<br/>with user details"]
+            UserSuccess -->|No| NotifyWarning["Notify: Unable to find user<br/>with account ID"]
+            SetUserWidget --> CheckJQL
+            NotifyWarning --> CheckJQL
+            CheckJQL{"initial_jql_expression_id<br/>is set AND<br/>pre_defined_jql_expressions exist?"}
+            CheckJQL -->|Yes| GetExpression{"Get expression from<br/>pre_defined_jql_expressions?"}
+            CheckJQL -->|No| CheckSearchOnStartup
+            GetExpression -->|Found| SetExpression["Set jql_expression_input<br/>with expression<br/>Clean: replace newlines/tabs"]
+            GetExpression -->|Not Found| CheckSearchOnStartup
+            SetExpression --> CheckSearchOnStartup
+            CheckSearchOnStartup{"search_on_startup<br/>is enabled?"}
+            CheckSearchOnStartup -->|No| End([End])
+            CheckSearchOnStartup -->|Yes| WaitWorkers["Wait for workers to complete<br/>(projects, issue types, statuses)"]
+            WaitWorkers --> RunSearch["Run Worker: Search<br/>(exclusive=True)"]
+            RunSearch --> CheckFocusItem{"focus_item_on_startup<br/>is set?"}
+            CheckFocusItem -->|No| End
+            CheckFocusItem -->|Yes| WaitSearch["Wait for search worker<br/>to complete"]
+            WaitSearch --> FocusItem["Run Worker: Focus Item<br/>on Startup"]
+            FocusItem --> End
+        ```
+
+        Returns:
+
+        """
+
         # fetch the list of projects
         workers: list[Worker] = [self.run_worker(self.fetch_projects())]
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
-        # users, status codes and work item types after the project dropdown is updated with the selection.
+        # status codes and work item types after the project dropdown is updated with the selection.
         # the same happens when the user configures the app to fetch only projects on start up
         if not CONFIGURATION.get().on_start_up_only_fetch_projects and not self.initial_project_key:
             # in this case we need to fetch users, status codes and work item types
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
-            workers.append(self.run_worker(self.fetch_users()))
+
+        # if the user launched the app with a pre-defined user account id then let's fetch the details of the user
+        # and set the user selection widget with the corresponding user; if nay exist
+        if self.initial_assignee_account_id:
+            user_response: APIControllerResponse = await self.api.get_user(self.initial_assignee_account_id)
+            if user_response.success and (use_details := user_response.result):
+                self.users_selector.set_value(self.initial_assignee_account_id, use_details.display_name)
+            else:
+                self.notify(
+                    f'Unable to find the user with account ID: {self.initial_assignee_account_id}. Check the configuration and/or the launch arguments',
+                    severity='warning'
+                )
 
         if self.initial_jql_expression_id and (
             pre_defined_jql_expressions := CONFIGURATION.get().pre_defined_jql_expressions
@@ -572,31 +665,12 @@ class MainScreen(Screen):
             work_item_types.append((name, item.id))
         return work_item_types
 
-    async def fetch_users(self) -> list[JiraUser]:
-        """Retrieves a list of users.
-
-        If a project is selected from the projects dropdown then this will retrieve all the users associated to the
-        project.
-
-        Returns:
-            A list of `JiraUser` instances.
-        """
-        self.logger.info('Fetching users')
-        return await self.get_users(project_key=self.project_selector.selection)
-
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.worker.name == 'fetch_statuses':
             self.available_issues_status = event.worker.result or []
             self.issue_status_selector.statuses = self.available_issues_status
         elif event.worker.name == 'fetch_issue_types':
             self.issue_type_selector.set_options(event.worker.result or [])
-        elif event.worker.name == 'fetch_users':
-            users: list[JiraUser] = event.worker.result or []
-            self.available_users = [(user.display_name, user.account_id) for user in users]
-            self.users_selector.users = {
-                'users': users,
-                'selection': self.initial_assignee_account_id,
-            }
 
     @on(Select.Changed, '#jira-project-selector')
     async def handle_project_selection(self, event: Select.Changed) -> None:
@@ -610,44 +684,11 @@ class MainScreen(Screen):
         Returns:
             Nothing.
         """
+
         # fetch issue types for the project
         self.run_worker(self.fetch_issue_types())
-        # fetch users for the project
-        self.run_worker(self.fetch_users())
         # fetch valid status codes
         self.run_worker(self.fetch_statuses())
-
-    async def get_users(self, project_key: str | None = None) -> list[JiraUser]:
-        if project_key:
-            # fetch the users that can be assigned to items in this project
-            response: APIControllerResponse = await self.api.search_users_assignable_to_projects(
-                project_keys=[project_key],
-                active=True,
-            )
-            if not response.success:
-                self.logger.error(
-                    'Failed to retrieve the users assignable to the project',
-                    extra={'error': response.error, 'project_key': project_key},
-                )
-                return []
-            return response.result or []
-
-        if (group_id := CONFIGURATION.get().jira_user_group_id) and CONFIGURATION.get().cloud:
-            # fetch the users that belong to this Jira user group ID
-            response = await self.api.list_all_active_users_in_group(group_id=group_id)
-            if not response.success:
-                self.logger.error(
-                    'Failed to retrieve the active users in the selected user group',
-                    extra={'error': response.error, 'group_id': group_id},
-                )
-                return []
-            return response.result or []
-        self.notify(
-            'Unable to find users. Check if the configuration option "jira_user_group_id" is set and that you are using Jira Cloud.',
-            severity='warning',
-            title='Find Users',
-        )
-        return []
 
     async def _search_work_items(
         self,
@@ -670,6 +711,8 @@ class MainScreen(Screen):
         Returns:
             An instance of `WorkItemSearchResult` with the results of the search.
         """
+
+        # extract filters for the search
         search_field_status: int | None = None
         if value := self.issue_status_selector.selection:
             search_field_status = int(value)
@@ -682,9 +725,7 @@ class MainScreen(Screen):
         if value := self.issue_date_until_input.value:
             search_field_created_until = isoparse(value).date()
 
-        search_field_assignee: str | None = None
-        if value := self.users_selector.selection:
-            search_field_assignee = value
+        search_field_assignee: str | None = self.users_selector.account_id
 
         search_field_issue_type: int | None = None
         if value := self.issue_type_selector.selection:
@@ -1042,9 +1083,7 @@ class MainScreen(Screen):
         # step 2: populate information tab
         self.issue_info_container.issue = work_item
 
-        # step 3: set up the details tab
-        # set the assignable users for the selected work item
-        self.issue_details_widget.available_users = self.available_users
+        # step 3: populate the details tab
         # set the work item
         self.issue_details_widget.issue = work_item
 

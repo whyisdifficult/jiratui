@@ -461,7 +461,6 @@ async def test_adding_worklog_user_clicks_cancel(
 @patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -470,7 +469,6 @@ async def test_adding_worklog_with_success(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     add_work_item_worklog_mock: AsyncMock,
@@ -532,7 +530,6 @@ async def test_adding_worklog_with_success(
 @patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -541,7 +538,6 @@ async def test_adding_worklog_with_error_adding_new_worklog(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     add_work_item_worklog_mock: AsyncMock,
@@ -602,7 +598,6 @@ async def test_adding_worklog_with_error_adding_new_worklog(
 @patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -611,7 +606,6 @@ async def test_adding_worklog_when_users_clicks_cancel(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     add_work_item_worklog_mock: AsyncMock,
@@ -664,7 +658,6 @@ async def test_adding_worklog_when_users_clicks_cancel(
 @patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -673,7 +666,6 @@ async def test_open_modal_to_view_work_logs(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_work_item_worklog_mock: AsyncMock,
@@ -723,7 +715,6 @@ async def test_open_modal_to_view_work_logs(
 @patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -732,7 +723,6 @@ async def test_delete_worklog(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_work_item_worklog_mock: AsyncMock,
@@ -791,7 +781,6 @@ async def test_delete_worklog(
 @patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -800,7 +789,6 @@ async def test_delete_worklog_and_close_worklog_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_work_item_worklog_mock: AsyncMock,
@@ -858,7 +846,6 @@ async def test_delete_worklog_and_close_worklog_screen(
 @patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -867,7 +854,6 @@ async def test_show_and_close_worklog_screen_without_deleting(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_work_item_worklog_mock: AsyncMock,
@@ -920,7 +906,6 @@ async def test_show_and_close_worklog_screen_without_deleting(
 @patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -929,7 +914,6 @@ async def test_open_worklog_in_browser(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_work_item_worklog_mock: AsyncMock,

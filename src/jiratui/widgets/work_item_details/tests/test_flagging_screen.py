@@ -13,7 +13,6 @@ from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -22,7 +21,6 @@ async def test_open_flag_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     determine_issue_flagged_status_mock: AsyncMock,
@@ -60,7 +58,6 @@ async def test_open_flag_screen(
 @patch('jiratui.widgets.screens.APIController.get_fields')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -69,7 +66,6 @@ async def test_open_flag_screen_issue_has_no_metadata(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_fields_mock: AsyncMock,
@@ -111,7 +107,6 @@ async def test_open_flag_screen_issue_has_no_metadata(
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -120,7 +115,6 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_flagged(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -170,7 +164,6 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_flagged(
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -179,7 +172,6 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_not_flagged(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -231,7 +223,6 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_not_flagged(
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -240,7 +231,6 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -288,7 +278,6 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status(
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -297,7 +286,6 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -348,7 +336,6 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -357,7 +344,6 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button1(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -416,7 +402,6 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button1(
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -425,7 +410,6 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_withou
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,
@@ -483,7 +467,6 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_withou
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -492,7 +475,6 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_update
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_custom_field_value_mock: Mock,

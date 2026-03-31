@@ -91,44 +91,6 @@ class IssueStatusSelectionInput(Select):
         self.set_options(statuses or [])
 
 
-class UserSelectionInput(Select):
-    HELP = 'See Search by Assignee section in the help'
-    WIDGET_ID = 'jira-users-selector'
-    users: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys:
-    - users: list
-    - selection: str | None
-    """
-
-    def __init__(self, users: list):
-        super().__init__(
-            options=users,
-            prompt='Select a user',
-            name='users',
-            id=self.WIDGET_ID,
-            type_to_search=True,
-            compact=True,
-            classes='jira-selector',
-        )
-        self.border_title = 'Assignee'
-        self.border_subtitle = '(a)'
-
-    @property
-    def help_anchor(self) -> str:
-        return '#search-by-assignee'
-
-    def watch_users(self, users: dict | None = None) -> None:
-        self.clear()
-        if users and (items := users.get('users', []) or []):
-            options = [(item.display_name, item.account_id) for item in items]
-            self.set_options(options)
-            if selection := users.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
-
-
 class WorkItemInputWidget(Input):
     HELP = 'See Search by Work Item Key section in the help'
 

@@ -3345,3 +3345,43 @@ async def test_delete_issue_with_api_error(
     assert response.error == 'some error'
     assert response.result is None
     delete_work_item_mock.assert_called_once_with('1', True)
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_user')
+async def test_get_user(get_user_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    get_user_mock.return_value = {
+        'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True
+    }
+    # WHEN
+    response = await jira_api_controller.get_user('123')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=JiraUser(
+            email='a@a.com',
+            account_id='123',
+            active=True,
+            display_name='john',
+        ),
+        error=None,
+    )
+    get_user_mock.assert_called_once_with('123')
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_user')
+async def test_get_user_with_exception(
+    get_user_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_user_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.get_user('123')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False,
+        result=None,
+        error='test error',
+    )
+    get_user_mock.assert_called_once_with('123')

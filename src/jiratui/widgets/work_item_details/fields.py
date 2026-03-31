@@ -1,5 +1,5 @@
 """
-This module contains the widgets used for displaying and updating some of the fields associated to a wrk item.
+This module contains the widgets used for displaying and updating fields associated to a work item.
 """
 
 from typing import Any
@@ -14,26 +14,7 @@ from textual.widgets import Button, Input, Label, MaskedInput, ProgressBar, Sele
 from textual.widgets.selection_list import Selection
 
 from jiratui.widgets.base import DateInput, ReadOnlyField
-from jiratui.widgets.filters import IssueStatusSelectionInput, UserSelectionInput
-
-
-class IssueDetailsAssigneeSelection(UserSelectionInput):
-    """A select widget that stores the assignee field of a work item."""
-
-    WIDGET_ID = 'jira-users-assignee-selector-edit'
-    update_enabled: Reactive[bool | None] = reactive(True)
-
-    def __init__(self, users: list):
-        super().__init__(users)
-        self.border_subtitle = '(x)'
-        self.jira_field_key = 'assignee'
-        """The id used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled: bool = True
-        """Indicates whether the work item allows editing/updating this field."""
-
-    def watch_update_enabled(self, enabled: bool = True) -> None:
-        self.update_is_enabled = enabled
-        self.disabled = not enabled
+from jiratui.widgets.filters import IssueStatusSelectionInput
 
 
 class IssueDetailsStatusSelection(IssueStatusSelectionInput):

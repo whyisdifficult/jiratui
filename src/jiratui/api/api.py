@@ -724,6 +724,25 @@ class JiraAPI:
             method=httpx.AsyncClient.get, url='group/member', params=params
         )
 
+
+    async def get_user(self, account_id: str) -> dict:
+        """Retrieves the details of a single user.
+
+        See Also:
+        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-get
+
+        Args:
+            account_id: the account ID of the user, which uniquely identifies the user across all Atlassian
+            products. For example, 5b10ac8d82e05b22cc7d4ef5.
+
+        Returns:
+            A dictionary with the details of the user
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get, url='user', params={'accountId': account_id}
+        )
+
     async def add_comment(self, issue_id_or_key: str, message: str) -> dict:
         """Adds a comment to an issue.
 

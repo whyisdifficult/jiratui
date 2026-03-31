@@ -22,7 +22,6 @@ from jiratui.widgets.work_item_details.fields import (
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -31,7 +30,6 @@ async def test_multi_checkbox_custom_field_open_modal_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -87,7 +85,6 @@ async def test_multi_checkbox_custom_field_open_modal_screen(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -96,7 +93,6 @@ async def test_multi_checkbox_custom_field_dismiss_modal_screen_without_changes(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -157,7 +153,6 @@ async def test_multi_checkbox_custom_field_dismiss_modal_screen_without_changes(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -166,7 +161,6 @@ async def test_multi_checkbox_custom_field_modal_screen_press_update_without_cha
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -228,7 +222,6 @@ async def test_multi_checkbox_custom_field_modal_screen_press_update_without_cha
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -237,7 +230,6 @@ async def test_multi_checkbox_custom_field_modal_screen_press_update_with_change
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -305,7 +297,6 @@ async def test_multi_checkbox_custom_field_modal_screen_press_update_with_change
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -314,7 +305,6 @@ async def test_custom_field_url_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -364,7 +354,6 @@ async def test_custom_field_url_with_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -373,7 +362,6 @@ async def test_custom_field_url_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -424,7 +412,6 @@ async def test_custom_field_url_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -433,7 +420,6 @@ async def test_custom_field_float_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -484,7 +470,6 @@ async def test_custom_field_float_with_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -493,7 +478,6 @@ async def test_custom_field_float_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -545,7 +529,6 @@ async def test_custom_field_float_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -554,7 +537,6 @@ async def test_custom_field_text_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -607,7 +589,6 @@ async def test_custom_field_text_with_value(
 @pytest.mark.parametrize('custom_field_value', [None, ''])
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -616,7 +597,6 @@ async def test_custom_field_text_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     custom_field_value: str | None,
@@ -670,7 +650,6 @@ async def test_custom_field_text_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -679,7 +658,6 @@ async def test_custom_field_datetime_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -733,7 +711,6 @@ async def test_custom_field_datetime_with_value(
 @pytest.mark.parametrize('custom_field_value', [None, ''])
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -742,7 +719,6 @@ async def test_custom_field_datetime_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     custom_field_value: str | None,
@@ -797,7 +773,6 @@ async def test_custom_field_datetime_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -806,7 +781,6 @@ async def test_custom_field_date_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -861,7 +835,6 @@ async def test_custom_field_date_with_value(
 @pytest.mark.parametrize('custom_field_value', [None, ''])
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -870,7 +843,6 @@ async def test_custom_field_date_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     custom_field_value: str | None,
@@ -926,7 +898,6 @@ async def test_custom_field_date_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -935,7 +906,6 @@ async def test_custom_field_selection_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -990,7 +960,6 @@ async def test_custom_field_selection_with_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -999,7 +968,6 @@ async def test_custom_field_selection_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -1055,7 +1023,6 @@ async def test_custom_field_selection_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1064,7 +1031,6 @@ async def test_custom_field_labels_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_custom_fields: list[JiraIssue],
@@ -1121,7 +1087,6 @@ async def test_custom_field_labels_with_value(
 @pytest.mark.parametrize('custom_field_value', [None, []])
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1130,7 +1095,6 @@ async def test_custom_field_labels_without_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     custom_field_value: list | None,
@@ -1188,7 +1152,6 @@ async def test_custom_field_labels_without_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1197,7 +1160,6 @@ async def test_components_field_open_modal_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_components_field: list[JiraIssue],
@@ -1247,7 +1209,6 @@ async def test_components_field_open_modal_screen(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1256,7 +1217,6 @@ async def test_components_field_open_modal_screen_without_initial_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_components_field: list[JiraIssue],
@@ -1303,7 +1263,6 @@ async def test_components_field_open_modal_screen_without_initial_value(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1312,7 +1271,6 @@ async def test_components_field_dismiss_modal_screen_without_changes(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_components_field: list[JiraIssue],
@@ -1367,7 +1325,6 @@ async def test_components_field_dismiss_modal_screen_without_changes(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1376,7 +1333,6 @@ async def test_components_field_modal_screen_press_update_without_changes(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_components_field: list[JiraIssue],
@@ -1432,7 +1388,6 @@ async def test_components_field_modal_screen_press_update_without_changes(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -1441,7 +1396,6 @@ async def test_components_field_modal_screen_press_update_with_changes(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues_with_components_field: list[JiraIssue],
