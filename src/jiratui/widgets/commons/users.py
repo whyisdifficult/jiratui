@@ -3,6 +3,8 @@ from textual.widgets import Input
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
 import logging
 
+from jiratui.api_controller.controller import APIController
+
 logger = logging.getLogger(__name__)
 
 class JiraUserInput(Input):
@@ -63,25 +65,15 @@ class UsersAutoComplete(AutoComplete):
     the target widget MUST provide a property to set the user's account id.
     """
 
-    def __init__(
-        self,
-        target: Input,
-        api_controller,
-        required: bool = False,
-        title: str | None = None,
-    ):
+    def __init__(self, target: Input, api_controller: APIController):
         """Initializes a UsersAutoComplete widget.
 
         Args:
             target: the Input widget to attach autocomplete to
             api_controller: APIController instance for fetching suggestions.
-            required: whether the field is required.
-            title: display title for the field (defaults to 'Assignee')
         """
 
         self._api_controller = api_controller
-        self._stored_title = title or 'Assignee'
-        self._required = required
         self._cached_suggestions: list[DropdownItem] = []
         self._last_query = ''
 

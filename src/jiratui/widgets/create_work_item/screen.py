@@ -108,7 +108,7 @@ class AddWorkItemScreen(Screen):
                     )
                     reporter_input.add_class(*['required'])
                     yield reporter_input
-                    yield UsersAutoComplete(reporter_input, self.app.api, title='Reporter')
+                    yield UsersAutoComplete(reporter_input, self.app.api)
                     # this input field contains the account id of the Jira user that we can use to update the item's
                     # assignee field
                     assignee_input = JiraUserInput(
@@ -117,7 +117,7 @@ class AddWorkItemScreen(Screen):
                         jira_field_key='assignee_account_id',
                     )
                     yield assignee_input
-                    yield UsersAutoComplete(assignee_input, self.app.api, title='Assignee')
+                    yield UsersAutoComplete(assignee_input, self.app.api)
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
                 yield CreateWorkItemDescription()
