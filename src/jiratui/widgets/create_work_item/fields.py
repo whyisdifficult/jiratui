@@ -7,7 +7,11 @@ from jiratui.widgets.base import DateInput
 
 class CreateWorkItemProjectSelectionInput(Select):
     projects: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys: projects: list and selection: str | None"""
+    """A dictionary with 2 keys: 
+    
+    projects: list
+    selection: str | None
+    """
 
     def __init__(self, projects: list, **kwargs):
         super().__init__(
@@ -47,72 +51,6 @@ class CreateWorkItemIssueTypeSelectionInput(Select):
         )
         self.border_title = 'Issue Type'
         self.border_subtitle = '(*)'
-
-
-class CreateWorkItemAssigneeSelectionInput(Select):
-    WIDGET_ID = 'create-work-item-assignee-selector'
-    users: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys:
-    - users: list
-    - selection: str | None
-    """
-    BORDER_TITLE = 'Assignee'
-    BORDER_SUB_TITLE = None
-
-    def __init__(self, users: list, **kwargs):
-        super().__init__(
-            options=users,
-            prompt='Select a user',
-            id=self.WIDGET_ID,
-            type_to_search=True,
-            compact=True,
-            **kwargs,
-        )
-        self.border_title = self.BORDER_TITLE
-        if self.BORDER_SUB_TITLE:
-            self.border_subtitle = self.BORDER_SUB_TITLE
-
-    def watch_users(self, users: dict | None = None) -> None:
-        self.clear()
-        if users and (items := users.get('users', []) or []):
-            options = [(item.display_name, item.account_id) for item in items]
-            self.set_options(options)
-            if selection := users.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
-
-
-class CreateWorkItemReporterSelectionInput(Select):
-    WIDGET_ID = 'create-work-item-reporter-selector'
-    BORDER_TITLE = 'Reporter'
-    BORDER_SUB_TITLE = '(*)'
-    reporters: Reactive[dict | None] = reactive(None, always_update=True)
-
-    def __init__(self, users: list, **kwargs):
-        super().__init__(
-            options=users,
-            prompt='Select a user',
-            id=self.WIDGET_ID,
-            type_to_search=True,
-            compact=True,
-            **kwargs,
-        )
-        self.border_title = self.BORDER_TITLE
-        if self.BORDER_SUB_TITLE:
-            self.border_subtitle = self.BORDER_SUB_TITLE
-
-    def watch_reporters(self, users: dict | None = None) -> None:
-        self.clear()
-        if users and (items := users.get('users', []) or []):
-            options = [(item.display_name, item.account_id) for item in items]
-            self.set_options(options)
-            if selection := users.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
 
 
 class CreateWorkItemIssueSummaryField(Input):

@@ -245,6 +245,7 @@ class IssueDetailsWidget(Vertical):
                     id='edit-work-item-input-assignee',
                     jira_field_key='assignee_account_id',
                     border_subtitle='(x)',
+                    border_title='Assignee',
                 )
                 assignee_input.add_class(*['required', 'cols-3'])
                 yield assignee_input  # cols 3

@@ -18,7 +18,6 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraIssueSearchResponse,
-    JiraUser,
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.urls import build_external_url_for_issue
@@ -374,7 +373,9 @@ class MainScreen(Screen):
                 yield ProjectSelectionInput(projects=[])
                 yield IssueTypeSelectionInput(types=[])
                 yield IssueStatusSelectionInput(statuses=[])
-                assignee_input = JiraUserInput(id='search-filters-input-assignee', border_subtitle='(a)')
+                assignee_input = JiraUserInput(
+                    id='search-filters-input-assignee', border_subtitle='(a)', border_title='Assignee',
+                )
                 yield assignee_input
                 yield UsersAutoComplete(assignee_input, self.api, title='Assignee')
             with ItemGrid(classes='bottom-search-bar'):
@@ -984,7 +985,7 @@ class MainScreen(Screen):
         await self.app.push_screen(
             AddWorkItemScreen(
                 project_key=self.project_selector.selection,
-                reporter_account_id=CONFIGURATION.get().jira_account_id,
+                reporter_account_id=self.initial_assignee_account_id,
             ),
             callback=self.create_work_item,
         )

@@ -17,8 +17,9 @@ class JiraUserInput(Input):
     def __init__(self, *args, **kwargs):
         border_subtitle: str | None = kwargs.pop('border_subtitle', None)
         jira_field_key: str | None = kwargs.pop('jira_field_key', None)
+        border_title: str | None = kwargs.pop('border_title', None)
         super().__init__(*args, **kwargs)
-        self.border_title = 'Assignee'
+        self.border_title = border_title or 'Jira User'
         self.border_subtitle = border_subtitle
         self.jira_field_key = jira_field_key
         """The id used by Jira to identify this field in the edit-metadata or to update its value in a work item."""
@@ -111,6 +112,7 @@ class UsersAutoComplete(AutoComplete):
             return
 
         try:
+            self._cached_suggestions = []
             response = await self._api_controller.search_users(email_or_name=query)
             # API controller returns APIControllerResponse with result containing suggestions list
             if response and response.success and response.result:
@@ -124,61 +126,6 @@ class UsersAutoComplete(AutoComplete):
 
                 # trigger dropdown re-evaluation to show the suggestions
                 self._handle_target_update()
-            else:
-                self._cached_suggestions = []
-                # TODO remove
-                self._cached_suggestions = [
-                    DropdownItem("emma stone|emma@alpha.test", id="2"),
-                    DropdownItem("liam smith|liam@beta.test", id="3"),
-                    DropdownItem("olivia brown|olivia@gamma.test", id="4"),
-                    DropdownItem("noah johnson|noah@delta.test", id="5"),
-                    DropdownItem("ava williams|ava@epsilon.test", id="6"),
-                    DropdownItem("lucas jones|lucas@zeta.test", id="7"),
-                    DropdownItem("sophia garcia|sophia@eta.test", id="8"),
-                    DropdownItem("mason martinez|mason@theta.test", id="9"),
-                    DropdownItem("mia rodriguez|mia@iota.test", id="10"),
-                    DropdownItem("ethan lee|ethan@kappa.test", id="11"),
-                    DropdownItem("isabella walker|isabella@lambda.test", id="12"),
-                    DropdownItem("logan hall|logan@mu.test", id="13"),
-                    DropdownItem("charlotte allen|charlotte@nu.test", id="14"),
-                    DropdownItem("jacob young|jacob@xi.test", id="15"),
-                    DropdownItem("amelia hernandez|amelia@omicron.test", id="16"),
-                    DropdownItem("oliver king|oliver@pi.test", id="17"),
-                    DropdownItem("harper wright|harper@rho.test", id="18"),
-                    DropdownItem("elijah lopez|elijah@sigma.test", id="19"),
-                    DropdownItem("evelyn hill|evelyn@tau.test", id="20"),
-                    DropdownItem("avery scott|avery@upsilon.test", id="21"),
-                    DropdownItem("benjamin green|benjamin@phi.test", id="22"),
-                    DropdownItem("zoe adams|zoe@chi.test", id="23"),
-                    DropdownItem("samuel baker|samuel@psi.test", id="24"),
-                    DropdownItem("hannah nelson|hannah@omega.test", id="25"),
-                    DropdownItem("henry clark|henry@alpha2.test", id="26"),
-                    DropdownItem("lily moore|lily@beta2.test", id="27"),
-                    DropdownItem("alexander rivera|alex@gamma2.test", id="28"),
-                    DropdownItem("scarlett reyes|scarlett@delta2.test", id="29"),
-                    DropdownItem("sebastian cook|sebastian@epsilon2.test", id="30"),
-                    DropdownItem("nora morgan|nora@zeta2.test", id="31"),
-                    DropdownItem("julian bell|julian@eta2.test", id="32"),
-                    DropdownItem("ella cooper|ella@theta2.test", id="33"),
-                    DropdownItem("levi murphy|levi@iota2.test", id="34"),
-                    DropdownItem("penelope bailey|penelope@kappa2.test", id="35"),
-                    DropdownItem("owen rivera|owen@lambda2.test", id="36"),
-                    DropdownItem("addison sanders|addison@mu2.test", id="37"),
-                    DropdownItem("mateo price|mateo@nu2.test", id="38"),
-                    DropdownItem("clara long|clara@xi2.test", id="39"),
-                    DropdownItem("ryan foster|ryan@omicron2.test", id="40"),
-                    DropdownItem("violet wagner|violet@pi2.test", id="41"),
-                    DropdownItem("david stanley|david@rho2.test", id="42"),
-                    DropdownItem("grace watts|grace@sigma2.test", id="43"),
-                    DropdownItem("nicholas perez|nick@tau2.test", id="44"),
-                    DropdownItem("aria cole|aria@upsilon2.test", id="45"),
-                    DropdownItem("carter ross|carter@phi2.test", id="46"),
-                    DropdownItem("zachary reid|zach@chi2.test", id="47"),
-                    DropdownItem("madison cruz|madison@psi2.test", id="48"),
-                    DropdownItem("wyatt hughes|wyatt@omega2.test", id="49"),
-                    DropdownItem("luna ford|luna@alpha3.test", id="50"),
-
-                ]
         except Exception as e:
             logger.error(f'Error fetching Jira users with the given query: {query} - {e}', exc_info=True)
             self._cached_suggestions = []
