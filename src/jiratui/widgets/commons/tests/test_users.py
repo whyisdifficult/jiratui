@@ -1,5 +1,5 @@
 from typing import cast
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -32,6 +32,7 @@ async def test_search_users_without_project(
         # THEN
         search_users_mock.assert_called_once_with(email_or_name='tes')
 
+
 @patch.object(APIController, 'search_users_assignable_to_projects')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
@@ -57,6 +58,7 @@ async def test_search_users_with_project(
         await pilot.press('s')
         # THEN
         search_users_assignable_to_projects_mock.assert_called_once_with(['PR1'], query='tes')
+
 
 @patch.object(APIController, 'search_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')

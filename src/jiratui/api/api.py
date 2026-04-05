@@ -724,7 +724,6 @@ class JiraAPI:
             method=httpx.AsyncClient.get, url='group/member', params=params
         )
 
-
     async def get_user(self, account_id: str) -> dict:
         """Retrieves the details of a single user.
 

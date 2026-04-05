@@ -23,7 +23,7 @@ from jiratui.models import (
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
-from jiratui.widgets.commons.users import UsersAutoComplete, JiraUserInput
+from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
@@ -235,7 +235,9 @@ class MainScreen(Screen):
         self.initial_work_item_key = work_item_key
         """A work item key to set as the initial value of the work-item-key widget."""
         """Pre-selected project key. This is passed during the initialization of the application."""
-        self.initial_assignee_account_id = user_account_id  # TODO check how to use it with autocomplete feature mow
+        self.initial_assignee_account_id = (
+            user_account_id  # TODO check how to use it with autocomplete feature mow
+        )
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
@@ -378,7 +380,9 @@ class MainScreen(Screen):
                 yield IssueTypeSelectionInput(types=[])
                 yield IssueStatusSelectionInput(statuses=[])
                 assignee_input = JiraUserInput(
-                    id='search-filters-input-assignee', border_subtitle='(a)', border_title='Assignee',
+                    id='search-filters-input-assignee',
+                    border_subtitle='(a)',
+                    border_title='Assignee',
                 )
                 yield assignee_input
                 yield UsersAutoComplete(assignee_input, self.api)
@@ -517,13 +521,17 @@ class MainScreen(Screen):
         # if the user launched the app with a pre-defined user account id then let's fetch the details of the user
         # and set the user selection widget with the corresponding user; if nay exist
         if self.initial_assignee_account_id:
-            user_response: APIControllerResponse = await self.api.get_user(self.initial_assignee_account_id)
+            user_response: APIControllerResponse = await self.api.get_user(
+                self.initial_assignee_account_id
+            )
             if user_response.success and (use_details := user_response.result):
-                self.users_selector.set_value(self.initial_assignee_account_id, use_details.display_name)
+                self.users_selector.set_value(
+                    self.initial_assignee_account_id, use_details.display_name
+                )
             else:
                 self.notify(
                     f'Unable to find the user with account ID: {self.initial_assignee_account_id}. Check the configuration and/or the launch arguments',
-                    severity='warning'
+                    severity='warning',
                 )
 
         if self.initial_jql_expression_id and (

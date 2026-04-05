@@ -1,5 +1,5 @@
 from typing import cast
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -39,7 +39,9 @@ async def test_select_work_item_with_project_enables_users_search_by_project(
                 issues=jira_issues, next_page_token=None, is_last=None
             ),
         )
-        get_issue_mock.return_value = APIControllerResponse(result=JiraIssueSearchResponse(issues=[jira_issues[1]]))
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         await pilot.press('ctrl+r')
@@ -91,7 +93,9 @@ async def test_select_and_display_work_item(
                 issues=jira_issues, next_page_token=None, is_last=None
             ),
         )
-        get_issue_mock.return_value = APIControllerResponse(result=JiraIssueSearchResponse(issues=[jira_issues[1]]))
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         await pilot.press('ctrl+r')

@@ -1,11 +1,13 @@
+import logging
+
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
-import logging
 
 from jiratui.api_controller.controller import APIController
 
 logger = logging.getLogger(__name__)
+
 
 class JiraUserInput(Input):
     """An input field for selecting a Jira user.
@@ -58,6 +60,7 @@ class JiraUserInput(Input):
         self.value = value if value else ''
         self.account_id = account_id
 
+
 class UsersAutoComplete(AutoComplete):
     """AutoComplete for Jira users that fetches suggestions from Jira API.
 
@@ -68,7 +71,9 @@ class UsersAutoComplete(AutoComplete):
     MIN_QUERY_TERM_LENGTH = 3
     """The minimum length of the query used for searching users by email/display name."""
 
-    def __init__(self, target: Input, api_controller: APIController, project_key: str | None = None):
+    def __init__(
+        self, target: Input, api_controller: APIController, project_key: str | None = None
+    ):
         """Initializes a UsersAutoComplete widget.
 
         Args:
@@ -84,7 +89,7 @@ class UsersAutoComplete(AutoComplete):
         # initialize with empty candidates - will be populated dynamically
         super().__init__(
             target=target,
-            candidates=self._get_users,   # type:ignore
+            candidates=self._get_users,  # type:ignore
         )
 
     def set_project_key(self, key: str | None = None) -> None:
@@ -144,7 +149,9 @@ class UsersAutoComplete(AutoComplete):
                 # trigger dropdown re-evaluation to show the suggestions
                 self._handle_target_update()
         except Exception as e:
-            logger.error(f'Error fetching Jira users with the given query: {query} - {e}', exc_info=True)
+            logger.error(
+                f'Error fetching Jira users with the given query: {query} - {e}', exc_info=True
+            )
             self._cached_suggestions = []
 
     def should_show_dropdown(self, search_string: str) -> bool:

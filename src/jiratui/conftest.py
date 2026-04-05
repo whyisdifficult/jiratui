@@ -10,14 +10,16 @@ from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import (
     Attachment,
+    IssuePriority,
     IssueStatus,
     IssueType,
     JiraIssue,
     JiraIssueComponent,
+    JiraSprint,
     JiraUser,
     JiraWorklog,
     Project,
-    WorkItemsSearchOrderBy, IssuePriority, JiraSprint,
+    WorkItemsSearchOrderBy,
 )
 
 

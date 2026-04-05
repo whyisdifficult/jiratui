@@ -3346,12 +3346,16 @@ async def test_delete_issue_with_api_error(
     assert response.result is None
     delete_work_item_mock.assert_called_once_with('1', True)
 
+
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_user')
 async def test_get_user(get_user_mock: Mock, jira_api_controller: APIController):
     # GIVEN
     get_user_mock.return_value = {
-        'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True
+        'accountId': '123',
+        'emailAddress': 'a@a.com',
+        'displayName': 'john',
+        'active': True,
     }
     # WHEN
     response = await jira_api_controller.get_user('123')
@@ -3367,6 +3371,7 @@ async def test_get_user(get_user_mock: Mock, jira_api_controller: APIController)
         error=None,
     )
     get_user_mock.assert_called_once_with('123')
+
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_user')

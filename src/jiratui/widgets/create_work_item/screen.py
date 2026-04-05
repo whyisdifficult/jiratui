@@ -141,7 +141,9 @@ class AddWorkItemScreen(Screen):
             self.run_worker(self._fetch_reporter())
 
     async def _fetch_reporter(self):
-        user_response: APIControllerResponse = await self.app.api.get_user(self._reporter_account_id)
+        user_response: APIControllerResponse = await self.app.api.get_user(
+            self._reporter_account_id
+        )
         if user_response.success and (use_details := user_response.result):
             self.reporter_selector.set_value(self._reporter_account_id, use_details.display_name)
 

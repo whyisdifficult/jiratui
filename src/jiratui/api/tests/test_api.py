@@ -3048,6 +3048,7 @@ async def test_delete_issue_without_deleting_subs_tasks(jira_api: JiraAPI):
     assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1'
     assert route.calls.last.request.url.params.get('deleteSubtasks') == 'false'
 
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_get_user(jira_api: JiraAPI):
@@ -3063,7 +3064,7 @@ async def test_get_user(jira_api: JiraAPI):
                 'displayName': 'Mia Krystof',
                 'key': '',
                 'name': '',
-            }
+            },
         )
     )
     # WHEN

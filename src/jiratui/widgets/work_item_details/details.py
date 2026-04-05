@@ -20,7 +20,7 @@ from jiratui.utils.work_item_updates import (
     work_item_priority_has_changed,
 )
 from jiratui.widgets.base import ReadOnlyTextField
-from jiratui.widgets.commons.users import UsersAutoComplete, JiraUserInput
+from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.work_item_details.factory import create_dynamic_widgets_for_updating_work_item
 from jiratui.widgets.work_item_details.fields import (
     IssueComponentsField,
@@ -476,7 +476,9 @@ class IssueDetailsWidget(Vertical):
                     title='Worklog',
                 )
 
-    def _update_priority_selection(self, priorities: list[tuple[str, str]], priority_id: str) -> None:
+    def _update_priority_selection(
+        self, priorities: list[tuple[str, str]], priority_id: str
+    ) -> None:
         for priority in priorities or []:
             if priority[1] == priority_id:
                 self.priority_selector.value = priority_id
@@ -835,7 +837,9 @@ class IssueDetailsWidget(Vertical):
 
         # set the assignee field
         if work_item.assignee:
-            self.assignee_selector.set_value(work_item.assignee.account_id, work_item.assignee.display_name)
+            self.assignee_selector.set_value(
+                work_item.assignee.account_id, work_item.assignee.display_name
+            )
 
         # update the "editability" of the assignee field
         # Important: the item's edit metadata refers to the assignee field with the key "assignee" but when we submit
