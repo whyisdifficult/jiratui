@@ -5,7 +5,7 @@ import logging
 from typing import Any
 
 import httpx
-import magic
+import puremagic
 
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
@@ -1069,7 +1069,7 @@ class JiraAPI:
         with open(filename, 'rb') as file_to_upload:
             try:
                 # attempt to detect the MIME type based on the content of the file
-                detected_mime_type: str = self._detect_file_mime_type(file_to_upload)  # type:ignore
+                detected_mime_type = self._detect_file_mime_type(file_to_upload)
             except FileNotFoundError as e:
                 self.logger.warning(
                     f'File not found. Unable to determine the MIME type of he file {filename}.'
@@ -1077,6 +1077,11 @@ class JiraAPI:
                 raise FileUploadException(
                     f'The file {filename} was not found. Unable to upload it as attachment.'
                 ) from e
+            else:
+                if detected_mime_type is None:
+                    raise FileUploadException(
+                        f'Unable to determine the type of file: {filename}. Unable to upload it as attachment.'
+                    )
             return self._sync_client.make_request(  # type:ignore[return-value]
                 method=httpx.post,
                 url=f'issue/{issue_id_or_key}/attachments',
@@ -1085,8 +1090,14 @@ class JiraAPI:
             )
 
     @staticmethod
-    def _detect_file_mime_type(file_to_upload: BufferedReader) -> str:
-        return magic.from_buffer(file_to_upload.read(2028), mime=True)
+    def _detect_file_mime_type(file_to_upload: BufferedReader) -> str | None:
+        puremagic_result: list[puremagic.PureMagicWithConfidence] = puremagic.magic_string(
+            file_to_upload.read(2028)
+        )
+        for result in puremagic_result:
+            if result.mime_type:
+                return result.mime_type
+        return None
 
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.
