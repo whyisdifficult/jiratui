@@ -72,7 +72,11 @@ class UsersAutoComplete(AutoComplete):
     """The minimum length of the query used for searching users by email/display name."""
 
     def __init__(
-        self, target: Input, api_controller: APIController, project_key: str | None = None, id: str | None = None,
+        self,
+        target: Input,
+        api_controller: APIController,
+        project_key: str | None = None,
+        id: str | None = None,  # noqa:A002
     ):
         """Initializes a UsersAutoComplete widget.
 
