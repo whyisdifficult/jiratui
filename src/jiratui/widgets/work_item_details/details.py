@@ -253,7 +253,7 @@ class IssueDetailsWidget(Vertical):
                 )
                 assignee_input.add_class(*['required', 'cols-3'])
                 yield assignee_input  # cols 3
-                users_autocomplete = UsersAutoComplete(assignee_input, self.app.api)
+                users_autocomplete = UsersAutoComplete(assignee_input, self.app.api)  # type:ignore[attr-defined]
                 users_autocomplete.add_class(*['cols-3'])
                 yield users_autocomplete
                 # set widgets in row 3

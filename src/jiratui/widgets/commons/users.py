@@ -169,4 +169,4 @@ class UsersAutoComplete(AutoComplete):
         if '|' in value:
             value = value.split('|', 1)[0]
         super().apply_completion(value, state)
-        self.target.account_id = self.option_list.highlighted_option.id
+        self.target.account_id = self.option_list.highlighted_option.id  # type:ignore[attr-defined]
