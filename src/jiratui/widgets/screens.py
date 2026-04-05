@@ -230,7 +230,7 @@ class MainScreen(Screen):
         self.api = APIController() if not api else api
         """The API instance used by the screen to interact with the Jira REST API via a an API controller."""
         self.available_issues_status: list[tuple[str, str]] = []
-        self.initial_project_key = project_key
+        self.initial_project_key: str | None = project_key
         """A project key to set as the initial value of the projects dropdown widget."""
         self.initial_work_item_key = work_item_key
         """A work item key to set as the initial value of the work-item-key widget."""
@@ -280,6 +280,10 @@ class MainScreen(Screen):
     @property
     def users_selector(self) -> JiraUserInput:
         return self.query_one(JiraUserInput)
+
+    @property
+    def users_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one(UsersAutoComplete)
 
     @property
     def run_button(self) -> Button:
@@ -677,7 +681,8 @@ class MainScreen(Screen):
     async def handle_project_selection(self, event: Select.Changed) -> None:
         """Handles the selection of a project.
 
-        This will trigger the actions to fetch users, types of issues and applicable project status codes.
+        This will trigger the actions to fetch the types of issues and applicable project status codes. It will also
+        update the project key of the autocomplete widget used for searching Jira users.
 
         Args:
             event: the event triggered by the selection.
@@ -690,6 +695,7 @@ class MainScreen(Screen):
         self.run_worker(self.fetch_issue_types())
         # fetch valid status codes
         self.run_worker(self.fetch_statuses())
+        self.users_autocomplete.set_project_key(self.project_selector.selection)
 
     async def _search_work_items(
         self,

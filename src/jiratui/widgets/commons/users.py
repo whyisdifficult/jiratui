@@ -65,7 +65,10 @@ class UsersAutoComplete(AutoComplete):
     the target widget MUST provide a property to set the user's account id.
     """
 
-    def __init__(self, target: Input, api_controller: APIController):
+    MIN_QUERY_TERM_LENGTH = 3
+    """The minimum length of the query used for searching users by email/display name."""
+
+    def __init__(self, target: Input, api_controller: APIController, project_key: str | None = None):
         """Initializes a UsersAutoComplete widget.
 
         Args:
@@ -73,17 +76,21 @@ class UsersAutoComplete(AutoComplete):
             api_controller: APIController instance for fetching suggestions.
         """
 
-        self._api_controller = api_controller
+        self._api_controller: APIController = api_controller
         self._cached_suggestions: list[DropdownItem] = []
         self._last_query = ''
+        self._project_key: str | None = project_key
 
         # initialize with empty candidates - will be populated dynamically
         super().__init__(
             target=target,
-            candidates=self._get_candidates_sync,   # type:ignore
+            candidates=self._get_users,   # type:ignore
         )
 
-    def _get_candidates_sync(self, target_state: TargetState) -> list[DropdownItem]:
+    def set_project_key(self, key: str | None = None) -> None:
+        self._project_key = key
+
+    def _get_users(self, target_state: TargetState) -> list[DropdownItem]:
         """Synchronous wrapper that returns cached suggestions."""
 
         # get the search string
@@ -93,20 +100,38 @@ class UsersAutoComplete(AutoComplete):
         if search_string and search_string != self._last_query:
             self._last_query = search_string
             # schedule async fetch - don't await here since this must be sync
-            self.call_later(self._fetch_suggestions, search_string)
+            self.call_later(self._search_users, search_string)
         return self._cached_suggestions
 
-    async def _fetch_suggestions(self, query: str) -> None:
-        """Fetch users suggestions from Jira API asynchronously."""
+    async def _search_users(self, query: str) -> None:
+        """Search Jira users asynchronously.
 
-        if not query:
+        If the auto complete field is initialized with a project id then this method searches for Jira users using a
+        combination of the project id and the search query. This allows to search for users assignable to issues in a
+        given project.
+
+        Args:
+            query: the query term to use. This will be used for finding users by display name and/or email.
+
+        Returns:
+            None
+        """
+
+        if not query or len(query) < self.MIN_QUERY_TERM_LENGTH:
             self._cached_suggestions = []
             return
 
         try:
             self._cached_suggestions = []
-            response = await self._api_controller.search_users(email_or_name=query)
-            # API controller returns APIControllerResponse with result containing suggestions list
+
+            if self._project_key:
+                response = await self._api_controller.search_users_assignable_to_projects(
+                    [self._project_key], query=query
+                )
+            else:
+                response = await self._api_controller.search_users(email_or_name=query)
+
+            # API controller returns APIControllerResponse with result containing the list of users found
             if response and response.success and response.result:
                 # update cached suggestions
                 self._cached_suggestions = []

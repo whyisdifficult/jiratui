@@ -157,6 +157,10 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(JiraUserInput)
 
     @property
+    def assignee_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one(UsersAutoComplete)
+
+    @property
     def priority_selector(self) -> IssueDetailsPrioritySelection:
         return self.query_one(IssueDetailsPrioritySelection)
 
@@ -259,10 +263,10 @@ class IssueDetailsWidget(Vertical):
                 # set widgets in row 4
                 yield IssueParentField()
                 yield IssueSprintField()
-                yield ProjectIDField()
+                yield ReporterField()
                 # set widgets in row 5
                 yield IssueTypeField()
-                yield ReporterField()  # cols 2
+                yield ProjectIDField()  # cols 2
                 # set widgets in row 6
                 yield ReadOnlyTextField(
                     id='issue_created_date',
@@ -472,7 +476,7 @@ class IssueDetailsWidget(Vertical):
                     title='Worklog',
                 )
 
-    def _update_priority_selection(self, priorities, priority_id: str) -> None:
+    def _update_priority_selection(self, priorities: list[tuple[str, str]], priority_id: str) -> None:
         for priority in priorities or []:
             if priority[1] == priority_id:
                 self.priority_selector.value = priority_id
@@ -519,6 +523,7 @@ class IssueDetailsWidget(Vertical):
             self.issue_sprint_field.value = ''
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
+            self.assignee_autocomplete.set_project_key()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
@@ -837,6 +842,9 @@ class IssueDetailsWidget(Vertical):
         # the payload for updating the work item's assignee we need to use the self.assignee_selector.jira_field_key;
         # this is because jira uses a different key for the same field when updating its value in a work item
         self.assignee_selector.update_enabled = editable_fields.get('assignee')
+
+        # set the project key to enable searching Jira users by project in addition to display name and email
+        self.assignee_autocomplete.set_project_key(work_item.project.key)
 
         # set the value of the form fields based on the work item's data
         if work_item.resolution_date:
