@@ -72,11 +72,12 @@ class UsersAutoComplete(AutoComplete):
     """The minimum length of the query used for searching users by email/display name."""
 
     def __init__(
-        self, target: Input, api_controller: APIController, project_key: str | None = None
+        self, target: Input, api_controller: APIController, project_key: str | None = None, id: str | None = None,
     ):
         """Initializes a UsersAutoComplete widget.
 
         Args:
+            id: the id for this widget.
             target: the Input widget to attach autocomplete to
             api_controller: APIController instance for fetching suggestions.
         """
@@ -88,6 +89,7 @@ class UsersAutoComplete(AutoComplete):
 
         # initialize with empty candidates - will be populated dynamically
         super().__init__(
+            id=id,
             target=target,
             candidates=self._get_users,  # type:ignore
         )

@@ -65,8 +65,16 @@ class AddWorkItemScreen(Screen):
         return self.query_one('#create-work-item-reporter-selector', expect_type=JiraUserInput)
 
     @property
+    def reporter_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one('#reporter-autocomplete', expect_type=UsersAutoComplete)
+
+    @property
     def assignee_selector(self) -> JiraUserInput:
         return self.query_one('#create-work-item-assignee-selector', expect_type=JiraUserInput)
+
+    @property
+    def assignee_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one('#assignee-autocomplete', expect_type=UsersAutoComplete)
 
     @property
     def summary_field(self) -> CreateWorkItemIssueSummaryField:
@@ -108,7 +116,7 @@ class AddWorkItemScreen(Screen):
                     )
                     reporter_input.add_class(*['required'])
                     yield reporter_input
-                    yield UsersAutoComplete(reporter_input, self.app.api)  # type:ignore[attr-defined]
+                    yield UsersAutoComplete(reporter_input, self.app.api, id='reporter-autocomplete')  # type:ignore[attr-defined]
                     # this input field contains the account id of the Jira user that we can use to update the item's
                     # assignee field
                     assignee_input = JiraUserInput(
@@ -117,7 +125,7 @@ class AddWorkItemScreen(Screen):
                         jira_field_key='assignee_account_id',
                     )
                     yield assignee_input
-                    yield UsersAutoComplete(assignee_input, self.app.api)  # type:ignore[attr-defined]
+                    yield UsersAutoComplete(assignee_input, self.app.api, id='assignee-autocomplete')  # type:ignore[attr-defined]
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
                 yield CreateWorkItemDescription()
@@ -180,6 +188,8 @@ class AddWorkItemScreen(Screen):
             and self.reporter_selector.value
             and self.summary_field.value
         )
+        self.assignee_autocomplete.set_project_key(self.project_selector.selection)
+        self.reporter_autocomplete.set_project_key(self.project_selector.selection)
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
     def handle_issue_type_selection(self) -> None:

@@ -385,7 +385,7 @@ class MainScreen(Screen):
                     border_title='Assignee',
                 )
                 yield assignee_input
-                yield UsersAutoComplete(assignee_input, self.api)
+                yield UsersAutoComplete(assignee_input, self.api, id='filter-assignee-autocomplete')
             with ItemGrid(classes='bottom-search-bar'):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
