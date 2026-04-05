@@ -10,10 +10,12 @@ from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import (
     Attachment,
+    IssuePriority,
     IssueStatus,
     IssueType,
     JiraIssue,
     JiraIssueComponent,
+    JiraSprint,
     JiraUser,
     JiraWorklog,
     Project,
@@ -246,8 +248,15 @@ def jira_issues() -> list[JiraIssue]:
             status=IssueStatus(name='Done', id='3'),
             issue_type=IssueType(id='2', name='Bug'),
             project=Project(id='1', name='Project 1', key='P1'),
+            parent_issue_key='P2',
             created=datetime(2025, 10, 11),
             updated=datetime(2025, 10, 11),
+            due_date=datetime(2025, 10, 12),
+            resolution_date=datetime(2025, 10, 11),
+            priority=IssuePriority(id='1', name='Medium'),
+            reporter=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+            resolution='this was done',
+            sprint=JiraSprint(id='5', name='This Sprint', active=True),
             edit_meta={
                 'fields': {
                     'customfield_10021': {
@@ -262,6 +271,11 @@ def jira_issues() -> list[JiraIssue]:
                         'key': 'customfield_10021',
                         'operations': ['add', 'set', 'remove'],
                         'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+                    },
+                    'priority': {
+                        'name': 'Priority',
+                        'key': 'priority',
+                        'allowedValues': [{'name': 'Medium', 'id': '1'}],
                     },
                 }
             },

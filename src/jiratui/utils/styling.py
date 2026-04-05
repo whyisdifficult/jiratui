@@ -2,7 +2,7 @@ from jiratui.config import CONFIGURATION
 
 WORK_ITEM_STATUS_STYLES = {
     'done': 'green',
-    'in_review': 'dark_olive_green',
+    'in_review': 'darkolivegreen',
     'in_progress': 'blue',
     'to_do': 'yellow',
 }

@@ -10,7 +10,6 @@ from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
 
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -19,7 +18,6 @@ async def test_open_git_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -53,7 +51,6 @@ async def test_open_git_screen(
 
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -62,7 +59,6 @@ async def test_git_screen_select_repo(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -101,7 +97,6 @@ async def test_git_screen_select_repo(
 
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -110,7 +105,6 @@ async def test_git_screen_no_branch_disables_button(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -153,7 +147,6 @@ async def test_git_screen_no_branch_disables_button(
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -162,7 +155,6 @@ async def test_git_screen_press_button_repo_not_found(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_git_repository_mock: Mock,
     create_branch_mock: Mock,
@@ -210,7 +202,6 @@ async def test_git_screen_press_button_repo_not_found(
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -219,7 +210,6 @@ async def test_git_screen_press_button_branch_exists(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_git_repository_mock: Mock,
     create_branch_mock: Mock,
@@ -277,7 +267,6 @@ async def test_git_screen_press_button_branch_exists(
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -286,7 +275,6 @@ async def test_git_screen_press_button_branch_does_not_exists(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_git_repository_mock: Mock,
     create_branch_mock: Mock,
@@ -335,7 +323,6 @@ async def test_git_screen_press_button_branch_does_not_exists(
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_get_git_repository')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -344,7 +331,6 @@ async def test_git_screen_press_button_branch_creation_fails(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_git_repository_mock: Mock,
     get_repo_branches_mock: Mock,
@@ -393,7 +379,6 @@ async def test_git_screen_press_button_branch_creation_fails(
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_get_git_repository')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -402,7 +387,6 @@ async def test_git_screen_press_button_branch_creation_with_checkout(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_git_repository_mock: Mock,
     get_repo_branches_mock: Mock,

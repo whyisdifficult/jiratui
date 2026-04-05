@@ -46,7 +46,6 @@ def app() -> JiraApp:
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -55,7 +54,6 @@ async def test_click_next_page_search_results(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -73,7 +71,6 @@ async def test_click_next_page_search_results(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -82,7 +79,6 @@ async def test_click_next_page_search_results_with_missing_token(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -100,7 +96,6 @@ async def test_click_next_page_search_results_with_missing_token(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -109,7 +104,6 @@ async def test_click_previous_page_search_results(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -127,7 +121,6 @@ async def test_click_previous_page_search_results(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -136,7 +129,6 @@ async def test_click_previous_page_search_results_with_missing_token(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -154,7 +146,6 @@ async def test_click_previous_page_search_results_with_missing_token(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -163,7 +154,6 @@ async def test_click_filter_datatable_filtering_key_shows_input(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -180,7 +170,6 @@ async def test_click_filter_datatable_filtering_key_shows_input(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -189,7 +178,6 @@ async def test_click_filter_datatable_filtering_key_feature_disabled(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -207,7 +195,6 @@ async def test_click_filter_datatable_filtering_key_feature_disabled(
 
 @patch.object(IssuesSearchResultsTable, 'get_initial_results_set')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -216,7 +203,6 @@ async def test_click_filter_datatable_filtering_key_hides_input(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     get_initial_results_set_mock: Mock,
     app,
@@ -237,7 +223,6 @@ async def test_click_filter_datatable_filtering_key_hides_input(
 
 @patch.object(IssuesSearchResultsTable, 'get_initial_results_set')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -246,7 +231,6 @@ async def test_datatable_filtering_yields_results(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     get_initial_results_set_mock: Mock,
     jira_issues: list[JiraIssue],
@@ -281,7 +265,6 @@ async def test_datatable_filtering_yields_results(
 
 @patch.object(IssuesSearchResultsTable, 'get_initial_results_set')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -290,7 +273,6 @@ async def test_datatable_filtering_yields_no_results(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     get_initial_results_set_mock: Mock,
     jira_issues: list[JiraIssue],
@@ -326,7 +308,6 @@ async def test_datatable_filtering_yields_no_results(
 @patch('jiratui.widgets.search.build_external_url_for_issue')
 @patch.object(JiraApp, 'open_url')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -335,7 +316,6 @@ async def test_open_issue_in_browser(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     open_url_mock: Mock,
     build_external_url_for_issue_mock: Mock,
@@ -375,7 +355,6 @@ async def test_open_issue_in_browser(
 
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -384,7 +363,6 @@ async def test_select_issue_in_search_results_datatable(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     fetch_issue_mock: AsyncMock,
     jira_issues: list[JiraIssue],
@@ -420,7 +398,6 @@ async def test_select_issue_in_search_results_datatable(
 
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -429,7 +406,6 @@ async def test_open_delete_issue_modal_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -464,7 +440,6 @@ async def test_open_delete_issue_modal_screen(
 
 
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -473,7 +448,6 @@ async def test_delete_issue_modal_screen_click_cancel(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -511,7 +485,6 @@ async def test_delete_issue_modal_screen_click_cancel(
 
 @patch.object(APIController, 'delete_work_item')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -520,7 +493,6 @@ async def test_delete_issue_modal_screen_click_delete(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     delete_work_item_mock: AsyncMock,
     jira_issues: list[JiraIssue],

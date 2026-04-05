@@ -10,15 +10,14 @@ from textual.widgets import Button, Input, Rule, Select, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueType, Project
+from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
-    CreateWorkItemAssigneeSelectionInput,
     CreateWorkItemDescription,
     CreateWorkItemIssueSummaryField,
     CreateWorkItemIssueTypeSelectionInput,
     CreateWorkItemParentKeyField,
     CreateWorkItemProjectSelectionInput,
-    CreateWorkItemReporterSelectionInput,
 )
 
 
@@ -32,6 +31,18 @@ class AddWorkItemScreen(Screen):
         reporter_account_id: str | None = None,
         parent_work_item_key: str | None = None,
     ):
+        """Initializes the screen.
+
+        Args:
+            project_key: the key of the project for which the work item will be created. If not defined the user will
+            need to choose it from a dropdown list.
+            reporter_account_id: the account id of the user that acts as a reporter. Ths is injected from the main
+            screen which in turn can be picked up from the cli or the configuration file. If not defined the user will
+            need to choose it from a dropdown list.
+            parent_work_item_key: the key of the parent work item to which this work item belongs. If not defined the
+            user will be able to set one.
+        """
+
         super().__init__()
         self._project_key = project_key
         self._reporter_account_id = reporter_account_id
@@ -50,12 +61,20 @@ class AddWorkItemScreen(Screen):
         return self.query_one(CreateWorkItemIssueTypeSelectionInput)
 
     @property
-    def reporter_selector(self) -> CreateWorkItemReporterSelectionInput:
-        return self.query_one(CreateWorkItemReporterSelectionInput)
+    def reporter_selector(self) -> JiraUserInput:
+        return self.query_one('#create-work-item-reporter-selector', expect_type=JiraUserInput)
 
     @property
-    def assignee_selector(self) -> CreateWorkItemAssigneeSelectionInput:
-        return self.query_one(CreateWorkItemAssigneeSelectionInput)
+    def reporter_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one('#reporter-autocomplete', expect_type=UsersAutoComplete)
+
+    @property
+    def assignee_selector(self) -> JiraUserInput:
+        return self.query_one('#create-work-item-assignee-selector', expect_type=JiraUserInput)
+
+    @property
+    def assignee_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one('#assignee-autocomplete', expect_type=UsersAutoComplete)
 
     @property
     def summary_field(self) -> CreateWorkItemIssueSummaryField:
@@ -83,10 +102,38 @@ class AddWorkItemScreen(Screen):
             yield Rule(classes='rule-50')
             with VerticalScroll(id='add-work-item-form'):
                 with ItemGrid(classes='add-work-item-fields-grid'):
+                    # set widgets in row 1
                     yield CreateWorkItemProjectSelectionInput([])
                     yield CreateWorkItemIssueTypeSelectionInput([])
-                    yield CreateWorkItemReporterSelectionInput([])
-                    yield CreateWorkItemAssigneeSelectionInput([])
+                    # set widgets in row 2
+                    # this input field contains the account id of the Jira user that we can use to update the item's
+                    # assignee field
+                    reporter_input = JiraUserInput(
+                        id='create-work-item-reporter-selector',
+                        border_title='Reporter',
+                        border_subtitle='(*)',
+                        jira_field_key='reporter_account_id',
+                    )
+                    reporter_input.add_class(*['required'])
+                    yield reporter_input
+                    yield UsersAutoComplete(
+                        reporter_input,
+                        self.app.api,  # type:ignore[attr-defined]
+                        id='reporter-autocomplete',
+                    )
+                    # this input field contains the account id of the Jira user that we can use to update the item's
+                    # assignee field
+                    assignee_input = JiraUserInput(
+                        id='create-work-item-assignee-selector',
+                        border_title='Assignee',
+                        jira_field_key='assignee_account_id',
+                    )
+                    yield assignee_input
+                    yield UsersAutoComplete(
+                        assignee_input,
+                        self.app.api,  # type:ignore[attr-defined]
+                        id='assignee-autocomplete',
+                    )
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
                 yield CreateWorkItemDescription()
@@ -98,8 +145,23 @@ class AddWorkItemScreen(Screen):
                 yield Button('Cancel', variant='error', id='add-work-item-button-quit')
 
     def on_mount(self):
+        """Mounts the widgets.
+
+        This fetches the required data to populate the widgets. It fetches the available projects available types of
+        issues that cna be created.
+        """
+
         self.run_worker(self.fetch_available_projects())
         self.run_worker(self.fetch_available_issue_types())
+        if self._reporter_account_id:
+            self.run_worker(self._fetch_reporter())
+
+    async def _fetch_reporter(self):
+        user_response: APIControllerResponse = await self.app.api.get_user(
+            self._reporter_account_id
+        )
+        if user_response.success and (use_details := user_response.result):
+            self.reporter_selector.set_value(self._reporter_account_id, use_details.display_name)
 
     async def fetch_available_projects(self) -> None:
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
@@ -124,37 +186,18 @@ class AddWorkItemScreen(Screen):
             options = [(t.name, t.id) for t in types]
             self.issue_type_selector.set_options(options)
 
-    async def fetch_users(self, project_key: str) -> None:
-        if project_key:
-            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-            response: APIControllerResponse = (
-                await application.api.search_users_assignable_to_projects(
-                    project_keys=[project_key],
-                    active=True,
-                )
-            )
-            if not response.success:
-                self.assignee_selector.users = None
-                self.reporter_selector.reporters = None
-            else:
-                self.assignee_selector.users = {'users': response.result or [], 'selection': None}
-                self.reporter_selector.reporters = {
-                    'users': response.result or [],
-                    'selection': self._reporter_account_id,
-                }
-
     @on(Select.Changed, 'CreateWorkItemProjectSelectionInput')
     def handle_project_selection(self) -> None:
         # fetch issue types for the project
         self.run_worker(self.fetch_available_issue_types(self.project_selector.selection))
-        # fetch assignable users and reporters for the selected project
-        self.run_worker(self.fetch_users(self.project_selector.selection))
         self.save_button.disabled = not (
             self.project_selector.selection
             and self.issue_type_selector.selection
-            and self.reporter_selector.selection
+            and self.reporter_selector.value
             and self.summary_field.value
         )
+        self.assignee_autocomplete.set_project_key(self.project_selector.selection)
+        self.reporter_autocomplete.set_project_key(self.project_selector.selection)
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
     def handle_issue_type_selection(self) -> None:
@@ -170,18 +213,18 @@ class AddWorkItemScreen(Screen):
             [
                 self.project_selector.selection,
                 self.issue_type_selector.selection,
-                self.reporter_selector.selection,
+                self.reporter_selector.value,
                 self.summary_field.value,
             ]
         )
 
-    @on(Select.Changed, 'CreateWorkItemReporterSelectionInput')
+    @on(Select.Changed, '#create-work-item-reporter-selector')
     def handle_reporter_selection(self) -> None:
         self.save_button.disabled = not all(
             [
                 self.project_selector.selection,
                 self.issue_type_selector.selection,
-                self.reporter_selector.selection,
+                self.reporter_selector.value,
                 self.summary_field.value,
             ]
         )
@@ -192,7 +235,7 @@ class AddWorkItemScreen(Screen):
             [
                 self.project_selector.selection,
                 self.issue_type_selector.selection,
-                self.reporter_selector.selection,
+                self.reporter_selector.value,
                 self.summary_field.value,
             ]
         )
@@ -217,18 +260,18 @@ class AddWorkItemScreen(Screen):
             [
                 self.project_selector.selection,
                 self.issue_type_selector.selection,
-                self.reporter_selector.selection,
+                self.reporter_selector.value,
                 self.summary_field.value,
             ]
         ):
-            self.notify('All required values (*) must be provided.', title='Create Work Item')
+            self.notify('Fields marked with (*) must be provided.', title='Create Work Item')
         else:
             data = {
                 'project_key': self.project_selector.selection,
                 'parent_key': self.parent_key_field.value,
                 'issue_type_id': self.issue_type_selector.selection,
-                'assignee_account_id': self.assignee_selector.selection,
-                'reporter_account_id': self.reporter_selector.selection,
+                self.assignee_selector.jira_field_key: self.assignee_selector.account_id,
+                self.reporter_selector.jira_field_key: self.reporter_selector.account_id,
                 'summary': self.summary_field.value,
                 'description': self.description_field.text.strip()
                 if self.description_field.text

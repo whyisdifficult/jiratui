@@ -174,7 +174,6 @@ def app() -> JiraApp:
     return app
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -183,7 +182,6 @@ async def test_application_title(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     app.config.tui_title = ''
@@ -192,7 +190,6 @@ async def test_application_title(
         assert pilot.app.title == 'JiraTUI'
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -201,7 +198,6 @@ async def test_application_title_with_custom_title(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     app.config.tui_title = 'Hello World!'
@@ -211,7 +207,6 @@ async def test_application_title_with_custom_title(
 
 
 @patch('jiratui.widgets.screens.APIController.server_info')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -220,7 +215,6 @@ async def test_application_title_without_custom_title_with_server_info(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     server_info_mock: AsyncMock,
     app,
 ):
@@ -247,7 +241,6 @@ async def test_application_title_without_custom_title_with_server_info(
 
 
 @patch('jiratui.widgets.screens.APIController.server_info')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -256,7 +249,6 @@ async def test_application_title_with_custom_title_with_server_info(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     server_info_mock: AsyncMock,
     app,
 ):
@@ -283,7 +275,6 @@ async def test_application_title_with_custom_title_with_server_info(
 
 
 @patch.object(ServerInfoScreen, '_get_server_info')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -292,7 +283,6 @@ async def test_open_server_info_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     get_server_info_mock: Mock,
     app,
 ):
@@ -318,7 +308,6 @@ async def test_open_server_info_screen(
 
 
 @patch.object(ServerInfoScreen, '_get_server_info')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -327,7 +316,6 @@ async def test_close_server_info_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     get_server_info_mock: Mock,
     app,
 ):
@@ -355,7 +343,6 @@ async def test_close_server_info_screen(
 
 
 @patch.object(ConfigFileScreen, '_get_data')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -364,7 +351,6 @@ async def test_open_config_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     get_data_mock: Mock,
     app,
 ):
@@ -379,7 +365,6 @@ async def test_open_config_screen(
 
 
 @patch.object(ConfigFileScreen, '_get_data')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -388,7 +373,6 @@ async def test_close_config_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     get_data_mock: Mock,
     app,
 ):
@@ -404,7 +388,6 @@ async def test_close_config_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -413,7 +396,6 @@ async def test_open_help_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     async with app.run_test() as pilot:
@@ -421,7 +403,6 @@ async def test_open_help_screen(
         assert isinstance(app.screen, HelpScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -430,7 +411,6 @@ async def test_close_help_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     async with app.run_test() as pilot:
@@ -440,7 +420,6 @@ async def test_close_help_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -449,7 +428,6 @@ async def test_application_quits_without_confirmation(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     app.config.confirm_before_quit = False
@@ -458,7 +436,6 @@ async def test_application_quits_without_confirmation(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -467,7 +444,6 @@ async def test_application_quits_with_confirmation_no_exit(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     app.config.confirm_before_quit = True
@@ -481,7 +457,6 @@ async def test_application_quits_with_confirmation_no_exit(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -490,14 +465,12 @@ async def test_application_theme_from_config(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app,
 ):
     async with app.run_test() as pilot:
         assert pilot.app.theme == 'dracula'
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -506,14 +479,12 @@ async def test_application_with_default_theme(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app_without_config_theme,
 ):
     async with app_without_config_theme.run_test() as pilot:
         assert pilot.app.theme == 'textual-dark'
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -522,14 +493,12 @@ async def test_application_with_input_theme(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app_with_input_theme,
 ):
     async with app_with_input_theme.run_test() as pilot:
         assert pilot.app.theme == 'monokai'
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -538,14 +507,12 @@ async def test_application_with_input_and_config_theme(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app_with_input_and_config_theme,
 ):
     async with app_with_input_and_config_theme.run_test() as pilot:
         assert pilot.app.theme == 'monokai'
 
 
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -554,7 +521,6 @@ async def test_application_with_unrecognized_config_theme(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     app_with_unrecognized_config_theme,
 ):
     async with app_with_unrecognized_config_theme.run_test() as pilot:

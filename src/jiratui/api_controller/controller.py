@@ -490,7 +490,7 @@ class APIController:
             instance of `APIControllerResponse` with the `error` message.
         """
         try:
-            response: list[dict] = await self.api.user_search(query=f'{email_or_name}')
+            response: list[dict] = await self.api.user_search(query=email_or_name)
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
@@ -642,6 +642,44 @@ class APIController:
         return APIControllerResponse(
             result=sorted(users, key=lambda item: item.display_name or item.account_id)
         )
+
+    async def get_user(self, account_id: str) -> APIControllerResponse:
+        """Retrieves the details of a single user.
+
+        Args:
+            account_id: the account ID of the user, which uniquely identifies the user across all Atlassian
+            products. For example, 5b10ac8d82e05b22cc7d4ef5.
+
+        Returns:
+            A dictionary with the details of the user
+        """
+
+        try:
+            response = await self.api.get_user(account_id)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to find the requested user',
+                extra={
+                    'account_id': account_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        else:
+            if not response:
+                return APIControllerResponse(success=False, error='The request user was not found')
+            return APIControllerResponse(
+                result=JiraUser(
+                    email=response.get('emailAddress'),
+                    account_id=response.get('accountId')
+                    if self.config.cloud is True
+                    else response.get('name'),
+                    active=response.get('active'),
+                    display_name=response.get('displayName'),
+                    username=response.get('name') if not self.config.cloud else None,
+                )
+            )
 
     async def delete_work_item(self, issue_id_or_key: str) -> APIControllerResponse:
         """Deletes a work item.

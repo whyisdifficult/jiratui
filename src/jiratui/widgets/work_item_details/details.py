@@ -11,7 +11,7 @@ from textual.widgets import ProgressBar
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
-from jiratui.models import IssuePriority, JiraIssue, JiraUser, TimeTracking
+from jiratui.models import IssuePriority, JiraIssue, TimeTracking
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_components_has_changed,
@@ -20,10 +20,10 @@ from jiratui.utils.work_item_updates import (
     work_item_priority_has_changed,
 )
 from jiratui.widgets.base import ReadOnlyTextField
+from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.work_item_details.factory import create_dynamic_widgets_for_updating_work_item
 from jiratui.widgets.work_item_details.fields import (
     IssueComponentsField,
-    IssueDetailsAssigneeSelection,
     IssueDetailsPrioritySelection,
     IssueDetailsStatusSelection,
     IssueKeyField,
@@ -129,7 +129,6 @@ class IssueDetailsWidget(Vertical):
 
     def __init__(self):
         super().__init__(id='issue_details')
-        self.available_users: list[tuple[str, str]] | None = None
         self.can_focus = True
         self._work_item_is_flagged = None
         """Indicates whether the issue contains a flag, i.e. it has been flagged."""
@@ -154,8 +153,12 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(IssueDetailsStatusSelection)
 
     @property
-    def assignee_selector(self) -> IssueDetailsAssigneeSelection:
-        return self.query_one(IssueDetailsAssigneeSelection)
+    def assignee_selector(self) -> JiraUserInput:
+        return self.query_one(JiraUserInput)
+
+    @property
+    def assignee_autocomplete(self) -> UsersAutoComplete:
+        return self.query_one(UsersAutoComplete)
 
     @property
     def priority_selector(self) -> IssueDetailsPrioritySelection:
@@ -238,17 +241,37 @@ class IssueDetailsWidget(Vertical):
             yield WorkItemFlagField()  # row 0
         with VerticalScroll(id='issue-details-form'):
             with StaticFieldsWidgets():
-                yield IssueSummaryField()  # row 1
-                yield IssueDetailsAssigneeSelection([])  # row 2
-                yield IssueDetailsPrioritySelection([])  # row 2
-                yield IssueDetailsStatusSelection([])  # row 2
-                yield IssueKeyField()  # row 3
-                yield IssueParentField()  # row 3
-                yield IssueSprintField()  # row 3
-                yield ProjectIDField()  # row 4
-                yield IssueTypeField()  # row 5
-                yield ReporterField()  # row 5
-                # row 6
+                # set widgets in row 1
+                yield IssueSummaryField()  # row 1 - cols 3
+                # set widgets in row 2
+                # this input field contains the id of the Jira user that we can use to update the item's assignee field
+                assignee_input = JiraUserInput(
+                    id='edit-work-item-input-assignee',
+                    jira_field_key='assignee_account_id',
+                    border_subtitle='(x)',
+                    border_title='Assignee',
+                )
+                assignee_input.add_class(*['required', 'cols-3'])
+                yield assignee_input  # cols 3
+                assignee_autocomplete = UsersAutoComplete(
+                    assignee_input,
+                    self.app.api,  # type:ignore[attr-defined]
+                    id='details-assignee-autocomplete',
+                )
+                assignee_autocomplete.add_class(*['cols-3'])
+                yield assignee_autocomplete
+                # set widgets in row 3
+                yield IssueDetailsPrioritySelection([])
+                yield IssueDetailsStatusSelection([])
+                yield IssueKeyField()
+                # set widgets in row 4
+                yield IssueParentField()
+                yield IssueSprintField()
+                yield ReporterField()
+                # set widgets in row 5
+                yield IssueTypeField()
+                yield ProjectIDField()  # cols 2
+                # set widgets in row 6
                 yield ReadOnlyTextField(
                     id='issue_created_date',
                     label='Created',
@@ -264,7 +287,7 @@ class IssueDetailsWidget(Vertical):
                     extra_classes='input-date',
                 )
                 yield WorkItemDetailsDueDate()
-                # row 7
+                # set widgets in row 7
                 yield ReadOnlyTextField(
                     id='issue_resolution_date',
                     label='Resolved',
@@ -278,10 +301,10 @@ class IssueDetailsWidget(Vertical):
                     disabled=True,
                     valid_empty=True,
                     extra_classes='cols-2',
-                )
-                # row 8
+                )  # cols 2
+                # set widgets in row 8 - cols 3
                 yield WorkItemLabelsField()
-                # row 9
+                # set widgets in row 9
                 yield IssueComponentsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()
@@ -457,7 +480,9 @@ class IssueDetailsWidget(Vertical):
                     title='Worklog',
                 )
 
-    def _update_priority_selection(self, priorities, priority_id: str) -> None:
+    def _update_priority_selection(
+        self, priorities: list[tuple[str, str]], priority_id: str
+    ) -> None:
         for priority in priorities or []:
             if priority[1] == priority_id:
                 self.priority_selector.value = priority_id
@@ -504,6 +529,7 @@ class IssueDetailsWidget(Vertical):
             self.issue_sprint_field.value = ''
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
+            self.assignee_autocomplete.set_project_key()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
@@ -572,10 +598,9 @@ class IssueDetailsWidget(Vertical):
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed
             if work_item_assignee_has_changed(
-                self.issue.assignee, self.assignee_selector.selection
+                self.issue.assignee, self.assignee_selector.account_id
             ):
-                # TODO replace with self.assignee_selector.jira_field_key
-                payload['assignee_account_id'] = self.assignee_selector.selection
+                payload[self.assignee_selector.jira_field_key] = self.assignee_selector.account_id
 
         if self.work_item_labels_widget.update_enabled and self.work_item_labels_widget.value:
             # update the issue's labels
@@ -707,8 +732,8 @@ class IssueDetailsWidget(Vertical):
 
     @staticmethod
     def _determine_editable_fields(work_item: JiraIssue) -> dict:
-        """Determines which of fields of a work item that can be updated via the details form support updates based on
-        the work item's edit metadata.
+        """Determines which of the fields of a work item that can be updated via the details form support updates
+        based on the work item's edit metadata.
 
         Args:
             work_item: the work item to check.
@@ -766,75 +791,6 @@ class IssueDetailsWidget(Vertical):
 
         return editable_fields
 
-    @staticmethod
-    def _generate_assignable_users_for_dropdown(
-        users: list[JiraUser] | None = None,
-        current_assignee: JiraUser | None = None,
-        default_assignable_users: list[tuple[str, str]] | None = None,
-    ) -> list[tuple[str, str]]:
-        assignable_users: set[str] = set()
-        selectable_users: list[tuple[str, str]] = []
-        for user in users or []:
-            if user.account_id:
-                selectable_users.append((user.display_name, user.account_id))
-                assignable_users.add(user.account_id)
-
-        if not selectable_users:
-            selectable_users = default_assignable_users
-            for selectable_user in selectable_users:
-                assignable_users.add(selectable_user[1])
-
-        if current_assignee and current_assignee.account_id not in assignable_users:
-            selectable_users.append((current_assignee.display_name, current_assignee.account_id))
-
-        return selectable_users
-
-    async def _retrieve_users_assignable_to_work_item(
-        self,
-        work_item_key: str,
-        current_assignee: JiraUser | None = None,
-        field_is_editable: bool | None = None,
-    ) -> None:
-        """Retrieves the users that can be assigned to a work item and sets the value of the assignee selector.
-
-        If the API does not return a list of users then the widget will fall back to using the list of available users
-        fetched by the application on start up; if any user is found.
-
-        Args:
-            work_item_key: the (case-sensitive) key of the work item.
-            current_assignee: the user currently assigned to the item.
-            field_is_editable: indicates whether the work item's assignee field is editable.
-
-        Returns:
-            Nothing.
-        """
-        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
-        # fetch the list of users that can be assigned to the current issue
-        response: APIControllerResponse = await application.api.search_users_assignable_to_issue(
-            issue_key=work_item_key
-        )
-        # generate the list of users for the dropdown menu
-        selectable_users: list[tuple[str, str]] = self._generate_assignable_users_for_dropdown(
-            response.result,
-            current_assignee,
-            self.available_users,
-        )
-
-        if selectable_users:
-            self.assignee_selector.set_options(selectable_users)
-            if current_assignee:
-                # update the current selection
-                self.assignee_selector.value = current_assignee.account_id
-            self.assignee_selector.update_enabled = field_is_editable
-        else:
-            if current_assignee:
-                self.assignee_selector.set_options(
-                    [(current_assignee.display_name, current_assignee.account_id)]
-                )
-                self.assignee_selector.update_enabled = field_is_editable
-            else:
-                self.assignee_selector.update_enabled = False
-
     async def _retrieve_applicable_status_codes(
         self,
         project_key: str,
@@ -857,7 +813,7 @@ class IssueDetailsWidget(Vertical):
                 self.issue_status_selector.value = current_status_id
 
     def watch_issue(self, work_item: JiraIssue | None) -> None:
-        """Updates the form fields associated to a work item with the details of the work item.
+        """Updates the form fields with the details of the work item currently selected.
 
         Args:
             work_item: a work item selected by the user in the left-hand side panel.
@@ -879,20 +835,26 @@ class IssueDetailsWidget(Vertical):
             )
         )
 
-        # check which of the fields in the details form can be updated; diable the widgets of those that do not support
+        # check which of the fields in the details form can be updated; disable the widgets of those that do not support
         # updates
         editable_fields: dict = self._determine_editable_fields(work_item)
 
-        # fetch the list of assignable users for the work item
-        self.run_worker(
-            self._retrieve_users_assignable_to_work_item(
-                work_item.key,
-                work_item.assignee,
-                editable_fields.get(self.assignee_selector.jira_field_key),
+        # set the assignee field
+        if work_item.assignee:
+            self.assignee_selector.set_value(
+                work_item.assignee.account_id, work_item.assignee.display_name
             )
-        )
 
-        # set the value fo the form fields based on the work item's data
+        # update the "editability" of the assignee field
+        # Important: the item's edit metadata refers to the assignee field with the key "assignee" but when we submit
+        # the payload for updating the work item's assignee we need to use the self.assignee_selector.jira_field_key;
+        # this is because jira uses a different key for the same field when updating its value in a work item
+        self.assignee_selector.update_enabled = editable_fields.get('assignee')
+
+        # set the project key to enable searching Jira users by project in addition to display name and email
+        self.assignee_autocomplete.set_project_key(work_item.project.key)
+
+        # set the value of the form fields based on the work item's data
         if work_item.resolution_date:
             self.issue_resolution_date_field.value = datetime.strftime(
                 work_item.resolution_date, '%Y-%m-%d %H:%M'

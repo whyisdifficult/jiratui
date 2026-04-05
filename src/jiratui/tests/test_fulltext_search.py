@@ -49,7 +49,6 @@ def app() -> JiraApp:
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -58,7 +57,6 @@ async def test_open_fulltext_search_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -74,7 +72,6 @@ async def test_open_fulltext_search_screen(
 
 
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -83,7 +80,6 @@ async def test_close_fulltext_search_screen(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     app,
 ):
@@ -101,7 +97,6 @@ async def test_close_fulltext_search_screen(
 
 @patch('jiratui.widgets.screens.MainScreen.action_search')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -110,7 +105,6 @@ async def test_close_fulltext_search_screen_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     action_search_mock: AsyncMock,
     app,
@@ -135,7 +129,6 @@ async def test_close_fulltext_search_screen_with_value(
 
 @patch('jiratui.widgets.screens.MainScreen.action_search')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -144,7 +137,6 @@ async def test_close_fulltext_search_screen_with_value_shorter_than_minimum_leng
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     action_search_mock: AsyncMock,
     app,
@@ -167,7 +159,6 @@ async def test_close_fulltext_search_screen_with_value_shorter_than_minimum_leng
 
 @patch('jiratui.widgets.screens.MainScreen.action_search')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -176,7 +167,6 @@ async def test_close_fulltext_search_screen_with_empty_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     action_search_mock: AsyncMock,
     app,
@@ -198,7 +188,6 @@ async def test_close_fulltext_search_screen_with_empty_value(
 
 @patch('jiratui.widgets.screens.MainScreen.action_search')
 @patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -207,7 +196,6 @@ async def test_dismiss_fulltext_search_screen_with_value(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_issues_mock: AsyncMock,
     action_search_mock: AsyncMock,
     app,

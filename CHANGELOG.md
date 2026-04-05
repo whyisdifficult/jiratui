@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Added
+
+- Use `textual-autocomplete` to define a widget for selecting Jira users as assignees in the filters.
+- Use `textual-autocomplete` to define a widget for selecting Jira users as assignees in the work item details pane.
+- Use `textual-autocomplete` to define a widget for selecting Jira users as assignees when creating work items.
+- Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
+
+### Bug Fixes
+
+- Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the 
+default reporting user when creating work items.
+
+### Minor Improvements
+
+- Add/remove/update tests.
+
 ## [1.7.0] - 2026-03-28
 
 ### Added

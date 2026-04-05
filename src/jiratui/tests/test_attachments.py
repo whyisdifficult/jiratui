@@ -17,7 +17,6 @@ from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -26,7 +25,6 @@ async def test_focus_attachments_datatable(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues: list[JiraIssue],
@@ -65,7 +63,6 @@ async def test_focus_attachments_datatable(
 
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -74,7 +71,6 @@ async def test_focus_attachments_datatable_highlight_file(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     jira_issues: list[JiraIssue],
@@ -115,7 +111,6 @@ async def test_focus_attachments_datatable_highlight_file(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -124,7 +119,6 @@ async def test_attachment_download_fails(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,
@@ -174,7 +168,6 @@ async def test_attachment_download_fails(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -183,7 +176,6 @@ async def test_show_attachment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,
@@ -233,7 +225,6 @@ async def test_show_attachment(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -242,7 +233,6 @@ async def test_show_attachment_with_language(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,
@@ -295,7 +285,6 @@ async def test_show_attachment_with_language(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -304,7 +293,6 @@ async def test_show_attachment_with_unsupported_type(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,
@@ -355,7 +343,6 @@ async def test_show_attachment_with_unsupported_type(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -364,7 +351,6 @@ async def test_open_attachment_in_browser_without_url(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,
@@ -416,7 +402,6 @@ async def test_open_attachment_in_browser_without_url(
 @patch('jiratui.widgets.screens.APIController.get_attachment_content')
 @patch('jiratui.widgets.screens.APIController.get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.get_users')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
@@ -425,7 +410,6 @@ async def test_open_attachment_in_browser(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    get_users_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
     get_attachment_content_mock: AsyncMock,

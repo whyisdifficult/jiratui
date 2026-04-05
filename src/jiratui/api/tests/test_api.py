@@ -3047,3 +3047,36 @@ async def test_delete_issue_without_deleting_subs_tasks(jira_api: JiraAPI):
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/task-1'
     assert route.calls.last.request.url.params.get('deleteSubtasks') == 'false'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_user(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('user'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'active': False,
+                'displayName': 'Mia Krystof',
+                'key': '',
+                'name': '',
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.get_user('5b10a2844c20165700ede21g')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/user'
+    assert route.calls.last.request.url.params.get('accountId') == '5b10a2844c20165700ede21g'
+    assert result == {
+        'accountId': '5b10a2844c20165700ede21g',
+        'accountType': 'atlassian',
+        'active': False,
+        'displayName': 'Mia Krystof',
+        'key': '',
+        'name': '',
+    }

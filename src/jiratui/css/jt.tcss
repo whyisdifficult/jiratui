@@ -64,8 +64,20 @@
     width: 20%;
 }
 
-#jira-users-selector {
-    width: 30%;
+#search-filters-input-assignee {
+    box_sizing: content-box;
+    height: 1;
+    width: 40;
+    margin: 0 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }
 
 .work-item-key {
@@ -201,9 +213,20 @@ IssueDescriptionWidget {
    align: left middle;
 }
 
-#jira-users-assignee-selector-edit {
-    border: round $accent;
+#edit-work-item-input-assignee {
+    box_sizing: content-box;
+    height: 1;
+    width: 40;
+    margin: 0 0;
     padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }
 
 #jira-issue-status-selector-edit {
@@ -632,7 +655,7 @@ AddWorkItemScreen > Vertical {
 }
 
 .add-work-item-fields-grid {
-    grid-size: 2 2;
+    grid-size: 2 3;
     grid-columns: 50% 50%;
 }
 
@@ -730,14 +753,36 @@ CreateWorkItemIssueSummaryField {
     }
 }
 
-CreateWorkItemReporterSelectionInput {
-    border: round red;
+#create-work-item-reporter-selector {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
+    margin: 0 0;
     padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }
 
-CreateWorkItemAssigneeSelectionInput {
-    border: round $primary-lighten-3;
+#create-work-item-assignee-selector {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
+    margin: 00 0;
     padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }
 
 CreateWorkItemIssueTypeSelectionInput {
@@ -1249,4 +1294,27 @@ SelectionsScreen > SelectionList {
     }
     border: round $primary-lighten-3;
     background: transparent;
+}
+
+UsersAutoComplete {
+    /* Customize the dropdown */
+    & AutoCompleteList {
+        max-height: 6;                  /* The number of lines before scrollbars appear */
+        constrain: none inside;
+        background: $primary-muted;     /* The background color of the dropdown */
+        color: $text-primary;           /* The color of the text */
+    }
+
+    /* Customize the matching substring highlighting */
+    & .autocomplete--highlight-match {
+        color: $text-accent;
+        text-style: bold;
+    }
+
+    /* Customize the text the cursor is over */
+    & .option-list--option-highlighted {
+        color: $text-success;
+        background: $error 50%;  /* 50% opacity, blending into background */
+        text-style: italic;
+    }
 }
