@@ -5,24 +5,25 @@ import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
+from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.screens import WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 
 
-@patch.object(APIController, 'search_users_assignable_to_projects')
+@patch.object(APIController, 'search_users_assignable_to_issue')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_select_work_item_with_project_enables_users_search_by_project(
+async def test_search_users_by_issue_key(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
-    search_users_assignable_to_projects_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -44,14 +45,21 @@ async def test_select_work_item_with_project_enables_users_search_by_project(
         )
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
+        await pilot.resize_terminal(600, 400)
         await pilot.press('ctrl+r')
         await pilot.press('down')
         await pilot.press('enter')
         await pilot.press('tab')
         await pilot.press('right')
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('q')
+        await pilot.press('w')
+        await pilot.press('r')
         # THEN
+        assert isinstance(main_screen.focused, JiraUserInput)
+        assert main_screen.focused.id == 'edit-work-item-input-assignee'
         assert main_screen.search_results_table.focus()
         assert main_screen.search_results_table.page == 1
         search_work_items_mock.assert_called_once()
@@ -59,11 +67,12 @@ async def test_select_work_item_with_project_enables_users_search_by_project(
             issues=jira_issues, next_page_token=None, is_last=None
         )
         assert main_screen.search_results_table.current_work_item_key == 'key-2'
-        assert isinstance(main_screen.focused, IssueDetailsWidget)
-        assert main_screen.focused.assignee_autocomplete._project_key == 'P1'
+        search_users_assignable_to_issue_mock.assert_called_once_with(
+            issue_key='key-2', query='qwr'
+        )
 
 
-@patch.object(APIController, 'search_users_assignable_to_projects')
+@patch.object(APIController, 'search_users_assignable_to_issue')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
@@ -76,7 +85,7 @@ async def test_select_and_display_work_item(
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     get_issue_mock: AsyncMock,
-    search_users_assignable_to_projects_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -114,7 +123,6 @@ async def test_select_and_display_work_item(
         assert main_screen.search_results_table.current_work_item_key == 'key-2'
         focused_widget = main_screen.focused
         assert isinstance(focused_widget, IssueDetailsWidget)
-        assert focused_widget.assignee_autocomplete._project_key == 'P1'
         assert focused_widget.issue_key_field.value == 'key-2'
         assert focused_widget.issue_summary_field.value == 'qwerty'
         assert focused_widget.project_id_field.value == '(P1) Project 1'

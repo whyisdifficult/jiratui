@@ -18,6 +18,7 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraIssueSearchResponse,
+    JiraUser,
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.urls import build_external_url_for_issue
@@ -235,9 +236,7 @@ class MainScreen(Screen):
         self.initial_work_item_key = work_item_key
         """A work item key to set as the initial value of the work-item-key widget."""
         """Pre-selected project key. This is passed during the initialization of the application."""
-        self.initial_assignee_account_id = (
-            user_account_id  # TODO check how to use it with autocomplete feature mow
-        )
+        self.initial_assignee_account_id = user_account_id
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
         """Pre-selected JQL expression ID to load into the JQL expression widget on start-up. This JQL expression will
@@ -282,10 +281,6 @@ class MainScreen(Screen):
     @property
     def users_selector(self) -> JiraUserInput:
         return self.query_one(JiraUserInput)
-
-    @property
-    def users_autocomplete(self) -> UsersAutoComplete:
-        return self.query_one(UsersAutoComplete)
 
     @property
     def run_button(self) -> Button:
@@ -385,7 +380,12 @@ class MainScreen(Screen):
                     border_title='Assignee',
                 )
                 yield assignee_input
-                yield UsersAutoComplete(assignee_input, self.api, id='filter-assignee-autocomplete')
+                yield UsersAutoComplete(
+                    assignee_input,
+                    self.api,
+                    id='filter-assignee-autocomplete',
+                    user_search_function=self._search_and_filter_users,
+                )
             with ItemGrid(classes='bottom-search-bar'):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
                 yield IssueSearchCreatedFromWidget()
@@ -519,15 +519,14 @@ class MainScreen(Screen):
             self.run_worker(self.fetch_statuses())
 
         # if the user launched the app with a pre-defined user account id then let's fetch the details of the user
-        # and set the user selection widget with the corresponding user; if nay exist
+        # and set the user selection widget with the corresponding user; if any exists
         if self.initial_assignee_account_id:
             user_response: APIControllerResponse = await self.api.get_user(
                 self.initial_assignee_account_id
             )
-            if user_response.success and (use_details := user_response.result):
-                self.users_selector.set_value(
-                    self.initial_assignee_account_id, use_details.display_name
-                )
+            user_details: JiraUser
+            if user_response.success and (user_details := user_response.result):
+                self.users_selector.set_value(user_details.account_id, user_details.display_name)
             else:
                 self.notify(
                     f'Unable to find the user with account ID: {self.initial_assignee_account_id}. Check the configuration and/or the launch arguments',
@@ -678,6 +677,12 @@ class MainScreen(Screen):
             work_item_types.append((name, item.id))
         return work_item_types
 
+    async def _search_and_filter_users(self, query: str) -> APIControllerResponse:
+        # searches and filters users that can be assignees of work items
+        return await self.api.search_users_assignable_to_issue(
+            project_id_or_key=self.project_selector.selection, query=query
+        )
+
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.worker.name == 'fetch_statuses':
             self.available_issues_status = event.worker.result or []
@@ -703,7 +708,6 @@ class MainScreen(Screen):
         self.run_worker(self.fetch_issue_types())
         # fetch valid status codes
         self.run_worker(self.fetch_statuses())
-        self.users_autocomplete.set_project_key(self.project_selector.selection)
 
     async def _search_work_items(
         self,

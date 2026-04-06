@@ -647,10 +647,82 @@ async def test_search_users_assignable_to_issue(
         error=None,
     )
     user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id=None,
         issue_key='key1',
-        query=None,
         offset=0,
         limit=1000,
+        query=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_assignable_search')
+async def test_search_users_assignable_to_issue_by_project(
+    user_assignable_search_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    user_assignable_search_mock.return_value = [
+        {'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True},
+        {'accountId': '456', 'emailAddress': 'b@b.com', 'displayName': 'homer', 'active': False},
+    ]
+    # WHEN
+    response = await jira_api_controller.search_users_assignable_to_issue(project_id_or_key='p1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraUser(
+                email='a@a.com',
+                account_id='123',
+                active=True,
+                display_name='john',
+            ),
+        ],
+        error=None,
+    )
+    user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key='p1',
+        account_id=None,
+        issue_key=None,
+        offset=0,
+        limit=1000,
+        query=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_assignable_search')
+async def test_search_users_assignable_to_issue_by_account(
+    user_assignable_search_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    user_assignable_search_mock.return_value = [
+        {'accountId': '123', 'emailAddress': 'a@a.com', 'displayName': 'john', 'active': True},
+        {'accountId': '456', 'emailAddress': 'b@b.com', 'displayName': 'homer', 'active': False},
+    ]
+    # WHEN
+    response = await jira_api_controller.search_users_assignable_to_issue(account_id='a1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraUser(
+                email='a@a.com',
+                account_id='123',
+                active=True,
+                display_name='john',
+            ),
+        ],
+        error=None,
+    )
+    user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id='a1',
+        issue_key=None,
+        offset=0,
+        limit=1000,
+        query=None,
     )
 
 
@@ -687,10 +759,12 @@ async def test_search_users_assignable_to_issue_active_and_non_active_users(
         error=None,
     )
     user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id=None,
         issue_key='key1',
-        query=None,
         offset=0,
         limit=1000,
+        query=None,
     )
 
 
@@ -728,10 +802,12 @@ async def test_search_users_assignable_to_issue_include_users_without_email(
         error=None,
     )
     user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id=None,
         issue_key='key1',
-        query=None,
         offset=0,
         limit=1000,
+        query=None,
     )
 
 
@@ -763,10 +839,12 @@ async def test_search_users_assignable_to_issue_skip_users_without_email(
         error=None,
     )
     user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id=None,
         issue_key='key1',
-        query=None,
         offset=0,
         limit=1000,
+        query=None,
     )
 
 
@@ -786,10 +864,12 @@ async def test_search_users_assignable_to_issue_with_exception(
         error='test error',
     )
     user_assignable_search_mock.assert_called_once_with(
+        project_id_or_key=None,
+        account_id=None,
         issue_key='key1',
-        query=None,
         offset=0,
         limit=1000,
+        query=None,
     )
 
 

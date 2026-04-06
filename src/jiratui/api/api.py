@@ -211,6 +211,7 @@ class JiraAPI:
         project_id_or_key: str | None = None,
         issue_key: str | None = None,
         issue_id: str | None = None,
+        account_id: str | None = None,
         offset: int | None = None,
         limit: int | None = 50,
         query: str | None = None,
@@ -231,10 +232,13 @@ class JiraAPI:
             relevant users. The string can match the prefix of the attribute's value. For example, `query=john` matches
             a user with a `displayName` of John Smith and a user with an `emailAddress` of johnson@example.com.
             Required, unless `username` or `accountId` is specified.
+            account_id: a query string that is matched exactly against user `accountId`. Required, unless `query` is
+            specified.
 
         Returns:
             A list of dictionaries with the details of the users.
         """
+
         if not any([project_id_or_key, issue_id, issue_key]):
             raise ValueError('One of these parameters is required: project_id, issue_id, issue_key')
 
@@ -251,6 +255,8 @@ class JiraAPI:
             params['issueKey'] = issue_key
         if issue_id:
             params['issueId'] = issue_id
+        if account_id:
+            params['accountId'] = account_id
 
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/assignable/search', params=params

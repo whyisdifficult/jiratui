@@ -522,9 +522,11 @@ class APIController:
 
     async def search_users_assignable_to_issue(
         self,
-        issue_key: str,
+        issue_key: str | None = None,
         query: str | None = None,
+        account_id: str | None = None,
         active: bool | None = True,
+        project_id_or_key: str | None = None,
     ) -> APIControllerResponse:
         """Retrieves the users that can be assigned to a work item.
 
@@ -534,6 +536,8 @@ class APIController:
             relevant users. The string can match the prefix of the attribute's value. For example, `query=john` matches
             a user with a `displayName` of John Smith and a user with an `emailAddress` of johnson@example.com.
             active: if set to `True` (default) it will retrieve active users only.
+            project_id_or_key: the project ID or project key (case sensitive).
+            account_id:
 
         Returns:
             An instance of `APIControllerResponse` with the list of `JiraUser` instances. If an error occurs an
@@ -542,10 +546,12 @@ class APIController:
 
         try:
             response: list[dict] = await self.api.user_assignable_search(
+                project_id_or_key=project_id_or_key,
                 issue_key=issue_key,
-                query=query,
+                account_id=account_id,
                 offset=0,
                 limit=RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
+                query=query,
             )
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
