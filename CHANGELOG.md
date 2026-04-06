@@ -13,15 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `textual-autocomplete` to define a widget for selecting Jira users as assignees in the work item details pane.
 - Use `textual-autocomplete` to define a widget for selecting Jira users as assignees when creating work items.
 - Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
+- Add support for updating the reporter of a work item.
 
 ### Bug Fixes
 
-- Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the 
+- Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the
 default reporting user when creating work items.
 
 ### Minor Improvements
 
 - Add/remove/update tests.
+- Refactor the class `UsersAutoComplete` to support custom search functions.
 
 ## [1.7.0] - 2026-03-28
 
