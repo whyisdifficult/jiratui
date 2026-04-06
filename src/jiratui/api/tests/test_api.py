@@ -369,6 +369,7 @@ async def test_user_assignable_search_with_multiple_parameters(jira_api: JiraAPI
         query='q',
         issue_key='k1',
         issue_id='2',
+        account_id='5b10a2844c20165700ede21g',
     )
     # THEN
     request_url = str(route.calls.last.request.url)
@@ -378,6 +379,7 @@ async def test_user_assignable_search_with_multiple_parameters(jira_api: JiraAPI
     assert 'issueKey=k1' in request_url
     assert 'issueId=2' in request_url
     assert 'project=P1' in request_url
+    assert 'accountId=5b10a2844c20165700ede21g' in request_url
     assert isinstance(result, dict)
     assert result == {
         'accountId': '5b10a2844c20165700ede21g',

@@ -133,6 +133,7 @@ class AddWorkItemScreen(Screen):
                         assignee_input,
                         self.app.api,  # type:ignore[attr-defined]
                         id='assignee-autocomplete',
+                        user_search_function=self._search_and_filter_assignees,
                     )
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
@@ -155,6 +156,12 @@ class AddWorkItemScreen(Screen):
         self.run_worker(self.fetch_available_issue_types())
         if self._reporter_account_id:
             self.run_worker(self._fetch_reporter())
+
+    async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
+        # searches and filters users that can be assignees of the work item being created.
+        return await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
+            project_id_or_key=self.project_selector.selection, query=query
+        )
 
     async def _fetch_reporter(self):
         user_response: APIControllerResponse = await self.app.api.get_user(
@@ -196,8 +203,6 @@ class AddWorkItemScreen(Screen):
             and self.reporter_selector.value
             and self.summary_field.value
         )
-        self.assignee_autocomplete.set_project_key(self.project_selector.selection)
-        self.reporter_autocomplete.set_project_key(self.project_selector.selection)
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
     def handle_issue_type_selection(self) -> None:

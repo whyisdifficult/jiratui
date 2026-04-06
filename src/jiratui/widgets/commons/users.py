@@ -1,10 +1,11 @@
 import logging
+from typing import Callable
 
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
 
-from jiratui.api_controller.controller import APIController
+from jiratui.api_controller.controller import APIController, APIControllerResponse
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +63,12 @@ class JiraUserInput(Input):
 
 
 class UsersAutoComplete(AutoComplete):
-    """AutoComplete for Jira users that fetches suggestions from Jira API.
+    """AutoComplete for Jira users that searches users using the Jira API.
 
-    This widget fetches users suggestions dynamically as the user types. It requires an Input widget as the target;
-    the target widget MUST provide a property to set the user's account id.
+    This widget fetches users dynamically as the user types. It requires an `Input` widget as the target;
+    the target widget MUST provide a property to set the user's account id, `account_id`.
+
+    This is useful for filtering users by name or email addresses, e.g. when searching for possible reporters.
     """
 
     MIN_QUERY_TERM_LENGTH = 3
@@ -75,21 +78,22 @@ class UsersAutoComplete(AutoComplete):
         self,
         target: Input,
         api_controller: APIController,
-        project_key: str | None = None,
+        user_search_function: Callable | None = None,
         id: str | None = None,  # noqa:A002
     ):
         """Initializes a UsersAutoComplete widget.
 
         Args:
-            id: the id for this widget.
             target: the Input widget to attach autocomplete to
             api_controller: APIController instance for fetching suggestions.
+            user_search_function: an async callable that searches and filters users based on a query term.
+            id: the id for this widget.
         """
 
         self._api_controller: APIController = api_controller
         self._cached_suggestions: list[DropdownItem] = []
         self._last_query = ''
-        self._project_key: str | None = project_key
+        self._user_search_function = user_search_function or self._search
 
         # initialize with empty candidates - will be populated dynamically
         super().__init__(
@@ -97,9 +101,6 @@ class UsersAutoComplete(AutoComplete):
             target=target,
             candidates=self._get_users,  # type:ignore
         )
-
-    def set_project_key(self, key: str | None = None) -> None:
-        self._project_key = key
 
     def _get_users(self, target_state: TargetState) -> list[DropdownItem]:
         """Synchronous wrapper that returns cached suggestions."""
@@ -113,6 +114,10 @@ class UsersAutoComplete(AutoComplete):
             # schedule async fetch - don't await here since this must be sync
             self.call_later(self._search_users, search_string)
         return self._cached_suggestions
+
+    async def _search(self, query: str) -> APIControllerResponse:
+        # the default function to search and filter users based on a query term
+        return await self._api_controller.search_users(email_or_name=query)
 
     async def _search_users(self, query: str) -> None:
         """Search Jira users asynchronously.
@@ -134,15 +139,7 @@ class UsersAutoComplete(AutoComplete):
 
         try:
             self._cached_suggestions = []
-
-            if self._project_key:
-                response = await self._api_controller.search_users_assignable_to_projects(
-                    [self._project_key], query=query
-                )
-            else:
-                response = await self._api_controller.search_users(email_or_name=query)
-
-            # API controller returns APIControllerResponse with result containing the list of users found
+            response: APIControllerResponse = await self._user_search_function(query)
             if response and response.success and response.result:
                 # update cached suggestions
                 self._cached_suggestions = []

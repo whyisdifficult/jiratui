@@ -135,6 +135,8 @@ class IssueDetailsWidget(Vertical):
         self._issue_supports_flagging = True
         """Indicates whether adding/removing a flag to a work item is supported. This depends on the issue's
         metadata or the configuration of the field used for storing the value of the flag."""
+        self._work_item_key: str | None = None
+        """The key of the work item currently being displayed."""
 
     @property
     def issue_is_flagged(self) -> bool:
@@ -155,10 +157,6 @@ class IssueDetailsWidget(Vertical):
     @property
     def assignee_selector(self) -> JiraUserInput:
         return self.query_one(JiraUserInput)
-
-    @property
-    def assignee_autocomplete(self) -> UsersAutoComplete:
-        return self.query_one(UsersAutoComplete)
 
     @property
     def priority_selector(self) -> IssueDetailsPrioritySelection:
@@ -257,6 +255,7 @@ class IssueDetailsWidget(Vertical):
                     assignee_input,
                     self.app.api,  # type:ignore[attr-defined]
                     id='details-assignee-autocomplete',
+                    user_search_function=self._search_and_filter_assignees,
                 )
                 assignee_autocomplete.add_class(*['cols-3'])
                 yield assignee_autocomplete
@@ -308,6 +307,12 @@ class IssueDetailsWidget(Vertical):
                 yield IssueComponentsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()
+
+    async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
+        # searches and filters users that can be assignees of the work item being edited
+        return await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
+            issue_key=self._work_item_key, query=query
+        )
 
     def action_focus_widget(self, key: str) -> None:
         """Focuses a widget depending on the key pressed.
@@ -514,9 +519,11 @@ class IssueDetailsWidget(Vertical):
             clear: if `True` it will reset the form's fields to their default values.
 
         Returns:
-            Nothing.
+            None.
         """
+
         if clear:
+            self._work_item_key = None
             self.issue_summary_field.value = ''
             self.issue_parent_field.value = ''
             self.issue_resolution_field.value = ''
@@ -529,7 +536,6 @@ class IssueDetailsWidget(Vertical):
             self.issue_sprint_field.value = ''
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
-            self.assignee_autocomplete.set_project_key()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
@@ -828,6 +834,8 @@ class IssueDetailsWidget(Vertical):
         if not work_item:
             return
 
+        self._work_item_key = work_item.key
+
         # fetch the list of status codes applicable for this work item and its type
         self.run_worker(
             self._retrieve_applicable_status_codes(
@@ -851,9 +859,6 @@ class IssueDetailsWidget(Vertical):
         # this is because jira uses a different key for the same field when updating its value in a work item
         self.assignee_selector.update_enabled = editable_fields.get('assignee')
 
-        # set the project key to enable searching Jira users by project in addition to display name and email
-        self.assignee_autocomplete.set_project_key(work_item.project.key)
-
         # set the value of the form fields based on the work item's data
         if work_item.resolution_date:
             self.issue_resolution_date_field.value = datetime.strftime(
@@ -869,7 +874,7 @@ class IssueDetailsWidget(Vertical):
             self.reporter_field.value = reporter.display_name
 
         self.issue_created_date_field.value = datetime.strftime(work_item.created, '%Y-%m-%d %H:%M')
-        self.issue_key_field.value = work_item.key
+        self.issue_key_field.value = self._work_item_key
         self.project_id_field.value = f'({work_item.project.key}) {work_item.project.name}'
         self.issue_type_field.value = work_item.work_item_type_name
         # set the value of the parent field and determine if it can be edited

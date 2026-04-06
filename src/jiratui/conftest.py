@@ -277,6 +277,7 @@ def jira_issues() -> list[JiraIssue]:
                         'key': 'priority',
                         'allowedValues': [{'name': 'Medium', 'id': '1'}],
                     },
+                    'assignee': {'name': 'Assignee', 'key': 'assignee', 'operations': ['set']},
                 }
             },
             attachments=[
