@@ -57,6 +57,33 @@ def work_item_assignee_has_changed(
             return current_assignee.account_id != target_assignee_account_id
 
 
+def work_item_reporter_has_changed(
+    current_reporter: JiraUser | None = None,
+    target_reporter_account_id: str | None = None,
+) -> bool:
+    """Determines if the assignee of a work item has changed wrt. to a new assignee selected by the user from the
+    assignee/users dropdown.
+
+    Args:
+        current_reporter: the work item's current reporter user.
+        target_reporter_account_id: the account ID of the new user that will act as the reporter of a work item.
+
+    Returns:
+        `True` if the reporter of the work item has changed; `False` otherwise.
+    """
+
+    if current_reporter is None:
+        if target_reporter_account_id is None:
+            return False
+        else:
+            return True
+    else:
+        if target_reporter_account_id is None:
+            return True
+        else:
+            return current_reporter.account_id != target_reporter_account_id
+
+
 def work_item_parent_has_changed(
     current_parent_key: str | None = None, target_parent_key: str | None = None
 ) -> bool:

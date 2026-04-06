@@ -18,6 +18,7 @@ from jiratui.utils.work_item_updates import (
     work_item_due_date_has_changed,
     work_item_parent_has_changed,
     work_item_priority_has_changed,
+    work_item_reporter_has_changed,
 )
 from jiratui.widgets.base import ReadOnlyTextField
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
@@ -32,7 +33,6 @@ from jiratui.widgets.work_item_details.fields import (
     IssueSummaryField,
     IssueTypeField,
     ProjectIDField,
-    ReporterField,
     TimeTrackingWidget,
     WorkItemDetailsDueDate,
     WorkItemDynamicFieldUpdateDateTimeWidget,
@@ -156,7 +156,11 @@ class IssueDetailsWidget(Vertical):
 
     @property
     def assignee_selector(self) -> JiraUserInput:
-        return self.query_one(JiraUserInput)
+        return self.query_one('#edit-work-item-input-assignee', expect_type=JiraUserInput)
+
+    @property
+    def reporter_selector(self) -> JiraUserInput:
+        return self.query_one('#edit-work-item-input-reporter', expect_type=JiraUserInput)
 
     @property
     def priority_selector(self) -> IssueDetailsPrioritySelection:
@@ -165,10 +169,6 @@ class IssueDetailsWidget(Vertical):
     @property
     def project_id_field(self) -> ProjectIDField:
         return self.query_one(ProjectIDField)
-
-    @property
-    def reporter_field(self) -> ReporterField:
-        return self.query_one(ReporterField)
 
     @property
     def issue_key_field(self) -> IssueKeyField:
@@ -249,7 +249,7 @@ class IssueDetailsWidget(Vertical):
                     border_subtitle='(x)',
                     border_title='Assignee',
                 )
-                assignee_input.add_class(*['required', 'cols-3'])
+                assignee_input.add_class(*['cols-3'])
                 yield assignee_input  # cols 3
                 assignee_autocomplete = UsersAutoComplete(
                     assignee_input,
@@ -266,7 +266,23 @@ class IssueDetailsWidget(Vertical):
                 # set widgets in row 4
                 yield IssueParentField()
                 yield IssueSprintField()
-                yield ReporterField()
+
+                # this input field contains the id of the Jira user that we can use to update the item's reporter field
+                reporter_input = JiraUserInput(
+                    id='edit-work-item-input-reporter',
+                    jira_field_key='reporter',
+                    border_title='Reporter',
+                    required=True,
+                )
+                yield reporter_input
+                reporter_autocomplete = UsersAutoComplete(
+                    reporter_input,
+                    self.app.api,  # type:ignore[attr-defined]
+                    id='details-reporter-autocomplete',
+                )
+                reporter_autocomplete.add_class(*['cols-3'])
+                yield reporter_autocomplete
+
                 # set widgets in row 5
                 yield IssueTypeField()
                 yield ProjectIDField()  # cols 2
@@ -529,13 +545,13 @@ class IssueDetailsWidget(Vertical):
             self.issue_resolution_field.value = ''
             self.issue_resolution_date_field.value = ''
             self.issue_last_update_date_field.value = ''
-            self.reporter_field.value = ''
             self.issue_key_field.value = ''
             self.project_id_field.value = ''
             self.issue_type_field.value = ''
             self.issue_sprint_field.value = ''
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
+            self.reporter_selector.clear()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.value = ''
@@ -562,7 +578,7 @@ class IssueDetailsWidget(Vertical):
             )
         )
 
-    def _build_payload_for_update(self) -> dict:
+    def _build_payload_for_update(self) -> dict | None:
         # maps field id to field value
         payload: dict[str, Any] = {}
         # process the "static" fields
@@ -607,6 +623,20 @@ class IssueDetailsWidget(Vertical):
                 self.issue.assignee, self.assignee_selector.account_id
             ):
                 payload[self.assignee_selector.jira_field_key] = self.assignee_selector.account_id
+
+        if self.reporter_selector.update_enabled:
+            if not self.reporter_selector or not self.reporter_selector.account_id:
+                self.notify(
+                    'Every work item must have a reporter',
+                    severity='error',
+                    title='Update Work Item',
+                )
+                return None
+            # check if the reporter has changed
+            if work_item_reporter_has_changed(
+                self.issue.reporter, self.reporter_selector.account_id
+            ):
+                payload[self.reporter_selector.jira_field_key] = self.reporter_selector.account_id
 
         if self.work_item_labels_widget.update_enabled and self.work_item_labels_widget.value:
             # update the issue's labels
@@ -658,12 +688,18 @@ class IssueDetailsWidget(Vertical):
         """
 
         if not self.issue:
-            self.notify('You must select a work item before saving changes')
+            self.notify(
+                'You must select a work item before saving changes',
+                severity='error',
+                title='Update Work Item',
+            )
             return
 
         issue_was_updated: bool = False
         # build the payload with the fields that will be updated
-        payload: dict = self._build_payload_for_update()
+        payload: dict | None = self._build_payload_for_update()
+        if payload is None:
+            return
         # check if we need to transition the issue and move it to the new status if needed
         issue_requires_transition = (
             self.issue_status_selector.selection is not None
@@ -787,6 +823,11 @@ class IssueDetailsWidget(Vertical):
                 'operations', {}
             )
 
+        if field_reporter := fields.get('reporter', {}):
+            editable_fields[field_reporter.get('key')] = 'set' in field_reporter.get(
+                'operations', {}
+            )
+
         if field_labels := fields.get('labels', {}):
             editable_fields[field_labels.get('key')] = 'set' in field_labels.get('operations', {})
 
@@ -848,9 +889,9 @@ class IssueDetailsWidget(Vertical):
         editable_fields: dict = self._determine_editable_fields(work_item)
 
         # set the assignee field
-        if work_item.assignee:
+        if work_item_assignee := work_item.assignee:
             self.assignee_selector.set_value(
-                work_item.assignee.account_id, work_item.assignee.display_name
+                work_item_assignee.account_id, work_item_assignee.display_name
             )
 
         # update the "editability" of the assignee field
@@ -858,6 +899,15 @@ class IssueDetailsWidget(Vertical):
         # the payload for updating the work item's assignee we need to use the self.assignee_selector.jira_field_key;
         # this is because jira uses a different key for the same field when updating its value in a work item
         self.assignee_selector.update_enabled = editable_fields.get('assignee')
+
+        # set the reporter field
+        if work_item_reporter := work_item.reporter:
+            self.reporter_selector.set_value(
+                work_item_reporter.account_id, work_item_reporter.display_name
+            )
+
+        # update the "editability" of the reporter field
+        self.reporter_selector.update_enabled = editable_fields.get('reporter')
 
         # set the value of the form fields based on the work item's data
         if work_item.resolution_date:
@@ -870,8 +920,6 @@ class IssueDetailsWidget(Vertical):
             self.issue_last_update_date_field.value = datetime.strftime(
                 work_item.updated, '%Y-%m-%d %H:%M'
             )
-        if reporter := work_item.reporter:
-            self.reporter_field.value = reporter.display_name
 
         self.issue_created_date_field.value = datetime.strftime(work_item.created, '%Y-%m-%d %H:%M')
         self.issue_key_field.value = self._work_item_key

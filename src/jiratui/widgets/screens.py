@@ -679,9 +679,11 @@ class MainScreen(Screen):
 
     async def _search_and_filter_users(self, query: str) -> APIControllerResponse:
         # searches and filters users that can be assignees of work items
-        return await self.api.search_users_assignable_to_issue(
-            project_id_or_key=self.project_selector.selection, query=query
-        )
+        if self.project_selector.selection:
+            return await self.api.search_users_assignable_to_issue(
+                project_id_or_key=self.project_selector.selection, query=query
+            )
+        return await self.api.search_users(email_or_name=query)
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.worker.name == 'fetch_statuses':

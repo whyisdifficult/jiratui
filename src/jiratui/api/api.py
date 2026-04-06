@@ -620,6 +620,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the details of the users.
         """
+
         params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset
@@ -651,6 +652,7 @@ class JiraAPI:
         Returns:
             A list of dictionaries with the details of the users.
         """
+
         params: dict[str, Any] = {}
         if offset is not None:
             params['startAt'] = offset

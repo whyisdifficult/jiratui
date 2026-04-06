@@ -17,6 +17,7 @@ from jiratui.api_controller.constants import (
     RECORDS_PER_PAGE_LIST_GROUP_USERS,
     RECORDS_PER_PAGE_LIST_GROUPS,
     RECORDS_PER_PAGE_SEARCH_PROJECTS,
+    RECORDS_PER_PAGE_SEARCH_USERS,
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_ISSUES,
     RECORDS_PER_PAGE_SEARCH_USERS_ASSIGNABLE_TO_PROJECTS,
 )
@@ -480,7 +481,7 @@ class APIController:
             return APIControllerResponse(result=result)
 
     async def search_users(self, email_or_name: str) -> APIControllerResponse:
-        """Searches users by email or name
+        """Searches users by email or name.
 
         Args:
             email_or_name: the email or name to filter users
@@ -490,7 +491,9 @@ class APIController:
             instance of `APIControllerResponse` with the `error` message.
         """
         try:
-            response: list[dict] = await self.api.user_search(query=email_or_name)
+            response: list[dict] = await self.api.user_search(
+                query=email_or_name, limit=RECORDS_PER_PAGE_SEARCH_USERS
+            )
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(

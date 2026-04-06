@@ -133,7 +133,7 @@ async def test_select_and_display_work_item(
         assert focused_widget.issue_parent_field.value == 'P2'
         assert focused_widget.issue_type_field.value == 'Bug'
         assert focused_widget.priority_selector.selection == '1'
-        assert focused_widget.reporter_field.value == 'Bart Simpson'
+        assert focused_widget.reporter_selector.value == 'Bart Simpson'
         assert focused_widget.assignee_selector.value == ''
         assert focused_widget.issue_resolution_field.value == 'this was done'
         assert focused_widget.issue_sprint_field.value == 'This Sprint'
