@@ -266,7 +266,8 @@ class IssueDetailsWidget(Vertical):
                 # set widgets in row 4
                 yield IssueParentField()
                 yield IssueSprintField()
-
+                yield IssueTypeField()
+                # set widgets in row 5
                 # this input field contains the id of the Jira user that we can use to update the item's reporter field
                 reporter_input = JiraUserInput(
                     id='edit-work-item-input-reporter',
@@ -274,6 +275,7 @@ class IssueDetailsWidget(Vertical):
                     border_title='Reporter',
                     required=True,
                 )
+                reporter_input.add_class(*['cols-3'])
                 yield reporter_input
                 reporter_autocomplete = UsersAutoComplete(
                     reporter_input,
@@ -282,11 +284,9 @@ class IssueDetailsWidget(Vertical):
                 )
                 reporter_autocomplete.add_class(*['cols-3'])
                 yield reporter_autocomplete
-
-                # set widgets in row 5
-                yield IssueTypeField()
-                yield ProjectIDField()  # cols 2
                 # set widgets in row 6
+                yield ProjectIDField()
+                # set widgets in row 7
                 yield ReadOnlyTextField(
                     id='issue_created_date',
                     label='Created',
@@ -302,7 +302,7 @@ class IssueDetailsWidget(Vertical):
                     extra_classes='input-date',
                 )
                 yield WorkItemDetailsDueDate()
-                # set widgets in row 7
+                # set widgets in row 8
                 yield ReadOnlyTextField(
                     id='issue_resolution_date',
                     label='Resolved',
@@ -316,10 +316,10 @@ class IssueDetailsWidget(Vertical):
                     disabled=True,
                     valid_empty=True,
                     extra_classes='cols-2',
-                )  # cols 2
-                # set widgets in row 8 - cols 3
+                )
+                # set widgets in row 9 - cols 3
                 yield WorkItemLabelsField()
-                # set widgets in row 9
+                # set widgets in row 10
                 yield IssueComponentsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()
