@@ -25,6 +25,7 @@ autocomplete feature there is no need to fetch all the users anymore.
 
 - Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the
 default reporting user when creating work items.
+- Use relative URLs to download attachments when the user uses Jra DC instance.
 
 ### Minor Improvements
 
