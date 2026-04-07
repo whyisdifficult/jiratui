@@ -36,7 +36,7 @@ class AddWorkItemScreen(Screen):
         Args:
             project_key: the key of the project for which the work item will be created. If not defined the user will
             need to choose it from a dropdown list.
-            reporter_account_id: the account id of the user that acts as a reporter. Ths is injected from the main
+            reporter_account_id: the account id of the user that acts as a reporter. This is injected from the main
             screen which in turn can be picked up from the cli or the configuration file. If not defined the user will
             need to choose it from a dropdown list.
             parent_work_item_key: the key of the parent work item to which this work item belongs. If not defined the
@@ -47,6 +47,10 @@ class AddWorkItemScreen(Screen):
         self._project_key = project_key
         self._reporter_account_id = reporter_account_id
         self._parent_work_item_key = parent_work_item_key
+
+    @property
+    def reporter_account_id(self) -> str | None:
+        return self._reporter_account_id
 
     @property
     def save_button(self) -> Button:
@@ -154,7 +158,7 @@ class AddWorkItemScreen(Screen):
 
         self.run_worker(self.fetch_available_projects())
         self.run_worker(self.fetch_available_issue_types())
-        if self._reporter_account_id:
+        if self.reporter_account_id:
             self.run_worker(self._fetch_reporter())
 
     async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
@@ -164,11 +168,9 @@ class AddWorkItemScreen(Screen):
         )
 
     async def _fetch_reporter(self):
-        user_response: APIControllerResponse = await self.app.api.get_user(
-            self._reporter_account_id
-        )
-        if user_response.success and (use_details := user_response.result):
-            self.reporter_selector.set_value(self._reporter_account_id, use_details.display_name)
+        response: APIControllerResponse = await self.app.api.get_user(self.reporter_account_id)
+        if response.success and (user_details := response.result):
+            self.reporter_selector.set_value(self.reporter_account_id, user_details.display_name)
 
     async def fetch_available_projects(self) -> None:
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821

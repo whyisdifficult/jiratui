@@ -64,15 +64,6 @@ class ProjectIDField(ReadOnlyField):
         self.add_class(*['issue_details_input_field', 'cols-3'])
 
 
-class ReporterField(ReadOnlyField):
-    """A widget to display and update the reporter field of a work item."""
-
-    def __init__(self):
-        super().__init__(placeholder='-')
-        self.border_title = 'Reporter'
-        self.add_class(*['issue_details_input_field', 'cols-2'])
-
-
 class IssueSprintField(ReadOnlyField):
     """A widget to display and update the sprint field of a work item."""
 

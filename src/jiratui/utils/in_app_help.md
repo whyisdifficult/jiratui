@@ -232,11 +232,10 @@ that in this case the dropdown may contain statuses with the same name; because 
 
 ## List of Users
 
-If you select a project then JiraTUI will retrieve all the users that can be assigned issues in the given
-project. Otherwise the app will attempt to find all the users that belong to the group ID defined in
-`jira_user_group_id`.
-
-**Important**: fetching users by group id is only supported in the Jira Cloud Platform.
+You can select a Jira user to act as an assignee and search work items assigned to that user. To do that you simply
+type in the name in the search box "Assignee" at the top of the app. Users are filtered by their email address and
+their display name. If you select a project from the "Projects" dropdown then users will be filtered by the project's
+key in addition to being filtered by their name/email address.
 
 # Creating Git Branches
 
@@ -365,7 +364,7 @@ can add an optional message to let your team know why the task is (not) flagged.
 
 # Deleting Work Items
 
-To delete a work item you can select an item from the search results pane on the left and then click `d`. This will 
+To delete a work item you can select an item from the search results pane on the left and then click `d`. This will
 open a modal screen that will let you confirm the deletion.
 
 Important: if an item has subtasks all of them will also be deleted.

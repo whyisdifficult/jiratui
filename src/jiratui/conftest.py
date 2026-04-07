@@ -37,7 +37,6 @@ def config_for_testing() -> ApplicationConfiguration:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -66,7 +65,6 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -94,7 +92,6 @@ def jira_api_controller() -> APIController:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -123,7 +120,6 @@ def jira_api_controller_for_jira_dc() -> APIController:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -152,7 +148,6 @@ def app() -> JiraApp:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -171,6 +166,24 @@ def app() -> JiraApp:
     app.api = APIController(config_mock)
     app._setup_logging = MagicMock()  # type:ignore[method-assign]
     return app
+
+
+@pytest.fixture
+def projects() -> list[Project]:
+    return [
+        Project(id='1', name='Project 1', key='P1'),
+        Project(id='2', name='Project 2', key='P2'),
+    ]
+
+
+@pytest.fixture
+def statuses() -> list[IssueStatus]:
+    return [IssueStatus(id='1', name='New'), IssueStatus(id='2', name='Done')]
+
+
+@pytest.fixture
+def issue_types() -> list[IssueType]:
+    return [IssueType(id='1', name='Task'), IssueType(id='2', name='Bug')]
 
 
 @pytest.fixture

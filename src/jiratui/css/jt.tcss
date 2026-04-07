@@ -216,7 +216,23 @@ IssueDescriptionWidget {
 #edit-work-item-input-assignee {
     box_sizing: content-box;
     height: 1;
-    width: 40;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+#edit-work-item-input-reporter {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
     margin: 0 0;
     padding: 0 1;
     border: round $primary-lighten-3;

@@ -23,9 +23,14 @@ class JiraUserInput(Input):
         border_subtitle: str | None = kwargs.pop('border_subtitle', None)
         jira_field_key: str | None = kwargs.pop('jira_field_key', None)
         border_title: str | None = kwargs.pop('border_title', None)
+        required: bool | None = kwargs.pop('required', False)
         super().__init__(*args, **kwargs)
         self.border_title = border_title or 'Jira User'
-        self.border_subtitle = border_subtitle
+        if required:
+            self.border_subtitle = '(*)'
+            self.add_class(*['required'])
+        if border_subtitle:
+            self.border_subtitle = border_subtitle
         self.jira_field_key = jira_field_key
         """The id used by Jira to identify this field in the edit-metadata or to update its value in a work item."""
         self._account_id: str | None = None

@@ -537,7 +537,7 @@ async def test_search_users(user_search_mock: Mock, jira_api_controller: APICont
         ],
         error=None,
     )
-    user_search_mock.assert_called_once_with(query='john')
+    user_search_mock.assert_called_once_with(query='john', limit=1000)
 
 
 @pytest.mark.asyncio
@@ -565,7 +565,7 @@ async def test_search_users_skip_users_without_email(
         ],
         error=None,
     )
-    user_search_mock.assert_called_once_with(query='john')
+    user_search_mock.assert_called_once_with(query='john', limit=1000)
 
 
 @pytest.mark.asyncio
@@ -600,7 +600,7 @@ async def test_search_users_include_users_without_email(
         ],
         error=None,
     )
-    user_search_mock.assert_called_once_with(query='john')
+    user_search_mock.assert_called_once_with(query='john', limit=1000)
 
 
 @pytest.mark.asyncio
@@ -618,7 +618,7 @@ async def test_search_users_with_exception(
         result=None,
         error='test error',
     )
-    user_search_mock.assert_called_once_with(query='john')
+    user_search_mock.assert_called_once_with(query='john', limit=1000)
 
 
 @pytest.mark.asyncio

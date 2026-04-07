@@ -28,7 +28,6 @@ def app() -> JiraApp:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
