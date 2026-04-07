@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
 import json
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import AsyncMock, Mock, mock_open, patch
 
 import httpx
 import pytest
 import respx
 
-from jiratui.api.api import JiraAPI, JiraDataCenterAPI
+from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.exceptions import FileUploadException
 from jiratui.models import WorkItemsSearchOrderBy
@@ -1354,7 +1354,7 @@ async def test_add_comment(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
-async def test_add_comment_with_api_v2(jira_api_v2: JiraAPI):
+async def test_add_comment_with_api_v2(jira_api_v2: JiraAPIv2):
     # GIVEN
     route = respx.post(get_url_pattern('issue/1/comment'))
     route.mock(
@@ -3082,3 +3082,105 @@ async def test_get_user(jira_api: JiraAPI):
         'key': '',
         'name': '',
     }
+
+
+@patch.object(JiraDataCenterAPI, 'get_attachment')
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment_content_using_jira_dc(
+    get_attachment_mock: AsyncMock, jira_api_dc: JiraDataCenterAPI
+):
+    # GIVEN
+    get_attachment_mock.return_value = {'content': 'https://foo.bar/path/filename.abc?q=1#f2'}
+    route = respx.get('https://foo.bar/rest/api/2/path/filename.abc?q=1')
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    # WHEN
+    await jira_api_dc.get_attachment_content('1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/path/filename.abc'
+
+
+@patch.object(JiraDataCenterAPI, 'get_attachment')
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment_content_using_jira_dc_with_empty_content(
+    get_attachment_mock: AsyncMock,
+    jira_api_dc: JiraDataCenterAPI,
+):
+    # GIVEN
+    get_attachment_mock.return_value = {'content': ''}
+    # WHEN
+    result = await jira_api_dc.get_attachment_content('1')
+    # THEN
+    assert result is None
+
+
+@patch.object(JiraDataCenterAPI, 'get_attachment')
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment_content_using_jira_dc_with_empty_attachment(
+    get_attachment_mock: AsyncMock,
+    jira_api_dc: JiraDataCenterAPI,
+):
+    # GIVEN
+    get_attachment_mock.return_value = None
+    # WHEN
+    result = await jira_api_dc.get_attachment_content('1')
+    # THEN
+    assert result is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment_using_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('attachment/1'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    # WHEN
+    await jira_api_dc.get_attachment('1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/2/attachment/1'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('attachment/1'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    # WHEN
+    await jira_api.get_attachment('1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/attachment/1'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_get_attachment_content(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('attachment/content/1'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    # WHEN
+    await jira_api.get_attachment_content('1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/attachment/content/1'
