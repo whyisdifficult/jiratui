@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 import puremagic
+from urllib3.util import parse_url
 
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
@@ -1560,9 +1561,17 @@ class JiraDataCenterAPI(JiraAPI):
         Returns:
             A bytes representation of the attachment's content; or `None` if the attachment can not be downloaded.
         """
+
         attachment: dict
         if attachment := await self.get_attachment(attachment_id):
             if content := attachment.get('content'):
+                # extract relative URL because Jira DC returns absolute URL
+                if parsed := parse_url(content):
+                    content = parsed.path.lstrip('/')
+                    if parsed.query:
+                        content += '?' + parsed.query
+                    if parsed.fragment:
+                        content += '#' + parsed.fragment
                 await self._async_http_client.make_request(
                     method=httpx.AsyncClient.get,
                     url=content,
