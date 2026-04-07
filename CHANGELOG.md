@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
 - Add support for updating the reporter of a work item.
 
+### Changed
+
+- [DEPRECATED] support for `config.jira_user_group_id` is deprecated and will be removed in future versions. This is
+no longer applicable because users can now be filtered using name/email address. With the introduction of the
+autocomplete feature there is no need to fetch all the users anymore.
+
 ### Bug Fixes
 
 - Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the

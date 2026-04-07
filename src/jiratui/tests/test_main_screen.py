@@ -62,7 +62,6 @@ def app() -> JiraApp:
         default_project_key_or_id=None,
         active_sprint_on_startup=False,
         jira_account_id=None,
-        jira_user_group_id='qwerty',
         tui_title=None,
         tui_custom_title=None,
         tui_title_include_jira_server_title=False,
@@ -562,7 +561,7 @@ async def test_copy_work_item_url_to_clipboard_without_url(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_search_users_with_custom_search_function(
+async def test_search_users_with_custom_search_function_by_query(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -587,7 +586,7 @@ async def test_search_users_with_custom_search_function(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_search_users_by_project_with_custom_search_function(
+async def test_search_users_with_custom_search_function_by_project(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,

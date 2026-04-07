@@ -555,8 +555,8 @@ def search_users_groups(
     group_id: str | None = None,
     page: int = 1,
 ) -> None:
-    """Searches Jira users groups. Use it to find groups of users by name or ID. Useful for setting the config variable
-    jira_user_group_id."""
+    """Searches Jira users groups. Use it to find groups of users by name or ID."""
+
     handler = CommandHandler()
     if group_id:
         # fetch the number of users in the group
