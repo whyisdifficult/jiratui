@@ -775,3 +775,9 @@ class JiraField(BaseModel):
     schema: dict
     untranslated_name: str | None = None
     """The name of the field without translations."""
+
+
+@dataclass
+class JQLAutocompleteSuggestion(BaseModel):
+    value: str | None = None
+    display_name: str | None = None

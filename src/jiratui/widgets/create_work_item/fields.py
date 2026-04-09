@@ -1,14 +1,16 @@
 from textual import on
 from textual.reactive import Reactive, reactive
-from textual.widgets import Input, Select, TextArea
+from textual.widgets import Input, Select
 
-from jiratui.widgets.base import DateInput
+from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget
 
 
 class CreateWorkItemProjectSelectionInput(Select):
+    """A Select widget for choosing the project for which we want to create a new work item."""
+
     projects: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys: 
-    
+    """A dictionary with 2 keys:
+
     projects: list
     selection: str | None
     """
@@ -18,13 +20,18 @@ class CreateWorkItemProjectSelectionInput(Select):
             options=projects,
             prompt='Select a project',
             name='project',
-            id='create-work-item-project-selector',
+            id='create-work-item-project-selector',  # the id of this widget
             type_to_search=True,
             compact=True,
             **kwargs,
         )
         self.border_title = 'Project'
         self.border_subtitle = '(*)'
+        self._jira_field_key = 'project_key'
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self._jira_field_key
 
     def watch_projects(self, projects: dict | None = None) -> None:
         self.clear()
@@ -38,27 +45,35 @@ class CreateWorkItemProjectSelectionInput(Select):
                         break
 
 
-class CreateWorkItemIssueTypeSelectionInput(Select):
-    def __init__(self, types: list, **kwargs):
+class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
+    """A Select widget for choosing the type of issue we want to create."""
+
+    def __init__(self, options: list[tuple[str, str]], **kwargs):
         super().__init__(
-            options=types,
-            prompt='Select issue type',
-            name='issue_types',
-            id='create-work-item-issue-types-selector',
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-issue-type-selector',  # TODO or this? create-work-item-select-issue-type
+            jira_field_key='issue_type_id',
+            title='Issue Type',
+            required=True,
+            options=options,
         )
         self.border_title = 'Issue Type'
         self.border_subtitle = '(*)'
 
 
 class CreateWorkItemIssueSummaryField(Input):
+    """An Input widget for setting the summary field of the issue we want to create."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = 'Summary'
         self.add_class(*['issue_details_input_field', 'required'])
         self.border_subtitle = '(*)'
+        self._jira_field_key = 'summary'
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self._jira_field_key
 
     @on(Input.Blurred)
     def clean_value(self, event: Input.Blurred) -> None:
@@ -66,54 +81,24 @@ class CreateWorkItemIssueSummaryField(Input):
             self.value = event.value.strip()
 
 
-class CreateWorkItemDescription(TextArea):
-    def __init__(self):
-        super().__init__(
-            '',
-            id='description',
-            compact=True,
-            classes='create-work-item-description',
-        )
-        self.border_title = 'Description'
-
-
 class CreateWorkItemParentKeyField(Input):
+    """An Input widget for setting the key of an issue that acts as a parent to the issue we want to create."""
+
     def __init__(self, value: str | None = None):
         super().__init__(
-            id='parent_key',
-            classes='create-work-item-parent-input-field',
             placeholder='ABC-12345',
             tooltip='The Key of the parent work item',
             value=value.strip() if value is not None else None,
         )
         self.compact = True
         self.border_title = 'Parent Key'
+        self._jira_field_key = 'parent_key'
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self._jira_field_key
 
     @on(Input.Changed)
     def clean_value(self, event: Input.Changed) -> None:
         if event.value is not None:
             self.value = event.value.strip()
-
-
-class CreateWorkItemDueDate(DateInput):
-    LABEL = 'Due Date'
-    TOOLTIP = 'Enter the due date for this work item.'
-    CLASSES = 'create-work-item-input-date'
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.compact = True
-
-
-class CreateWorkItemTextField(Input):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.compact = True
-        self.add_class('create-work-item-generic-input-field')
-
-
-class CreateWorkItemSelectionInput(Select):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.compact = True
-        self.add_class('create-work-item-generic-selector')

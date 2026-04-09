@@ -1300,7 +1300,52 @@ class JiraAPI:
         Returns:
             A list of dictionaries.
         """
+
         return await self._client.make_request(method=httpx.AsyncClient.get, url='field')
+
+    async def get_jql_autocomplete_suggestions(
+        self,
+        field_name: str | None = None,
+        field_value: str | None = None,
+        predicate_name: str | None = None,
+        predicate_value: str | None = None,
+    ) -> dict:
+        """Retrieves the JQL search auto complete suggestions for a field.
+
+        Suggestions can be obtained by providing:
+
+        - `fieldName` to get a list of all values for the field.
+        - `fieldName` and `fieldValue` to get a list of values containing the text in `fieldValue`.
+        - `fieldName` and `predicateName` to get a list of all predicate values for the field.
+        - `fieldName`, `predicateName`, and `predicateValue` to get a list of predicate values containing the text in
+        `predicateValue`.
+
+        Args:
+            field_name: a field name to get a list of all values for the field.
+            field_value: a partial field item name entered by the user.
+            predicate_name: the name of the
+            [CHANGED operator predicate](https://confluence.atlassian.com/x/hQORLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for
+            which the suggestions are generated. The valid predicate operators are `by`, `from`, and `to`.
+            predicate_value: the partial predicate item name entered by the user.
+
+        Returns:
+            List of suggestions or None if request fails.
+        """
+
+        params = {}
+        if field_name:
+            params['fieldName'] = field_name
+        if field_value:
+            params['fieldValue'] = field_value
+        if predicate_name:
+            params['predicateName'] = predicate_name
+        if predicate_value:
+            params['predicateValue'] = predicate_value
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get,
+            url='jql/autocompletedata/suggestions',
+            params=params,
+        )
 
 
 class JiraAPIv2(JiraAPI):

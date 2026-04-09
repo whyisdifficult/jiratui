@@ -56,6 +56,7 @@ from jiratui.models import (
     JiraUserGroup,
     JiraWorkItemFields,
     JiraWorklog,
+    JQLAutocompleteSuggestion,
     LinkIssueType,
     PaginatedJiraWorklog,
     Project,
@@ -2469,3 +2470,58 @@ class APIController:
             return APIControllerResponse(
                 result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
             )
+
+    async def get_jql_autocomplete_suggestions(
+        self,
+        field_name: str | None = None,
+        field_value: str | None = None,
+        predicate_name: str | None = None,
+        predicate_value: str | None = None,
+    ) -> APIControllerResponse:
+        """Retrieves suggestions for a field.
+
+        Args:
+            field_name: a field name to get a list of all values for the field.
+            field_value: a partial field item name entered by the user.
+            predicate_name: the name of the
+            [CHANGED operator predicate](https://confluence.atlassian.com/x/hQORLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for
+            which the suggestions are generated. The valid predicate operators are `by`, `from`, and `to`.
+            predicate_value: the partial predicate item name entered by the user.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of suggestions and `success = True`.
+            If an error occurs then `success = False` and the error message in the `error` key.
+        """
+
+        try:
+            response: Any | None = await self.api.get_jql_autocomplete_suggestions(
+                field_name,
+                field_value,
+                predicate_name,
+                predicate_value,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to get label suggestions',
+                extra={
+                    'field_name': field_name,
+                    'field_value': field_value,
+                    'predicate_name': predicate_name,
+                    'predicate_value': predicate_value,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        if not response or not isinstance(response, dict):
+            return APIControllerResponse(
+                success=False, error='Invalid response from JQL autocomplete suggestions API'
+            )
+        suggestions: list[JQLAutocompleteSuggestion] = []
+        for suggestion in response.get('results', []):
+            suggestions.append(
+                JQLAutocompleteSuggestion(
+                    value=suggestion.get('value'), display_name=suggestion.get('displayName')
+                )
+            )
+        return APIControllerResponse(result=suggestions)

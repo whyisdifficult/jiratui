@@ -10,8 +10,9 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 logger = logging.getLogger(__name__)
 
 
+# TODO consider moving this to src/jiratui/widgets/commons/widgets.py
 class JiraUserInput(Input):
-    """An input field for selecting a Jira user.
+    """An input field for selecting a single Jira user.
 
     This widget holds the Jira user's account id that is used to identify the user. This is useful for operations
     that create/update work items' user fields, such as assignee, reporter, etc.
@@ -67,6 +68,7 @@ class JiraUserInput(Input):
         self.account_id = account_id
 
 
+# TODO consider moving this to src/jiratui/widgets/commons/base.py
 class UsersAutoComplete(AutoComplete):
     """AutoComplete for Jira users that searches users using the Jira API.
 
