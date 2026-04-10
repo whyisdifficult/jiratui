@@ -12,6 +12,7 @@ from jiratui.widgets.commons.widgets import (
     MultiSelectWidget,
     NumericInputWidget,
     SelectionWidget,
+    SprintWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -792,7 +793,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10020':
             assert widget.jira_field_key == 'customfield_10020'
-            assert isinstance(widget, TextInputWidget)
+            assert isinstance(widget, SprintWidget)
         elif widget.id == 'customfield_10021':
             assert widget.jira_field_key == 'customfield_10021'
             assert isinstance(widget, MultiSelectWidget)

@@ -11,23 +11,25 @@ from jiratui.widgets.commons.factory_utils import AllowedValuesParser
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
+    EpicLinkWidget,
     LabelsWidget,
     MultiSelectWidget,
     NumericInputWidget,
     SelectionWidget,
+    SprintWidget,
     TextInputWidget,
     URLWidget,
 )
 
 
 def create_widgets_for_work_item_creation(
-    data: list[dict],
-    api_controller: APIController | None = None,
+    data: list[dict], api_controller: APIController | None = None
 ) -> list[Widget]:
-    """Creates a list of widgets for the "form" that allows users to create work items.
+    """Creates a list of Textual widgets for the "form" that allows users to create work items.
 
     Args:
-        data: a list of dictionaries with the create-metadata information.
+        data: a list of dictionaries with the create-metadata information for all the fields of a given type of work
+        item supported in a project.
         api_controller: an optional APIController instance to make requests to the Jira API; unused, for compatibility.
 
     Returns:
@@ -40,7 +42,7 @@ def create_widgets_for_work_item_creation(
     enable_additional = config.enable_creating_additional_fields
 
     for item in data:
-        field_id = item.get('fieldId')
+        field_id: str = item.get('fieldId')
 
         if field_id in CREATE_FORM_DEFAULT_FIELDS:
             # ignore them because they will be included in the form anyway
@@ -63,9 +65,9 @@ def create_widgets_for_work_item_creation(
                 required=required,
             )
         else:
-            schema = item.get('schema', {})
+            schema: dict = item.get('schema', {})
             schema_type = schema.get('type', '')
-            custom_type = schema.get('custom')
+            custom_type: str | None = schema.get('custom')
             if custom_type == CustomFieldType.USER_PICKER.value:
                 widget = UserPickerWidget(
                     mode=FieldMode.CREATE,
@@ -78,6 +80,24 @@ def create_widgets_for_work_item_creation(
             #     # TODO this needs to support autocomplete
             #     # TODO create and use a new class called MultiJiraUserInput that behaves like LabelsWidget to support commas
             #     #   and the account_id should support a list of account ids separated by commas
+            elif custom_type == CustomFieldType.EPIC_LINK.value:
+                widget = EpicLinkWidget(
+                    mode=FieldMode.CREATE,
+                    field_id=field_id or '',
+                    jira_field_key=item.get('key') or field_id,
+                    title=item.get('name'),
+                    required=required,
+                )
+                widget.tooltip = f'{item.get("name")} (Tip: to ignore use id: {field_id})'
+            elif custom_type == CustomFieldType.SPRINT.value:
+                widget = SprintWidget(
+                    mode=FieldMode.CREATE,
+                    field_id=field_id or '',
+                    jira_field_key=item.get('key') or field_id,
+                    title=item.get('name'),
+                    required=required,
+                )
+                widget.tooltip = f'{item.get("name")} (Tip: to ignore use id: {field_id})'
             elif custom_type == CustomFieldType.FLOAT.value or (
                 schema_type and schema_type.lower() == 'number'
             ):
@@ -128,7 +148,13 @@ def create_widgets_for_work_item_creation(
                     title=item.get('name'),
                 )
                 widget.border_title = item.get('name')
-            elif allowed_values := item.get('allowedValues'):
+            elif 'allowedValues' in item:
+                # the field supports pre-defined values
+                if not (allowed_values := item.get('allowedValues')):
+                    # if the field does not have any pre-defined values then the field can not be use for creating a
+                    # work item because we don't know the possible allowed values to choose from; Jira admins need to
+                    # pre-define the values first
+                    continue
                 options = AllowedValuesParser.parse_options(allowed_values)
                 # check if this is an array field (multi-select)
                 schema_type = schema.get('type')
@@ -174,6 +200,7 @@ def create_widgets_for_work_item_creation(
                         prompt=f'Select {item.get("name")}',
                     )
             else:
+                # the default widget for any other field
                 widget = TextInputWidget(
                     mode=FieldMode.CREATE,
                     field_id=field_id or '',

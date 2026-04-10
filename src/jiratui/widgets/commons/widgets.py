@@ -11,6 +11,8 @@ Widgets included:
 - DescriptionWidget: TextArea input field for managing the description of work items during creation and update
 operations.
 - MultiSelectWidget: Multi-select with checkboxes
+- SprintWidget: Text input field for providing the ID of a sprint using a shorter layout.
+- EpicLinkWidget: Text input field for providing the key of an Epic issue using a shorter layout.
 
 All widgets work in both CREATE and UPDATE modes by extending base classes from base.py.
 """
@@ -87,7 +89,7 @@ class DateInputWidget(DateInput, BaseFieldWidget, BaseUpdateFieldWidget):
         Args:
             mode: The field mode (CREATE or UPDATE)
             field_id: Field identifier (Jira field key)
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: Display title (defaults to field_id)
             required: Whether the field is required (mainly for CREATE mode)
             original_value: Original date value from Jira (UPDATE mode only)
@@ -385,7 +387,7 @@ class TextInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         Args:
             mode: The field mode (CREATE or UPDATE)
             field_id: Field identifier (Jira field key)
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: Display title (defaults to field_id)
             required: Whether the field is required (mainly for CREATE mode)
             placeholder: Placeholder text for the input
@@ -519,7 +521,7 @@ class LabelsWidget(Input):
         Args:
             mode: CREATE or UPDATE mode
             field_id: Jira field ID (e.g., "labels" or "customfield_10001")
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: Display title for the field
             required: Whether the field is required
             original_value: Original labels for UPDATE mode (list of strings)
@@ -730,6 +732,153 @@ class URLWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         return original != current
 
 
+class EpicLinkWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
+    """Unified Input widget for specifying the key of an (Epic) issue supporting both CREATE and UPDATE modes."""
+
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        title: str | None = None,
+        required: bool = False,
+        original_value: str | None = None,
+        field_supports_update: bool = True,
+        **kwargs: Any,
+    ) -> None:
+        self.mode = mode
+        self._original_value = original_value or ''
+        self._supports_update = field_supports_update
+        self.field_id = field_id
+
+        # initialize Input widget
+        super().__init__(placeholder='E.g. ABC-123', id=field_id, **kwargs)
+
+        # set border title with required indicator
+        self.border_title = f'{title} [red]*[/red]' if required else title
+
+        # mode-specific setup
+        self._jira_field_key = jira_field_key
+        if mode == FieldMode.CREATE:
+            self.add_class('create-work-item-generic-input-field', 'issue_key')
+        elif mode == FieldMode.UPDATE:
+            self.add_class('issue_details_input_field', ' issue_key')
+            if original_value:
+                self.value = original_value
+            if not field_supports_update:
+                self.disabled = True
+
+    @property
+    def original_value(self) -> str:
+        """Get the original value from Jira."""
+        return self._original_value
+
+    def get_value_for_create(self) -> str:
+        """Get value for create work item request."""
+        if self.mode != FieldMode.CREATE:
+            msg = 'get_value_for_create() can only be called in CREATE mode'
+            raise ValueError(msg)
+        return self.value.strip()
+
+    def get_value_for_update(self) -> str:
+        """Get value for update work item request."""
+        if self.mode != FieldMode.UPDATE:
+            msg = 'get_value_for_update() can only be called in UPDATE mode'
+            raise ValueError(msg)
+        return self.value.strip()
+
+    @property
+    def value_has_changed(self) -> bool:
+        """Check if the value has changed from original."""
+        if self.mode != FieldMode.UPDATE:
+            msg = 'value_has_changed can only be checked in UPDATE mode'
+            raise ValueError(msg)
+
+        original = self.original_value.strip()
+        current = self.value.strip()
+
+        # Both empty - no change
+        if not original and not current:
+            return False
+
+        # Compare stripped values
+        return original != current
+
+
+class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
+    """Unified Input widget for specifying the ID of a Sprint supporting both CREATE and UPDATE modes."""
+
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        title: str | None = None,
+        required: bool = False,
+        original_value: str | None = None,
+        field_supports_update: bool = True,
+        **kwargs: Any,
+    ) -> None:
+        self.mode = mode
+        self._original_value = original_value or ''
+        self._supports_update = field_supports_update
+        self.field_id = field_id
+
+        # initialize Input widget
+        super().__init__(id=field_id, placeholder='Sprint ID, e.g. 123', **kwargs)
+
+        # set border title with required indicator
+        self.border_title = f'{title} [red]*[/red]' if required else title
+
+        # mode-specific setup
+        self._jira_field_key = jira_field_key
+        self.styles.width = 20
+        if mode == FieldMode.CREATE:
+            self.add_class('create-work-item-generic-input-field')
+        elif mode == FieldMode.UPDATE:
+            self.add_class('issue_details_input_field')
+            if original_value:
+                self.value = original_value
+            if not field_supports_update:
+                self.disabled = True
+
+    @property
+    def original_value(self) -> str:
+        """Get the original value from Jira."""
+        return self._original_value
+
+    def get_value_for_create(self) -> str:
+        """Get value for create work item request."""
+        if self.mode != FieldMode.CREATE:
+            msg = 'get_value_for_create() can only be called in CREATE mode'
+            raise ValueError(msg)
+        return self.value.strip()
+
+    def get_value_for_update(self) -> str:
+        """Get value for update work item request."""
+        if self.mode != FieldMode.UPDATE:
+            msg = 'get_value_for_update() can only be called in UPDATE mode'
+            raise ValueError(msg)
+        return self.value.strip()
+
+    @property
+    def value_has_changed(self) -> bool:
+        """Check if the value has changed from original."""
+        if self.mode != FieldMode.UPDATE:
+            msg = 'value_has_changed can only be checked in UPDATE mode'
+            raise ValueError(msg)
+
+        original = self.original_value.strip()
+        current = self.value.strip()
+
+        # Both empty - no change
+        if not original and not current:
+            return False
+
+        # Compare stripped values
+        return original != current
+
+
 # ============================================================================
 # Numeric and Selection Widgets
 # ============================================================================
@@ -764,7 +913,7 @@ class NumericInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         Args:
             mode: The field mode (CREATE or UPDATE)
             field_id: Field identifier (Jira field key)
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: Display title (defaults to field_id)
             required: Whether the field is required (mainly for CREATE mode)
             placeholder: Placeholder text for the input
@@ -980,7 +1129,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         title: str | None = None,
         required: bool = False,
         # CREATE mode parameters
-        initial_value: Any = Select.BLANK,
+        initial_value: Any = Select.NULL,
         # UPDATE mode parameters
         original_value: str | None = None,
         field_supports_update: bool = True,
@@ -988,13 +1137,12 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         allow_blank: bool = True,
         prompt: str | None = None,
     ):
-        """
-        Initialize a SelectionWidget.
+        """Initializes a SelectionWidget.
 
         Args:
             mode: The field mode (CREATE or UPDATE)
             field_id: Field identifier (Jira field key)
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             options: List of (display_name, value) tuples for the dropdown
             title: Display title (defaults to field_id)
             required: Whether the field is required (mainly for CREATE mode)
@@ -1004,6 +1152,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             allow_blank: Whether to allow blank/empty selection
             prompt: Prompt text for the dropdown
         """
+
         # Determine the appropriate prompt
         display_prompt = prompt or f'Select {title or field_id}'
 
@@ -1040,7 +1189,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             self.add_class('create-work-item-generic-selector')
         else:
             # CREATE mode specific setup
-            if initial_value != Select.BLANK:
+            if initial_value != Select.NULL:
                 self.value = initial_value
             self.add_class('create-work-item-generic-selector')
 
@@ -1068,7 +1217,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')
 
-        if self.value and self.value != Select.BLANK:
+        if self.value and self.value != Select.NULL:
             return {'id': self.value}
         return None
 
@@ -1281,13 +1430,12 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
         original_value: list[str] | None = None,
         field_supports_update: bool = True,
     ):
-        """
-        Initialize a MultiSelectWidget.
+        """Initializes a MultiSelectWidget.
 
         Args:
             mode: The field mode (CREATE or UPDATE)
             field_id: Field identifier (Jira field key)
-            jira_field_key: TODO
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
             options: List of (display_name, value) tuples for checkboxes
             title: Display title (defaults to field_id)
             required: Whether the field is required (mainly for CREATE mode)

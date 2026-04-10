@@ -1,54 +1,26 @@
 from textual import on
-from textual.reactive import Reactive, reactive
-from textual.widgets import Input, Select
+from textual.widgets import Input
 
-from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget
+from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget, ProjectSelectionWidget
 
 
-class CreateWorkItemProjectSelectionInput(Select):
+class CreateWorkItemProjectSelectionInput(ProjectSelectionWidget):
     """A Select widget for choosing the project for which we want to create a new work item."""
 
-    projects: Reactive[dict | None] = reactive(None, always_update=True)
-    """A dictionary with 2 keys:
-
-    projects: list
-    selection: str | None
-    """
-
-    def __init__(self, projects: list, **kwargs):
+    def __init__(self):
         super().__init__(
-            options=projects,
-            prompt='Select a project',
-            name='project',
-            id='create-work-item-project-selector',  # the id of this widget
-            type_to_search=True,
-            compact=True,
-            **kwargs,
+            mode=FieldMode.CREATE,
+            field_id='create-work-item-select-project',
+            title='Project',
+            required=True,
+            jira_field_key='project_key',
         )
-        self.border_title = 'Project'
-        self.border_subtitle = '(*)'
-        self._jira_field_key = 'project_key'
-
-    @property
-    def jira_field_key(self) -> str | None:
-        return self._jira_field_key
-
-    def watch_projects(self, projects: dict | None = None) -> None:
-        self.clear()
-        if projects and (items := projects.get('projects', []) or []):
-            options = [(f'({project.key}) {project.name}', project.key) for project in items]
-            self.set_options(options)
-            if selection := projects.get('selection'):
-                for option in options:
-                    if option[1] == selection:
-                        self.value = option[1]
-                        break
 
 
 class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
     """A Select widget for choosing the type of issue we want to create."""
 
-    def __init__(self, options: list[tuple[str, str]], **kwargs):
+    def __init__(self, options: list[tuple[str, str]]):
         super().__init__(
             mode=FieldMode.CREATE,
             field_id='create-work-item-issue-type-selector',  # TODO or this? create-work-item-select-issue-type
@@ -57,8 +29,6 @@ class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
             required=True,
             options=options,
         )
-        self.border_title = 'Issue Type'
-        self.border_subtitle = '(*)'
 
 
 class CreateWorkItemIssueSummaryField(Input):

@@ -24,6 +24,15 @@ from jiratui.widgets.create_work_item.fields import (
 
 
 class AddWorkItemScreen(Screen):
+    """A modal screen for adding work items.
+
+    The screen is pushed from the main screen of the application. It is responsible for:
+
+    - Displaying a form to allow the user to fill in the basic details to create the work item.
+    - Building the required Widgets for the form based on the metadata associated to the project and type of work item
+    being created.
+    """
+
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'New Work Item'
 
@@ -139,7 +148,7 @@ class AddWorkItemScreen(Screen):
             with VerticalScroll(id='add-work-item-form'):
                 with ItemGrid(classes='add-work-item-fields-grid'):
                     # set widgets in row 1
-                    yield CreateWorkItemProjectSelectionInput([])
+                    yield CreateWorkItemProjectSelectionInput()
                     yield CreateWorkItemIssueTypeSelectionInput([])
                     # set widgets in row 2
                     # this input field contains the account id of the Jira user that we can use to update the item's
@@ -172,8 +181,8 @@ class AddWorkItemScreen(Screen):
     def on_mount(self):
         """Mounts the widgets.
 
-        This fetches the required data to populate the widgets. It fetches the available projects available types of
-        issues that cna be created.
+        This fetches the required data to populate the widgets. It fetches the available projects and the available
+        types of issues that can be created.
         """
 
         self.run_worker(self.fetch_available_projects())
@@ -261,6 +270,16 @@ class AddWorkItemScreen(Screen):
         self.save_button.disabled = not self._validate_required_fields()
 
     async def fetch_issue_create_metadata(self, project_key: str, issue_type_id: str) -> None:
+        """Fetch the metadata for creating work items of a given type in the given project.
+
+        Args:
+            project_key: the key of the project for which we want to create a work item.
+            issue_type_id: the type of work item we want to create.
+
+        Returns:
+            None
+        """
+
         await self.additional_fields.remove_children()
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.get_issue_create_metadata(

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import enum
 from typing import Optional
 
@@ -102,7 +102,7 @@ class DateNode(Node):
     def date_value(self) -> date | None:
         if self._text:
             try:
-                return datetime.fromtimestamp(int(self._text)).date()
+                return datetime.fromtimestamp(int(self._text), tz=timezone.utc).date()
             except Exception:
                 return None
         return None

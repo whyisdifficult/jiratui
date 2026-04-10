@@ -263,6 +263,9 @@ IssueDescriptionWidget {
     &:focus {
         border: round $accent-lighten-3;
     }
+    &.issue_key {
+        width: 15;
+    }
 }
 
 IssueParentField {
@@ -766,6 +769,9 @@ CreateWorkItemParentKeyField {
     }
     &:focus {
         border: round $accent-lighten-3;
+    }
+    &.issue_key {
+        width: 15;
     }
 }
 

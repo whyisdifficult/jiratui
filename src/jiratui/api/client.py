@@ -109,13 +109,34 @@ class JiraTUIAsyncHTTPClient:
         timeout: int = 55,
         **kwargs,
     ) -> Any | None:
+        """Makes a request to the Jira REST API.
+
+        Args:
+            method: the HTTP method to execute.
+            url: the (relative) URL to request.
+            headers: any HTTP headers.
+            timeout: an optional timeout (in seconds). Default is 55.
+            **kwargs: arguments passed directly to the callable method.
+
+        Returns:
+            The parsed JSON response from the API, or None/empty dict for empty responses.
+
+        Raises:
+            ServiceInvalidRequestException: If the request fails.
+            ServiceUnavailableException: If the service is unavailable or times out.
+            ResourceNotFoundException: If the requested resource is not found (404).
+            AuthorizationException: If authentication fails (401).
+            PermissionException: If permission is denied (403).
+            ServiceInvalidResponseException: If the response cannot be parsed.
+        """
+
         headers = self.set_headers(headers)
-        url = self.get_resource_url(url)
+        full_url = self.get_resource_url(url)
 
         try:
             response: httpx.Response = await method(
                 self.client,
-                url=url,
+                url=full_url,
                 headers=headers,
                 timeout=timeout,
                 auth=self.authentication,
@@ -123,8 +144,8 @@ class JiraTUIAsyncHTTPClient:
             )
         except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.ConnectError) as e:
             msg = f'{e.__class__.__name__}: {e}.'
-            self.logger.error(msg, extra={'url': url})
-            raise ServiceUnavailableException(msg, extra={'url': url}) from e
+            self.logger.error(msg, extra={'url': full_url})
+            raise ServiceUnavailableException(msg, extra={'url': full_url}) from e
 
         try:
             response.raise_for_status()
@@ -133,7 +154,7 @@ class JiraTUIAsyncHTTPClient:
             error_details: dict | None = self._parse_error_response(response)
 
             extra = {
-                'url': url,
+                'url': full_url,
                 'status_code': response.status_code,
             }
 
@@ -161,7 +182,7 @@ class JiraTUIAsyncHTTPClient:
             if response.status_code == 201:
                 return self._empty_response(response)
             log_msg = f'{e.__class__.__name__}: {e}.'
-            self.logger.error(log_msg, extra={'url': url, 'status_code': response.status_code})
+            self.logger.error(log_msg, extra={'url': full_url, 'status_code': response.status_code})
             raise ServiceInvalidResponseException(log_msg, extra={}) from e
 
     @staticmethod

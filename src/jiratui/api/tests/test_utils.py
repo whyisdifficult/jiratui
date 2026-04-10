@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from jiratui.api.utils import build_issue_search_jql
+from jiratui.api.utils import build_issue_search_jql, parse_required_fields_from_meta
 from jiratui.models import WorkItemsSearchOrderBy
 
 
@@ -80,3 +80,23 @@ def test_build_issue_search_jql_with_parameters_and_jql_query_with_order():
     assert result == (
         'project = "P1" and created >= "2025-12-01" and created <= "2025-12-02" and updated >= "2025-12-03" and updated <= "2025-12-04" and status = "1" and assignee = "1" and type = 2 and q=5 order by key asc'
     )
+
+
+def test_parse_required_fields_from_meta():
+    # GIVEN
+    metadata = {
+        'fields': [
+            {
+                'required': True,
+                'key': 'value 1',
+            },
+            {
+                'required': False,
+                'key': 'value 2',
+            },
+        ]
+    }
+    # WHEN
+    result = parse_required_fields_from_meta(metadata)
+    # THEN
+    assert result == ['value 1']

@@ -21,3 +21,6 @@ class CustomFieldType(Enum):
     SD_REQUEST_LANGUAGE = (
         'com.atlassian.servicedesk.servicedesk-lingo-integration-plugin:sd-request-language'
     )
+    EPIC_LINK = 'com.pyxis.greenhopper.jira:gh-epic-link'
+    SPRINT = 'com.pyxis.greenhopper.jira:gh-sprint'
+    TEAM = 'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team'

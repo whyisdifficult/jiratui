@@ -312,11 +312,15 @@ class UserPickerWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         return original_value != current_value
 
 
-# TODO this is not being used
 class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified project selection widget that works in both CREATE and UPDATE modes."""
 
     projects: Reactive[dict | None] = reactive(None, init=False, always_update=True)
+    """A dictionary with 2 keys:
+
+    projects: list
+    selection: str | None
+    """
 
     def __init__(
         self,
@@ -381,11 +385,11 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             self.add_class('create-work-item-project-selector')
 
     def watch_projects(self, projects: dict | None = None) -> None:
-        """
-        Watch for changes to the projects reactive property (CREATE mode).
+        """Watches for changes to the projects reactive property (CREATE mode).
 
         Expects a dict with 'projects' (list of Project objects) and optional 'selection'.
         """
+
         if self.mode != FieldMode.CREATE:
             return
 
@@ -401,8 +405,8 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
     @property
     def selection(self) -> str | None:
-        """Get the current selection value."""
-        if self.value == Select.BLANK or self.value is None:
+        """Gets the current selection value."""
+        if self.value == Select.NULL or self.value is None:
             return None
         return str(self.value)
 
@@ -504,7 +508,7 @@ class IssueTypeSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
     @property
     def selection(self) -> str | None:
         """Get the current selection value."""
-        if self.value == Select.BLANK or self.value is None:
+        if self.value == Select.NULL or self.value is None:
             return None
         return str(self.value)
 
