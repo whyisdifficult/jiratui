@@ -23,7 +23,7 @@ from jiratui.widgets.create_work_item.fields import (
 )
 
 
-class AddWorkItemScreen(Screen):
+class AddWorkItemScreen(Screen[dict[str, Any]]):
     """A modal screen for adding work items.
 
     The screen is pushed from the main screen of the application. It is responsible for:
@@ -31,6 +31,23 @@ class AddWorkItemScreen(Screen):
     - Displaying a form to allow the user to fill in the basic details to create the work item.
     - Building the required Widgets for the form based on the metadata associated to the project and type of work item
     being created.
+
+    The screen uses the API to:
+    - Retrieve the list of projects
+    - Retrieve the list of work items types associated to the selected project
+    - Retrieve the necessary metadata for creating the work item in within the project.
+    - Verify that the reporter provided to the screen does actually exist.
+
+    The screen can be initialized with:
+    - A project key
+    - The account ID of the reporter
+    - An optional key that identifies the parent item of the work item being created. This is useful when the screen
+    is open from the Widget that shows the list of subtasks associated to an item.
+
+    ```{important}
+    This screen does not actually create the work item. Instead, upon dismissing the screen the caller will receive the
+    necessary data to create the work item via the Jira API.
+    ```
     """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
@@ -217,9 +234,8 @@ class AddWorkItemScreen(Screen):
     async def fetch_available_projects(self) -> None:
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.search_projects()
-        if not response.success:
-            projects: list[Project] = []
-        else:
+        projects: list[Project] = []
+        if response.success:
             projects = response.result or []
         projects.sort(key=lambda x: x.name)
         self.project_selector.projects = {'projects': projects, 'selection': self._project_key}
@@ -229,9 +245,8 @@ class AddWorkItemScreen(Screen):
         key = project_key or self.project_selector.selection
         if key:
             response: APIControllerResponse = await application.api.get_issue_types_for_project(key)
+            types: list[IssueType] = []
             if not response.success:
-                types: list[IssueType] = []
-            else:
                 types = response.result or []
             types.sort(key=lambda x: x.name)
             options = [(t.name, t.id) for t in types]
@@ -245,7 +260,7 @@ class AddWorkItemScreen(Screen):
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
     def handle_issue_type_selection(self) -> None:
-        # fetch create metadata for issues in the selected project and of the selected type
+        # fetch metadata for creating issues in the selected project and of the selected type
         if self.project_selector.selection and self.issue_type_selector.selection:
             self.run_worker(
                 self.fetch_issue_create_metadata(
@@ -256,21 +271,21 @@ class AddWorkItemScreen(Screen):
 
     @on(Select.Changed, '#create-work-item-reporter-selector')
     def handle_reporter_selection(self) -> None:
-        """Handle reporter field changes to update save button state."""
+        """Handles reporter field changes to update save button state."""
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Input.Blurred, 'CreateWorkItemIssueSummaryField')
     def handle_summary_value_change(self):
-        """Handle summary field changes to update save button state."""
+        """Handles summary field changes to update save button state."""
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(TextArea.Changed, 'DescriptionWidget')
     def handle_description_value_change(self):
-        """Handle description field changes to update save button state."""
+        """Handles description field changes to update save button state."""
         self.save_button.disabled = not self._validate_required_fields()
 
     async def fetch_issue_create_metadata(self, project_key: str, issue_type_id: str) -> None:
-        """Fetch the metadata for creating work items of a given type in the given project.
+        """Fetches the metadata for creating work items of a given type in the given project.
 
         Args:
             project_key: the key of the project for which we want to create a work item.
