@@ -770,10 +770,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
     # THEN
     for widget in widgets:
         assert widget.jira_field_key is not None
-        if widget.id == 'attachment':
-            assert widget.jira_field_key == 'attachment'
-            assert isinstance(widget, TextInputWidget)
-        elif widget.id == 'customfield_10000':
+        if widget.id == 'customfield_10000':
             assert widget.jira_field_key == 'customfield_10000'
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10001':
@@ -806,9 +803,6 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         elif widget.id == 'duedate':
             assert widget.jira_field_key == 'duedate'
             assert isinstance(widget, DateInputWidget)
-        elif widget.id == 'issuelinks':
-            assert widget.jira_field_key == 'issuelinks'
-            assert isinstance(widget, TextInputWidget)
         elif widget.id == 'labels':
             assert widget.jira_field_key == 'labels'
             assert isinstance(widget, LabelsWidget)
@@ -821,7 +815,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         elif widget.id == 'user-picker':
             assert widget.jira_field_key == 'user-picker'
             assert isinstance(widget, UserPickerWidget)
-    assert len(widgets) == 17
+    assert len(widgets) == 14
 
 
 def test_jira_field_key_for_non_required_additional_fields_with_ignore_list(app):
