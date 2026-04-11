@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any
 
 from textual.widget import Widget
@@ -27,6 +26,10 @@ def create_widgets_for_work_item_creation(
 ) -> list[Widget]:
     """Creates a list of Textual widgets for the "form" that allows users to create work items.
 
+    Fields that are statically included in the form, such as `project`, `issuetype`, `reporter`, etc. are ignored by
+    this function. As a result this function will not return Textual's Widget instances for them. These fields are
+    defined in [CREATE_FORM_DEFAULT_FIELDS](#src.jiratui.widgets.create_work_item.factory.CREATE_FORM_DEFAULT_FIELDS).
+
     Args:
         data: a list of dictionaries with the create-metadata information for all the fields of a given type of work
         item supported in a project.
@@ -44,19 +47,22 @@ def create_widgets_for_work_item_creation(
     for item in data:
         field_id: str = item.get('fieldId')
 
-        if field_id in CREATE_FORM_DEFAULT_FIELDS:
+        if field_id in CREATE_FORM_DEFAULT_FIELDS_IDS:
             # ignore them because they will be included in the form anyway
+            continue
+
+        if field_id in FIELDS_IDS_NOT_SUPPORTED:
             continue
 
         if not (required := item.get('required', False)):
             if field_id in ignore_list:
                 continue
-            if not enable_additional and field_id not in PROCESS_OPTIONAL_FIELDS:
+            if not enable_additional and field_id not in CREATE_FORM_OPTIONAL_FIELDS_IDS:
                 continue
 
         widget: Widget | None
 
-        if field_id == CreateWorkItemFieldId.DUE_DATE.value:
+        if field_id == 'duedate':
             widget = DateInputWidget(
                 mode=FieldMode.CREATE,
                 field_id=item.get('fieldId') or '',
@@ -68,6 +74,8 @@ def create_widgets_for_work_item_creation(
             schema: dict = item.get('schema', {})
             schema_type = schema.get('type', '')
             custom_type: str | None = schema.get('custom')
+            if custom_type in CUSTOM_FIELD_TYPES_NOT_SUPPORTED:
+                continue
             if custom_type == CustomFieldType.USER_PICKER.value:
                 widget = UserPickerWidget(
                     mode=FieldMode.CREATE,
@@ -221,28 +229,36 @@ def create_widgets_for_work_item_creation(
     return widgets
 
 
-class CreateWorkItemFieldId(Enum):
-    PROJECT = 'project'
-    ISSUE_TYPE = 'issuetype'
-    REPORTER = 'reporter'
-    SUMMARY = 'summary'
-    DESCRIPTION = 'description'
-    PARENT = 'parent'
-    DUE_DATE = 'duedate'
-    PRIORITY = 'priority'
-    ASSIGNEE = 'assignee'
-
-
-CREATE_FORM_DEFAULT_FIELDS = [
-    CreateWorkItemFieldId.PROJECT.value,
-    CreateWorkItemFieldId.ISSUE_TYPE.value,
-    CreateWorkItemFieldId.REPORTER.value,
-    CreateWorkItemFieldId.SUMMARY.value,
-    CreateWorkItemFieldId.DESCRIPTION.value,
-    CreateWorkItemFieldId.PARENT.value,
-    CreateWorkItemFieldId.ASSIGNEE.value,
+# these custom field types are temporarily not supported because we need special treatment for generating their
+# widgets. This requires fetching the list of options, e.g. via autocomplete, and a widget that allows the user to
+# select multiple options. I decided to use this approach to exclude them instead of letting the user exclude them via
+# # their personal configuration. Otherwise, these fields will be rendered using a default text-based widget and this
+# # will cause errors when creating the items; as their values are not simply strings.
+FIELDS_IDS_NOT_SUPPORTED = [
+    'attachment',
+    'issuelinks',
 ]
-PROCESS_OPTIONAL_FIELDS: list[str] = [
-    CreateWorkItemFieldId.DUE_DATE.value,
-    CreateWorkItemFieldId.PRIORITY.value,
+
+# these custom field types are temporarily not supported because we need special treatment for generating their
+# widgets. This requires fetching the list of options, e.g. via autocomplete, and a widget that allows the user to
+# select multiple options. I decided to use this approach to exclude them instead of letting the user exclude them via
+# their personal configuration. Otherwise, these fields will be rendered using a default text-based widget and this
+# will cause errors when creating the items; as their values are not simply strings.
+CUSTOM_FIELD_TYPES_NOT_SUPPORTED = [
+    'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+    'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
+]
+
+CREATE_FORM_DEFAULT_FIELDS_IDS: list[str] = [
+    'project',
+    'issuetype',
+    'reporter',
+    'summary',
+    'description',
+    'parent',
+    'assignee',
+]
+CREATE_FORM_OPTIONAL_FIELDS_IDS: list[str] = [
+    'duedate',
+    'priority',
 ]

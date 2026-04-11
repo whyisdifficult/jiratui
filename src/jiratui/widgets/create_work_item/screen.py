@@ -126,7 +126,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
     @property
     def additional_fields(self) -> VerticalScroll:
-        return self.query_one('#additional_fields', expect_type=VerticalScroll)
+        return self.query_one('#create-additional-fields', expect_type=VerticalScroll)
 
     def _validate_required_fields(self) -> bool:
         """Checks if all required fields for saving the form data have values.
@@ -188,7 +188,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 yield DescriptionWidget(
                     mode=FieldMode.CREATE, field_id='description', title='Description'
                 )
-                yield VerticalScroll(id='additional_fields')
+                yield VerticalScroll(id='create-additional-fields')
             with ItemGrid(classes='add-work-item-grid-buttons'):
                 yield Button(
                     'Save', variant='success', id='add-work-item-button-save', disabled=True

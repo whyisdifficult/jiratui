@@ -843,6 +843,10 @@ AddWorkItemScreen > Vertical {
     }
 }
 
+#create-additional-fields {
+    scrollbar-size-vertical: 1;
+}
+
 /* ---------------------------------------- Create Work Item Screen - END ---------------------------------------- */
 
 /* Confirmation Screen */
