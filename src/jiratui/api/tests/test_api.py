@@ -3294,3 +3294,247 @@ async def test_get_attachment_content(jira_api: JiraAPI):
     await jira_api.get_attachment_content('1')
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/attachment/content/1'
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_user_picker(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('user/picker'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'header': 'Showing 1 of 25 matching groups',
+                'total': 25,
+                'users': [
+                    {
+                        'accountId': '5b10a2844c20165700ede21g',
+                        'accountType': 'atlassian',
+                        'avatarUrl': 'https://example.com/avatar.jpg',
+                        'displayName': 'Bart Simpson',
+                        'html': '<strong>Bart</strong>Simpson - <strong>bart</strong>@example.com (<strong>bart</strong>)',
+                        'key': 'bart',
+                        'name': 'bart',
+                    }
+                ],
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.user_picker('bart', limit=10)
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/user/picker'
+    assert route.calls.last.request.url.params.get('maxResults') == '10'
+    assert route.calls.last.request.url.params.get('query') == 'bart'
+    assert result == {
+        'header': 'Showing 1 of 25 matching groups',
+        'total': 25,
+        'users': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'avatarUrl': 'https://example.com/avatar.jpg',
+                'displayName': 'Bart Simpson',
+                'html': '<strong>Bart</strong>Simpson - <strong>bart</strong>@example.com (<strong>bart</strong>)',
+                'key': 'bart',
+                'name': 'bart',
+            }
+        ],
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_user_picker_with_default_limit(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('user/picker'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'header': 'Showing 1 of 25 matching groups',
+                'total': 25,
+                'users': [
+                    {
+                        'accountId': '5b10a2844c20165700ede21g',
+                        'accountType': 'atlassian',
+                        'avatarUrl': 'https://example.com/avatar.jpg',
+                        'displayName': 'Bart Simpson',
+                        'html': '<strong>Bart</strong>Simpson - <strong>bart</strong>@example.com (<strong>bart</strong>)',
+                        'key': 'bart',
+                        'name': 'bart',
+                    }
+                ],
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.user_picker('bart')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/user/picker'
+    assert route.calls.last.request.url.params.get('maxResults') is None
+    assert route.calls.last.request.url.params.get('query') == 'bart'
+    assert result == {
+        'header': 'Showing 1 of 25 matching groups',
+        'total': 25,
+        'users': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'avatarUrl': 'https://example.com/avatar.jpg',
+                'displayName': 'Bart Simpson',
+                'html': '<strong>Bart</strong>Simpson - <strong>bart</strong>@example.com (<strong>bart</strong>)',
+                'key': 'bart',
+                'name': 'bart',
+            }
+        ],
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_issue_picker(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/picker'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'sections': [
+                    {
+                        'label': 'History Search',
+                        'sub': 'Showing 8 of 8 matching issues',
+                        'id': 'hs',
+                        'issues': [
+                            {
+                                'id': 10429,
+                                'key': 'SSP-29',
+                                'keyHtml': 'SSP-29',
+                                'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                                'summary': 'Another test task',
+                                'summaryText': 'Another test task',
+                            },
+                            {
+                                'id': 10000,
+                                'key': 'SSP-1',
+                                'keyHtml': 'SSP-1',
+                                'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                                'summary': 'Evaluate new test Parser',
+                                'summaryText': 'Evaluate new test Parser',
+                            },
+                        ],
+                    }
+                ]
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.issue_picker('test task', '1', False, 'issue-2')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/picker'
+    assert route.calls.last.request.url.params.get('showSubTasks') == 'false'
+    assert route.calls.last.request.url.params.get('query') == 'test task'
+    assert route.calls.last.request.url.params.get('currentProjectId') == '1'
+    assert route.calls.last.request.url.params.get('currentIssueKey') == 'issue-2'
+    assert result == {
+        'sections': [
+            {
+                'label': 'History Search',
+                'sub': 'Showing 8 of 8 matching issues',
+                'id': 'hs',
+                'issues': [
+                    {
+                        'id': 10429,
+                        'key': 'SSP-29',
+                        'keyHtml': 'SSP-29',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                        'summary': 'Another test task',
+                        'summaryText': 'Another test task',
+                    },
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    },
+                ],
+            }
+        ]
+    }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_issue_picker_without_project_without_current_issue_key(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/picker'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'sections': [
+                    {
+                        'label': 'History Search',
+                        'sub': 'Showing 8 of 8 matching issues',
+                        'id': 'hs',
+                        'issues': [
+                            {
+                                'id': 10429,
+                                'key': 'SSP-29',
+                                'keyHtml': 'SSP-29',
+                                'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                                'summary': 'Another test task',
+                                'summaryText': 'Another test task',
+                            },
+                            {
+                                'id': 10000,
+                                'key': 'SSP-1',
+                                'keyHtml': 'SSP-1',
+                                'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                                'summary': 'Evaluate new test Parser',
+                                'summaryText': 'Evaluate new test Parser',
+                            },
+                        ],
+                    }
+                ]
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.issue_picker('test task', show_sub_tasks=False)
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/picker'
+    assert route.calls.last.request.url.params.get('showSubTasks') == 'false'
+    assert route.calls.last.request.url.params.get('query') == 'test task'
+    assert route.calls.last.request.url.params.get('currentProjectId') is None
+    assert route.calls.last.request.url.params.get('currentIssueKey') is None
+    assert result == {
+        'sections': [
+            {
+                'label': 'History Search',
+                'sub': 'Showing 8 of 8 matching issues',
+                'id': 'hs',
+                'issues': [
+                    {
+                        'id': 10429,
+                        'key': 'SSP-29',
+                        'keyHtml': 'SSP-29',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                        'summary': 'Another test task',
+                        'summaryText': 'Another test task',
+                    },
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    },
+                ],
+            }
+        ]
+    }

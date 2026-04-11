@@ -48,6 +48,7 @@ from jiratui.models import (
     JiraField,
     JiraGlobalSettings,
     JiraIssue,
+    JiraIssuePickerSuggestion,
     JiraIssueSearchResponse,
     JiraMyselfInfo,
     JiraServerInfo,
@@ -526,6 +527,48 @@ class APIController:
             )
         return APIControllerResponse(result=users)
 
+    async def find_users_for_picker(self, query: str) -> APIControllerResponse:
+        """Searches  users whose attributes match the query term.
+
+        This is useful for building widgets that allow the user to pick users.
+
+        Args:
+            query: string that is matched against user attributes, such as `displayName`, and `emailAddress`, to find
+            relevant users.
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `JiraUser` instances. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message.
+        """
+
+        try:
+            response: dict = await self.api.user_picker(
+                query=query, limit=RECORDS_PER_PAGE_SEARCH_USERS
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to find users using the user picker feature',
+                extra={
+                    'query': query,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        users: list[JiraUser] = []
+        for user in response.get('users', []):
+            users.append(
+                JiraUser(
+                    account_id=user.get('accountId')
+                    if self.config.cloud is True
+                    else user.get('name'),
+                    active=True,
+                    display_name=user.get('displayName'),
+                )
+            )
+        return APIControllerResponse(result=users)
+
     async def search_users_assignable_to_issue(
         self,
         issue_key: str | None = None,
@@ -776,6 +819,64 @@ class APIController:
                     error=f'Failed to extract the details of the requested work item {issue_id_or_key}: {str(e)}',
                 )
             return APIControllerResponse(result=JiraIssueSearchResponse(issues=[instance]))
+
+    async def issue_picker(
+        self,
+        query: str,
+        project_id: str | None = None,
+        show_sub_tasks: bool = True,
+        current_issue_key: str | None = None,
+    ) -> APIControllerResponse:
+        """Retrieves lists of issues matching a query string. Use this resource to provide auto-completion suggestions
+        when the user is looking for an issue using a word or string.
+
+        Args:
+            query: a string to match against text fields in the issue such as title, description, or comments.
+            project_id: the ID of a project that suggested issues must belong to.
+            show_sub_tasks: indicate whether to include subtasks in the suggestions list. The default is `True`.
+            current_issue_key: the key of an issue to exclude from search results. For example, the issue the user is
+            viewing when they perform this query.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of `JiraIssuePickerSuggestion` if the request is
+            successful; `APIControllerResponse` with `success = False` and an error message otherwise.
+        """
+
+        try:
+            response: dict = await self.api.issue_picker(
+                query=query,
+                project_id=project_id,
+                show_sub_tasks=show_sub_tasks,
+                current_issue_key=current_issue_key,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve find issues with the given query',
+                extra={
+                    'query': query,
+                    'project_id': project_id,
+                    'current_issue_key': current_issue_key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        else:
+            processed: set[str] = set()
+            issues: list[JiraIssuePickerSuggestion] = []
+            for section in response.get('sections', []):
+                for issue in section.get('issues', []):
+                    if issue.get('id') in processed:
+                        continue
+                    processed.add(issue.get('id'))
+                    issues.append(
+                        JiraIssuePickerSuggestion(
+                            id=str(issue.get('id')),
+                            summary=issue.get('summary'),
+                            key=issue.get('key'),
+                        )
+                    )
+            return APIControllerResponse(result=issues)
 
     def _build_criteria_for_searching_work_items(
         self,

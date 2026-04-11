@@ -23,6 +23,7 @@ from jiratui.models import (
     JiraField,
     JiraGlobalSettings,
     JiraIssue,
+    JiraIssuePickerSuggestion,
     JiraIssueSearchResponse,
     JiraMyselfInfo,
     JiraServerInfo,
@@ -3869,3 +3870,236 @@ async def test_get_user_with_exception(
         error='test error',
     )
     get_user_mock.assert_called_once_with('123')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_picker')
+async def test_find_users_for_picker(user_picker_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    user_picker_mock.return_value = {
+        'header': 'Showing 1 of 25 matching groups',
+        'total': 25,
+        'users': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'avatarUrl': 'https://example.com/avatar.jpg',
+                'displayName': 'Bart Simpson',
+                'html': '<strong>Bart</strong>Simpson - <strong>bart</strong>@example.com (<strong>bart</strong>)',
+                'key': 'bart',
+                'name': 'bart',
+            }
+        ],
+    }
+    # WHEN
+    response = await jira_api_controller.find_users_for_picker('bart')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraUser(
+                account_id='5b10a2844c20165700ede21g',
+                active=True,
+                display_name='Bart Simpson',
+            )
+        ],
+    )
+    user_picker_mock.assert_called_once_with(query='bart', limit=1000)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_picker')
+async def test_find_users_for_picker_no_results(
+    user_picker_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    user_picker_mock.return_value = {}
+    # WHEN
+    response = await jira_api_controller.find_users_for_picker('bart')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[],
+    )
+    user_picker_mock.assert_called_once_with(query='bart', limit=1000)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'user_picker')
+async def test_find_users_for_picker_with_error(
+    user_picker_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    user_picker_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.find_users_for_picker('bart')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False,
+        result=None,
+        error='test error',
+    )
+    user_picker_mock.assert_called_once_with(query='bart', limit=1000)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_picker')
+async def test_issue_picker(issue_picker_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    issue_picker_mock.return_value = {
+        'sections': [
+            {
+                'label': 'History Search',
+                'sub': 'Showing 8 of 8 matching issues',
+                'id': 'hs',
+                'issues': [
+                    {
+                        'id': 10429,
+                        'key': 'SSP-29',
+                        'keyHtml': 'SSP-29',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                        'summary': 'Another test task',
+                        'summaryText': 'Another test task',
+                    },
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    },
+                ],
+            },
+            {
+                'label': 'Another section',
+                'sub': 'Showing 1 of 1 matching issues',
+                'id': 'other-section',
+                'issues': [
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    }
+                ],
+            },
+        ]
+    }
+    # WHEN
+    response = await jira_api_controller.issue_picker('test', '1', False, 'issue-2')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraIssuePickerSuggestion(
+                id='10429',
+                key='SSP-29',
+                summary='Another test task',
+            ),
+            JiraIssuePickerSuggestion(
+                id='10000',
+                key='SSP-1',
+                summary='Evaluate new test Parser',
+            ),
+        ],
+    )
+    issue_picker_mock.assert_called_once_with(
+        query='test',
+        project_id='1',
+        show_sub_tasks=False,
+        current_issue_key='issue-2',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_picker')
+async def test_issue_picker_with_query_only(
+    issue_picker_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    issue_picker_mock.return_value = {
+        'sections': [
+            {
+                'label': 'History Search',
+                'sub': 'Showing 8 of 8 matching issues',
+                'id': 'hs',
+                'issues': [
+                    {
+                        'id': 10429,
+                        'key': 'SSP-29',
+                        'keyHtml': 'SSP-29',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium',
+                        'summary': 'Another test task',
+                        'summaryText': 'Another test task',
+                    },
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    },
+                ],
+            },
+            {
+                'label': 'Current Search',
+                'sub': 'Showing 1 of 1 matching issues',
+                'id': 'cs',
+                'issues': [
+                    {
+                        'id': 10000,
+                        'key': 'SSP-1',
+                        'keyHtml': 'SSP-1',
+                        'img': '/rest/api/2/universal_avatar/view/type/issuetype/avatar/10314?size=medium',
+                        'summary': 'Evaluate new test Parser',
+                        'summaryText': 'Evaluate new test Parser',
+                    }
+                ],
+            },
+        ]
+    }
+    # WHEN
+    response = await jira_api_controller.issue_picker('test')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraIssuePickerSuggestion(
+                id='10429',
+                key='SSP-29',
+                summary='Another test task',
+            ),
+            JiraIssuePickerSuggestion(
+                id='10000',
+                key='SSP-1',
+                summary='Evaluate new test Parser',
+            ),
+        ],
+    )
+    issue_picker_mock.assert_called_once_with(
+        query='test',
+        project_id=None,
+        show_sub_tasks=True,
+        current_issue_key=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'issue_picker')
+async def test_issue_picker_with_error(issue_picker_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    issue_picker_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.issue_picker('test')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    issue_picker_mock.assert_called_once_with(
+        query='test',
+        project_id=None,
+        show_sub_tasks=True,
+        current_issue_key=None,
+    )

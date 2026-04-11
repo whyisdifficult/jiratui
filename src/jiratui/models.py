@@ -276,6 +276,13 @@ class JiraBaseIssue(BaseModel):
 
 
 @dataclass
+class JiraIssuePickerSuggestion(JiraBaseIssue):
+    """An issue returned by the API's issue picker feature."""
+
+    summary: str
+
+
+@dataclass
 class JiraIssueComponent(BaseModel):
     """A component that can be associated to a work item."""
 
