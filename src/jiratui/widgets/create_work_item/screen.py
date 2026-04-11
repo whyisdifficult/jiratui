@@ -246,7 +246,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if key:
             response: APIControllerResponse = await application.api.get_issue_types_for_project(key)
             types: list[IssueType] = []
-            if not response.success:
+            if response.success:
                 types = response.result or []
             types.sort(key=lambda x: x.name)
             options = [(t.name, t.id) for t in types]
