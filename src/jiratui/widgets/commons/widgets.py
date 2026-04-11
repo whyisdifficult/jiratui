@@ -1495,12 +1495,12 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
         return [{'id': item_id} for item_id in selected]
 
     def get_value_for_create(self) -> list[dict] | None:
-        """
-        Returns the value formatted for Jira API creation (CREATE mode).
+        """Returns the value formatted for Jira API creation (CREATE mode).
 
         Returns:
             A list of dicts with IDs of selected options, or None if no selection
         """
+
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')
 
@@ -1511,12 +1511,12 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
 
     @property
     def value_has_changed(self) -> bool:
-        """
-        Determines if the current selection differs from the original value (UPDATE mode).
+        """Determines if the current selection differs from the original value (UPDATE mode).
 
         Returns:
             True if selection has changed, False otherwise
         """
+
         if self.mode != FieldMode.UPDATE:
             raise ValueError('value_has_changed only valid in UPDATE mode')
 

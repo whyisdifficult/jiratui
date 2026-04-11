@@ -232,6 +232,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             self.reporter_selector.set_value(self.reporter_account_id, user_details.display_name)
 
     async def fetch_available_projects(self) -> None:
+        """Fetches the available projects and updates the project dropdown widget."""
+
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.search_projects()
         projects: list[Project] = []
@@ -241,6 +243,16 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         self.project_selector.projects = {'projects': projects, 'selection': self._project_key}
 
     async def fetch_available_issue_types(self, project_key: str | None = None) -> None:
+        """Fetches the applicable types of work items for the selected project and updates the issue type dropdown
+        widget.
+
+        Args:
+            project_key: the key of the project selected by the user.
+
+        Returns:
+            None
+        """
+
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         key = project_key or self.project_selector.selection
         if key:
@@ -254,13 +266,27 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
     @on(Select.Changed, 'CreateWorkItemProjectSelectionInput')
     def handle_project_selection(self) -> None:
-        # fetch issue types for the project
+        """Fetches the applicable types of work items for creating issues in the selected project.
+
+        This also updates the status of the "Save" button.
+
+        Returns:
+            None.
+        """
+
         self.run_worker(self.fetch_available_issue_types(self.project_selector.selection))
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
     def handle_issue_type_selection(self) -> None:
-        # fetch metadata for creating issues in the selected project and of the selected type
+        """Fetches metadata for creating issues in the selected project and of the selected type.
+
+        This also updates the status of the "Save" button.
+
+        Returns:
+            None.
+        """
+
         if self.project_selector.selection and self.issue_type_selector.selection:
             self.run_worker(
                 self.fetch_issue_create_metadata(
@@ -271,21 +297,28 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
     @on(Select.Changed, '#create-work-item-reporter-selector')
     def handle_reporter_selection(self) -> None:
-        """Handles reporter field changes to update save button state."""
+        """Updates the status of the "Save" button after the user selects a Reporter."""
+
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Input.Blurred, 'CreateWorkItemIssueSummaryField')
-    def handle_summary_value_change(self):
-        """Handles summary field changes to update save button state."""
+    def handle_summary_value_change(self) -> None:
+        """Updates the status of the "Save" button after the user updates the summary field."""
+
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(TextArea.Changed, 'DescriptionWidget')
-    def handle_description_value_change(self):
-        """Handles description field changes to update save button state."""
+    def handle_description_value_change(self) -> None:
+        """Updates the status of the "Save" button after the user updates the description field."""
+
         self.save_button.disabled = not self._validate_required_fields()
 
     async def fetch_issue_create_metadata(self, project_key: str, issue_type_id: str) -> None:
         """Fetches the metadata for creating work items of a given type in the given project.
+
+        This function does a few things:
+        - Retrieves the metadata for creating work items of a given type in the given project.
+        - Builds and mounts the necessary widgets that compose the create-work-item form.
 
         Args:
             project_key: the key of the project for which we want to create a work item.
@@ -341,8 +374,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
             # create and mount AutoComplete widgets for labels inputs
             for input_widget in self.additional_fields.query(Input):
-                if isinstance(input_widget, LabelsWidget):  # instead of input_widget.id == 'labels'
-                    # get field metadata to check if required
+                if isinstance(input_widget, LabelsWidget):
+                    # set up the autocomplete widget for the field that allows users to select labels
                     field_meta = self._field_metadata.get('labels', {})
                     required = field_meta.get('required', False)
                     title = field_meta.get('name', 'Labels')
@@ -419,6 +452,16 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
     @on(Button.Pressed, '#add-work-item-button-save')
     def handle_save(self) -> None:
+        """Builds the necessary payload data for creating a new work item.
+
+        This **does not** actually create the work item. Instead, it passes the payload data to the main screen upon
+        dismissal. The main screen is then responsible for requesting the API to create a new work item with the given
+        payload.
+
+        Returns:
+            None.
+        """
+
         if not self._validate_required_fields():
             self.notify('Fields marked with (*) must be provided.', title='Create Work Item')
         else:
@@ -443,7 +486,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
                 value: Any = None
                 if isinstance(widget, MultiSelectWidget):
-                    if value := widget.get_value_for_update():
+                    if value := widget.get_value_for_create():
                         data[field_id] = value
                     continue
                 elif isinstance(widget, Select):
