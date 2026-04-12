@@ -493,9 +493,12 @@ flowchart TD
 
 ### Creating Work Items
 
-To create a work item you can press `ctrl+n`. This will open up a modal screen with a form to provide the necessary
-fields to create the work item. Fields marked with `(*)` are required. If the item is created successfully a message
-will pop up in the app indicating the work item key.
+Press `Ctrl+N` to open the work item creation modal. A form will appear with required fields (marked with `*`) and
+optional fields. Upon successful creation, a confirmation message displays your new work item key.
+
+```{tip}
+If you want to see the newly-created work item simply refresh the list of issues by clicking `ctrl+r`.
+```
 
 ```{figure} /_static/assets/images/create-work-item-screen.png
 :align: center
@@ -504,56 +507,66 @@ The modal screen that allows users to create work items. This shows how the scre
 project and a type of work item.
 ```
 
-Upon opening up the modal screen, JiraTUI will display the basic fields that need to be filled in for creating a work
-item. These fields include:
+#### Basic Workflow
 
-- a dropdown to select a Project
-- a dropdown to select the type of work item we want to create
-- a search field for selecting the reporter
-- a field for providing the summary of the item
+The modal displays these four required fields:
 
-In addition to these 4 required fields the form will initially include:
+- **Project** (dropdown) – Select which project the work item belongs to
+- **Issue Type** (dropdown) – Choose the type of work item (e.g., Task, Bug, Story)
+- **Reporter** (searchable field) – Enter your name or email; autocomplete filters by display name or email address
+- **Summary** (text field) – Provide a brief description of the work item
 
-- a search field for selecting the assignee
-- an input field for specifying the key of a parent issue
+In addition to these required fields, the form also includes two optional fields:
 
-#### Selecting Project and Type of Item
+- **Assignee** (searchable field) – Specify who will work on the item
+- **Parent Issue** (text field) – Enter the key of a parent issue if this is a sub-task
 
-Upon selecting a project from the dropdown menu the tool will fetch and display the types of work items that can be
-created for the selected project. When you select a work item type the tool will update the list of fields that can be
-filled in to create the work item. Some of these fields may be required, others may be optional.
+#### Selecting Projects and Issue Types
 
-These fields that depend on the type of work item are referred to as "additional fields". JiraTUI allows you to
-control whether you want these fields to be part of the form that creates item via configuration variable called
-`enable_creating_additional_fields`. The default value is `False`. This means that JiraTUI will not display any
-additional field when creating new issues. To enable this feature simply set the variable to `True` in the config file.
+When you select a project from the Project dropdown, JiraTUI fetches and displays the available issue types for that
+project. Once you select an issue type, the form updates to show all fields relevant to that type—some required, some
+optional.
 
-In addition to this variable, the tool defines another configuration variable that lets you control which additional field to skip
-when creating new issues. For example, you may not want to specify the start date when you create a work item. To
-exclude specific additional fields from the form you can specify their field ids via the configuration variable
-`create_additional_fields_ignore_ids`. For example, assuming that the id `customfield_1` identifies the start date
-field and the id `customfield_2` identifies the sprint field you can do the exclude these fields like this:
+These type-specific fields are called _"additional fields"_. By default, JiraTUI hides additional fields and only
+shows **Due Date** and **Priority** as optional fields. To display all additional fields available for your chosen
+issue type, enable them in your configuration.
+
+#### Configuring Additional Fields
+
+See also: [Configuring Optional Fields in Create Work Item Form](/users/configuration/configuration.md#configuring-optional-fields-in-create-work-item-form)
+
+##### Enabling Additional Fields
+
+To include issue-type-specific fields (such as custom fields, **sprint**, **start date**, etc.) in the creation form
+
+1. Open your config file
+2. Set `enable_creating_additional_fields: true`
+3. Save and restart JiraTUI
+
+The form will now display all additional fields available for the selected issue type.
+
+##### Excluding Specific Fields
+
+If you want to enable additional fields but skip certain ones (for example, you may not want to specify a start date
+when creating work items), use the `create_additional_fields_ignore_ids` configuration variable:
 
 ```yaml
 create_additional_fields_ignore_ids: ['customfield_1', 'customfield_2']
 ```
 
+This example excludes two custom fields from the creation form. Replace `customfield_1` and `customfield_2` with the
+actual field IDs you want to skip.
+
 ```{tip}
-To determine the id of the field that you want to exclude from the create form you can ohover of the input field and
-get the id of the field form the tooltip.
+**Finding Field IDs**: To determine a field's ID, hover over the input field in the form. The field ID will appear in
+the tooltip.
 ```
 
-```{note}
-When `enable_creating_additional_fields` is set to `False` (default), only `duedate` and `priority` optional fields
-are shown.
-```
+#### Selecting Users (Reporter & Assignee)
 
-#### Selecting Users
-
-To select a reporter and an assignee simply type in the name or email of the user and select one of the options from
-the dropdown list. This uses an autocomplete feature that searches and filters users based on their display names and
-email addresses.
-
+Both the **Reporter** and **Assignee** fields use autocomplete. Start typing a user's name or email address, and matching
+results will appear in a dropdown menu for you to select. The search filters users based on their display names and
+email addresses, making it easy to find the right person.
 
 ### Updating Work Items
 

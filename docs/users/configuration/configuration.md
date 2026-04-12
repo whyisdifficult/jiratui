@@ -185,6 +185,25 @@ update_additional_fields_ignore_ids:
   - customfield_12345
 ```
 
+## Configuring Optional Fields in Create Work Item Form
+
+By default, JiraTUI does not allow users to view and update these fields. To enable this feature you can set
+the variable `enable_creating_additional_fields: True`.
+
+### Hiding Specific Optional Fields
+
+Use `create_additional_fields_ignore_ids` to hide specific fields from the default set. This is useful when you want to
+hide problematic fields.
+
+```yaml
+create_additional_fields_ignore_ids:
+  - customfield_10001
+  - customfield_10002
+```
+
+This configuration will show the default optional fields (`duedate` and `priority`) except for any fields in the
+ignore list.
+
 ## Customize the Styling of Components
 
 JiraTUI allows you to customize the styling of some components in the UI. Among these you can set the color the UI uses
