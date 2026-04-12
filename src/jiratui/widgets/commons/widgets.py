@@ -657,6 +657,7 @@ class URLWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         jira_field_key: str,
         title: str | None = None,
         required: bool = False,
+        placeholder: str = 'https://example.com',
         original_value: str | None = None,
         field_supports_update: bool = True,
         **kwargs: Any,
@@ -667,26 +668,38 @@ class URLWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         self.field_id = field_id
 
         # initialize Input widget
-        placeholder = 'https://example.com'
         super().__init__(
             placeholder=placeholder,
             id=field_id,
             **kwargs,
         )
 
-        # Set border title with required indicator
-        self.border_title = f'{title} [red]*[/red]' if required else title
+        # setup base field properties
+        self.setup_base_field(
+            mode=mode,
+            field_id=field_id,
+            jira_field_key=jira_field_key,
+            title=title,
+            required=required,
+            compact=True,
+        )
 
         # mode-specific setup
-        self._jira_field_key = jira_field_key
-        if mode == FieldMode.CREATE:
-            self.add_class('create-field')
-        elif mode == FieldMode.UPDATE:
+        if mode == FieldMode.UPDATE:
+            self.setup_update_field(
+                jira_field_key=jira_field_key,
+                original_value=original_value or '',
+                field_supports_update=field_supports_update,
+            )
             self.add_class('update-field')
+            # set initial value if provided
             if original_value:
                 self.value = original_value
             if not field_supports_update:
                 self.disabled = True
+        else:
+            # CREATE mode specific CSS
+            self.add_class('create-field')
 
     @property
     def original_value(self) -> str:
@@ -817,6 +830,7 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         jira_field_key: str,
         title: str | None = None,
         required: bool = False,
+        placeholder='Sprint ID, e.g. 123',
         original_value: str | None = None,
         field_supports_update: bool = True,
         **kwargs: Any,
@@ -827,22 +841,35 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         self.field_id = field_id
 
         # initialize Input widget
-        super().__init__(id=field_id, placeholder='Sprint ID, e.g. 123', **kwargs)
+        super().__init__(id=field_id, placeholder=placeholder, **kwargs)
 
-        # set border title with required indicator
-        self.border_title = f'{title} [red]*[/red]' if required else title
+        # setup base field properties
+        self.setup_base_field(
+            mode=mode,
+            field_id=field_id,
+            jira_field_key=jira_field_key,
+            title=title,
+            required=required,
+            compact=True,
+        )
 
-        # mode-specific setup
-        self._jira_field_key = jira_field_key
+        # Mode-specific setup
         self.styles.width = 20
-        if mode == FieldMode.CREATE:
-            self.add_class('create-work-item-generic-input-field')
-        elif mode == FieldMode.UPDATE:
+        if mode == FieldMode.UPDATE:
+            self.setup_update_field(
+                jira_field_key=jira_field_key,
+                original_value=original_value or '',
+                field_supports_update=field_supports_update,
+            )
             self.add_class('issue_details_input_field')
+            # set initial value if provided
             if original_value:
                 self.value = original_value
             if not field_supports_update:
                 self.disabled = True
+        else:
+            # CREATE mode specific CSS
+            self.add_class('create-work-item-generic-input-field')
 
     @property
     def original_value(self) -> str:

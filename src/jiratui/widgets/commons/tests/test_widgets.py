@@ -6,6 +6,8 @@ Tests both CREATE and UPDATE modes for all widget types:
 - TextInputWidget
 - NumericInputWidget
 - SelectionWidget
+- URLInputWidget
+- SprintWidgetWidget
 """
 
 import pytest
@@ -17,7 +19,9 @@ from jiratui.widgets.commons.widgets import (
     DateTimeInputWidget,
     NumericInputWidget,
     SelectionWidget,
+    SprintWidget,
     TextInputWidget,
+    URLWidget,
 )
 
 # ============================================================================
@@ -478,6 +482,338 @@ class TestTextInputWidget:
         """Test value_has_changed from None to value."""
         async with app.run_test():
             widget = TextInputWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+
+            widget.value = 'new text'
+            assert widget.value_has_changed is True
+
+
+class TestURLInputWidget:
+    """Tests for URLWidget in both CREATE and UPDATE modes."""
+
+    def test_create_mode_initialization(self):
+        """Test URLWidget initialization in CREATE mode."""
+        widget = URLWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            title='Custom Text',
+            required=True,
+        )
+
+        assert widget.mode == FieldMode.CREATE
+        assert widget.field_id == 'customfield_10002'
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.border_title == 'Custom Text'
+        assert widget.border_subtitle == '(*)'
+        assert 'required' in widget.classes
+        assert 'create-field' in widget.classes
+
+    def test_create_mode_with_placeholder(self):
+        """Test URLWidget with custom placeholder."""
+        widget = URLWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            placeholder='Enter custom text...',
+        )
+
+        assert widget.placeholder == 'Enter custom text...'
+
+    @pytest.mark.asyncio
+    async def test_update_mode_initialization(self, app):
+        """Test URLWidget initialization in UPDATE mode."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                title='Custom Text',
+                original_value='original text',
+                field_supports_update=True,
+            )
+
+            assert widget.mode == FieldMode.UPDATE
+            assert widget.jira_field_key == 'customfield_10002'
+            assert widget.original_value == 'original text'
+            assert widget.value == 'original text'
+            assert 'update-field' in widget.classes
+
+    @pytest.mark.asyncio
+    async def test_get_value_for_update(self, app):
+        """Test get_value_for_update returns current value."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original',
+            )
+
+            widget.value = 'updated text'
+            result = widget.get_value_for_update()
+            assert result == 'updated text'
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_no_change(self, app):
+        """Test value_has_changed when value hasn't changed."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = 'original text'
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_with_whitespace(self, app):
+        """Test value_has_changed ignores whitespace differences."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = ' original text '
+            # Should not detect change due to whitespace stripping
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_modified(self, app):
+        """Test value_has_changed when value is modified."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = 'updated text'
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_empty(self, app):
+        """Test value_has_changed when both are empty."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='',
+            )
+
+            widget.value = '   '  # Whitespace only
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_value(self, app):
+        """Test value_has_changed from empty to value."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='',
+            )
+
+            widget.value = 'new text'
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_value_to_empty(self, app):
+        """Test value_has_changed from value to empty."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = ''
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_none_to_value(self, app):
+        """Test value_has_changed from None to value."""
+        async with app.run_test():
+            widget = URLWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+
+            widget.value = 'new text'
+            assert widget.value_has_changed is True
+
+
+class TestSprintWidgetWidget:
+    """Tests for SprintWidgetWidget in both CREATE and UPDATE modes."""
+
+    def test_create_mode_initialization(self):
+        """Test SprintWidgetWidget initialization in CREATE mode."""
+        widget = SprintWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            title='Custom Text',
+            required=True,
+        )
+
+        assert widget.mode == FieldMode.CREATE
+        assert widget.field_id == 'customfield_10002'
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.border_title == 'Custom Text'
+        assert widget.border_subtitle == '(*)'
+        assert 'required' in widget.classes
+        assert 'create-work-item-generic-input-field' in widget.classes
+
+    def test_create_mode_with_placeholder(self):
+        """Test SprintWidgetWidget with custom placeholder."""
+        widget = SprintWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            placeholder='Enter custom text...',
+        )
+
+        assert widget.placeholder == 'Enter custom text...'
+
+    @pytest.mark.asyncio
+    async def test_update_mode_initialization(self, app):
+        """Test SprintWidgetWidget initialization in UPDATE mode."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                title='Custom Text',
+                original_value='original text',
+                field_supports_update=True,
+            )
+
+            assert widget.mode == FieldMode.UPDATE
+            assert widget.jira_field_key == 'customfield_10002'
+            assert widget.original_value == 'original text'
+            assert widget.value == 'original text'
+            assert 'issue_details_input_field' in widget.classes
+
+    @pytest.mark.asyncio
+    async def test_get_value_for_update(self, app):
+        """Test get_value_for_update returns current value."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original',
+            )
+
+            widget.value = 'updated text'
+            result = widget.get_value_for_update()
+            assert result == 'updated text'
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_no_change(self, app):
+        """Test value_has_changed when value hasn't changed."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = 'original text'
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_with_whitespace(self, app):
+        """Test value_has_changed ignores whitespace differences."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = ' original text '
+            # Should not detect change due to whitespace stripping
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_modified(self, app):
+        """Test value_has_changed when value is modified."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = 'updated text'
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_empty(self, app):
+        """Test value_has_changed when both are empty."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='',
+            )
+
+            widget.value = '   '  # Whitespace only
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_value(self, app):
+        """Test value_has_changed from empty to value."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='',
+            )
+
+            widget.value = 'new text'
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_value_to_empty(self, app):
+        """Test value_has_changed from value to empty."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='original text',
+            )
+
+            widget.value = ''
+            assert widget.value_has_changed is True
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_none_to_value(self, app):
+        """Test value_has_changed from None to value."""
+        async with app.run_test():
+            widget = SprintWidget(
                 mode=FieldMode.UPDATE,
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
