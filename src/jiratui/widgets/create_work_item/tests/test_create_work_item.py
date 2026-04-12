@@ -5,11 +5,14 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueType, Project
 from jiratui.widgets.commons import UserPickerWidget
+from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
+    DescriptionWidget,
     LabelsWidget,
     MultiSelectWidget,
+    MultiUserPickerWidget,
     NumericInputWidget,
     SelectionWidget,
     SprintWidget,
@@ -17,6 +20,11 @@ from jiratui.widgets.commons.widgets import (
     URLWidget,
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
+from jiratui.widgets.create_work_item.fields import (
+    CreateWorkItemIssueSummaryField,
+    CreateWorkItemIssueTypeSelectionInput,
+    CreateWorkItemProjectSelectionInput,
+)
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 
 
@@ -764,6 +772,21 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
             'operations': ['set'],
             'fieldId': 'user-picker',
         },
+        {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'user',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
+                'customId': 10003,
+            },
+            'name': 'Approvers',
+            'key': 'customfield_10003',
+            'autoCompleteUrl': 'https://example.net/rest/api/1.0/users/picker?fieldName=customfield_10003&showAvatar=true&query=',
+            'hasDefaultValue': False,
+            'operations': ['add', 'set', 'remove'],
+            'fieldId': 'customfield_10003',
+        },
     ]
     # WHEN
     widgets = create_widgets_for_work_item_creation(fields)
@@ -773,6 +796,9 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         if widget.id == 'customfield_10000':
             assert widget.jira_field_key == 'customfield_10000'
             assert isinstance(widget, TextInputWidget)
+        if widget.id == 'customfield_10003':
+            assert widget.jira_field_key == 'customfield_10003'
+            assert isinstance(widget, MultiUserPickerWidget)
         elif widget.id == 'customfield_10001':
             assert widget.jira_field_key == 'customfield_10001'
             assert isinstance(widget, TextInputWidget)
@@ -815,7 +841,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         elif widget.id == 'user-picker':
             assert widget.jira_field_key == 'user-picker'
             assert isinstance(widget, UserPickerWidget)
-    assert len(widgets) == 14
+    assert len(widgets) == 15
 
 
 def test_jira_field_key_for_non_required_additional_fields_with_ignore_list(app):
@@ -950,3 +976,102 @@ def test_jira_field_key_field_custom_field_with_allowed_values_non_array_type(
     widgets = create_widgets_for_work_item_creation(fields)
     # THEN
     assert isinstance(widgets[0], SelectionWidget)
+
+
+@pytest.mark.asyncio
+async def test_validate_required_fields_is_false(app, create_metadata_without_editable_reporter):
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen._reporter_is_editable = False
+        screen.description_field.text = ''
+
+        # WHEN
+        result = screen._validate_required_fields()
+        assert result is False
+
+
+@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@pytest.mark.asyncio
+async def test_validate_required_fields(app, create_metadata_without_editable_reporter):
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen._reporter_is_editable = False
+
+        # WHEN
+        result = screen._validate_required_fields()
+        assert result is True
+
+
+@patch.object(JiraUserInput, 'account_id', PropertyMock(return_value='1'))
+@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@pytest.mark.asyncio
+async def test_validate_required_fields_reporter_is_editable_and_selected(
+    app, create_metadata_without_editable_reporter
+):
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen._reporter_is_editable = True
+
+        # WHEN
+        result = screen._validate_required_fields()
+        assert result is True
+
+
+@patch.object(JiraUserInput, 'account_id', PropertyMock(return_value=None))
+@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@pytest.mark.asyncio
+async def test_validate_required_fields_reporter_is_editable_and_not_selected(
+    app, create_metadata_without_editable_reporter
+):
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen._reporter_is_editable = True
+
+        # WHEN
+        result = screen._validate_required_fields()
+        assert result is False
+
+
+@patch.object(DescriptionWidget, 'required', PropertyMock(return_value=True))
+@patch.object(JiraUserInput, 'account_id', PropertyMock(return_value=None))
+@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@pytest.mark.asyncio
+async def test_validate_required_fields_description_is_required_and_not_set(
+    app, create_metadata_without_editable_reporter
+):
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen._reporter_is_editable = True
+        screen.description_field.text = ''
+
+        # WHEN
+        result = screen._validate_required_fields()
+        assert result is False
