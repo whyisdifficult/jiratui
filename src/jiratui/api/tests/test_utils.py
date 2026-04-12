@@ -100,3 +100,32 @@ def test_parse_required_fields_from_meta():
     result = parse_required_fields_from_meta(metadata)
     # THEN
     assert result == ['value 1']
+
+
+def test_parse_required_fields_from_meta_with_no_fields():
+    # GIVEN
+    metadata = {'fields': []}
+    # WHEN
+    result = parse_required_fields_from_meta(metadata)
+    # THEN
+    assert result == []
+
+
+def test_parse_required_fields_from_meta_with_all_fields_not_required():
+    # GIVEN
+    metadata = {
+        'fields': [
+            {
+                'required': False,
+                'key': 'value 1',
+            },
+            {
+                'required': False,
+                'key': 'value 2',
+            },
+        ]
+    }
+    # WHEN
+    result = parse_required_fields_from_meta(metadata)
+    # THEN
+    assert result == []

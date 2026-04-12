@@ -1052,14 +1052,21 @@ JQLEditorScreen > Vertical {
 
 /* Work Item Information (description, summary and custom fields) */
 
+#work-item-info-loading-container {
+    align: center middle;
+    height: 100%;
+    width: 100%;
+    display: none;
+}
+
 #work-item-info-description-scroll-container {
-    border: solid $secondary-lighten-3;
+    border: round $secondary-lighten-3;
     padding: 0 0 0 0;
     scrollbar-size-vertical: 1;
 }
 
 #work-item-info-extra-scroll-container {
-    border: solid $secondary;
+    border: round $secondary;
     scrollbar-size-vertical: 1;
 }
 

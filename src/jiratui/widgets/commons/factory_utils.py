@@ -1,24 +1,4 @@
-# from typing import Any
-#
-# from textual.widget import Widget
-# from textual.widgets import Select
-#
-# from jiratui.widgets.commons.base import FieldMode
-# from jiratui.widgets.commons.constants import CustomFieldType
-# from jiratui.widgets.commons.widgets import (
-#     DateInputWidget,
-#     DateTimeInputWidget,
-#     LabelsWidget,
-#     MultiSelectWidget,
-#     NumericInputWidget,
-#     SelectionWidget,
-#     TextInputWidget,
-#     URLWidget,
-# )
-
 # TODO add missing pieces from the original PR
-
-
 class AllowedValuesParser:
     """Parses the `allowedValues` field found in a Jira field's metadata dictionary into Select widget options.
 
