@@ -497,6 +497,64 @@ To create a work item you can press `ctrl+n`. This will open up a modal screen w
 fields to create the work item. Fields marked with `(*)` are required. If the item is created successfully a message
 will pop up in the app indicating the work item key.
 
+```{figure} /_static/assets/images/create-work-item-screen.png
+:align: center
+
+The modal screen that allows users to create work items. This shows how the screen looks after the users selects a
+project and a type of work item.
+```
+
+Upon opening up the modal screen, JiraTUI will display the basic fields that need to be filled in for creating a work
+item. These fields include:
+
+- a dropdown to select a Project
+- a dropdown to select the type of work item we want to create
+- a search field for selecting the reporter
+- a field for providing the summary of the item
+
+In addition to these 4 required fields the form will initially include:
+
+- a search field for selecting the assignee
+- an input field for specifying the key of a parent issue
+
+#### Selecting Project and Type of Item
+
+Upon selecting a project from the dropdown menu the tool will fetch and display the types of work items that can be
+created for the selected project. When you select a work item type the tool will update the list of fields that can be
+filled in to create the work item. Some of these fields may be required, others may be optional.
+
+These fields that depend on the type of work item are referred to as "additional fields". JiraTUI allows you to
+control whether you want these fields to be part of the form that creates item via configuration variable called
+`enable_creating_additional_fields`. The default value is `False`. This means that JiraTUI will not display any
+additional field when creating new issues. To enable this feature simply set the variable to `True` in the config file.
+
+In addition to this variable, the tool defines another configuration variable that lets you control which additional field to skip
+when creating new issues. For example, you may not want to specify the start date when you create a work item. To
+exclude specific additional fields from the form you can specify their field ids via the configuration variable
+`create_additional_fields_ignore_ids`. For example, assuming that the id `customfield_1` identifies the start date
+field and the id `customfield_2` identifies the sprint field you can do the exclude these fields like this:
+
+```yaml
+create_additional_fields_ignore_ids: ['customfield_1', 'customfield_2']
+```
+
+```{tip}
+To determine the id of the field that you want to exclude from the create form you can ohover of the input field and
+get the id of the field form the tooltip.
+```
+
+```{note}
+When `enable_creating_additional_fields` is set to `False` (default), only `duedate` and `priority` optional fields
+are shown.
+```
+
+#### Selecting Users
+
+To select a reporter and an assignee simply type in the name or email of the user and select one of the options from
+the dropdown list. This uses an autocomplete feature that searches and filters users based on their display names and
+email addresses.
+
+
 ### Updating Work Items
 
 The "Details" tab on the right-hand side shows the details of the currently selected work item. The tab displays a form

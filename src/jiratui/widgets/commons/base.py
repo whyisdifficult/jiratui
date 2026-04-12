@@ -686,13 +686,6 @@ class MultiUserPickerAutoComplete(AutoComplete):
             NotImplemented: if the target Input widget does not implement the required `update_users_data` method.
         """
 
-        if not (
-            update_users_data_callable := getattr(self.target, 'update_users_data', None)
-        ) or not callable(update_users_data_callable):
-            raise NotImplementedError(
-                f'Class {self.target.__class__.__name__} MUST implement update_users_data(account_id, name)'
-            )
-
         self._api_controller = api_controller
         self._stored_title = title or 'Users'
         self._required = required
@@ -706,6 +699,13 @@ class MultiUserPickerAutoComplete(AutoComplete):
             target=target,
             candidates=self._get_users,  # type:ignore
         )
+
+        if not (
+            update_users_data_callable := getattr(self.target, 'update_users_data', None)
+        ) or not callable(update_users_data_callable):
+            raise NotImplementedError(
+                f'Class {self.target.__class__.__name__} MUST implement update_users_data(account_id, name)'
+            )
 
     async def _search(self, query: str) -> APIControllerResponse:
         # the default function to search and filter users based on a query term
@@ -834,13 +834,6 @@ class MultiIssuePickerAutoComplete(AutoComplete):
             NotImplemented: if the target Input widget does not implement the required `update_issues_data` method.
         """
 
-        if not (
-            update_issues_data_callable := getattr(self.target, 'update_issues_data', None)
-        ) or not callable(update_issues_data_callable):
-            raise NotImplementedError(
-                f'Class {self.target.__class__.__name__} MUST implement update_issues_data(issue_key)'
-            )
-
         self._api_controller = api_controller
         self._stored_title = title or 'Issues'
         self._required = required
@@ -854,6 +847,13 @@ class MultiIssuePickerAutoComplete(AutoComplete):
             target=target,
             candidates=self._get_issues,  # type:ignore
         )
+
+        if not (
+            update_issues_data_callable := getattr(self.target, 'update_issues_data', None)
+        ) or not callable(update_issues_data_callable):
+            raise NotImplementedError(
+                f'Class {self.target.__class__.__name__} MUST implement update_issues_data(issue_key)'
+            )
 
     async def _search(self, query: str) -> APIControllerResponse:
         # the default function to search and filter issues based on a query term
