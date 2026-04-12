@@ -176,7 +176,7 @@ class UsersAutoComplete(AutoComplete):
         return True
 
     def apply_completion(self, value: str, state: TargetState) -> None:
-        if '|' in value:
-            value = value.split('|', 1)[0]
+        # split name from email
+        value = value.split('|', 1)[0]
         super().apply_completion(value, state)
         self.target.account_id = self.option_list.highlighted_option.id  # type:ignore[attr-defined]

@@ -2128,9 +2128,9 @@ class APIController:
             )
 
         # process dynamic required fields from **kwargs
-        # handle special field formats (components, custom fields)
+        # handle special field formats (components, custom fields, approvers)
         for field_key, field_value in dynamic_fields.items():
-            # Special handling for components - needs array of objects with 'id' key
+            # special handling for components - needs array of objects with 'id' key
             if field_key == 'components':
                 if isinstance(field_value, list):
                     # If it's a list of IDs, convert to proper format
@@ -2140,7 +2140,7 @@ class APIController:
                         # Already in correct format or empty list
                         fields['components'] = field_value
                 else:
-                    # Single component ID
+                    # single component ID
                     fields['components'] = [{'id': field_value}]
             else:
                 # For all other fields (including custom fields), pass as-is

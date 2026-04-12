@@ -13,6 +13,7 @@ from jiratui.widgets.commons.widgets import (
     EpicLinkWidget,
     LabelsWidget,
     MultiSelectWidget,
+    MultiUserPickerWidget,
     NumericInputWidget,
     SelectionWidget,
     SprintWidget,
@@ -84,10 +85,14 @@ def create_widgets_for_work_item_creation(
                     required=required,
                     title=item.get('name'),
                 )
-            # elif custom_type == CustomFieldType.MULTI_USER_PICKER.value:
-            #     # TODO this needs to support autocomplete
-            #     # TODO create and use a new class called MultiJiraUserInput that behaves like LabelsWidget to support commas
-            #     #   and the account_id should support a list of account ids separated by commas
+            elif custom_type == CustomFieldType.MULTI_USER_PICKER.value:
+                widget = MultiUserPickerWidget(
+                    mode=FieldMode.CREATE,
+                    field_id=field_id or '',
+                    jira_field_key=item.get('key') or field_id,
+                    title=item.get('name'),
+                    required=required,
+                )
             elif custom_type == CustomFieldType.EPIC_LINK.value:
                 widget = EpicLinkWidget(
                     mode=FieldMode.CREATE,
@@ -246,7 +251,6 @@ FIELDS_IDS_NOT_SUPPORTED = [
 # will cause errors when creating the items; as their values are not simply strings.
 CUSTOM_FIELD_TYPES_NOT_SUPPORTED = [
     'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
-    'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
 ]
 
 CREATE_FORM_DEFAULT_FIELDS_IDS: list[str] = [

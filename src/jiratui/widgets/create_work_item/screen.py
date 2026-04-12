@@ -11,9 +11,19 @@ from textual.widgets import Button, Input, Rule, Select, Static, TextArea
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueType, Project
 from jiratui.widgets.commons import CustomFieldType
-from jiratui.widgets.commons.base import FieldMode, LabelsAutoComplete, UserPickerWidget
+from jiratui.widgets.commons.base import (
+    FieldMode,
+    LabelsAutoComplete,
+    MultiUserPickerAutoComplete,
+    UserPickerWidget,
+)
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
-from jiratui.widgets.commons.widgets import DescriptionWidget, LabelsWidget, MultiSelectWidget
+from jiratui.widgets.commons.widgets import (
+    DescriptionWidget,
+    LabelsWidget,
+    MultiSelectWidget,
+    MultiUserPickerWidget,
+)
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
     CreateWorkItemIssueSummaryField,
@@ -372,20 +382,27 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     for user_picker in user_picker_widgets:
                         user_picker.users = users_data
 
-            # create and mount AutoComplete widgets for labels inputs
+            # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
             for input_widget in self.additional_fields.query(Input):
                 if isinstance(input_widget, LabelsWidget):
                     # set up the autocomplete widget for the field that allows users to select labels
                     field_meta = self._field_metadata.get('labels', {})
                     required = field_meta.get('required', False)
                     title = field_meta.get('name', 'Labels')
-                    autocomplete = LabelsAutoComplete(
-                        target=input_widget,
-                        api_controller=application.api,
-                        required=required,
-                        title=title,
+                    await self.additional_fields.mount(
+                        LabelsAutoComplete(
+                            target=input_widget,
+                            api_controller=application.api,
+                            required=required,
+                            title=title,
+                        )
                     )
-                    await self.additional_fields.mount(autocomplete)
+                elif isinstance(input_widget, MultiUserPickerWidget):
+                    await self.additional_fields.mount(
+                        MultiUserPickerAutoComplete(
+                            target=input_widget, api_controller=application.api
+                        )
+                    )
 
     @staticmethod
     def _format_field_value(field_id: str, value: Any, field_metadata: dict) -> Any:
@@ -465,6 +482,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if not self._validate_required_fields():
             self.notify('Fields marked with (*) must be provided.', title='Create Work Item')
         else:
+            # process widgets that are created statically
             data: dict[str, Any] = {
                 self.project_selector.jira_field_key: self.project_selector.selection,
                 self.parent_key_field.jira_field_key: self.parent_key_field.value,
@@ -480,6 +498,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             if self._reporter_is_editable:
                 data[self.reporter_selector.jira_field_key] = self.reporter_selector.account_id
 
+            # process widgets that are created dynamically
             for widget in self.additional_fields.children:
                 if not (field_id := widget.id):
                     continue
@@ -487,7 +506,11 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 value: Any = None
                 if isinstance(widget, MultiSelectWidget):
                     if value := widget.get_value_for_create():
-                        data[field_id] = value
+                        data[widget.jira_field_key] = value
+                    continue
+                elif isinstance(widget, MultiUserPickerWidget):
+                    if value := widget.get_value_for_create():
+                        data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, Select):
                     value = widget.selection

@@ -13,6 +13,8 @@ operations.
 - MultiSelectWidget: Multi-select with checkboxes
 - SprintWidget: Text input field for providing the ID of a sprint using a shorter layout.
 - EpicLinkWidget: Text input field for providing the key of an Epic issue using a shorter layout.
+- MultiUserPickerWidget: Comma-separated list of users' display names.
+- MultiIssuePickerWidget Comma-separated list of issues' keys.
 
 All widgets work in both CREATE and UPDATE modes by extending base classes from base.py.
 """
@@ -877,6 +879,403 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
 
         # Compare stripped values
         return original != current
+
+
+class MultiUserPickerWidget(Input):
+    """Unified users' display names input widget that works in both CREATE and UPDATE modes.
+
+    This widget handles comma-separated users' names input and provides proper formatting for Jira API (list of strings).
+
+    Schema detection:
+        custom_type == CustomFieldType.MULTI_USER_PICKER.value
+
+    Usage in CREATE mode:
+    ```python
+    widget = MultiUserPickerWidget(
+        mode=FieldMode.CREATE,
+        field_id='approvers',
+        jira_field_key='approvers',
+        title='Approvers',
+        required=False,
+    )
+    # User enters: "bart, homer, lisa"
+    get_value_for_create() == ['123', '456', '789']
+    ```
+
+    Usage in UPDATE mode:
+    ```python
+    widget = MultiUserPickerWidget(
+        mode=FieldMode.UPDATE,
+        field_id="approvers",
+        jira_field_key="approvers",
+        title="Approvers",
+        original_value=[{"name": "bart", "id": "123"}, {"name": "homer", "id": "456"}],
+        supports_update=True
+    )
+    widget.update_users_data("123", "bart")
+    widget.update_users_data("456", "homer")
+    # Displays: "bart, homer"
+    # User changes to: "bart, lisa"
+    get_value_for_update() returns: ["123", "789"]
+    value_has_changed == True
+    ```
+    """
+
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        title: str | None = None,
+        required: bool = False,
+        original_value: list[dict] | None = None,
+        supports_update: bool = True,
+        **kwargs,
+    ):
+        """Initializes the widget.
+
+        Args:
+            mode: CREATE or UPDATE mode
+            field_id: Jira field ID (e.g., "labels" or "customfield_10001")
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
+            title: Display title for the field
+            required: Whether the field is required
+            original_value: Original users for UPDATE mode (list of dictionaries with the id and name of a user)
+            supports_update: Whether field can be updated (UPDATE mode only)
+            **kwargs: Additional arguments passed to Input
+        """
+
+        # store mode and original value
+        self.mode = mode
+        self._original_value: list[dict] | None = (
+            original_value if mode == FieldMode.UPDATE else None
+        )
+        self._supports_update = supports_update if mode == FieldMode.UPDATE else True
+        self.field_id = field_id
+        # keeps track of the users' account ids and their names
+        # example: {'123': 'Bart'}
+        self._users: dict[str, str] = {}
+
+        # initialize Input widget
+        Input.__init__(
+            self,
+            placeholder='Type in user name or email...',
+            id=field_id,
+            **kwargs,
+        )
+
+        # set border title
+        self.border_title = title or 'Users'
+
+        # mode-specific setup
+        self._jira_field_key = jira_field_key
+        if self.mode == FieldMode.UPDATE:
+            self.add_class('issue_details_input_field')
+            # disable if field doesn't support updates
+            self.disabled = not supports_update
+            # set initial value from original_value (list -> comma-separated string)
+            if self._original_value:
+                self.value = ','.join([user.get('name') for user in self._original_value])
+        else:
+            # CREATE mode specific CSS
+            self.add_class('create-work-item-generic-input-field')
+
+        # Add required indicator
+        if required:
+            self.border_subtitle = '(*)'
+            self.add_class('required')
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self._jira_field_key
+
+    @property
+    def original_value(self) -> list[dict]:
+        """Gets the original labels from Jira."""
+        return self._original_value or []
+
+    def get_value_for_create(self) -> list[dict]:
+        """Returns users account ids formatted for Jira API create requests (CREATE mode).
+
+        The attribute `self._users` may contain account ids of users that are not among the ones displayed by the
+        Input widget. This can happen when the user deletes a user's name form the input. To make sure this widget
+        always return the account ids of the final list of users we need to process the ids in `self._users` based on
+        their names.
+
+        Example:
+        ```python
+        self._users = {'123': 'Bart', '456': 'Homer'}
+        self.value = 'Bart'
+        result = get_value_for_create()
+        [{'id': '123'}]
+        ```
+
+        Returns:
+            A list of dictionaries with the id of a user's account.
+        """
+
+        if self.mode != FieldMode.CREATE:
+            raise ValueError('get_value_for_create() only valid in CREATE mode')
+
+        if not self.value or not self.value.strip():
+            return []
+
+        # split by comma, remove internal spaces, filter empty strings
+        values = {name.strip() for name in self.value.split(',') if name.strip()}
+        return [
+            {'id': user_account_id}
+            for user_account_id, user_display_name in self._users.items()
+            if user_display_name in values
+        ]
+
+    def get_value_for_update(self) -> list[dict]:
+        """Returns users account ids formatted for Jira API update requests (UPDATE mode).
+
+        The attribute `self._users` may contain account ids of users that are not among the ones displayed by the
+        Input widget. This can happen when the user deletes a user's name form the input. To make sure this widget
+        always return the account ids of the final list of users we need to process the ids in `self._users` based on
+        their names.
+
+        Example:
+        ```python
+        self._users = {'123': 'Bart', '456': 'Homer'}
+        self.value = 'Bart'
+        result = get_value_for_update()
+        [{'id': '123'}]
+        ```
+
+        Returns:
+            A list of dictionaries with the id of a user's account.
+        """
+
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('get_value_for_update() only valid in UPDATE mode')
+
+        if not self.value or not self.value.strip():
+            return []
+
+        # split by comma, remove internal spaces, filter empty strings
+        values = {name.strip() for name in self.value.split(',') if name.strip()}
+        return [
+            {'id': user_account_id}
+            for user_account_id, user_display_name in self._users.items()
+            if user_display_name in values
+        ]
+
+    @property
+    def value_has_changed(self) -> bool:
+        """Determines if names have changed from original value (UPDATE mode).
+
+        Uses set comparison to ignore order and whitespace differences.
+        Comparison is case-insensitive (treats "Backend" and "backend" as same), but original casing is preserved when
+        sending to Jira API.
+
+        Returns:
+            True if names have changed, False otherwise.
+        """
+
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('value_has_changed only valid in UPDATE mode')
+
+        original_users: list[dict] = self.original_value if self.original_value else []
+        current_users: list[dict] = self.get_value_for_update()
+
+        # Both empty - no change
+        if not original_users and not current_users:
+            return False
+
+        # One empty, one not - changed
+        if bool(original_users) != bool(current_users):
+            return True
+
+        # Compare as sets (case-insensitive, order-independent)
+        original_set = {user.get('id') for user in original_users}
+        current_set = {user.get('id') for user in current_users}
+        return original_set != current_set
+
+    def update_users_data(self, account_id: str, name: str) -> None:
+        if account_id and name:
+            self._users[account_id] = name
+
+
+class MultiIssuePickerWidget(Input):
+    """Unified issues' keys input widget that works in both CREATE and UPDATE modes.
+
+    This widget handles comma-separated issue key input and provides proper formatting
+    for Jira API (list of strings).
+
+    Schema detection:
+        schema.type == "array" AND schema.items == "issuelinks" AND field_id == "issuelinks"
+
+    Usage in CREATE mode:
+    ```python
+    widget = MultiIssuePickerWidget(
+        mode=FieldMode.CREATE,
+        field_id='issuelinks',
+        jira_field_key='issuelinks',
+        title='Issues Links',
+        required=False,
+    )
+    # User enters: "issue-1, issue-2, issue-2"
+    get_value_for_create() == ['issue-1', 'issue-2', 'issue-3']
+    ```
+
+    Usage in UPDATE mode:
+    ```python
+    widget = MultiIssuePickerWidget(
+        mode=FieldMode.UPDATE,
+        field_id="issuelinks",
+        jira_field_key="issuelinks",
+        title="Issues Links",
+        original_value=["issue-1", "issue-2"],
+        supports_update=True
+    )
+    # Displays: "issue-1, issue-2"
+    # User changes to: "issue-1, issue-3"
+    get_value_for_update() returns: ["issue-1", "issue-3"]
+    value_has_changed == True
+    ```
+    """
+
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        title: str | None = None,
+        required: bool = False,
+        original_value: list[str] | None = None,
+        supports_update: bool = True,
+        **kwargs,
+    ):
+        """Initializes the widget.
+
+        Args:
+            mode: CREATE or UPDATE mode
+            field_id: Jira field ID (e.g., "labels" or "customfield_10001")
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
+            title: Display title for the field
+            required: Whether the field is required
+            original_value: Original labels for UPDATE mode (list of strings)
+            supports_update: Whether field can be updated (UPDATE mode only)
+            **kwargs: Additional arguments passed to Input
+        """
+
+        # store mode and original value
+        self.mode = mode
+        self._original_value = original_value if mode == FieldMode.UPDATE else None
+        self._supports_update = supports_update if mode == FieldMode.UPDATE else True
+        self.field_id = field_id
+        # keeps track of the keys selected by the user
+        self._issues_keys: set[str] = set()
+
+        # initialize Input widget
+        Input.__init__(
+            self,
+            placeholder='Type in issue key/title...',
+            id=field_id,
+            **kwargs,
+        )
+
+        # set border title
+        self.border_title = title or 'Linked Issues'
+
+        # mode-specific setup
+        self._jira_field_key = jira_field_key
+        if self.mode == FieldMode.UPDATE:
+            self.add_class('issue_details_input_field')
+            # Disable if field doesn't support updates
+            self.disabled = not supports_update
+            # Set initial value from original_value (list -> comma-separated string)
+            if original_value:
+                self.value = ','.join(original_value)
+        else:
+            # CREATE mode specific CSS
+            self.add_class('create-work-item-generic-input-field')
+
+        # Add required indicator
+        if required:
+            self.border_subtitle = '(*)'
+            self.add_class('required')
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self._jira_field_key
+
+    @property
+    def original_value(self) -> list[str]:
+        """Gets the original labels from Jira."""
+        return self._original_value or []
+
+    def get_value_for_create(self) -> list[str]:
+        """Returns issue keys formatted for Jira API create requests (CREATE mode).
+
+        Returns:
+            A list of issue keys strings (leading/trailing whitespace stripped, empty keys filtered out)
+        """
+
+        if self.mode != FieldMode.CREATE:
+            raise ValueError('get_value_for_create() only valid in CREATE mode')
+
+        if not self.value or not self.value.strip():
+            return []
+
+        # split by comma, remove internal spaces, filter empty strings
+        values = {label.strip() for label in self.value.split(',') if label.strip()}
+        return [issue_key for issue_key in self._issues_keys if issue_key in values]
+
+    def get_value_for_update(self) -> list[str]:
+        """Returns issue keys formatted for Jira API update requests (UPDATE mode).
+
+        Returns:
+            A list of issue keys strings (leading/trailing whitespace stripped, empty labels filtered out)
+        """
+
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('get_value_for_update() only valid in UPDATE mode')
+
+        if not self.value or not self.value.strip():
+            return []
+
+        # split by comma and filter empty strings
+        values = {label.strip() for label in self.value.split(',') if label.strip()}
+        return [issue_key for issue_key in self._issues_keys if issue_key in values]
+
+    @property
+    def value_has_changed(self) -> bool:
+        """Determines if issues keys have changed from original value (UPDATE mode).
+
+        Uses set comparison to ignore order and whitespace differences.
+        Comparison is case-insensitive (treats "Backend" and "backend" as same), but original casing is preserved when
+        sending to Jira API.
+
+        Returns:
+            True if the issues keys have changed, False otherwise.
+        """
+
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('value_has_changed only valid in UPDATE mode')
+
+        original_issues_keys = self.original_value if self.original_value else []
+        current_issues_keys = self.get_value_for_update()
+
+        # both empty - no change
+        if not original_issues_keys and not current_issues_keys:
+            return False
+
+        # one empty, one not - changed
+        if bool(original_issues_keys) != bool(current_issues_keys):
+            return True
+
+        # compare as sets (case-insensitive, order-independent)
+        # Use lowercase for comparison to treat "Backend" and "backend" as same
+        original_set = {label.lower() for label in original_issues_keys}
+        current_set = {label.lower() for label in current_issues_keys}
+        return original_set != current_set
+
+    def update_issues_data(self, issue_key: str) -> None:
+        if issue_key:
+            self._issues_keys.add(issue_key)
 
 
 # ============================================================================

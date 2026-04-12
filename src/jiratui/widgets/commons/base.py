@@ -1,12 +1,13 @@
 from enum import Enum
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Select
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
 
-from jiratui.models import JQLAutocompleteSuggestion
+from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.models import JiraUser, JQLAutocompleteSuggestion
 
 logger = logging.getLogger(__name__)
 
@@ -643,3 +644,297 @@ class LabelsAutoComplete(AutoComplete):
         new_value = ', '.join(words) + ', '
         self.target.value = new_value
         self.target.cursor_position = len(new_value)
+
+
+class MultiUserPickerAutoComplete(AutoComplete):
+    """AutoComplete for selecting multiple users.
+
+    This widget works in both CREATE and UPDATE modes, fetching users suggestions dynamically as the user types.
+
+    ````{important}
+    The target Input widget will display a comma-separated list of names. However, the widget needs to keep track of
+    the account ids of every user. To do that the target Input widget MUST implement a method called
+
+    ```python
+    update_users_data(account_id='', name='')
+    ```
+
+    This will be used for storing the users selected in the target Input widget.
+    ````
+    """
+
+    MIN_QUERY_TERM_LENGTH = 2
+    """The minimum length of the query used for searching users by email/display name."""
+
+    def __init__(
+        self,
+        target: Input,
+        api_controller: APIController,
+        required: bool = False,
+        title: str | None = None,
+        user_search_function: Callable | None = None,
+    ):
+        """Initializes a `MultiUserPickerAutoComplete` widget.
+
+        Args:
+            target: the Input widget to attach autocomplete to
+            api_controller: APIController instance for fetching suggestions
+            required: whether the field is required
+            title: display title for the field (defaults to 'Users')
+
+        Raises:
+            NotImplemented: if the target Input widget does not implement the required `update_users_data` method.
+        """
+
+        if not (
+            update_users_data_callable := getattr(self.target, 'update_users_data', None)
+        ) or not callable(update_users_data_callable):
+            raise NotImplementedError(
+                f'Class {self.target.__class__.__name__} MUST implement update_users_data(account_id, name)'
+            )
+
+        self._api_controller = api_controller
+        self._stored_title = title or 'Users'
+        self._required = required
+        self._cached_suggestions: list[DropdownItem] = []
+        self._last_query = ''
+        # the function used for fetching suggestions (Jira users) based on the input query provided by the user
+        self._user_search_function = user_search_function or self._search
+
+        # initialize with empty candidates - will be populated dynamically
+        super().__init__(
+            target=target,
+            candidates=self._get_users,  # type:ignore
+        )
+
+    async def _search(self, query: str) -> APIControllerResponse:
+        # the default function to search and filter users based on a query term
+        return await self._api_controller.find_users_for_picker(query)
+
+    def _get_users(self, target_state: TargetState) -> list[DropdownItem]:
+        """Synchronous wrapper that returns cached suggestions."""
+
+        # get the search string
+        search_string = self.get_search_string(target_state)
+        # if query changed, trigger async fetch
+        if search_string and search_string != self._last_query:
+            self._last_query = search_string
+            # schedule async fetch - don't await here since this must be sync
+            self.call_later(self._search_users, search_string)
+        return self._cached_suggestions
+
+    async def _search_users(self, query: str) -> None:
+        """Searches Jira users asynchronously.
+
+        Args:
+            query: the query term to use. This will be used for finding users by display name and/or email. The query
+            term MUST be at least `MIN_QUERY_TERM_LENGTH` characters long to trigger the search.
+
+        Returns:
+            None
+        """
+
+        if not query or len(query) < self.MIN_QUERY_TERM_LENGTH:
+            self._cached_suggestions = []
+            return
+
+        try:
+            self._cached_suggestions = []
+            response: APIControllerResponse = await self._user_search_function(query)
+            if response and response.success and response.result:
+                # update cached suggestions
+                self._cached_suggestions = []
+                user: JiraUser
+                for user in response.result:
+                    self._cached_suggestions.append(
+                        DropdownItem(main=user.display_name, id=user.account_id)
+                    )
+                # trigger dropdown re-evaluation to show the suggestions
+                self._handle_target_update()
+        except Exception as e:
+            logger.error(f'Error fetching users suggestions: {e}', exc_info=True)
+            self._cached_suggestions = []
+
+    def get_search_string(self, target_state: TargetState) -> str:
+        """Gets the string to search within - just the last user's name for comma-separated users names."""
+
+        # target_state is a TargetState object with .text attribute
+        value = target_state.text if hasattr(target_state, 'text') else str(target_state)
+        words = value.split(',')
+        return words[-1].strip()
+
+    def should_show_dropdown(self, search_string: str) -> bool:
+        if self.option_list.option_count == 1:
+            first_option = self.option_list.get_option_at_index(0).prompt
+            from rich.text import Text
+
+            text_from_option = (
+                first_option.plain if isinstance(first_option, Text) else first_option
+            )
+            return text_from_option != search_string
+        else:
+            return True
+
+    def apply_completion(self, value: str, state: TargetState) -> None:
+        """Applies the selected completion to the input."""
+
+        # get the id of the selected option; this is the user's account id
+        highlighted_option_id = self.option_list.highlighted_option.id
+        # remove possible email address in the value
+        value = value.split('|', 1)[0]
+        current_value = state.text
+        # split by comma and strip whitespace from each part
+        words = [word.strip() for word in current_value.split(',')]
+        # replace the last word with the selected value
+        words[-1] = value
+        # rejoin with commas and add trailing space for next entry
+        new_value = ', '.join(words) + ', '
+        self.target.value = new_value
+        self.target.cursor_position = len(new_value)
+        self.target.update_users_data(account_id=highlighted_option_id, name=value)  # type:ignore[attr-defined]
+
+
+class MultiIssuePickerAutoComplete(AutoComplete):
+    """AutoComplete for selecting multiple work items by key.
+
+    This widget works in both CREATE and UPDATE modes, fetching issues suggestions dynamically as the user types.
+
+    ````{important}
+    The target Input widget will display a comma-separated list of issues keys. However, the widget needs to keep
+    track of the keys of every selected issue. To do that the target Input widget MUST implement a method called
+
+    ```python
+    update_issues_data(issue_key='')
+    ```
+
+    This will be used for storing the keys selected in the target Input widget.
+    ````
+    """
+
+    MIN_QUERY_TERM_LENGTH = 3
+    """The minimum length of the query used for searching issues by query term."""
+
+    def __init__(
+        self,
+        target: Input,
+        api_controller: APIController,
+        required: bool = False,
+        title: str | None = None,
+        issue_search_function: Callable | None = None,
+    ):
+        """Initializes a `MultiIssuePickerAutoComplete` widget.
+
+        Args:
+            target: the Input widget to which the autocomplete will be applied.
+            api_controller: APIController instance for fetching suggestions
+            required: whether the field is required
+            title: display title for the field (defaults to 'Issues')
+
+        Raises:
+            NotImplemented: if the target Input widget does not implement the required `update_issues_data` method.
+        """
+
+        if not (
+            update_issues_data_callable := getattr(self.target, 'update_issues_data', None)
+        ) or not callable(update_issues_data_callable):
+            raise NotImplementedError(
+                f'Class {self.target.__class__.__name__} MUST implement update_issues_data(issue_key)'
+            )
+
+        self._api_controller = api_controller
+        self._stored_title = title or 'Issues'
+        self._required = required
+        self._cached_suggestions: list[DropdownItem] = []
+        self._last_query = ''
+        # the function used for fetching suggestions (Jira issues) based on the input query provided by the user
+        self._issue_search_function = issue_search_function or self._search
+
+        # Initialize with empty candidates - will be populated dynamically
+        super().__init__(
+            target=target,
+            candidates=self._get_issues,  # type:ignore
+        )
+
+    async def _search(self, query: str) -> APIControllerResponse:
+        # the default function to search and filter issues based on a query term
+        return await self._api_controller.issue_picker(query)
+
+    def _get_issues(self, target_state: TargetState) -> list[DropdownItem]:
+        """Synchronous wrapper that returns cached suggestions."""
+
+        # get the search string
+        search_string = self.get_search_string(target_state)
+        # if query changed, trigger async fetch
+        if search_string and search_string != self._last_query:
+            self._last_query = search_string
+            # Schedule async fetch - don't await here since this must be sync
+            self.call_later(self._search_issues, search_string)
+        return self._cached_suggestions
+
+    async def _search_issues(self, query: str) -> None:
+        """Searches Jira issues asynchronously.
+
+        Args:
+            query: the query term to use. This will be used for finding issues by key or summary. The query
+            term MUST be at least `MIN_QUERY_TERM_LENGTH` characters long to trigger the search.
+
+        Returns:
+            None
+        """
+
+        if not query or len(query) < self.MIN_QUERY_TERM_LENGTH:
+            self._cached_suggestions = []
+            return
+
+        try:
+            self._cached_suggestions = []
+            response: APIControllerResponse = await self._issue_search_function(query)
+            if response and response.success and response.result:
+                # update cached suggestions
+                self._cached_suggestions = []
+                for issue in response.result:
+                    self._cached_suggestions.append(
+                        DropdownItem(main=f'{issue.key}|{issue.summary[:30]}...', id=issue.key)
+                    )
+                # trigger dropdown re-evaluation to show the suggestions
+                self._handle_target_update()
+        except Exception as e:
+            logger.error(f'Error fetching issues suggestions: {e}', exc_info=True)
+            self._cached_suggestions = []
+
+    def get_search_string(self, target_state: TargetState) -> str:
+        """Gets the string to search within - just the last key for comma-separated keys."""
+        # target_state is a TargetState object with .text attribute
+        value = target_state.text if hasattr(target_state, 'text') else str(target_state)
+        words = value.split(',')
+        return words[-1].strip()
+
+    def should_show_dropdown(self, search_string: str) -> bool:
+        if self.option_list.option_count == 1:
+            first_option = self.option_list.get_option_at_index(0).prompt
+            from rich.text import Text
+
+            text_from_option = (
+                first_option.plain if isinstance(first_option, Text) else first_option
+            )
+            return text_from_option != search_string
+        else:
+            return True
+
+    def apply_completion(self, value: str, state: TargetState) -> None:
+        """Applies the selected completion to the input."""
+
+        # get the id of the selected option; this is an issue's key
+        highlighted_option_id = self.option_list.highlighted_option.id
+        # remove the summary of the issue and keep the key only to make the input values shorter
+        value = value.split('|', 1)[0]
+        current_value = state.text
+        # split by comma and strip whitespace from each part
+        words = [word.strip() for word in current_value.split(',')]
+        # replace the last word with the selected value
+        words[-1] = value
+        # rejoin with commas and add trailing space for next entry
+        new_value = ', '.join(words) + ', '
+        self.target.value = new_value
+        self.target.cursor_position = len(new_value)
+        self.target.update_issues_data(issue_key=highlighted_option_id)  # type:ignore[attr-defined]
