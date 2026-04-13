@@ -1,4 +1,3 @@
-# TODO add missing pieces from the original PR
 class AllowedValuesParser:
     """Parses the `allowedValues` field found in a Jira field's metadata dictionary into Select widget options.
 

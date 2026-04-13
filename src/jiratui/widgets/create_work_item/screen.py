@@ -348,6 +348,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         else:
             # store fields metadata for proper value formatting later
             fields_data: list[dict] = response.result.get('fields', [])
+
             for field in fields_data:
                 if field_id := field.get('fieldId'):
                     self._field_metadata[field_id] = field
@@ -372,7 +373,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
             # TODO test this logic to see what it does
             if user_picker_widgets := self.additional_fields.query(UserPickerWidget):
-                # TODO consider using the autocomplete version
                 users_response = await application.api.search_users_assignable_to_projects(
                     project_keys=[project_key],
                     active=True,

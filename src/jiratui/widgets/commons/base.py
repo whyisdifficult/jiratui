@@ -171,7 +171,6 @@ class ValidationUtils:
         return original != current
 
 
-# TODO replace with autocomplete
 class UserPickerWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified user picker widget that works in both CREATE and UPDATE modes."""
 

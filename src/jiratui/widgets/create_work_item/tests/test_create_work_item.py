@@ -49,6 +49,157 @@ def create_metadata_with_editable_reporter() -> dict:
                 'required': False,
                 'operations': ['set'],
             },
+            {
+                'required': False,
+                'schema': {'type': 'array', 'items': 'component', 'system': 'components'},
+                'name': 'Components',
+                'key': 'components',
+                'hasDefaultValue': False,
+                'operations': ['add', 'set', 'remove'],
+                'allowedValues': [
+                    {
+                        'id': '10000',
+                        'name': 'Component 1',
+                        'archived': False,
+                        'released': True,
+                    },
+                ],
+                'fieldId': 'components',
+            },
+            {
+                'required': False,
+                'schema': {'type': 'date', 'system': 'duedate'},
+                'name': 'Due date',
+                'key': 'duedate',
+                'hasDefaultValue': False,
+                'operations': ['set'],
+                'fieldId': 'duedate',
+            },
+            {
+                'required': False,
+                'schema': {'type': 'priority', 'system': 'priority'},
+                'name': 'Priority',
+                'key': 'priority',
+                'hasDefaultValue': True,
+                'operations': ['set'],
+                'allowedValues': [
+                    {
+                        'self': 'https://example.atlassian.net/rest/api/3/priority/1',
+                        'iconUrl': 'https://example.atlassian.net/images/icons/priorities/highest_new.svg',
+                        'name': 'Highest',
+                        'id': '1',
+                    },
+                    {
+                        'self': 'https://example.atlassian.net/rest/api/3/priority/2',
+                        'iconUrl': 'https://example.atlassian.net/images/icons/priorities/high_new.svg',
+                        'name': 'High',
+                        'id': '2',
+                    },
+                    {
+                        'self': 'https://example.atlassian.net/rest/api/3/priority/3',
+                        'iconUrl': 'https://example.atlassian.net/images/icons/priorities/medium_new.svg',
+                        'name': 'Medium',
+                        'id': '3',
+                    },
+                    {
+                        'self': 'https://example.atlassian.net/rest/api/3/priority/4',
+                        'iconUrl': 'https://example.atlassian.net/images/icons/priorities/low_new.svg',
+                        'name': 'Low',
+                        'id': '4',
+                    },
+                    {
+                        'self': 'https://example.atlassian.net/rest/api/3/priority/5',
+                        'iconUrl': 'https://example.atlassian.net/images/icons/priorities/lowest_new.svg',
+                        'name': 'Lowest',
+                        'id': '5',
+                    },
+                ],
+                'defaultValue': {
+                    'self': 'https://example.atlassian.net/rest/api/3/priority/3',
+                    'iconUrl': 'https://example.atlassian.net/images/icons/priorities/medium_new.svg',
+                    'name': 'Medium',
+                    'id': '3',
+                },
+                'fieldId': 'priority',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'string',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:url',
+                    'customId': 10015,
+                },
+                'name': 'Start date',
+                'key': 'customfield_10015',
+                'hasDefaultValue': False,
+                'operations': ['set'],
+                'fieldId': 'customfield_10015',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'datetime',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:datetime',
+                    'customId': 10015,
+                },
+                'name': 'Some date',
+                'key': 'customfield_10098',
+                'hasDefaultValue': False,
+                'operations': ['set'],
+                'fieldId': 'customfield_10098',
+            },
+            {
+                'required': False,
+                'schema': {'type': 'array', 'items': 'string', 'system': 'labels'},
+                'name': 'Labels',
+                'key': 'labels',
+                'autoCompleteUrl': 'https://example.atlassian.net/rest/api/1.0/labels/suggest?query=',
+                'hasDefaultValue': False,
+                'operations': ['add', 'set', 'remove'],
+                'fieldId': 'labels',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'numeric',
+                    'items': 'string',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:float',
+                    'customId': 10020,
+                },
+                'name': 'A number',
+                'key': 'customfield_10097',
+                'hasDefaultValue': False,
+                'operations': ['set'],
+                'fieldId': 'customfield_10097',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'user',
+                    'items': 'user',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:userpicker',
+                    'customId': 10003,
+                },
+                'name': 'A User',
+                'key': 'customfield_10096',
+                'hasDefaultValue': False,
+                'operations': ['add', 'set', 'remove'],
+                'fieldId': 'customfield_10096',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'user',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
+                    'customId': 10003,
+                },
+                'name': 'Approvers',
+                'key': 'customfield_10095',
+                'hasDefaultValue': False,
+                'operations': ['add', 'set', 'remove'],
+                'fieldId': 'customfield_10095',
+            },
         ]
     }
 
@@ -498,6 +649,106 @@ async def test_save_includes_reporter_when_editable(
         assert dismiss_args['reporter_account_id'] == 'reporter123'
         assert dismiss_args['project_key'] == 'TEST'
         assert dismiss_args['summary'] == 'Test Summary'
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_includes_additional_fields(
+    get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
+):
+    """Test that save handler includes additional fields and the same reporter and assignee."""
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(
+                type(screen.description_field), 'text', new_callable=PropertyMock
+            ) as mock_description,
+            patch.object(MultiSelectWidget, 'get_value_for_create') as mock_components,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(
+                URLWidget, 'value', new_callable=PropertyMock(return_value='http://example.bar')
+            ),
+            patch.object(
+                DateTimeInputWidget,
+                'value',
+                new_callable=PropertyMock(return_value='2026-05-05 12:30'),
+            ),
+            patch.object(
+                LabelsWidget, 'value', new_callable=PropertyMock(return_value='test1, test2')
+            ),
+            patch.object(
+                NumericInputWidget, 'value', new_callable=PropertyMock(return_value='123.45')
+            ),
+            patch.object(
+                UserPickerWidget, 'selection', new_callable=PropertyMock(return_value='1')
+            ),
+            patch.object(MultiUserPickerWidget, 'get_value_for_create') as mock_multi_user_picker,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_description.return_value = 'Test Description'
+            mock_components.return_value = [{'id': '10000'}]
+            mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
+
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['assignee_account_id'] == 'reporter123'
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['components'] == [{'id': '10000'}]
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['customfield_10015'] == 'http://example.bar'
+        assert dismiss_args['customfield_10098'] == '2026-05-05 12:30'
+        assert set(dismiss_args['labels']) == {'test1', 'test2'}
+        assert dismiss_args['customfield_10097'] == 123.45
+        assert dismiss_args['customfield_10096'] == {'accountId': '1'}
+        assert dismiss_args['customfield_10095'] == [{'accountId': '3'}, {'accountId': '4'}]
 
 
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
