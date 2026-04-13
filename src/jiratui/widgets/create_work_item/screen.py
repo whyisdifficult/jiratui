@@ -371,7 +371,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             )
             await self.additional_fields.mount_all(metadata_fields)
 
-            # TODO test this logic to see what it does
             if user_picker_widgets := self.additional_fields.query(UserPickerWidget):
                 users_response = await application.api.search_users_assignable_to_projects(
                     project_keys=[project_key],

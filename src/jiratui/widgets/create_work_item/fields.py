@@ -10,7 +10,7 @@ class CreateWorkItemProjectSelectionInput(ProjectSelectionWidget):
     def __init__(self):
         super().__init__(
             mode=FieldMode.CREATE,
-            field_id='create-work-item-select-project',
+            field_id='project_key',
             title='Project',
             required=True,
             jira_field_key='project_key',
@@ -23,7 +23,7 @@ class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
     def __init__(self, options: list[tuple[str, str]]):
         super().__init__(
             mode=FieldMode.CREATE,
-            field_id='create-work-item-issue-type-selector',  # TODO or this? create-work-item-select-issue-type
+            field_id='issue_type_id',
             jira_field_key='issue_type_id',
             title='Issue Type',
             required=True,
