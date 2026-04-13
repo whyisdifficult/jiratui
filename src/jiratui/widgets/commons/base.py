@@ -656,7 +656,7 @@ class MultiUserPickerAutoComplete(AutoComplete):
     the account ids of every user. To do that the target Input widget MUST implement a method called
 
     ```python
-    update_users_data(account_id='', name='')
+    add_user(account_id='', name='')
     ```
 
     This will be used for storing the users selected in the target Input widget.
@@ -683,7 +683,7 @@ class MultiUserPickerAutoComplete(AutoComplete):
             title: display title for the field (defaults to 'Users')
 
         Raises:
-            NotImplemented: if the target Input widget does not implement the required `update_users_data` method.
+            NotImplemented: if the target Input widget does not implement the required `add_user` method.
         """
 
         self._api_controller = api_controller
@@ -700,11 +700,11 @@ class MultiUserPickerAutoComplete(AutoComplete):
             candidates=self._get_users,  # type:ignore
         )
 
-        if not (
-            update_users_data_callable := getattr(self.target, 'update_users_data', None)
-        ) or not callable(update_users_data_callable):
+        if not (add_user_callable := getattr(self.target, 'add_user', None)) or not callable(
+            add_user_callable
+        ):
             raise NotImplementedError(
-                f'Class {self.target.__class__.__name__} MUST implement update_users_data(account_id, name)'
+                f'Class {self.target.__class__.__name__} MUST implement add_user(account_id, name)'
             )
 
     async def _search(self, query: str) -> APIControllerResponse:
@@ -782,16 +782,16 @@ class MultiUserPickerAutoComplete(AutoComplete):
         highlighted_option_id = self.option_list.highlighted_option.id
         # remove possible email address in the value
         value = value.split('|', 1)[0]
-        current_value = state.text
+        # current_value = state.text
         # split by comma and strip whitespace from each part
-        words = [word.strip() for word in current_value.split(',')]
+        # words = [word.strip() for word in current_value.split(',')]
         # replace the last word with the selected value
-        words[-1] = value
+        # words[-1] = value
         # rejoin with commas and add trailing space for next entry
-        new_value = ', '.join(words) + ', '
-        self.target.value = new_value
-        self.target.cursor_position = len(new_value)
-        self.target.update_users_data(account_id=highlighted_option_id, name=value)  # type:ignore[attr-defined]
+        # new_value = ', '.join(words) + ', '
+        # self.target.value = new_value
+        # self.target.cursor_position = len(new_value)
+        self.target.add_user(account_id=highlighted_option_id, name=value)  # type:ignore[attr-defined]
 
 
 class MultiIssuePickerAutoComplete(AutoComplete):
