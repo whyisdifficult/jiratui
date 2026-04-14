@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
-from textual.containers import Container, Vertical, VerticalGroup, VerticalScroll
+from textual.containers import Center, Container, Vertical, VerticalGroup, VerticalScroll
 from textual.reactive import Reactive, reactive
-from textual.widgets import Markdown
+from textual.widgets import LoadingIndicator, Markdown
 
 from jiratui.models import CustomFieldTypes, JiraIssue
 from jiratui.utils.adf2md.adf2md import adf2md
@@ -57,8 +57,19 @@ class WorkItemInfoContainer(Vertical):
             '#work-item-info-description-scroll-container', expect_type=VerticalScroll
         )
 
+    @property
+    def loading_container(self) -> Center:
+        return self.query_one('#work-item-info-loading-container', expect_type=Center)
+
+    @property
+    def content_container(self) -> VerticalGroup:
+        return self.query_one('#work-item-info-content', expect_type=VerticalGroup)
+
     def compose(self) -> ComposeResult:
-        with VerticalGroup():
+        with Center(id='work-item-info-loading-container') as loading_container:
+            loading_container.display = False
+            yield LoadingIndicator()
+        with VerticalGroup(id='work-item-info-content'):
             with WorkItemSummaryContainer():
                 yield IssueSummaryWidget()
             with VerticalScroll(id='work-item-info-description-scroll-container'):
@@ -75,6 +86,20 @@ class WorkItemInfoContainer(Vertical):
             self.issue_description_widget.visible = True
             self.description_container.visible = True
             self.description_container.border_title = 'Description'
+
+            # check if description is required in the edit metadata
+            is_required = False
+            if issue_edit_metadata := work_item.get_edit_metadata():
+                description_field = issue_edit_metadata.get('description', {})
+                is_required = description_field.get('required', False)
+
+            # set border title with required indicator if needed
+            if is_required:
+                self.description_container.border_subtitle = '(*)'
+                self.description_container.add_class('required')
+            else:
+                self.description_container.border_subtitle = ''
+                self.description_container.remove_class('required')
         else:
             self.description_container.visible = False
             self.issue_description_widget.visible = False
@@ -153,3 +178,13 @@ class WorkItemInfoContainer(Vertical):
             # remove the extra fields and hide the widget
             self.extra_fields_container.visible = False
             self.extra_fields_container.remove_children()
+
+    def show_loading(self) -> None:
+        """Shows the loading indicator and hides content."""
+        self.loading_container.display = True
+        self.content_container.display = False
+
+    def hide_loading(self) -> None:
+        """Hides the loading indicator and shows content."""
+        self.loading_container.display = False
+        self.content_container.display = True

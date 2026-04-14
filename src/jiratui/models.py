@@ -276,6 +276,13 @@ class JiraBaseIssue(BaseModel):
 
 
 @dataclass
+class JiraIssuePickerSuggestion(JiraBaseIssue):
+    """An issue returned by the API's issue picker feature."""
+
+    summary: str
+
+
+@dataclass
 class JiraIssueComponent(BaseModel):
     """A component that can be associated to a work item."""
 
@@ -775,3 +782,9 @@ class JiraField(BaseModel):
     schema: dict
     untranslated_name: str | None = None
     """The name of the field without translations."""
+
+
+@dataclass
+class JQLAutocompleteSuggestion(BaseModel):
+    value: str | None = None
+    display_name: str | None = None

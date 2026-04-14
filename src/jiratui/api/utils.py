@@ -3,6 +3,23 @@ from datetime import date
 from jiratui.models import WorkItemsSearchOrderBy
 
 
+def parse_required_fields_from_meta(metadata: dict) -> list[str]:
+    """Extracts required field keys from issue create metadata.
+
+    Args:
+        metadata: Response from get_issue_create_meta()
+
+    Returns:
+        List of required field keys (e.g., ['summary', 'components', 'customfield_10712'])
+    """
+
+    required_fields = []
+    for field in metadata.get('fields', []):
+        if field.get('required', False):
+            required_fields.append(field['key'])
+    return required_fields
+
+
 def build_issue_search_jql(
     project_key: str | None = None,
     created_from: date | None = None,

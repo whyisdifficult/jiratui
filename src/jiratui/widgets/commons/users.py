@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class JiraUserInput(Input):
-    """An input field for selecting a Jira user.
+    """An input field for selecting a single Jira user.
 
     This widget holds the Jira user's account id that is used to identify the user. This is useful for operations
     that create/update work items' user fields, such as assignee, reporter, etc.
@@ -174,7 +174,10 @@ class UsersAutoComplete(AutoComplete):
         return True
 
     def apply_completion(self, value: str, state: TargetState) -> None:
-        if '|' in value:
-            value = value.split('|', 1)[0]
+        # extract the selected option here before doing this after we call super() yields a null option which triggers
+        # an exception
+        account_id = self.option_list.highlighted_option.id
+        # split name from email
+        value = value.split('|', 1)[0]
         super().apply_completion(value, state)
-        self.target.account_id = self.option_list.highlighted_option.id  # type:ignore[attr-defined]
+        self.target.account_id = account_id  # type:ignore[attr-defined]

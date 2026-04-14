@@ -1,0 +1,77 @@
+{
+    "fields": [
+        {
+            "fieldId": "summary",
+            "hasDefaultValue": false,
+            "key": "summary",
+            "name": "Summary",
+            "operations": ["set"],
+            "required": true,
+            "schema": {
+                "type": "string"
+            }
+        },
+        {
+            "fieldId": "components",
+            "hasDefaultValue": false,
+            "key": "components",
+            "name": "Components",
+            "operations": ["add", "set", "remove"],
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": "component"
+            },
+            "allowedValues": [
+                {
+                    "id": "10000",
+                    "name": "Backend",
+                    "description": "Backend component"
+                },
+                {
+                    "id": "10001",
+                    "name": "Frontend",
+                    "description": "Frontend component"
+                }
+            ]
+        },
+        {
+            "fieldId": "customfield_10712",
+            "hasDefaultValue": false,
+            "key": "customfield_10712",
+            "name": "Dev Group",
+            "operations": ["set"],
+            "required": true,
+            "schema": {
+                "type": "string",
+                "custom": "com.atlassian.jira.plugin.system.customfieldtypes:textfield",
+                "customId": 10712
+            }
+        },
+        {
+            "fieldId": "assignee",
+            "hasDefaultValue": false,
+            "key": "assignee",
+            "name": "Assignee",
+            "operations": ["set"],
+            "required": false,
+            "schema": {
+                "type": "user"
+            }
+        },
+        {
+            "fieldId": "description",
+            "hasDefaultValue": false,
+            "key": "description",
+            "name": "Description",
+            "operations": ["set"],
+            "required": false,
+            "schema": {
+                "type": "string"
+            }
+        }
+    ],
+    "maxResults": 5,
+    "startAt": 0,
+    "total": 5
+}

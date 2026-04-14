@@ -244,6 +244,8 @@ class MainScreen(Screen):
         self.focus_item_on_startup = focus_item_on_startup
         """The position of the work item to focus and open on startup. Requires search_on_startup to be enabled."""
         self.logger = logging.getLogger(LOGGER_NAME)
+        self.current_loaded_work_item_key: str | None = None
+        """Track the currently loaded work item key to prevent redundant reloads."""
         # maps keys to widget ids to enable quick navigation
         self.keys_widget_ids_mapping: dict[str, str] = {
             'p': '#jira-project-selector',
@@ -374,17 +376,10 @@ class MainScreen(Screen):
                 yield ProjectSelectionInput(projects=[])
                 yield IssueTypeSelectionInput(types=[])
                 yield IssueStatusSelectionInput(statuses=[])
-                assignee_input = JiraUserInput(
+                yield JiraUserInput(
                     id='search-filters-input-assignee',
                     border_subtitle='(a)',
                     border_title='Assignee',
-                )
-                yield assignee_input
-                yield UsersAutoComplete(
-                    assignee_input,
-                    self.api,
-                    id='filter-assignee-autocomplete',
-                    user_search_function=self._search_and_filter_users,
                 )
             with ItemGrid(classes='bottom-search-bar'):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
@@ -554,6 +549,16 @@ class MainScreen(Screen):
             if self.focus_item_on_startup:
                 await self.app.workers.wait_for_complete([search_worker])
                 self.run_worker(self._focus_item_after_startup(self.focus_item_on_startup))
+
+        # mount autocomplete widgets
+        await self.mount(
+            UsersAutoComplete(
+                self.users_selector,
+                self.api,
+                id='filter-assignee-autocomplete',
+                user_search_function=self._search_and_filter_users,
+            )
+        )
 
     async def fetch_projects(self) -> None:
         """Fetches the list of available projects.
@@ -1022,7 +1027,38 @@ class MainScreen(Screen):
         """
 
         if data:
-            response: APIControllerResponse = await self.api.create_work_item(data)
+            # split data into base fields and dynamic fields (custom fields, components, etc.)
+            # Base fields are handled explicitly by the controller
+            base_fields = {
+                'project_key',
+                'parent_key',
+                'issue_type_id',
+                'assignee_account_id',
+                'reporter_account_id',
+                'summary',
+                'description',
+                'duedate',
+                'priority',
+            }
+
+            # Separate base data from dynamic fields (custom fields, components, etc.)
+            base_data = {k: v for k, v in data.items() if k in base_fields}
+            dynamic_fields = {k: v for k, v in data.items() if k not in base_fields}
+
+            self.logger.info(
+                'Creating work item with split fields',
+                extra={
+                    'base_data': base_data,
+                    'dynamic_fields': dynamic_fields,
+                    'all_data_keys': list(data.keys()),
+                    'dynamic_field_types': {k: type(v).__name__ for k, v in dynamic_fields.items()},
+                },
+            )
+
+            response: APIControllerResponse = await self.api.create_work_item(
+                base_data, **dynamic_fields
+            )
+
             if response.success and response.result:
                 self.notify(
                     f'Work item {response.result.key} created successfully',
@@ -1075,11 +1111,12 @@ class MainScreen(Screen):
         - update the data in all the other tabs
 
         Args:
-            selected_work_item_key: the key if the work item selected by the user from the search results datatable.
+            selected_work_item_key: the key of the work item selected by the user from the search results datatable.
 
         Returns:
             Nothing
         """
+
         if not selected_work_item_key:
             self.notify(
                 'You need to select a work item before fetching its details.',
@@ -1088,11 +1125,19 @@ class MainScreen(Screen):
             )
             return
 
+        # skip if the same work item is already loaded
+        if self.current_loaded_work_item_key == selected_work_item_key:
+            return
+
+        # show loading indicator
+        self.issue_info_container.show_loading()
+
         # step 1: fetch issue
         response: APIControllerResponse = await self.api.get_issue(
             issue_id_or_key=selected_work_item_key,
         )
         if not response.success or not response.result:
+            self.issue_info_container.hide_loading()
             self.notify(
                 'Unable to find the selected work item', title='Find Work Item', severity='error'
             )
@@ -1103,6 +1148,10 @@ class MainScreen(Screen):
 
         # step 2: populate information tab
         self.issue_info_container.issue = work_item
+        self.issue_info_container.hide_loading()
+
+        # track the currently loaded work item
+        self.current_loaded_work_item_key = selected_work_item_key
 
         # step 3: populate the details tab
         # set the work item

@@ -332,6 +332,7 @@ class JiraAPI:
         Returns:
             A dictionary with the detail sof the issue.
         """
+
         params: dict[str, Any] = {'expand': 'editmeta'}
         if fields is not None:
             params['fields'] = fields
@@ -340,6 +341,43 @@ class JiraAPI:
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get,
             url=f'issue/{issue_id_or_key}',
+            params=params,
+        )
+
+    async def issue_picker(
+        self,
+        query: str,
+        project_id: str | None = None,
+        show_sub_tasks: bool = True,
+        current_issue_key: str | None = None,
+    ) -> dict:
+        """Retrieves lists of issues matching a query string. Use this resource to provide auto-completion suggestions
+        when the user is looking for an issue using a word or string.
+
+        Args:
+            query: a string to match against text fields in the issue such as title, description, or comments.
+            project_id: the ID of a project that suggested issues must belong to.
+            show_sub_tasks: indicates whether to include subtasks in the suggestions list. The default is `True`.
+            current_issue_key: the key of an issue to exclude from search results. For example, the issue the user is
+            viewing when they perform this query.
+
+        Returns:
+            A dictionary with 2 lists of issues suggested for use in auto-completion.
+
+            - History Search which includes issues from the user's history of created, edited, or viewed issues that
+            contain the string in the query parameter.
+            - Current Search which includes issues that match the JQL expression in currentJQL and contain the string
+            in the query parameter.
+        """
+
+        params: dict[str, Any] = {'query': query, 'showSubTasks': show_sub_tasks}
+        if project_id is not None:
+            params['currentProjectId'] = project_id
+        if current_issue_key is not None:
+            params['currentIssueKey'] = current_issue_key
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url='issue/picker',
             params=params,
         )
 
@@ -665,6 +703,38 @@ class JiraAPI:
             params['query'] = query
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.get, url='user/search', params=params
+        )
+
+    async def user_picker(self, query: str, limit: int | None = None) -> dict:
+        """Retrieves a list of users whose attributes match the query term.
+
+        The returned object includes the html field where the matched query term is highlighted with the HTML strong
+        tag. A list of account IDs can be provided to exclude users from the results.
+
+        ```{important}
+        This operation takes the users in the range defined by maxResults, up to the thousandth user, and then returns
+        only the users from that range that match the query term. This means the operation usually returns fewer users
+        than specified in maxResults
+        ```
+
+        Args:
+            query: query: string that is matched against user attributes, such as `displayName`, and `emailAddress`, to find
+            relevant users.
+            limit: the maximum number of items to return. The total number of matched users is returned in the `total`
+            key. The default value is 50.
+
+        See Also:
+            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-picker-get
+
+        Returns:
+            A dictionary with a `users` key that contains the list of users found.
+        """
+
+        params: dict[str, Any] = {'query': query}
+        if limit is not None:
+            params['maxResults'] = limit
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get, url='user/picker', params=params
         )
 
     async def get_groups_in_bulk(
@@ -1300,7 +1370,52 @@ class JiraAPI:
         Returns:
             A list of dictionaries.
         """
+
         return await self._client.make_request(method=httpx.AsyncClient.get, url='field')
+
+    async def get_jql_autocomplete_suggestions(
+        self,
+        field_name: str | None = None,
+        field_value: str | None = None,
+        predicate_name: str | None = None,
+        predicate_value: str | None = None,
+    ) -> dict:
+        """Retrieves the JQL search auto complete suggestions for a field.
+
+        Suggestions can be obtained by providing:
+
+        - `fieldName` to get a list of all values for the field.
+        - `fieldName` and `fieldValue` to get a list of values containing the text in `fieldValue`.
+        - `fieldName` and `predicateName` to get a list of all predicate values for the field.
+        - `fieldName`, `predicateName`, and `predicateValue` to get a list of predicate values containing the text in
+        `predicateValue`.
+
+        Args:
+            field_name: a field name to get a list of all values for the field.
+            field_value: a partial field item name entered by the user.
+            predicate_name: the name of the
+            [CHANGED operator predicate](https://confluence.atlassian.com/x/hQORLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for
+            which the suggestions are generated. The valid predicate operators are `by`, `from`, and `to`.
+            predicate_value: the partial predicate item name entered by the user.
+
+        Returns:
+            List of suggestions or None if request fails.
+        """
+
+        params = {}
+        if field_name:
+            params['fieldName'] = field_name
+        if field_value:
+            params['fieldValue'] = field_value
+        if predicate_name:
+            params['predicateName'] = predicate_name
+        if predicate_value:
+            params['predicateValue'] = predicate_value
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get,
+            url='jql/autocompletedata/suggestions',
+            params=params,
+        )
 
 
 class JiraAPIv2(JiraAPI):

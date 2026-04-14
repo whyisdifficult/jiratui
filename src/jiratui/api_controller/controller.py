@@ -48,6 +48,7 @@ from jiratui.models import (
     JiraField,
     JiraGlobalSettings,
     JiraIssue,
+    JiraIssuePickerSuggestion,
     JiraIssueSearchResponse,
     JiraMyselfInfo,
     JiraServerInfo,
@@ -56,6 +57,7 @@ from jiratui.models import (
     JiraUserGroup,
     JiraWorkItemFields,
     JiraWorklog,
+    JQLAutocompleteSuggestion,
     LinkIssueType,
     PaginatedJiraWorklog,
     Project,
@@ -106,13 +108,13 @@ class APIController:
             )
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = logging.getLogger(LOGGER_NAME)
+        self._required_fields_cache: dict[str, list[str]] = {}
 
     @staticmethod
     def _extract_exception_details(exception: Exception) -> dict:
-        extra: dict = exception.extra or {} if hasattr(exception, 'extra') else {}
-        message = (
-            extra.get('errorMessages', [])[0] if extra.get('errorMessages', []) else str(exception)
-        )
+        extra: dict = getattr(exception, 'extra', {}) or {}
+        error_messages = extra.get('errorMessages', [])
+        message = error_messages[0] if error_messages else str(exception)
         return {'message': message, 'extra': extra}
 
     async def get_project(self, key: str) -> APIControllerResponse:
@@ -140,7 +142,9 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=Project(
-                id=str(response.get('id')), name=response.get('name'), key=response.get('key')
+                id=str(response.get('id', '')),
+                name=response.get('name', ''),
+                key=response.get('key', ''),
             ),
         )
 
@@ -523,6 +527,48 @@ class APIController:
             )
         return APIControllerResponse(result=users)
 
+    async def find_users_for_picker(self, query: str) -> APIControllerResponse:
+        """Searches  users whose attributes match the query term.
+
+        This is useful for building widgets that allow the user to pick users.
+
+        Args:
+            query: string that is matched against user attributes, such as `displayName`, and `emailAddress`, to find
+            relevant users.
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `JiraUser` instances. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message.
+        """
+
+        try:
+            response: dict = await self.api.user_picker(
+                query=query, limit=RECORDS_PER_PAGE_SEARCH_USERS
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to find users using the user picker feature',
+                extra={
+                    'query': query,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        users: list[JiraUser] = []
+        for user in response.get('users', []):
+            users.append(
+                JiraUser(
+                    account_id=user.get('accountId')
+                    if self.config.cloud is True
+                    else user.get('name'),
+                    active=True,
+                    display_name=user.get('displayName'),
+                )
+            )
+        return APIControllerResponse(result=users)
+
     async def search_users_assignable_to_issue(
         self,
         issue_key: str | None = None,
@@ -773,6 +819,64 @@ class APIController:
                     error=f'Failed to extract the details of the requested work item {issue_id_or_key}: {str(e)}',
                 )
             return APIControllerResponse(result=JiraIssueSearchResponse(issues=[instance]))
+
+    async def issue_picker(
+        self,
+        query: str,
+        project_id: str | None = None,
+        show_sub_tasks: bool = True,
+        current_issue_key: str | None = None,
+    ) -> APIControllerResponse:
+        """Retrieves lists of issues matching a query string. Use this resource to provide auto-completion suggestions
+        when the user is looking for an issue using a word or string.
+
+        Args:
+            query: a string to match against text fields in the issue such as title, description, or comments.
+            project_id: the ID of a project that suggested issues must belong to.
+            show_sub_tasks: indicate whether to include subtasks in the suggestions list. The default is `True`.
+            current_issue_key: the key of an issue to exclude from search results. For example, the issue the user is
+            viewing when they perform this query.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of `JiraIssuePickerSuggestion` if the request is
+            successful; `APIControllerResponse` with `success = False` and an error message otherwise.
+        """
+
+        try:
+            response: dict = await self.api.issue_picker(
+                query=query,
+                project_id=project_id,
+                show_sub_tasks=show_sub_tasks,
+                current_issue_key=current_issue_key,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve find issues with the given query',
+                extra={
+                    'query': query,
+                    'project_id': project_id,
+                    'current_issue_key': current_issue_key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        else:
+            processed: set[str] = set()
+            issues: list[JiraIssuePickerSuggestion] = []
+            for section in response.get('sections', []):
+                for issue in section.get('issues', []):
+                    if issue.get('id') in processed:
+                        continue
+                    processed.add(issue.get('id'))
+                    issues.append(
+                        JiraIssuePickerSuggestion(
+                            id=str(issue.get('id')),
+                            summary=issue.get('summary'),
+                            key=issue.get('key'),
+                        )
+                    )
+            return APIControllerResponse(result=issues)
 
     def _build_criteria_for_searching_work_items(
         self,
@@ -1894,7 +1998,51 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
-    async def create_work_item(self, data: dict) -> APIControllerResponse:
+    async def get_required_fields_for_issue_type(
+        self, project_key: str, issue_type_id: str
+    ) -> APIControllerResponse:
+        """Retrieves required fields for a project and issue type combination.
+
+        ```{Note}
+        Results are cached in memory for the lifetime of the APIController instance. The cache uses
+        `{project_key}:{issue_type_id}` as the key and has no explicit invalidation mechanism.
+        ```
+
+        Args:
+            project_key: The case-sensitive key of the project.
+            issue_type_id: The ID of the issue type.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of required field keys in the result;
+            `APIControllerResponse(success=False)` if there is an error.
+        """
+
+        from jiratui.api.utils import parse_required_fields_from_meta
+
+        # check cache first
+        cache_key = f'{project_key}:{issue_type_id}'
+        if cache_key in self._required_fields_cache:
+            return APIControllerResponse(result=self._required_fields_cache[cache_key])
+
+        # fetch from API
+        try:
+            metadata = await self.api.get_issue_create_meta(project_key, issue_type_id)
+            required_fields = parse_required_fields_from_meta(metadata)
+            self._required_fields_cache[cache_key] = required_fields
+            return APIControllerResponse(result=required_fields)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to get required fields for issue type',
+                extra={
+                    'project_key': project_key,
+                    'issue_type_id': issue_type_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+    async def create_work_item(self, data: dict, **dynamic_fields) -> APIControllerResponse:
         """Creates a work item.
 
         The description field of a work item may be an ADF document or, if API v2 is used then a simple string. This
@@ -1912,21 +2060,36 @@ class APIController:
             item id and key. If an error occurs then  `APIControllerResponse.success == False` and
             `APIControllerResponse.error` indicates the error.
         """
-        fields = {}
+
+        fields: dict[str, Any] = {}
+
+        # fetch create metadata to check which fields are available for this project/issue type
+        project_key = data.get('project_key')
+        issue_type_id = data.get('issue_type_id')
+        available_fields: set[str] = set()
+
+        if project_key and issue_type_id:
+            metadata_response = await self.get_issue_create_metadata(project_key, issue_type_id)
+            if metadata_response.success and metadata_response.result:
+                metadata_fields = metadata_response.result.get('fields', [])
+                available_fields = {
+                    field.get('key') for field in metadata_fields if field.get('key')
+                }
 
         if assignee_account_id := data.get('assignee_account_id'):
             fields['assignee'] = {'id': assignee_account_id}
 
         if reporter_account_id := data.get('reporter_account_id'):
-            fields['reporter'] = {'id': reporter_account_id}
+            if not available_fields or 'reporter' in available_fields:
+                fields['reporter'] = {'id': reporter_account_id}
 
-        if issue_type_id := data.get('issue_type_id'):
+        if issue_type_id:
             fields['issuetype'] = {'id': issue_type_id}
 
         if parent_key := data.get('parent_key'):
             fields['parent'] = {'key': parent_key}
 
-        if project_key := data.get('project_key'):
+        if project_key:
             fields['project'] = {'key': project_key}
 
         if due_date := data.get('duedate'):
@@ -1964,16 +2127,49 @@ class APIController:
                 error='The work item was not created because there are no details to create it.',
             )
 
+        # process dynamic required fields from **kwargs
+        # handle special field formats (components, custom fields, approvers)
+        for field_key, field_value in dynamic_fields.items():
+            # special handling for components - needs array of objects with 'id' key
+            if field_key == 'components':
+                if isinstance(field_value, list):
+                    # If it's a list of IDs, convert to proper format
+                    if field_value and isinstance(field_value[0], str):
+                        fields['components'] = [{'id': comp_id} for comp_id in field_value]
+                    else:
+                        # Already in correct format or empty list
+                        fields['components'] = field_value
+                else:
+                    # single component ID
+                    fields['components'] = [{'id': field_value}]
+            else:
+                # For all other fields (including custom fields), pass as-is
+                # The caller is responsible for proper formatting
+                fields[field_key] = field_value
+
         try:
             result: dict = await self.api.create_work_item(fields)
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
+            error_message = exception_details.get('message', str(e))
+
+            if 'cannot be set' in str(e).lower() or (
+                exception_details.get('extra', {}).get('errors')
+                and any(
+                    'cannot be set' in str(err).lower()
+                    for err in exception_details.get('extra', {}).get('errors', {}).values()
+                )
+            ):
+                error_message = (
+                    f'{error_message}. Note: Some fields may not be available based on your '
+                    'project configuration. Check your project screens and field configurations.'
+                )
+
             self.logger.error(
                 'An error occurred while trying to create an item',
                 extra={
                     'error_message': str(e),
                     'assignee_account_id': data.get('assignee_account_id'),
-                    'reporter_account_id': data.get('reporter_account_id'),
                     'issue_type_id': data.get('issue_type_id'),
                     'parent_key': data.get('parent_key'),
                     'project_key': data.get('project_key'),
@@ -1983,7 +2179,7 @@ class APIController:
                     **exception_details.get('extra', {}),
                 },
             )
-            return APIControllerResponse(success=False, error=exception_details.get('message'))
+            return APIControllerResponse(success=False, error=error_message)
         return APIControllerResponse(
             result=JiraBaseIssue(id=result.get('id'), key=result.get('key'))
         )
@@ -2469,3 +2665,58 @@ class APIController:
             return APIControllerResponse(
                 result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
             )
+
+    async def get_jql_autocomplete_suggestions(
+        self,
+        field_name: str | None = None,
+        field_value: str | None = None,
+        predicate_name: str | None = None,
+        predicate_value: str | None = None,
+    ) -> APIControllerResponse:
+        """Retrieves suggestions for a field.
+
+        Args:
+            field_name: a field name to get a list of all values for the field.
+            field_value: a partial field item name entered by the user.
+            predicate_name: the name of the
+            [CHANGED operator predicate](https://confluence.atlassian.com/x/hQORLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for
+            which the suggestions are generated. The valid predicate operators are `by`, `from`, and `to`.
+            predicate_value: the partial predicate item name entered by the user.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of suggestions and `success = True`.
+            If an error occurs then `success = False` and the error message in the `error` key.
+        """
+
+        try:
+            response: Any | None = await self.api.get_jql_autocomplete_suggestions(
+                field_name,
+                field_value,
+                predicate_name,
+                predicate_value,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to get label suggestions',
+                extra={
+                    'field_name': field_name,
+                    'field_value': field_value,
+                    'predicate_name': predicate_name,
+                    'predicate_value': predicate_value,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        if not response or not isinstance(response, dict):
+            return APIControllerResponse(
+                success=False, error='Invalid response from JQL autocomplete suggestions API'
+            )
+        suggestions: list[JQLAutocompleteSuggestion] = []
+        for suggestion in response.get('results', []):
+            suggestions.append(
+                JQLAutocompleteSuggestion(
+                    value=suggestion.get('value'), display_name=suggestion.get('displayName')
+                )
+            )
+        return APIControllerResponse(result=suggestions)

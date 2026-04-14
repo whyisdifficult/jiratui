@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [DEPRECATED] support for `config.jira_user_group_id` is deprecated and will be removed in future versions. This is
 no longer applicable because users can now be filtered using name/email address. With the introduction of the
 autocomplete feature there is no need to fetch all the users anymore.
+- Refactor the definition of widgets to make it easier to share them across different widgets and use
+cases; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/163. This work in this PR
+has been applied in this [PR](https://github.com/whyisdifficult/jiratui/pull/163) to make resolving conflicts more
+manageable.
 
 ### Bug Fixes
 
@@ -31,6 +35,7 @@ default reporting user when creating work items.
 
 - Add/remove/update tests.
 - Refactor the class `UsersAutoComplete` to support custom search functions.
+- Update the documentation to reflect changes in the way we can create new work items.
 
 ## [1.7.0] - 2026-03-28
 

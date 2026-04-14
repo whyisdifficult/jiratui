@@ -3,10 +3,11 @@
     padding: 0 1;
 }
 
-.rule-50 {
+.rule-20 {
     width: 100%;
     content-align: right middle;
-    margin: 1 50 1 50;
+    margin: 1 20 1 20;
+    color: $text-muted;
 }
 
 .rule-horizontal-compact-70 {
@@ -262,6 +263,9 @@ IssueDescriptionWidget {
     }
     &:focus {
         border: round $accent-lighten-3;
+    }
+    &.issue_key {
+        width: 15;
     }
 }
 
@@ -636,7 +640,149 @@ LinkedWorkItemInputWidget {
     }
 }
 
-/* Create Work Item Screen */
+/* ---------------------------------------- Create Work Item Screen - BEGIN ---------------------------------------- */
+
+CreateWorkItemProjectSelectionInput {
+    border: round red;
+    padding: 0 1;
+}
+
+CreateWorkItemIssueTypeSelectionInput {
+    border: round red;
+    padding: 0 1;
+}
+
+CreateWorkItemIssueSummaryField {
+    box_sizing: content-box;
+    height: 1;
+    width: 80%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+CreateWorkItemParentKeyField {
+    box_sizing: content-box;
+    height: 1;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+#create-work-item-reporter-selector {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
+    margin: 0 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+#create-work-item-assignee-selector {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
+    margin: 00 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-multi-user-picker {
+    box_sizing: content-box;
+    height: 1;
+    width: 100%;
+    margin: 00 0;
+    padding: 0 1;
+    border: round $primary-lighten-3;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-user-picker {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+}
+
+.create-work-item-float-input.-invalid {
+    border: round red;
+}
+
+.create-work-item-float-input {
+    box_sizing: content-box;
+    height: 1;
+    border: round $primary-lighten-3;
+    width: 20;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+.create-work-item-generic-input-field {
+    box_sizing: content-box;
+    height: 1;
+    width: 60%;
+    border: round $primary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+    &.issue_key {
+        width: 15;
+    }
+}
+
+.create-work-item-generic-selector {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    &.required {
+        border: round red;
+    }
+}
 
 #add-work-item-form {
     width: 100%;
@@ -655,6 +801,7 @@ AddWorkItemScreen > Vertical {
         margin-top: 1;
     }
 }
+
 #add-work-item-button-save {
     width: 20%;
     padding: 0 0;
@@ -697,119 +844,15 @@ AddWorkItemScreen > Vertical {
     }
 }
 
-.create-work-item-parent-input-field {
-    box_sizing: content-box;
-    height: 1;
-    width: 20;
-    margin: 0 0;
-    padding: 0 1;
-    border: round $primary-lighten-3;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
+#create-additional-fields {
+    scrollbar-size-vertical: 1;
 }
 
-.create-work-item-input-date {
-    box_sizing: content-box;
-    height: 1;
-    border: round $primary-lighten-3;
-    width: 20;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
+.create-work-item-tip {
+    color: $text-muted;
 }
 
-.create-work-item-generic-input-field {
-    box_sizing: content-box;
-    height: 1;
-    width: 60%;
-    border: round $primary-lighten-3;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
-.create-work-item-generic-selector {
-    border: round $primary-lighten-3;
-    padding: 0 1;
-    &.required {
-        border: round red;
-    }
-}
-
-CreateWorkItemIssueSummaryField {
-    box_sizing: content-box;
-    height: 1;
-    width: 80%;
-    border: round $primary-lighten-3;
-    margin: 0 0;
-    padding: 0 1;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
-#create-work-item-reporter-selector {
-    box_sizing: content-box;
-    height: 1;
-    width: 100%;
-    margin: 0 0;
-    padding: 0 1;
-    border: round $primary-lighten-3;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
-#create-work-item-assignee-selector {
-    box_sizing: content-box;
-    height: 1;
-    width: 100%;
-    margin: 00 0;
-    padding: 0 1;
-    border: round $primary-lighten-3;
-    background: $background;
-    &.required {
-        border: round red;
-    }
-    &:focus {
-        border: round $accent-lighten-3;
-    }
-}
-
-CreateWorkItemIssueTypeSelectionInput {
-    border: round red;
-    padding: 0 1;
-}
-
-CreateWorkItemProjectSelectionInput {
-    border: round red;
-    padding: 0 1;
-}
+/* ---------------------------------------- Create Work Item Screen - END ---------------------------------------- */
 
 /* Confirmation Screen */
 
@@ -1014,14 +1057,21 @@ JQLEditorScreen > Vertical {
 
 /* Work Item Information (description, summary and custom fields) */
 
+#work-item-info-loading-container {
+    align: center middle;
+    height: 100%;
+    width: 100%;
+    display: none;
+}
+
 #work-item-info-description-scroll-container {
-    border: solid $secondary-lighten-3;
+    border: round $secondary-lighten-3;
     padding: 0 0 0 0;
     scrollbar-size-vertical: 1;
 }
 
 #work-item-info-extra-scroll-container {
-    border: solid $secondary;
+    border: round $secondary;
     scrollbar-size-vertical: 1;
 }
 
@@ -1332,5 +1382,22 @@ UsersAutoComplete {
         color: $text-success;
         background: $error 50%;  /* 50% opacity, blending into background */
         text-style: italic;
+    }
+}
+
+/* MultiSelectWidget - inline multi-select for array fields */
+
+MultiSelectWidget {
+    border: round $primary-lighten-3;
+    padding: 0 1;
+    height: auto;
+    max-height: 12;
+    background: $background;
+    scrollbar-size-vertical: 1;
+    &.required {
+        border: round red;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
     }
 }
