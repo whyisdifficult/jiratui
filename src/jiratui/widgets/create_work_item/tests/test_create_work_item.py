@@ -1527,6 +1527,26 @@ async def test_format_field_value_with_custom_type_float_and_correct_value(app):
         assert result == float('1.2')
 
 
+@pytest.mark.asyncio
+async def test_format_field_value_with_type_number(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'type': 'number',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', '1.2', metadata)
+        # THEN
+        assert result == float('1.2')
+
+
 @pytest.mark.parametrize(
     'field_value, expected',
     [
