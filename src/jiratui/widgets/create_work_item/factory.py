@@ -251,6 +251,7 @@ FIELDS_IDS_NOT_SUPPORTED = [
 # will cause errors when creating the items; as their values are not simply strings.
 CUSTOM_FIELD_TYPES_NOT_SUPPORTED = [
     'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+    'com.pyxis.greenhopper.jira:gh-lexo-rank',  # this requires special syntax
 ]
 
 CREATE_FORM_DEFAULT_FIELDS_IDS: list[str] = [

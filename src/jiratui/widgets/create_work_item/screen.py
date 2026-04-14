@@ -441,7 +441,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if custom_type == CustomFieldType.USER_PICKER.value:
             return {'accountId': value}
 
-        elif custom_type == CustomFieldType.FLOAT.value:
+        elif custom_type == CustomFieldType.FLOAT.value or schema.get('type') == 'number':
             if value:  # Type-safe check to prevent ~AlwaysFalsy error
                 try:
                     return float(value)
