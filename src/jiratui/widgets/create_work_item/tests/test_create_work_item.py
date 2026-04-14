@@ -1092,7 +1092,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         elif widget.id == 'user-picker':
             assert widget.jira_field_key == 'user-picker'
             assert isinstance(widget, UserPickerWidget)
-    assert len(widgets) == 15
+    assert len(widgets) == 14
 
 
 def test_jira_field_key_for_non_required_additional_fields_with_ignore_list(app):

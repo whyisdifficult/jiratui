@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `textual-autocomplete` to define a widget for selecting Jira users as assignees when creating work items.
 - Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
 - Add support for updating the reporter of a work item.
+- Support for fields with `type:number` when we create new work items.
 
 ### Changed
 
