@@ -61,7 +61,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
-    TITLE = 'New Work Item'
+    TITLE = 'Create Work Item'
 
     def __init__(
         self,
@@ -169,9 +169,15 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         vertical.border_title = self.TITLE
         with vertical:
             yield Static(
-                Text('Important: Fields marked with (*) are required.', style='italic orange')
+                Text(
+                    'You can configure the additional fields to exclude via the variables config.enable_creating_additional_fields and config.create_additional_fields_ignore_ids'
+                ),
+                classes='create-work-item-tip',
             )
-            yield Rule(classes='rule-50')
+            yield Static(
+                Text('Important: fields marked with (*) are required.', style='orange italic'),
+            )
+            yield Rule(classes='rule-20')
             with VerticalScroll(id='add-work-item-form'):
                 with ItemGrid(classes='add-work-item-fields-grid'):
                     # set widgets in row 1
@@ -208,13 +214,17 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     def on_mount(self):
         """Mounts the widgets.
 
-        This fetches the required data to populate the widgets. It fetches the available projects and the available
-        types of issues that can be created.
+        This fetches the required data to populate the widgets.
+
+        1. It fetches the available projects.
+        2. It fetches the available types of issues that can be created.
+        3. If the reporter account id is set and the reporter field is editable then this will also fetch the details of
+        the user identified by the reporter account and will set the reporter dropdown if the user exists.
+        4. It mounts the autocomplete widgets required for selecting reporter and assignee.
         """
 
         self.run_worker(self.fetch_available_projects())
         self.run_worker(self.fetch_available_issue_types())
-        # TODO check if this works because at mounting time _reporter_is_editable is always false
         if self.reporter_account_id and self._reporter_is_editable:
             self.run_worker(self._fetch_reporter())
         reporter_autocomplete = UsersAutoComplete(
@@ -237,6 +247,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         )
 
     async def _fetch_reporter(self):
+        """Checks if the user identified by self.reporter_account_id exist and if it does, it sets the reporter
+        dropdown widget."""
+
         response: APIControllerResponse = await self.app.api.get_user(self.reporter_account_id)
         if response.success and (user_details := response.result):
             self.reporter_selector.set_value(self.reporter_account_id, user_details.display_name)

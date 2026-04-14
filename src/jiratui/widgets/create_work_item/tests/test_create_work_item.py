@@ -1326,3 +1326,280 @@ async def test_validate_required_fields_description_is_required_and_not_set(
         # WHEN
         result = screen._validate_required_fields()
         assert result is False
+
+
+@pytest.mark.parametrize('validate_required_fields', [True, False])
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@pytest.mark.asyncio
+async def test_save_button_status_after_reporter_selection(
+    validate_required_fields_mock: Mock, validate_required_fields: bool, app
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        validate_required_fields_mock.return_value = validate_required_fields
+        # WHEN
+        screen.handle_reporter_selection()
+        # THEN
+        assert screen.save_button.disabled is not validate_required_fields
+
+
+@pytest.mark.parametrize('validate_required_fields', [True, False])
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@pytest.mark.asyncio
+async def test_save_button_status_after_summary_update(
+    validate_required_fields_mock: Mock, validate_required_fields: bool, app
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        validate_required_fields_mock.return_value = validate_required_fields
+        # WHEN
+        screen.handle_summary_value_change()
+        # THEN
+        assert screen.save_button.disabled is not validate_required_fields
+
+
+@pytest.mark.parametrize('validate_required_fields', [True, False])
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@pytest.mark.asyncio
+async def test_save_button_status_after_description_update(
+    validate_required_fields_mock: Mock, validate_required_fields: bool, app
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        validate_required_fields_mock.return_value = validate_required_fields
+        # WHEN
+        screen.handle_description_value_change()
+        # THEN
+        assert screen.save_button.disabled is not validate_required_fields
+
+
+@pytest.mark.parametrize('validate_required_fields', [True, False])
+@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=None))
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@pytest.mark.asyncio
+async def test_save_button_status_after_issue_type_selection(
+    validate_required_fields_mock: Mock, validate_required_fields: bool, app
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        validate_required_fields_mock.return_value = validate_required_fields
+        # WHEN
+        screen.handle_issue_type_selection()
+        # THEN
+        assert screen.save_button.disabled is not validate_required_fields
+
+
+@pytest.mark.parametrize('validate_required_fields', [True, False])
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@pytest.mark.asyncio
+async def test_save_button_status_after_project_selection(
+    validate_required_fields_mock: Mock,
+    fetch_available_issue_types_mock: Mock,
+    validate_required_fields: bool,
+    app,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    fetch_available_issue_types_mock.return_value = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        validate_required_fields_mock.return_value = validate_required_fields
+        # WHEN
+        screen.handle_project_selection()
+        # THEN
+        assert screen.save_button.disabled is not validate_required_fields
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_with_no_value(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN/THEN
+        assert screen._format_field_value('field_a', None, {}) is None
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_with_custom_type_userpicker(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:userpicker',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', 'value', metadata)
+        # THEN
+        assert result == {'accountId': 'value'}
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_with_custom_type_float_no_value(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:float',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', None, metadata)
+        # THEN
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_with_custom_type_float_and_incorrect_value(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:float',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', 'a', metadata)
+        # THEN
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_with_custom_type_float_and_correct_value(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:float',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', '1.2', metadata)
+        # THEN
+        assert result == float('1.2')
+
+
+@pytest.mark.parametrize(
+    'field_value, expected',
+    [
+        ('test1, test2', ['test1', 'test2']),
+        (['test1', 'test2'], ['test1', 'test2']),
+        (1, []),
+    ],
+)
+@pytest.mark.asyncio
+async def test_format_field_value_for_labels_field(field_value, expected, app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'type': 'array',
+            'items': 'string',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('labels', field_value, metadata)
+        # THEN
+        assert result == expected
+
+
+@pytest.mark.parametrize(
+    'field_type, field_value, expected',
+    [
+        ('other', 'test1', {'id': 'test1'}),
+        ('array', ['test1', 'test2'], [{'id': 'test1'}, {'id': 'test2'}]),
+        ('array', 'test1', [{'id': 'test1'}]),
+    ],
+)
+@pytest.mark.asyncio
+async def test_format_field_value_with_allowed_values(field_type: str, field_value, expected, app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'allowedValues': [{'name': 'Highest', 'id': '1'}],
+        'schema': {
+            'type': field_type,
+        },
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', field_value, metadata)
+        # THEN
+        assert result == expected
+
+
+@pytest.mark.asyncio
+async def test_format_field_value_fallback(app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {
+        'schema': {
+            'type': 'type1',
+        }
+    }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('field_a', 'test1', metadata)
+        # THEN
+        assert result == 'test1'
