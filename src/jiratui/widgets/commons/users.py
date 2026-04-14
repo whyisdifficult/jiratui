@@ -174,7 +174,10 @@ class UsersAutoComplete(AutoComplete):
         return True
 
     def apply_completion(self, value: str, state: TargetState) -> None:
+        # extract the selected option here before doing this after we call super() yields a null option which triggers
+        # an exception
+        account_id = self.option_list.highlighted_option.id  # type:ignore[attr-defined]
         # split name from email
         value = value.split('|', 1)[0]
         super().apply_completion(value, state)
-        self.target.account_id = self.option_list.highlighted_option.id  # type:ignore[attr-defined]
+        self.target.account_id = account_id

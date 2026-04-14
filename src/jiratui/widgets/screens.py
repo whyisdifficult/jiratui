@@ -376,17 +376,10 @@ class MainScreen(Screen):
                 yield ProjectSelectionInput(projects=[])
                 yield IssueTypeSelectionInput(types=[])
                 yield IssueStatusSelectionInput(statuses=[])
-                assignee_input = JiraUserInput(
+                yield JiraUserInput(
                     id='search-filters-input-assignee',
                     border_subtitle='(a)',
                     border_title='Assignee',
-                )
-                yield assignee_input
-                yield UsersAutoComplete(
-                    assignee_input,
-                    self.api,
-                    id='filter-assignee-autocomplete',
-                    user_search_function=self._search_and_filter_users,
                 )
             with ItemGrid(classes='bottom-search-bar'):
                 yield WorkItemInputWidget(value=self.initial_work_item_key)
@@ -556,6 +549,16 @@ class MainScreen(Screen):
             if self.focus_item_on_startup:
                 await self.app.workers.wait_for_complete([search_worker])
                 self.run_worker(self._focus_item_after_startup(self.focus_item_on_startup))
+
+        # mount autocomplete widgets
+        await self.mount(
+            UsersAutoComplete(
+                self.users_selector,
+                self.api,
+                id='filter-assignee-autocomplete',
+                user_search_function=self._search_and_filter_users,
+            )
+        )
 
     async def fetch_projects(self) -> None:
         """Fetches the list of available projects.
