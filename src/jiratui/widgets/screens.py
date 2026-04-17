@@ -1282,11 +1282,15 @@ class MainScreen(Screen):
 
         if self.current_loaded_work_item_key == message.work_item_key:
             # clean up the forms and tabs
-            self.related_issues_widget.remove_children()
-            self.issue_comments_widget.remove_children()
-            self.issue_attachments_widget.remove_children()
-            self.issue_remote_links_widget.remove_children()
-            self.issue_child_work_items_widget.remove_children()
-            self.issue_info_container.clear_information = True
+            self.related_issues_widget.issues = None
+            self.related_issues_widget.issue_key = None
+            self.issue_comments_widget.comments = None
+            self.issue_comments_widget.issue_key = None
+            self.issue_attachments_widget.attachments = None
+            self.issue_attachments_widget.issue_key = None
+            self.issue_remote_links_widget.issue_key = None
+            self.issue_child_work_items_widget.issues = None
+            self.issue_child_work_items_widget.issue_key = None
+            self.issue_info_container.issue = None
             self.issue_details_widget.issue = None
             self.current_loaded_work_item_key = None

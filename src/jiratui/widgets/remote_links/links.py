@@ -194,7 +194,6 @@ class IssueRemoteLinksWidget(VerticalScroll):
                 )
             )
 
-        await self.remove_children()
         await self.mount_all(rows)
 
     def watch_issue_key(self, issue_key: str | None = None) -> None:
@@ -206,5 +205,7 @@ class IssueRemoteLinksWidget(VerticalScroll):
         Returns:
             Nothing.
         """
+
+        self.remove_children()
         if issue_key:
             self.run_worker(self.fetch_remote_links(issue_key))
