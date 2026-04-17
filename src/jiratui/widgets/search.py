@@ -5,9 +5,11 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, ItemGrid, Vertical
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Rule, Static
+from textual.widgets._data_table import RowDoesNotExist
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -130,7 +132,20 @@ class DataTableSearchInput(Input):
 
 
 class IssuesSearchResultsTable(DataTable):
-    """The widgets that displays the results of a search."""
+    """The widget that displays the results of a search.
+
+    This widget provides a reactive attribute, `search_results`, that contains the issues that the table will
+    display.
+
+    The widget can post a message of type `IssuesSearchResultsTable.WorkItemDeleted` when the user deletes an item from
+    the table.
+
+    ```{important}
+    Deleting an item will delete the item from Jira. After a successful deletion the datatable will remove the row
+    related to the item that was deleted. In addition, the widget will send the message
+    `IssuesSearchResultsTable.WorkItemDeleted` to notify other widgets so they can update the relevant widgets.
+    ```
+    """
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)
 
@@ -178,6 +193,15 @@ class IssuesSearchResultsTable(DataTable):
 
     SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN = 30
 
+    class WorkItemDeleted(Message):
+        def __init__(self, work_item_key: str) -> None:
+            self._work_item_key = work_item_key
+            super().__init__()
+
+        @property
+        def work_item_key(self) -> str:
+            return self._work_item_key
+
     def __init__(self):
         super().__init__(id='search_results', cursor_type='row')
         # stores the next page's token by page number
@@ -188,6 +212,7 @@ class IssuesSearchResultsTable(DataTable):
         self.token_by_page: dict[int, str] = {}
         self.page = 1
         self.current_work_item_key: str | None = None
+        self.current_work_item_id: str | None = None
         self._initial_results_set: JiraIssueSearchResponse | None = None
 
     def set_initial_results_set(self, data: JiraIssueSearchResponse | None = None):
@@ -252,17 +277,18 @@ class IssuesSearchResultsTable(DataTable):
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Fetches the details of the currently-selected item."""
-        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-        _, work_item_key = event.row_key.value.split('#')
-        self.current_work_item_key = work_item_key
-        # use exclusive=True to make sure that if the user selects another work item before the worker finishes
-        # retrieving the data of the previously selected the correct data is fetched
-        # the exclusive flag tells Textual to cancel all previous workers before starting the new one.
-        self.run_worker(screen.fetch_issue(work_item_key), exclusive=True)
+        if event.row_key:
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            self.current_work_item_id, self.current_work_item_key = event.row_key.value.split('#')
+            # use exclusive=True to make sure that if the user selects another work item before the worker finishes
+            # retrieving the data of the previously selected the correct data is fetched
+            # the exclusive flag tells Textual to cancel all previous workers before starting the new one.
+            self.run_worker(screen.fetch_issue(self.current_work_item_key), exclusive=True)
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Stores the key of the currently-selected item."""
-        _, self.current_work_item_key = event.row_key.value.split('#')
+        if event.row_key:
+            self.current_work_item_id, self.current_work_item_key = event.row_key.value.split('#')
 
     def action_open_issue_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
@@ -308,9 +334,18 @@ class IssuesSearchResultsTable(DataTable):
                 self.current_work_item_key
             )
             if response.success:
-                self.notify(
-                    f'{self.current_work_item_key} deleted successfully', title='Delete Work Item'
-                )
+                try:
+                    self.remove_row(f'{self.current_work_item_id}#{self.current_work_item_key}')
+                except RowDoesNotExist:
+                    pass
+                else:
+                    # post the message to the parent container can update the pagination legend
+                    self.post_message(self.WorkItemDeleted(self.current_work_item_key))
+                    # force the table to highlight another item to avoid RowDoesNotExist exceptions with the next delete
+                    # attempt
+                    self.action_cursor_up()
+                    self.action_cursor_down()
+                self.notify(f'Deleted {self.current_work_item_key}', title='Delete Work Item')
             else:
                 self.notify(
                     f'Failed to delete the item {self.current_work_item_key}.',
@@ -383,24 +418,49 @@ class IssuesSearchResultsTable(DataTable):
 
 
 class SearchResultsContainer(Container):
-    """The container that holds the search results."""
+    """The container that holds the DataTable widget with the search results.
+
+    This widget provides a reactive attribute called `pagination`. The attribute accepts a dictionary with the details
+    of the search results' pagination. This includes `current_page_number` and `total`. When this attribute is updated
+    the widget will update the legend in the border subtitle to display the number of results and the page number.
+    """
 
     pagination: Reactive[dict | None] = reactive(None)
+    """Reactive attribute that contains pagination details associated to the search results. This is used setting the
+    widget's border subtitle with the page number and total records in the result."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.border_title = 'Work Items'
         self.config = CONFIGURATION.get()
+        self._total_results = None
+        self._page_number = None
+        self._total_pages = None
+
+    def _update_border_subtitle(self) -> None:
+        if self._total_results is None:
+            self.border_subtitle = (
+                None if self._page_number is None else f'Page {self._page_number}'
+            )
+        else:
+            self._total_pages = self._total_results // self.config.search_results_per_page
+            if (self._total_results % self.config.search_results_per_page) > 0:
+                self._total_pages += 1
+            if self._page_number is not None:
+                self.border_subtitle = f'Page {self._page_number} of {self._total_pages} (total: {self._total_results})'
+            else:
+                self.border_subtitle = None
 
     def watch_pagination(self, response: dict) -> None:
         if response:
-            current_page_number = max(1, response.get('current_page_number'))
-            if (total_results := response.get('total', 0)) is not None:
-                total_pages = total_results // self.config.search_results_per_page
-                if (total_results % self.config.search_results_per_page) > 0:
-                    total_pages += 1
-                self.border_subtitle = (
-                    f'Page {current_page_number} of {total_pages} (total: {total_results})'
-                )
-            else:
-                self.border_subtitle = f'Page {current_page_number}'
+            self._page_number = max(1, response.get('current_page_number'))
+            self._total_results = response.get('total', 0)
+            self._update_border_subtitle()
+
+    @on(IssuesSearchResultsTable.WorkItemDeleted)
+    def update_pagination_details_after_delete(
+        self, message: IssuesSearchResultsTable.WorkItemDeleted
+    ) -> None:
+        # update the total number of records and the border legend
+        self._total_results = 0 if self._total_results is None else self._total_results - 1
+        self._update_border_subtitle()

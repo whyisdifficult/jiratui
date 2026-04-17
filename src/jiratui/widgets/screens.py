@@ -1145,16 +1145,14 @@ class MainScreen(Screen):
 
         result: JiraIssueSearchResponse = response.result
         work_item: JiraIssue = result.issues[0]
+        # track the currently loaded work item
+        self.current_loaded_work_item_key = work_item.key
 
         # step 2: populate information tab
         self.issue_info_container.issue = work_item
         self.issue_info_container.hide_loading()
 
-        # track the currently loaded work item
-        self.current_loaded_work_item_key = selected_work_item_key
-
         # step 3: populate the details tab
-        # set the work item
         self.issue_details_widget.issue = work_item
 
         # step 4: populate the related-issues tab
@@ -1169,11 +1167,11 @@ class MainScreen(Screen):
         self.issue_attachments_widget.issue_key = work_item.key
         self.issue_attachments_widget.attachments = work_item.attachments
 
-        # fetch the issue's web links
+        # step 7: populate links tab
         if CONFIGURATION.get().show_issue_web_links:
             self.issue_remote_links_widget.issue_key = work_item.key
 
-        # fetch sub-tasks
+        # step 8: populate subtasks tab
         self.run_worker(self.retrieve_issue_subtasks(work_item.key))
 
     async def request_text_search(self, value: str):
@@ -1265,3 +1263,30 @@ class MainScreen(Screen):
 
         # Shift focus to the issue info container so user can interact with the issue
         self.issue_info_container.focus()
+
+    @on(IssuesSearchResultsTable.WorkItemDeleted)
+    def clear_work_item_data(self, message: IssuesSearchResultsTable.WorkItemDeleted) -> None:
+        """Clears the data of a selected item when the item is deleted.
+
+        When a work item is deleted and the item is the one currently being displayed in the information tabs on the
+        right-hand panel let's make sure we clean the forms and widgets. This way we avoid displaying the details of
+        the item that was deleted. This is only done when the item deleted is the one currently being displayed.
+
+        Args:
+            message: the message sent by a widget, e.g. the DataTable that holds the search results, when a work item is
+            deleted. The message contains the key of the work item that was deleted.
+
+        Returns:
+            None
+        """
+
+        if self.current_loaded_work_item_key == message.work_item_key:
+            # clean up the forms and tabs
+            self.related_issues_widget.remove_children()
+            self.issue_comments_widget.remove_children()
+            self.issue_attachments_widget.remove_children()
+            self.issue_remote_links_widget.remove_children()
+            self.issue_child_work_items_widget.remove_children()
+            self.issue_info_container.clear_information = True
+            self.issue_details_widget.issue = None
+            self.current_loaded_work_item_key = None
