@@ -9,7 +9,11 @@ from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, WorkItemsSearchOrderBy
 from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
-from jiratui.widgets.search import ConfirmDeleteItemScreen, IssuesSearchResultsTable
+from jiratui.widgets.search import (
+    ConfirmDeleteItemScreen,
+    IssuesSearchResultsTable,
+    SearchResultsContainer,
+)
 
 
 @pytest.fixture()
@@ -438,6 +442,7 @@ async def test_open_delete_issue_modal_screen(
         assert isinstance(app.screen, ConfirmDeleteItemScreen)
 
 
+@patch.object(SearchResultsContainer, '_update_border_subtitle')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
@@ -448,6 +453,7 @@ async def test_delete_issue_modal_screen_click_cancel(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
+    update_border_subtitle_mock: Mock,
     jira_issues: list[JiraIssue],
     app,
 ):
@@ -480,19 +486,22 @@ async def test_delete_issue_modal_screen_click_cancel(
         )
         assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
         assert isinstance(app.screen, MainScreen)
+        update_border_subtitle_mock.assert_called_once()
 
 
 @patch.object(APIController, 'delete_work_item')
+@patch.object(SearchResultsContainer, '_update_border_subtitle')
 @patch('jiratui.widgets.screens.MainScreen._search_work_items')
 @patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_delete_issue_modal_screen_click_delete(
-    search_projects_mock: AsyncMock,
+    fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
+    update_border_subtitle_mock: Mock,
     delete_work_item_mock: AsyncMock,
     jira_issues: list[JiraIssue],
     app,
@@ -524,6 +533,61 @@ async def test_delete_issue_modal_screen_click_delete(
         assert main_screen.search_results_table.search_results == JiraIssueSearchResponse(
             issues=jira_issues, next_page_token=None, is_last=None
         )
-        assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
+        assert main_screen.search_results_table.current_work_item_key != jira_issues[1].key
         assert isinstance(app.screen, MainScreen)
         delete_work_item_mock.assert_called_once_with(jira_issues[1].key)
+        update_border_subtitle_mock.assert_has_calls([call(), call()])
+
+
+@patch.object(APIController, 'delete_work_item')
+@patch.object(SearchResultsContainer, '_update_border_subtitle')
+@patch('jiratui.widgets.screens.MainScreen._search_work_items')
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_delete_issue_modal_screen_click_delete_currently_selected_item(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    update_border_subtitle_mock: Mock,
+    delete_work_item_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    """Tests that deleting the currently select item clears the currently selected item key and the details' issue."""
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    delete_work_item_mock.return_value = APIControllerResponse()
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        main_screen.current_loaded_work_item_key = jira_issues[1].key
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('down')
+        await pilot.press('d')
+        await pilot.press('enter')
+        # THEN
+        assert main_screen.search_results_table.focus()
+        assert main_screen.search_results_table.page == 1
+        search_work_items_mock.assert_called_once()
+        assert main_screen.search_results_table.search_results == JiraIssueSearchResponse(
+            issues=jira_issues, next_page_token=None, is_last=None
+        )
+        assert main_screen.search_results_table.current_work_item_key != jira_issues[1].key
+        assert isinstance(app.screen, MainScreen)
+        delete_work_item_mock.assert_called_once_with(jira_issues[1].key)
+        update_border_subtitle_mock.assert_has_calls([call(), call()])
+        assert main_screen.current_loaded_work_item_key is None
+        assert main_screen.issue_details_widget.issue is None

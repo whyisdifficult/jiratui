@@ -7,6 +7,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-toml
+      - id: debug-statements
       - id: check-added-large-files
         args: ['--maxkb=800']
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -14,7 +15,7 @@ repos:
     rev: v0.15.8
     hooks:
       # Run the linter.
-      - id: ruff-check
+      - id: ruff
         args: [--fix]
       # Run the formatter.
       - id: ruff-format

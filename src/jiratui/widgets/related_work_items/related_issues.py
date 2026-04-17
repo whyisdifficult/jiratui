@@ -130,7 +130,7 @@ class RelatedIssuesWidget(VerticalScroll):
             )
         else:
             self.notify(
-                'Select a work item before attempting to add a link.',
+                'Select a work item before attempting to link work items.',
                 title=self.NOTIFICATIONS_DEFAULT_TITLE,
             )
 

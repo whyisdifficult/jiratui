@@ -73,15 +73,20 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         self._issue_key = value
 
     async def action_create_work_item_subtask(self) -> None:
-        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-        await self.app.push_screen(
-            AddWorkItemScreen(
-                project_key=screen.project_selector.selection,
-                reporter_account_id=CONFIGURATION.get().jira_account_id,
-                parent_work_item_key=self.issue_key,
-            ),
-            callback=screen.create_work_item,
-        )
+        if self._issue_key:
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            await self.app.push_screen(
+                AddWorkItemScreen(
+                    project_key=screen.project_selector.selection,
+                    reporter_account_id=CONFIGURATION.get().jira_account_id,
+                    parent_work_item_key=self.issue_key,
+                ),
+                callback=screen.create_work_item,
+            )
+        else:
+            self.notify(
+                'Select a work item before attempting to create a subtask.', title='Create Subtask'
+            )
 
     def watch_issues(self, items: list[JiraIssue]) -> None:
         """Updates the list of work items that are subtasks of the currently-selected item.
