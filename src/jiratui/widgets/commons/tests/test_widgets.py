@@ -9,6 +9,7 @@ Tests both CREATE and UPDATE modes for all widget types:
 - URLInputWidget
 - SprintWidgetWidget
 - MultiUserPickerWidget
+- SingleUserPickerWidget
 """
 
 import pytest
@@ -21,6 +22,7 @@ from jiratui.widgets.commons.widgets import (
     MultiUserPickerWidget,
     NumericInputWidget,
     SelectionWidget,
+    SingleUserPickerWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -255,7 +257,7 @@ class TestDateTimeInputWidget:
         assert widget.mode == FieldMode.CREATE
         assert widget.field_id == 'customfield_10001'
         assert widget.border_title == 'Event Time'
-        assert 'create-work-item-datetime-input' in widget.classes
+        assert 'issue_details_input_field' in widget.classes
 
     @pytest.mark.asyncio
     async def test_update_mode_initialization(self, app):
@@ -513,7 +515,7 @@ class TestURLInputWidget:
         assert widget.border_title == 'Custom Text'
         assert widget.border_subtitle == '(*)'
         assert 'required' in widget.classes
-        assert 'create-field' in widget.classes
+        assert 'create-work-item-generic-input-field' in widget.classes
 
     def test_create_mode_with_placeholder(self):
         """Test URLWidget with custom placeholder."""
@@ -543,7 +545,7 @@ class TestURLInputWidget:
             assert widget.jira_field_key == 'customfield_10002'
             assert widget.original_value == 'original text'
             assert widget.value == 'original text'
-            assert 'update-field' in widget.classes
+            assert 'issue_details_input_field' in widget.classes
 
     @pytest.mark.asyncio
     async def test_get_value_for_update(self, app):
@@ -1029,6 +1031,193 @@ class TestMultiUserPickerWidget:
             assert widget.value_has_changed is True
             assert widget.value == 'homer'
             assert widget.get_value_for_update() == [{'id': '2'}]
+
+
+class TestSingleUserPickerWidget:
+    """Tests for SingleUserPickerWidget in both CREATE and UPDATE modes."""
+
+    def test_create_mode_initialization(self):
+        """Test SingleUserPickerWidget initialization in CREATE mode."""
+        widget = SingleUserPickerWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            title='Custom Text',
+            required=True,
+        )
+
+        assert widget.mode == FieldMode.CREATE
+        assert widget.field_id == 'customfield_10002'
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.border_title == 'Custom Text'
+        assert widget.border_subtitle == '(*)'
+        assert widget.original_value is None
+        assert widget.account_id is None
+        assert widget.value == ''
+        assert widget.get_value_for_create() is None
+        assert 'required' in widget.classes
+        assert 'create-work-item-generic-input-field' in widget.classes
+
+    def test_create_mode_initialization_with_custom_subtitle(self):
+        """Test SingleUserPickerWidget initialization in CREATE mode."""
+        widget = SingleUserPickerWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            title='Custom Text',
+            required=True,
+            border_subtitle='(a)',
+        )
+        assert widget.border_subtitle == '(*) (a)'
+
+    def test_create_mode_with_placeholder(self):
+        """Test SingleUserPickerWidget with custom placeholder."""
+        widget = SingleUserPickerWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10002',
+            jira_field_key='customfield_10002',
+            placeholder='Enter custom text...',
+        )
+        # THEN
+        assert widget.placeholder == 'Enter custom text...'
+        assert widget.get_value_for_create() is None
+
+    @pytest.mark.asyncio
+    async def test_update_mode_initialization(self, app):
+        """Test SingleUserPickerWidget initialization in UPDATE mode."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                title='Custom Text',
+                original_value=None,
+                supports_update=True,
+            )
+            # THEN
+            assert widget.mode == FieldMode.UPDATE
+            assert widget.jira_field_key == 'customfield_10002'
+            assert widget.original_value is None
+            assert widget.value == ''
+            assert widget.account_id is None
+            assert 'issue_details_input_field' in widget.classes
+            assert widget.get_value_for_update() is None
+
+    @pytest.mark.asyncio
+    async def test_get_value_for_update(self, app):
+        """Test get_value_for_update returns current value."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+            # WHEN
+            widget.set_value(account_id='1', name='bart')
+            # THEN
+            assert widget.get_value_for_update() == '1'
+            assert widget.value == 'bart'
+
+    @pytest.mark.parametrize('name', [None, '', ' '])
+    @pytest.mark.asyncio
+    async def test_value_has_changed_no_change(self, name, app):
+        """Test value_has_changed when value hasn't changed."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+            # WHEN
+            widget.set_value(account_id=None, name=name)
+            # THEN
+            assert widget.value_has_changed is False
+            assert widget.get_value_for_update() is None
+            assert widget.value == ''
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_with_whitespace(self, app):
+        """Test value_has_changed ignores whitespace differences."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value={'account_id': '1', 'name': 'bart'},
+            )
+            widget.set_value(account_id='1', name='bart ')
+            # THEN
+            assert widget.value == 'bart'
+            assert widget.value_has_changed is False
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_empty(self, app):
+        """Test value_has_changed when both are empty."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+            # WHEN
+            widget.set_value(account_id=None, name='')
+            # THEN
+            assert widget.value_has_changed is False
+            assert widget.get_value_for_update() is None
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_empty_to_value(self, app):
+        """Test value_has_changed from empty to value."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value={},
+            )
+            # WHEN
+            widget.set_value(account_id='2', name='homer')
+            # THEN
+            assert widget.value == 'homer'
+            assert widget.value_has_changed is True
+            assert widget.get_value_for_update() == '2'
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_value_to_empty(self, app):
+        """Test value_has_changed from value to empty."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value={'account_id': '2', 'name': 'homer'},
+            )
+            # WHEN
+            assert widget.value == 'homer'
+            widget.set_value(account_id=None, name=None)
+            # THEN
+            assert widget.value_has_changed is True
+            assert widget.value == ''
+            assert widget.get_value_for_update() is None
+
+    @pytest.mark.asyncio
+    async def test_value_has_changed_none_to_value(self, app):
+        """Test value_has_changed from None to value."""
+        async with app.run_test():
+            widget = SingleUserPickerWidget(
+                mode=FieldMode.UPDATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value=None,
+            )
+            # WHEN
+            widget.set_value(account_id='2', name='homer')
+            assert widget.value_has_changed is True
+            assert widget.value == 'homer'
+            assert widget.get_value_for_update() == '2'
 
 
 # ============================================================================

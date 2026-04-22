@@ -15,7 +15,6 @@ from jiratui.widgets.commons.base import (
     FieldMode,
     LabelsAutoComplete,
     MultiUserPickerAutoComplete,
-    UserPickerWidget,
 )
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
@@ -23,6 +22,7 @@ from jiratui.widgets.commons.widgets import (
     LabelsWidget,
     MultiSelectWidget,
     MultiUserPickerWidget,
+    SingleUserPickerWidget,
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
@@ -184,15 +184,15 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     yield CreateWorkItemProjectSelectionInput()
                     yield CreateWorkItemIssueTypeSelectionInput([])
                     # set widgets in row 2
-                    # this input field contains the account id of the Jira user that we can use to update the item's
-                    # assignee field
+                    # this input field contains the account id of the Jira user that we can use to set the item's
+                    # reporter field
                     yield JiraUserInput(
                         id='create-work-item-reporter-selector',
                         border_title='Reporter',
                         border_subtitle='(*)',
                         jira_field_key='reporter_account_id',
                     ).add_class(*['required'])
-                    # this input field contains the account id of the Jira user that we can use to update the item's
+                    # this input field contains the account id of the Jira user that we can use to set the item's
                     # assignee field
                     yield JiraUserInput(
                         id='create-work-item-assignee-selector',
@@ -384,16 +384,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             )
             await self.additional_fields.mount_all(metadata_fields)
 
-            if user_picker_widgets := self.additional_fields.query(UserPickerWidget):
-                users_response = await application.api.search_users_assignable_to_projects(
-                    project_keys=[project_key],
-                    active=True,
-                )
-                if users_response.success and users_response.result:
-                    users_data = {'users': users_response.result, 'selection': None}
-                    for user_picker in user_picker_widgets:
-                        user_picker.users = users_data
-
             # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
             for input_widget in self.additional_fields.query(Input):
                 if isinstance(input_widget, LabelsWidget):
@@ -414,6 +404,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         MultiUserPickerAutoComplete(
                             target=input_widget, api_controller=application.api
                         )
+                    )
+                elif isinstance(input_widget, SingleUserPickerWidget):
+                    await self.additional_fields.mount(
+                        UsersAutoComplete(target=input_widget, api_controller=application.api)
                     )
 
     @staticmethod
@@ -521,6 +515,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, MultiUserPickerWidget):
+                    if value := widget.get_value_for_create():
+                        data[widget.jira_field_key] = value
+                    continue
+                elif isinstance(widget, SingleUserPickerWidget):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value
                     continue

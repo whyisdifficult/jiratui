@@ -4,7 +4,6 @@ import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueType, Project
-from jiratui.widgets.commons import UserPickerWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
@@ -15,6 +14,7 @@ from jiratui.widgets.commons.widgets import (
     MultiUserPickerWidget,
     NumericInputWidget,
     SelectionWidget,
+    SingleUserPickerWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -714,9 +714,7 @@ async def test_save_includes_additional_fields(
             patch.object(
                 NumericInputWidget, 'value', new_callable=PropertyMock(return_value='123.45')
             ),
-            patch.object(
-                UserPickerWidget, 'selection', new_callable=PropertyMock(return_value='1')
-            ),
+            patch.object(SingleUserPickerWidget, 'get_value_for_create') as mock_user_picker,
             patch.object(MultiUserPickerWidget, 'get_value_for_create') as mock_multi_user_picker,
         ):
             mock_project.return_value = 'TEST'
@@ -727,6 +725,7 @@ async def test_save_includes_additional_fields(
             mock_description.return_value = 'Test Description'
             mock_components.return_value = [{'id': '10000'}]
             mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
+            mock_user_picker.return_value = 'reporter123'
 
             # WHEN
             screen.handle_save()
@@ -1091,7 +1090,7 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
             assert isinstance(widget, DateTimeInputWidget)
         elif widget.id == 'user-picker':
             assert widget.jira_field_key == 'user-picker'
-            assert isinstance(widget, UserPickerWidget)
+            assert isinstance(widget, SingleUserPickerWidget)
     assert len(widgets) == 14
 
 
