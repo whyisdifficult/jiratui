@@ -725,7 +725,7 @@ async def test_save_includes_additional_fields(
             mock_description.return_value = 'Test Description'
             mock_components.return_value = [{'id': '10000'}]
             mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
-            mock_user_picker.return_value = 'reporter123'
+            mock_user_picker.return_value = '12345qwerty'
 
             # WHEN
             screen.handle_save()
@@ -733,21 +733,23 @@ async def test_save_includes_additional_fields(
         # THEN
         # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['assignee_account_id'] == 'reporter123'
+        assert len(dismiss_args.keys()) == 16
         assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['summary'] == 'Test Summary'
         assert dismiss_args['parent_key'] == 'issue-1'
         assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['assignee_account_id'] == 'reporter123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['description'] == 'Test Description'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
         assert dismiss_args['components'] == [{'id': '10000'}]
-        assert dismiss_args['priority'] == '3'
         assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
         assert dismiss_args['customfield_10015'] == 'http://example.bar'
         assert dismiss_args['customfield_10098'] == '2026-05-05 12:30'
         assert set(dismiss_args['labels']) == {'test1', 'test2'}
         assert dismiss_args['customfield_10097'] == 123.45
-        assert dismiss_args['customfield_10096'] == {'accountId': '1'}
         assert dismiss_args['customfield_10095'] == [{'accountId': '3'}, {'accountId': '4'}]
+        assert dismiss_args['customfield_10096'] == '12345qwerty'
 
 
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
@@ -1560,11 +1562,39 @@ async def test_format_field_value_for_labels_field(field_value, expected, app):
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     metadata = {
-        'schema': {
-            'type': 'array',
-            'items': 'string',
-        }
+        'required': False,
+        'schema': {'type': 'array', 'items': 'string', 'system': 'labels'},
+        'name': 'Labels',
+        'key': 'labels',
+        'autoCompleteUrl': 'https://example.atlassian.net/rest/api/1.0/labels/suggest?query=',
+        'hasDefaultValue': False,
+        'operations': ['add', 'set', 'remove'],
+        'fieldId': 'labels',
     }
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._format_field_value('labels', field_value, metadata)
+        # THEN
+        assert result == expected
+
+
+@pytest.mark.parametrize(
+    'field_value, expected',
+    [
+        ('test1, test2', ['test1', 'test2']),
+        (['test1', 'test2'], ['test1', 'test2']),
+        (1, []),
+    ],
+)
+@pytest.mark.asyncio
+async def test_format_field_value_for_strings_array_fields(field_value, expected, app):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    metadata = {'type': 'array', 'items': 'string', 'customId': 10076}
     async with app.run_test() as pilot:
         screen = AddWorkItemScreen(project_key='TEST')
         await app.push_screen(screen)

@@ -110,6 +110,9 @@ class WidgetBuilder:
 
         Returns:
             A SingleUserPickerWidget instance.
+
+        Example:
+        build_user_picker(FieldMode.UPDATE, FieldMetadata(), current_value={'accountId': '123', 'displayName': 'Bart'})
         """
 
         if mode == FieldMode.CREATE:
@@ -124,11 +127,14 @@ class WidgetBuilder:
             # UPDATE mode
             original_value: dict | None = None
             if current_value:
-                original_value = {
-                    'accountId': current_value.get('accountId'),
-                    'name': current_value.get('name'),
-                }
-
+                name = current_value.get('displayName', current_value.get('name', ''))
+                if current_value.get('accountId') and name and (cleaned_name := name.strip()):
+                    original_value = {
+                        'account_id': current_value.get('accountId'),
+                        'name': cleaned_name,
+                    }
+                else:
+                    raise ValueError('Missing required accountId and/or displayName or name')
             return SingleUserPickerWidget(
                 mode=mode,
                 field_id=metadata.field_id,
@@ -136,6 +142,7 @@ class WidgetBuilder:
                 title=metadata.name,
                 original_value=original_value,
                 supports_update=metadata.supports_update,
+                required=metadata.required,
             )
 
     @staticmethod
@@ -145,12 +152,13 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: float | None = None,
     ) -> Widget:
-        """Builds a NumericInputWidget for float/number fields.
+        """Builds a `NumericInputWidget` for float/number fields.
 
         Args:
-            mode: CREATE or UPDATE mode.
-            metadata: parsed field metadata.
-            current_value: current numeric value (UPDATE mode only).
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             A instance of NumericInputWidget.
@@ -185,19 +193,20 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: str | None = None,
     ) -> Widget:
-        """
-        Build a SelectionWidget for dropdown selection fields.
+        """Builds a `SelectionWidget` for dropdown selection fields.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
             options: List of (display_name, id) tuples
             initial_value: Initial value (CREATE mode only)
-            current_value: Current selected ID (UPDATE mode only)
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             SelectionWidget instance
         """
+
         if mode == FieldMode.CREATE:
             # Determine allow_blank and initial value
             allow_blank = True
@@ -244,13 +253,13 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: str | None = None,
     ) -> Widget:
-        """
-        Build a DateInputWidget for date picker fields.
+        """Builds a `DateInputWidget` for date picker fields.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current date value (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             DateInputWidget instance
@@ -277,13 +286,13 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: str | None = None,
     ) -> Widget:
-        """
-        Build a DateTimeInputWidget for datetime fields.
+        """Builds a `DateTimeInputWidget` for datetime fields.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current datetime value (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             DateTimeInputWidget instance
@@ -310,13 +319,13 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: str | None = None,
     ) -> Widget:
-        """
-        Build a TextInputWidget for text fields.
+        """Builds a `TextInputWidget` for text fields.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current text value (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             TextInputWidget instance
@@ -347,15 +356,15 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: str | None = None,
     ) -> Widget:
-        """
-        Build a unified URLWidget for URL fields.
+        """Builds a unified `URLWidget` for URL fields.
 
         Auto-adds 'https://' prefix when input loses focus if no protocol is present.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current URL value (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             URLWidget instance for URL input
@@ -378,13 +387,13 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: list[str] | None = None,
     ) -> Widget:
-        """
-        Build a LabelsWidget for comma-separated labels input.
+        """Builds a `LabelsWidget` for comma-separated labels input.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current labels list (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             LabelsWidget instance
@@ -396,8 +405,8 @@ class WidgetBuilder:
             jira_field_key=metadata.key,
             title=metadata.name,
             required=metadata.required,
-            current_value=current_value or [],
-            field_supports_update=metadata.supports_update,
+            original_value=current_value or [],
+            supports_update=metadata.supports_update,
         )
 
     @staticmethod
@@ -407,18 +416,19 @@ class WidgetBuilder:
         # UPDATE mode parameters
         current_value: list[dict] | None = None,
     ) -> Widget:
-        """
-        Build a multi-checkbox widget.
+        """Builds a `MultiSelectWidget` widget.
+
+        This uses MultiSelectWidget for both CREATE and UPDATE modes.
 
         Args:
-            mode: CREATE or UPDATE mode
-            metadata: Parsed field metadata
-            current_value: Current selected values (UPDATE mode only)
+            mode: either CREATE or UPDATE mode.
+            metadata: the field's metadata.
+            current_value: the current value of the work item's field associated to this widget. This is only relevant
+            when the mode is `FieldMode.UPDATE`.
 
         Returns:
             Widget instance for multi-checkbox input
         """
-        # Use MultiSelectWidget for both CREATE and UPDATE modes
 
         # Extract current value IDs for UPDATE mode
         current_ids = []
@@ -531,8 +541,7 @@ def should_skip_field(
     field_id: str,
     skip_list: list[str],
 ) -> bool:
-    """
-    Check if a field should be skipped during widget creation.
+    """Checks if a field should be skipped during widget creation.
 
     Args:
         field_id: The field ID to check

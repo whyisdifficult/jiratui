@@ -445,10 +445,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             return None
 
         # labels field (array of strings)
-        elif (
-            schema.get('type') == 'array'
-            and schema.get('items') == 'string'
-            and field_id == 'labels'
+        elif field_id == 'labels' or (
+            schema.get('type') == 'array' and schema.get('items') == 'strings'
         ):
             if isinstance(value, str):
                 # split by comma and strip whitespace from each label
@@ -506,7 +504,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
             # process widgets that are created dynamically
             for widget in self.additional_fields.children:
-                if not (field_id := widget.id):
+                if not hasattr(widget, 'field_id'):
+                    continue
+
+                if not (field_id := widget.field_id):
                     continue
 
                 value: Any = None
@@ -519,6 +520,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, SingleUserPickerWidget):
+                    if value := widget.get_value_for_create():
+                        data[widget.jira_field_key] = value
+                    continue
+                elif isinstance(widget, LabelsWidget):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value
                     continue

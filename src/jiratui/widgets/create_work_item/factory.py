@@ -185,7 +185,7 @@ def create_widgets_for_work_item_creation(
 
                     widget = MultiSelectWidget(
                         mode=FieldMode.CREATE,
-                        field_id=item.get('fieldId') or '',
+                        field_id=field_id or '',
                         jira_field_key=item.get('key') or field_id,
                         options=options,
                         title=item.get('name'),
@@ -203,7 +203,7 @@ def create_widgets_for_work_item_creation(
 
                     widget = SelectionWidget(
                         mode=FieldMode.CREATE,
-                        field_id=item.get('fieldId') or '',
+                        field_id=field_id or '',
                         jira_field_key=item.get('key') or field_id,
                         options=options,
                         title=item.get('name'),

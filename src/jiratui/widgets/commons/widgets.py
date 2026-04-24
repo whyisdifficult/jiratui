@@ -127,7 +127,6 @@ class DateInputWidget(DateInput, BaseFieldWidget, BaseUpdateFieldWidget):
             required=required if mode == FieldMode.CREATE else False,
             compact=True,
         )
-        # self.add_class('input-date')
 
         # Mode-specific setup
         if mode == FieldMode.UPDATE:
@@ -510,7 +509,7 @@ class SingleUserPickerWidget(Input):
             title: the display title for the field.
             required: indicates whether the field is required or not.
             original_value: the current value of the work item's field associated to this widget. This is only relevant
-            when the mode is `FieldMode.UPDATE`. It expects a list of dictionaries with the account id and name of a
+            when the mode is `FieldMode.UPDATE`. It expects a list of dictionaries with the `account_id` and `name` of a
             Jira user.
             supports_update: indicates whether the field can be updated. This is only relevant when the mode is
             `FieldMode.UPDATE`.
@@ -597,31 +596,35 @@ class SingleUserPickerWidget(Input):
     def account_id(self, account_id: str | None):
         self._account_id = account_id
 
-    def get_value_for_create(self) -> str | None:
+    def get_value_for_create(self) -> dict | None:
         """Retrieves the value of the widget when the widget is used in CREATE mode.
 
         The value of this field is the account id of the selected Jira user.
 
         Returns:
-            The account id of the selected Jira user.
+            The a dictionary with the account id of the selected Jira user.
         """
 
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')
-        return self.account_id
+        if self.account_id is not None:
+            return {'id': self.account_id}
+        return None
 
-    def get_value_for_update(self) -> str | None:
+    def get_value_for_update(self) -> dict | None:
         """Retrieves the value of the widget when the widget is used in UPDATE mode.
 
         The value of this field is the account id of the selected Jira user.
 
         Returns:
-            The account id of the selected Jira user.
+            The a dictionary with the account id of the selected Jira user.
         """
 
         if self.mode != FieldMode.UPDATE:
             raise ValueError('get_value_for_update() only valid in UPDATE mode')
-        return self.account_id
+        if self.account_id is not None:
+            return {'id': self.account_id}
+        return None
 
     @property
     def value_has_changed(self) -> bool:
@@ -637,7 +640,7 @@ class SingleUserPickerWidget(Input):
             raise ValueError('value_has_changed only valid in UPDATE mode')
 
         original_user: dict | None = self.original_value if self.original_value else None
-        current_user = self.get_value_for_update()
+        current_user: dict = self.get_value_for_update()
 
         # both empty - no change
         if not original_user and not current_user:
@@ -647,7 +650,7 @@ class SingleUserPickerWidget(Input):
         if bool(original_user) != bool(current_user):
             return True
 
-        return original_user.get('account_id') != current_user
+        return original_user.get('account_id') != current_user.get('id')
 
     def clear(self):
         super().clear()
@@ -661,9 +664,15 @@ class LabelsWidget(Input):
     for Jira API (list of strings).
 
     Schema detection:
-        custom_type == CustomFieldType.LABELS.value
-        OR
-        schema.type == "array" AND schema.items == "string" AND field_id == "labels"
+    ```python
+    custom_type == CustomFieldType.LABELS.value
+    ```
+
+    or,
+
+    ```python
+    schema.type == "array" AND schema.items == "string" AND field_id == "labels"
+    ```
 
     Usage in CREATE mode:
     ```python
@@ -1102,7 +1111,9 @@ class MultiUserPickerWidget(Input):
     This widget handles comma-separated users' names input and provides proper formatting for Jira API (list of strings).
 
     Schema detection:
-        custom_type == CustomFieldType.MULTI_USER_PICKER.value
+    ```python
+    custom_type == CustomFieldType.MULTI_USER_PICKER.value
+    ```
 
     Usage in CREATE mode:
     ```python
@@ -1203,7 +1214,7 @@ class MultiUserPickerWidget(Input):
             # CREATE mode specific CSS
             self.add_class('create-work-item-generic-input-field')
 
-        # Add required indicator
+        # add required indicator
         if required:
             self.border_subtitle = '(*)'
             self.add_class('required')
@@ -1640,7 +1651,8 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
         )
 
-        # Mode-specific setup
+        # mode-specific setup
+        self.add_class('create-work-item-generic-selector')
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
                 jira_field_key=jira_field_key,
@@ -1650,12 +1662,10 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             # Set initial value for UPDATE mode
             if original_value is not None:
                 self.value = original_value
-            self.add_class('create-work-item-generic-selector')
         else:
             # CREATE mode specific setup
             if initial_value != Select.NULL:
                 self.value = initial_value
-            self.add_class('create-work-item-generic-selector')
 
     def get_value_for_update(self) -> dict | None:
         """
@@ -1719,24 +1729,30 @@ class DescriptionWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     - Required field support
 
     Usage in CREATE mode:
-        widget = DescriptionWidget(
-            mode=FieldMode.CREATE,
-            field_id="description",
-            title="Description",
-            required=False
-        )
-        # Get value: widget.text
+    ```python
+    widget = DescriptionWidget(
+        mode=FieldMode.CREATE, field_id='description', title='Description', required=False
+    )
+    # Get value:
+    widget.text
+    ```
 
     Usage in UPDATE mode:
-        widget = DescriptionWidget(
-            mode=FieldMode.UPDATE,
-            field_id="description",
-            title="Description",
-            original_value="Original description text",
-            field_supports_update=True
-        )
-        # Check changes: widget.value_has_changed
-        # Get value for API: widget.get_value_for_update()
+    ```python
+    widget = DescriptionWidget(
+        mode=FieldMode.UPDATE,
+        field_id='description',
+        title='Description',
+        original_value='Original description text',
+        field_supports_update=True,
+    )
+    # Check changes:
+    widget.value_has_changed
+    # Get value for API updates:
+    widget.get_value_for_update()
+    # Get value for API creation operations:
+    widget.get_value_for_create()
+    ```
     """
 
     def __init__(
