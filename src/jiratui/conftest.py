@@ -220,8 +220,16 @@ def jira_worklogs() -> list[JiraWorklog]:
             started=datetime(2025, 10, 18, 13, 45, 0, tzinfo=timezone.utc),
             time_spent='1h',
             time_spent_seconds=3600,
-            author=Mock(spec=JiraUser),
-            update_author=Mock(spec=JiraUser),
+            author=JiraUser(
+                display_name='Bart',
+                account_id='1',
+                active=True,
+            ),
+            update_author=JiraUser(
+                display_name='Bart',
+                account_id='1',
+                active=True,
+            ),
             comment='-',
         ),
         JiraWorklog(
@@ -230,8 +238,16 @@ def jira_worklogs() -> list[JiraWorklog]:
             started=datetime(2025, 10, 19, 13, 45, 0, tzinfo=timezone.utc),
             time_spent='1h',
             time_spent_seconds=3600,
-            author=Mock(spec=JiraUser),
-            update_author=Mock(spec=JiraUser),
+            author=JiraUser(
+                display_name='Bart',
+                account_id='1',
+                active=True,
+            ),
+            update_author=JiraUser(
+                display_name='Bart',
+                account_id='1',
+                active=True,
+            ),
             comment='-',
         ),
     ]
