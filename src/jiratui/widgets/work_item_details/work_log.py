@@ -168,6 +168,7 @@ class WorkItemWorkLogScreen(Screen[dict]):
             self._update_subtitle()
             elements: list[WorkLogCollapsible] = []
             worklog: JiraWorklog
+            comment_widget: Markdown | Static
             for worklog in result.logs:
                 if worklog.comment and (comment_text := worklog.get_comment()):
                     comment_widget = Markdown(comment_text)
@@ -181,7 +182,7 @@ class WorkItemWorkLogScreen(Screen[dict]):
                     )
 
                 url = build_external_url_for_work_log(self._work_item_key, worklog.id)
-                work_log_details = DataTable(cursor_type='row')
+                work_log_details: DataTable = DataTable(cursor_type='row')
                 work_log_details.add_columns(*('Time Spent', 'Started', 'Author', 'Update Author'))
                 work_log_details.add_row(
                     worklog.display_time_spent(),
