@@ -182,13 +182,29 @@ class WorkItemWorkLogScreen(Screen[dict]):
                     )
 
                 url = build_external_url_for_work_log(self._work_item_key, worklog.id)
-                work_log_details: DataTable = DataTable(cursor_type='row')
-                work_log_details.add_columns(*('Time Spent', 'Started', 'Author', 'Update Author'))
-                work_log_details.add_row(
-                    worklog.display_time_spent(),
-                    worklog.display_started(),
-                    worklog.display_author(),
-                    worklog.display_update_author(),
+                work_log_details: DataTable = DataTable(
+                    cursor_type='row', show_header=False, classes='worklog-details-table'
+                )
+                work_log_details.add_columns(*('Property', 'Value'))
+                work_log_details.add_rows(
+                    [
+                        (
+                            Text('Time Spent', justify='right'),
+                            Text(worklog.display_time_spent(), justify='left'),
+                        ),
+                        (
+                            Text('Started', justify='right'),
+                            Text(worklog.display_started(), justify='left'),
+                        ),
+                        (
+                            Text('Author', justify='right'),
+                            Text(worklog.display_author(), justify='left'),
+                        ),
+                        (
+                            Text('Update Author', justify='right'),
+                            Text(worklog.display_update_author(), justify='left'),
+                        ),
+                    ]
                 )
                 elements.append(
                     WorkLogCollapsible(
