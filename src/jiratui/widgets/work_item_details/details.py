@@ -1,7 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, cast
 
-from dateutil import parser  # type:ignore[import-untyped]
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
@@ -499,9 +498,17 @@ class IssueDetailsWidget(Vertical):
             )
         else:
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+            started_datetime: datetime | None = None
+            if started:
+                naive_dt = datetime.fromisoformat(started)
+                # assume the date/time value is in local time and convert to UTC
+                started_datetime = naive_dt.replace(
+                    tzinfo=None
+                ).astimezone()  # make it aware of local TZ as defined by the OS
+                started_datetime = started_datetime.astimezone(timezone.utc)
             response: APIControllerResponse = await application.api.add_work_item_worklog(
                 issue_key_or_id=work_item_key,
-                started=parser.parse(f'{started}Z') if started else None,
+                started=started_datetime,
                 time_spent=time_spent,
                 time_remaining=time_remaining,
                 comment=description,

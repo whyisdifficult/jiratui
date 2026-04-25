@@ -2,13 +2,24 @@ from datetime import datetime
 import re
 from typing import cast
 
+from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical, VerticalScroll
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Button, Collapsible, Footer, Input, Label, Markdown, TextArea
+from textual.widgets import (
+    Button,
+    Collapsible,
+    DataTable,
+    Footer,
+    Input,
+    Label,
+    Markdown,
+    Static,
+    TextArea,
+)
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorklog, PaginatedJiraWorklog
@@ -158,15 +169,30 @@ class WorkItemWorkLogScreen(Screen[dict]):
             elements: list[WorkLogCollapsible] = []
             worklog: JiraWorklog
             for worklog in result.logs:
-                comment_text = ''
-                if worklog.comment and not (comment_text := worklog.get_comment()):
+                if worklog.comment and (comment_text := worklog.get_comment()):
+                    comment_widget = Markdown(comment_text)
+                else:
                     # this may happen if we fail to parse the ADF data for Jira Cloud API
-                    comment_text = 'Unable to display the description associated to the worklog.'
+                    comment_widget = Static(
+                        Text(
+                            'Unable to display the description associated to the worklog.',
+                            style='red italic',
+                        )
+                    )
 
                 url = build_external_url_for_work_log(self._work_item_key, worklog.id)
+                work_log_details = DataTable(cursor_type='row')
+                work_log_details.add_columns(*('Time Spent', 'Started', 'Author', 'Update Author'))
+                work_log_details.add_row(
+                    worklog.display_time_spent(),
+                    worklog.display_started(),
+                    worklog.display_author(),
+                    worklog.display_update_author(),
+                )
                 elements.append(
                     WorkLogCollapsible(
-                        Markdown(comment_text),
+                        comment_widget,
+                        work_log_details,
                         title=worklog.display(),
                         url=url or None,
                         worklog_id=worklog.id,
