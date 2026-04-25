@@ -944,11 +944,11 @@ class JiraAPI:
         Returns:
             A dictionary with the details of the work item after the update.
         """
-        data = {'update': payload}
+
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.put,
             url=f'issue/{issue_id_or_key}',
-            data=json.dumps(data),
+            data=json.dumps(payload),
             params={'returnIssue': True},
         )
 

@@ -2205,7 +2205,7 @@ async def test_update_issue_with_no_updates(
 
 @pytest.mark.parametrize('field_name', ['summary', 'duedate', 'priority', 'assignee_account_id'])
 @pytest.mark.asyncio
-async def test_update_issue_with_update_fields(
+async def test_update_issue_with_update_fields_without_meta_operations(
     field_name: str,
     work_item: JiraIssue,
     jira_api_controller: APIController,
@@ -2249,12 +2249,30 @@ async def test_update_issue_with_update_fields_no_update_allowed(
 
 
 @pytest.mark.parametrize(
-    'field_id, field_key, updated_fields',
+    'field_id, field_key, updated_fields, expected_payload',
     [
-        ('summary', 'summary', ['summary']),
-        ('duedate', 'duedate', ['duedate']),
-        ('priority', 'priority', ['priority']),
-        ('assignee_account_id', 'assignee', ['assignee_account_id']),
+        ('summary', 'summary', ['summary'], {'update': {'summary': [{'set': 'value'}]}}),
+        ('duedate', 'duedate', ['duedate'], {'update': {'duedate': [{'set': 'value'}]}}),
+        (
+            'priority',
+            'priority',
+            ['priority'],
+            {'update': {'priority': [{'set': {'id': 'value'}}]}},
+        ),
+        (
+            'assignee_account_id',
+            'assignee',
+            ['assignee_account_id'],
+            {'update': {'assignee': [{'set': {'accountId': 'value'}}]}},
+        ),
+        ('parent', 'parent', ['parent'], {'fields': {'parent': {'key': 'value'}}}),
+        ('labels', 'labels', ['labels'], {'update': {'labels': [{'set': 'value'}]}}),
+        (
+            'components',
+            'components',
+            ['components'],
+            {'update': {'components': [{'set': 'value'}]}},
+        ),
     ],
 )
 @pytest.mark.asyncio
@@ -2264,24 +2282,29 @@ async def test_update_issue_with_update_fields_update_allowed(
     field_id: str,
     field_key: str,
     updated_fields: list[str],
+    expected_payload: dict,
     work_item: JiraIssue,
     jira_api_controller: APIController,
 ):
     # GIVEN
-    work_item.edit_meta = {'fields': {field_key: {'operations': {'set': 'new value'}}}}
+    work_item.edit_meta = {
+        'fields': {field_key: {'operations': {'set': 'new value'}, 'key': field_key}}
+    }
     work_item.key = 'WI1'
     update_issue_mock.return_value = {'fields': {field_id: 'new value'}}
     # WHEN
     result = await jira_api_controller.update_issue(work_item, {field_id: 'value'})
     # THEN
+    update_issue_mock.assert_called_once_with(work_item.key, expected_payload)
     assert result == APIControllerResponse(
         result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
     )
 
 
 @pytest.mark.asyncio
-async def test_update_issue_with_update_labels(
-    work_item: JiraIssue, jira_api_controller: APIController
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_labels_no_metadata(
+    update_issue_mock: Mock, work_item: JiraIssue, jira_api_controller: APIController
 ):
     # GIVEN
     work_item.edit_meta = {'fields': {'summary': {'operations': {}}}}
@@ -2289,12 +2312,14 @@ async def test_update_issue_with_update_labels(
     # WHEN
     result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
     # THEN
+    update_issue_mock.assert_not_called()
     assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
 
 
 @pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
 async def test_update_issue_with_update_labels_not_allowed(
-    work_item: JiraIssue, jira_api_controller: APIController
+    update_issue_mock: Mock, work_item: JiraIssue, jira_api_controller: APIController
 ):
     # GIVEN
     work_item.edit_meta = {'fields': {'labels': {'operations': {'add': 'allowed'}}}}
@@ -2302,6 +2327,7 @@ async def test_update_issue_with_update_labels_not_allowed(
     # WHEN
     result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
     # THEN
+    update_issue_mock.assert_not_called()
     assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
 
 
@@ -2319,8 +2345,61 @@ async def test_update_issue_with_update_labels_allowed(
     # WHEN
     result = await jira_api_controller.update_issue(work_item, {'labels': 'value'})
     # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'update': {'labels': [{'set': 'value'}]}}
+    )
     assert result == APIControllerResponse(
         result=UpdateWorkItemResponse(success=True, updated_fields=['labels'])
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_additional_fields_nothing_to_update(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = True
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {})
+    # THEN
+    update_issue_mock.assert_not_called()
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=None)
+    )
+
+
+@pytest.mark.parametrize(
+    'update_issue_response, updated_fields',
+    [
+        ({'fields': {'customfield_1': 'new value'}}, ['customfield_1']),
+        ({'fields': {}}, []),
+    ],
+)
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_additional_fields(
+    update_issue_mock: Mock,
+    update_issue_response,
+    updated_fields,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = True
+    work_item.key = 'WI1'
+    work_item.edit_meta = {'fields': {'customfield_1': {'operations': {'set': 'allowed'}}}}
+    update_issue_mock.return_value = update_issue_response
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'customfield_1': 'value'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'update': {'customfield_1': [{'set': 'value'}]}}
+    )
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
     )
 
 

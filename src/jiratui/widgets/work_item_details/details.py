@@ -631,7 +631,9 @@ class IssueDetailsWidget(Vertical):
             if work_item_parent_has_changed(
                 self.issue.parent_issue_key, self.issue_parent_field.value
             ):
-                payload[self.issue_parent_field.jira_field_key] = self.issue_parent_field.value
+                payload[self.issue_parent_field.jira_field_key] = (
+                    self.issue_parent_field.value or None
+                )
 
         if self.assignee_selector.update_enabled:
             # check if the assignee has changed
@@ -741,11 +743,7 @@ class IssueDetailsWidget(Vertical):
                     self.issue, payload
                 )
             except UpdateWorkItemException as e:
-                self.notify(
-                    f'An error occurred while trying to update the item: {e}',
-                    severity='error',
-                    title='Update Work Item',
-                )
+                self.notify(str(e), severity='error', title='Update Work Item')
             except ValidationError as e:
                 self.notify(
                     f'Data validation error: {e}',
@@ -753,26 +751,16 @@ class IssueDetailsWidget(Vertical):
                     title='Update Work Item',
                 )
             except Exception as e:
-                self.notify(
-                    f'An unknown error occurred while trying to update the item: {e}',
-                    severity='error',
-                    title='Update Work Item',
-                )
+                self.notify(str(e), severity='error', title='Update Work Item')
             else:
                 if response.success:
                     self.notify('Work item updated successfully.', title='Update Work Item')
                     issue_was_updated = True
                 else:
                     self.notify(
-                        'The work item was not updated.',
-                        severity='error',
-                        title='Update Work Item',
+                        'The work item was not updated.', severity='error', title='Update Work Item'
                     )
-                    self.notify(
-                        response.error,
-                        severity='error',
-                        title='Update Work Item',
-                    )
+                    self.notify(response.error, severity='error', title='Update Work Item')
 
         if issue_requires_transition:
             response = await application.api.transition_issue_status(

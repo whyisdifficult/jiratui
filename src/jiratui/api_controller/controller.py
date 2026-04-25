@@ -1433,6 +1433,7 @@ class APIController:
         - Labels
         - Parent
         - Components
+        - Reporter
         - (Some) Custom and System fields types
 
         Args:
@@ -1466,7 +1467,8 @@ class APIController:
             ):
                 raise ValidationError('The summary field can not be empty.')
 
-        fields_to_update: dict[str, list] = {}
+        # a dictionary with 2 keys: fields and update
+        payload: dict[str, dict[str, Any]] = defaultdict(dict)
 
         if JiraWorkItemFields.SUMMARY.value in updates:
             # the issue's summary has changed
@@ -1476,7 +1478,7 @@ class APIController:
                         f'The field {JiraWorkItemFields.SUMMARY.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[JiraWorkItemFields.SUMMARY.value] = [
+                payload['update'][JiraWorkItemFields.SUMMARY.value] = [
                     {'set': updates.get(JiraWorkItemFields.SUMMARY.value)}
                 ]
             else:
@@ -1493,7 +1495,7 @@ class APIController:
                         f'The field {JiraWorkItemFields.DUE_DATE.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[JiraWorkItemFields.DUE_DATE.value] = [
+                payload['update'][JiraWorkItemFields.DUE_DATE.value] = [
                     {'set': updates.get(JiraWorkItemFields.DUE_DATE.value) or None}
                 ]
             else:
@@ -1510,7 +1512,7 @@ class APIController:
                         f'The field {JiraWorkItemFields.PRIORITY.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[JiraWorkItemFields.PRIORITY.value] = [
+                payload['update'][JiraWorkItemFields.PRIORITY.value] = [
                     {'set': {'id': updates.get(JiraWorkItemFields.PRIORITY.value)}}
                 ]
             else:
@@ -1527,9 +1529,11 @@ class APIController:
                         f'The field {JiraWorkItemFields.PARENT.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[JiraWorkItemFields.PARENT.value] = [
-                    {'set': {'key': updates.get(JiraWorkItemFields.PARENT.value)}}
-                ]
+                # this field can only be updated only via the fields key in the payload; adding the field in the update
+                # key has no effect
+                payload['fields'][JiraWorkItemFields.PARENT.value] = {
+                    'key': updates.get(JiraWorkItemFields.PARENT.value) or None
+                }
             else:
                 raise UpdateWorkItemException(
                     f'The field {JiraWorkItemFields.PARENT.value} can not be updated for the selected work item.',
@@ -1546,11 +1550,11 @@ class APIController:
                         extra={'work_item_key': issue.key},
                     )
                 if self.config.cloud:
-                    fields_to_update[meta_assignee.get('key')] = [
+                    payload['update'][meta_assignee.get('key')] = [
                         {'set': {'accountId': updates.get('assignee_account_id')}}
                     ]
                 else:
-                    fields_to_update[meta_assignee.get('key')] = [
+                    payload['update'][meta_assignee.get('key')] = [
                         {'set': {'name': updates.get('assignee_account_id')}}
                     ]
             else:
@@ -1562,7 +1566,7 @@ class APIController:
         if JiraWorkItemFields.LABELS.value in updates:
             if meta_labels := metadata_fields.get(JiraWorkItemFields.LABELS.value, {}):
                 if 'set' in meta_labels.get('operations', {}):
-                    fields_to_update[JiraWorkItemFields.LABELS.value] = [
+                    payload['update'][JiraWorkItemFields.LABELS.value] = [
                         {'set': updates.get(JiraWorkItemFields.LABELS.value)}
                     ]
 
@@ -1573,7 +1577,7 @@ class APIController:
                         f'The field {JiraWorkItemFields.COMPONENTS.value} can not be updated for the selected work item.',
                         extra={'work_item_key': issue.key},
                     )
-                fields_to_update[JiraWorkItemFields.COMPONENTS.value] = [
+                payload['update'][JiraWorkItemFields.COMPONENTS.value] = [
                     {'set': updates.get(JiraWorkItemFields.COMPONENTS.value)}
                 ]
             else:
@@ -1599,15 +1603,15 @@ class APIController:
                 else:
                     if metadata := metadata_fields.get(field_id, {}):
                         if 'set' in metadata.get('operations', {}):
-                            fields_to_update[field_id] = [{'set': field_value}]
+                            payload['update'][field_id] = [{'set': field_value}]
                     else:
                         raise UpdateWorkItemException(
                             f'The field {field_id} can not be updated for the selected work item.',
                             extra={'work_item_key': issue.key},
                         )
 
-        if fields_to_update:
-            response: dict = await self.api.update_issue(issue.key, fields_to_update)
+        if payload:
+            response: dict = await self.api.update_issue(issue.key, payload)
             updated_fields: list[str] = []
             if fields := response.get('fields', {}):
                 updated_fields = list(fields.keys())
