@@ -1,7 +1,7 @@
+from datetime import datetime, timezone
 from typing import cast
 from unittest.mock import AsyncMock, Mock, patch
 
-from dateutil import parser  # type:ignore[import-untyped]
 import pytest
 from textual.widgets import Button
 
@@ -395,6 +395,7 @@ async def test_log_work_screen_saving(
         await pilot.press('enter')
         dismiss_mock.assert_called_once_with(
             {
+                'key': '1',
                 'time_spent': '1h',
                 'time_remaining': current_remaining_estimate,
                 'description': 't',
@@ -515,9 +516,15 @@ async def test_adding_worklog_with_success(
         await pilot.press('enter')
         # THEN
         assert isinstance(app.screen, MainScreen)
+        naive_dt = datetime.fromisoformat(date_time_value)
+        # assume the date/time value is in local time and convert to UTC
+        started_datetime = naive_dt.replace(
+            tzinfo=None
+        ).astimezone()  # make it aware of local TZ as defined by the OS
+        started_datetime = started_datetime.astimezone(timezone.utc)
         add_work_item_worklog_mock.assert_called_once_with(
             issue_key_or_id='key-2',
-            started=parser.parse(f'{date_time_value}Z'),
+            started=started_datetime,
             time_spent='1w',
             time_remaining='2w',
             comment='-',
@@ -584,9 +591,15 @@ async def test_adding_worklog_with_error_adding_new_worklog(
         await pilot.press('enter')
         # THEN
         assert isinstance(app.screen, MainScreen)
+        naive_dt = datetime.fromisoformat(date_time_value)
+        # assume the date/time value is in local time and convert to UTC
+        started_datetime = naive_dt.replace(
+            tzinfo=None
+        ).astimezone()  # make it aware of local TZ as defined by the OS
+        started_datetime = started_datetime.astimezone(timezone.utc)
         add_work_item_worklog_mock.assert_called_once_with(
             issue_key_or_id='key-2',
-            started=parser.parse(f'{date_time_value}Z'),
+            started=started_datetime,
             time_spent='1w',
             time_remaining='2w',
             comment='-',

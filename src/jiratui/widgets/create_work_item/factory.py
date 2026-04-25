@@ -5,7 +5,7 @@ from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController
 from jiratui.config import CONFIGURATION
-from jiratui.widgets.commons import CustomFieldType, FieldMode, UserPickerWidget
+from jiratui.widgets.commons import CustomFieldType, FieldMode
 from jiratui.widgets.commons.factory_utils import AllowedValuesParser
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
@@ -16,6 +16,7 @@ from jiratui.widgets.commons.widgets import (
     MultiUserPickerWidget,
     NumericInputWidget,
     SelectionWidget,
+    SingleUserPickerWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -78,7 +79,7 @@ def create_widgets_for_work_item_creation(
             if custom_type in CUSTOM_FIELD_TYPES_NOT_SUPPORTED:
                 continue
             if custom_type == CustomFieldType.USER_PICKER.value:
-                widget = UserPickerWidget(
+                widget = SingleUserPickerWidget(
                     mode=FieldMode.CREATE,
                     field_id=field_id or '',
                     jira_field_key=item.get('key') or field_id,
@@ -184,7 +185,7 @@ def create_widgets_for_work_item_creation(
 
                     widget = MultiSelectWidget(
                         mode=FieldMode.CREATE,
-                        field_id=item.get('fieldId') or '',
+                        field_id=field_id or '',
                         jira_field_key=item.get('key') or field_id,
                         options=options,
                         title=item.get('name'),
@@ -202,7 +203,7 @@ def create_widgets_for_work_item_creation(
 
                     widget = SelectionWidget(
                         mode=FieldMode.CREATE,
-                        field_id=item.get('fieldId') or '',
+                        field_id=field_id or '',
                         jira_field_key=item.get('key') or field_id,
                         options=options,
                         title=item.get('name'),

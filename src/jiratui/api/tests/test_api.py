@@ -2686,10 +2686,10 @@ async def test_update_issue(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.update_issue('1', {'summary': 'test summary'})
+    result = await jira_api.update_issue('1', {'fields': {'summary': 'test summary'}})
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1'
-    assert json.loads(route.calls.last.request.content) == {'update': {'summary': 'test summary'}}
+    assert json.loads(route.calls.last.request.content) == {'fields': {'summary': 'test summary'}}
     request_url = str(route.calls.last.request.url)
     assert 'returnIssue=true' in request_url
     assert result == {}

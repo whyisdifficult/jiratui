@@ -1,6 +1,4 @@
-from datetime import date
-
-from jiratui.models import IssuePriority, JiraIssueComponent, JiraUser
+from jiratui.models import IssuePriority, JiraUser
 
 
 def work_item_priority_has_changed(
@@ -104,57 +102,5 @@ def work_item_parent_has_changed(
     if not target_parent_key:
         return True
     if current_parent_key == target_parent_key.strip():
-        return False
-    return True
-
-
-def work_item_due_date_has_changed(
-    current_due_date: date | None = None, target_due_date: str | None = None
-) -> bool:
-    """Determines if the due date of a work item has changed wrt. to a new value selected by the user.
-
-    Args:
-        current_due_date: the current due date of the work item.
-        target_due_date: the new due date set by the user.
-
-    Returns:
-        `True` id the due date has changed; `False` otherwise.
-    """
-    if current_due_date is None:
-        if target_due_date:
-            return True
-        return False
-    if not target_due_date:
-        return True
-    if str(current_due_date) == target_due_date:
-        return False
-    return True
-
-
-def work_item_components_has_changed(
-    current_components: list[JiraIssueComponent],
-    target_components: list[dict],
-) -> bool:
-    """Determines if the components field of a work item has changed based on the current value and a new selection
-    made by the user.
-
-    Args:
-        current_components: the list of components currently assigned to a work item.
-        target_components: the new list of components.
-
-    Returns:
-        `True` if the list of components has changed.
-    """
-
-    if not current_components and target_components:
-        return True
-    if current_components and not target_components:
-        return True
-    if not current_components and not target_components:
-        return False
-    if len(current_components) != len(target_components):
-        return True
-    current_set = {x.id for x in current_components}
-    if current_set.intersection({x.get('id') for x in target_components}) == current_set:
         return False
     return True

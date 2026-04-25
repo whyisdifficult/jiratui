@@ -32,6 +32,10 @@ manageable.
 - Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the
 default reporting user when creating work items.
 - Use relative URLs to download attachments when the user uses Jra DC instance.
+- Fix a bug that prevented updating the parent of a work item
+- Fix bug that display incorrect message when the user opens the modal screen to log work but does not log any work.
+- Fix bug that causes to show the datetime in the work log details in the incorrect timezone. Dates are now displayed in
+local TZ.
 
 ### Minor Improvements
 

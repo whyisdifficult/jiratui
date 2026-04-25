@@ -2,13 +2,24 @@ from datetime import datetime
 import re
 from typing import cast
 
+from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical, VerticalScroll
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Button, Collapsible, Footer, Input, Label, Markdown, TextArea
+from textual.widgets import (
+    Button,
+    Collapsible,
+    DataTable,
+    Footer,
+    Input,
+    Label,
+    Markdown,
+    Static,
+    TextArea,
+)
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorklog, PaginatedJiraWorklog
@@ -157,16 +168,48 @@ class WorkItemWorkLogScreen(Screen[dict]):
             self._update_subtitle()
             elements: list[WorkLogCollapsible] = []
             worklog: JiraWorklog
+            comment_widget: Markdown | Static
             for worklog in result.logs:
-                comment_text = ''
-                if worklog.comment and not (comment_text := worklog.get_comment()):
+                if worklog.comment and (comment_text := worklog.get_comment()):
+                    comment_widget = Markdown(comment_text)
+                else:
                     # this may happen if we fail to parse the ADF data for Jira Cloud API
-                    comment_text = 'Unable to display the description associated to the worklog.'
+                    comment_widget = Static(
+                        Text(
+                            'Unable to display the description associated to the worklog.',
+                            style='red italic',
+                        )
+                    )
 
                 url = build_external_url_for_work_log(self._work_item_key, worklog.id)
+                work_log_details: DataTable = DataTable(
+                    cursor_type='row', show_header=False, classes='worklog-details-table'
+                )
+                work_log_details.add_columns(*('Property', 'Value'))
+                work_log_details.add_rows(
+                    [
+                        (
+                            Text('Time Spent', justify='right'),
+                            Text(worklog.display_time_spent(), justify='left'),
+                        ),
+                        (
+                            Text('Started', justify='right'),
+                            Text(worklog.display_started(), justify='left'),
+                        ),
+                        (
+                            Text('Author', justify='right'),
+                            Text(worklog.display_author(), justify='left'),
+                        ),
+                        (
+                            Text('Update Author', justify='right'),
+                            Text(worklog.display_update_author(), justify='left'),
+                        ),
+                    ]
+                )
                 elements.append(
                     WorkLogCollapsible(
-                        Markdown(comment_text),
+                        comment_widget,
+                        work_log_details,
                         title=worklog.display(),
                         url=url or None,
                         worklog_id=worklog.id,
@@ -217,6 +260,7 @@ class LogWorkScreen(Screen[dict]):
 
     The screen's result is a dictionary with the following keys:
     {
+        'key': the key of the issue whose work lo we are updating.
         'time_spent': the time spent as provided by the user in the screen's form.
         'time_remaining': the time remaining as provided by the user in the screen's form.
         'description': an optional as provided by the user in the screen's form.
@@ -394,6 +438,7 @@ class LogWorkScreen(Screen[dict]):
     def handle_save_button(self) -> None:
         self.dismiss(
             {
+                'key': self._work_item_key,
                 'time_spent': self.time_spent_input.value,
                 'time_remaining': self.time_remaining_input.value,
                 'description': self.work_description_input.text,

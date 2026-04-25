@@ -20,7 +20,7 @@ from jiratui.widgets.summary import IssueDescriptionWidget
 class WorkItemReadOnlyDetailsScreen(ModalScreen):
     """A modal screen that displays the details of a work item in read-only mode."""
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close Help')]
+    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'Work Item Details'
 
     def __init__(self, work_item_key: str):

@@ -13,8 +13,32 @@ logger = logging.getLogger(__name__)
 class JiraUserInput(Input):
     """An input field for selecting a single Jira user.
 
-    This widget holds the Jira user's account id that is used to identify the user. This is useful for operations
-    that create/update work items' user fields, such as assignee, reporter, etc.
+    This widget is specifically designed for statically composed widgets; i.e. widgets that are defined in the
+    `compose()` method of other widgets.
+
+    If you need to support single/multi-user selection for dynamically created widgets then use `SingleUserPickerWidget`
+    and `MultiUserPickerWidget`.
+
+    This widget holds the Jira user's account id that is used to identify the user. The widget MUST implement
+    a property called `account_id` to retrieve and set the account id of the selected user.
+
+    This widget can be used with the `jiratui.widgets.commons.users.UsersAutoComplete` widget to support autocomplete
+    search functionality.
+
+    Example:
+    users_selector = JiraUserInput(
+        id='search-filters-input-assignee',
+        border_subtitle='(a)',
+        border_title='Assignee',
+    )
+    await mount(
+        UsersAutoComplete(
+            users_selector,
+            api,
+            id='filter-assignee-autocomplete',
+            user_search_function=custom_search_function,
+        )
+    )
     """
 
     update_enabled: Reactive[bool | None] = reactive(True)
@@ -40,10 +64,12 @@ class JiraUserInput(Input):
 
     @property
     def account_id(self) -> str | None:
+        """This is required to support autocomplete behavior."""
         return self._account_id if self.value and self.value.strip() else None
 
     @account_id.setter
     def account_id(self, account_id: str | None):
+        """This is required to support autocomplete behavior."""
         self._account_id = account_id
 
     @property

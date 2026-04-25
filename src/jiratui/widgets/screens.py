@@ -936,6 +936,8 @@ class MainScreen(Screen):
     async def action_search(self, search_term: str | None = None) -> None:
         """Handles the event  when the user presses the "search" button or "ctrl+r"."""
 
+        # reset the key of the currently loaded issue to avoid not fetching the selected issue again after searching
+        self.current_loaded_work_item_key = None
         # clear the information pane
         self.issue_info_container.clear_information = True
         # clear the details pane

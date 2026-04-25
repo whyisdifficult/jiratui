@@ -712,28 +712,39 @@ class JiraWorklog(BaseModel):
     def updated_on(self) -> str:
         if self.update_author:
             if self.updated:
-                return f'{datetime.strftime(self.updated, "%Y-%m-%d %H:%M")} by {self.update_author.display_user}'
+                local_dt = self.updated.astimezone()
+                return f'{datetime.strftime(local_dt, "%Y-%m-%d %H:%M")} by {self.update_author.display_user}'
             else:
                 return f'by {self.update_author.display_user}'
-        return datetime.strftime(self.updated, '%Y-%m-%d %H:%M') if self.updated else ''
+        if self.updated:
+            local_dt = self.updated.astimezone()
+            return datetime.strftime(local_dt, '%Y-%m-%d %H:%M')
+        return ''
 
     def created_on(self) -> str:
         if self.author:
             if self.started:
-                return f'{datetime.strftime(self.started, "%Y-%m-%d %H:%M")} by {self.author.display_user}'
+                local_dt = self.started.astimezone()
+                return (
+                    f'{datetime.strftime(local_dt, "%Y-%m-%d %H:%M")} by {self.author.display_user}'
+                )
             else:
                 return f'by {self.author.display_user}'
-        return datetime.strftime(self.started, '%Y-%m-%d %H:%M') if self.started else ''
+        if self.started:
+            local_dt = self.started.astimezone()
+            return datetime.strftime(local_dt, '%Y-%m-%d %H:%M')
+        return ''
 
     def display(self) -> str:
+        local_dt = self.updated.astimezone() if self.updated else None
         if self.author:
-            if self.updated:
-                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(self.updated, "%Y-%m-%d %H:%M")}'
+            if local_dt:
+                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(local_dt, "%Y-%m-%d %H:%M")}'
             else:
                 return f'{self.author.display_user} logged {self.time_spent}'
         else:
-            if self.updated:
-                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(self.updated, "%Y-%m-%d %H:%M")}'
+            if local_dt:
+                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(local_dt, "%Y-%m-%d %H:%M")}'
             else:
                 return f'{self.author.display_user} logged {self.time_spent}'
 
@@ -754,6 +765,25 @@ class JiraWorklog(BaseModel):
             return adf2md(self.comment)
         except Exception:
             return ''
+
+    def display_time_spent(self):
+        return self.time_spent if self.time_spent else ''
+
+    def display_started(self):
+        if self.started:
+            local_dt = self.started.astimezone()
+            return datetime.strftime(local_dt, '%Y-%m-%d %H:%M')
+        return ''
+
+    def display_author(self) -> str:
+        if self.author:
+            return self.author.display_user
+        return ''
+
+    def display_update_author(self) -> str:
+        if self.update_author:
+            return self.update_author.display_user
+        return ''
 
 
 @dataclass
