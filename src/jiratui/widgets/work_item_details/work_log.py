@@ -217,6 +217,7 @@ class LogWorkScreen(Screen[dict]):
 
     The screen's result is a dictionary with the following keys:
     {
+        'key': the key of the issue whose work lo we are updating.
         'time_spent': the time spent as provided by the user in the screen's form.
         'time_remaining': the time remaining as provided by the user in the screen's form.
         'description': an optional as provided by the user in the screen's form.
@@ -394,6 +395,7 @@ class LogWorkScreen(Screen[dict]):
     def handle_save_button(self) -> None:
         self.dismiss(
             {
+                'key': self._work_item_key,
                 'time_spent': self.time_spent_input.value,
                 'time_remaining': self.time_remaining_input.value,
                 'description': self.work_description_input.text,

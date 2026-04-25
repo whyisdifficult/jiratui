@@ -415,7 +415,7 @@ class IssueDetailsWidget(Vertical):
         """Opens a pop-up modal to allow the user to log work for the current work item.
 
         Returns:
-            `None`.
+            None
         """
         if self.issue:
             current_remaining_estimate = None
@@ -451,29 +451,34 @@ class IssueDetailsWidget(Vertical):
             data: the data returned by the modal screen after the user clicks the "save" button.
 
         Returns:
-            `None`.
+            None
         """
-        self.run_worker(
-            self._add_worklog(
-                time_spent=data.get('time_spent'),
-                time_remaining=data.get('time_remaining'),
-                description=data.get('description'),
-                started=data.get('started'),
-                current_remaining_estimate=data.get('current_remaining_estimate'),
+
+        if data:
+            self.run_worker(
+                self._add_worklog(
+                    work_item_key=data.get('key'),
+                    time_spent=data.get('time_spent'),
+                    time_remaining=data.get('time_remaining'),
+                    description=data.get('description'),
+                    started=data.get('started'),
+                    current_remaining_estimate=data.get('current_remaining_estimate'),
+                )
             )
-        )
 
     async def _add_worklog(
         self,
+        work_item_key: str,
         time_spent: str,
         started: str,
         time_remaining: str | None = None,
         description: str | None = None,
         current_remaining_estimate: str | None = None,
     ) -> None:
-        """Logs work for the currently-selected item.
+        """Logs work for a work item.
 
         Args:
+            work_item_key: the key of the work item whose work log we are updating.
             time_spent: the time spent on the task. E.g. 1w 1d
             time_remaining: the time remaining in the task. E.g. 1w 1d
             description: an optional description of the work done in the task.
@@ -481,9 +486,11 @@ class IssueDetailsWidget(Vertical):
             current_remaining_estimate: the current remaining estimate of the task.
 
         Return:
-            `None`
+            None
         """
 
+        if not work_item_key:
+            self.notify('Select a work item before logging work.', title='Worklog')
         if not time_spent:
             # this should not happen but if for some reason it does then make sure to let the user know that we can't
             # add the worklog
@@ -493,7 +500,7 @@ class IssueDetailsWidget(Vertical):
         else:
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = await application.api.add_work_item_worklog(
-                issue_key_or_id=self.issue.key,
+                issue_key_or_id=work_item_key,
                 started=parser.parse(f'{started}Z') if started else None,
                 time_spent=time_spent,
                 time_remaining=time_remaining,

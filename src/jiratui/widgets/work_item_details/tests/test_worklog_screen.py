@@ -395,6 +395,7 @@ async def test_log_work_screen_saving(
         await pilot.press('enter')
         dismiss_mock.assert_called_once_with(
             {
+                'key': '1',
                 'time_spent': '1h',
                 'time_remaining': current_remaining_estimate,
                 'description': 't',
