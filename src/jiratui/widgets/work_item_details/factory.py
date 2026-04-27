@@ -14,7 +14,6 @@ class WorkItemManualUpdateFieldKeys(Enum):
     """These fields are excluded from the dynamic updates because they are already part of the details tab's form or,
     they are updated separately."""
 
-    LABELS = 'labels'
     COMMENT = 'comment'
     DUE_DATE = 'duedate'
     ISSUE_LINKS = 'issuelinks'
@@ -31,7 +30,6 @@ class WorkItemManualUpdateFieldNames(Enum):
     """These fields are excluded from the dynamic updates because they are already part of the details tab's form or,
     they are updated separately."""
 
-    LABELS = 'labels'
     COMMENT = 'comment'
     DUE_DATE = 'duedate'
     ISSUE_LINKS = 'issuelinks'
@@ -304,7 +302,14 @@ def create_dynamic_widgets_for_updating_work_item(
                     )
         else:
             # process the non-custom fields based on the schema type
-            if schema.get('type', '').lower() == 'number':
+            if schema.get('system', '').lower() == 'labels':
+                # get the current value of the field
+                if (value := work_item.labels) is None:
+                    value = []
+                widget = builder.build_labels(
+                    mode=FieldMode.UPDATE, metadata=metadata, current_value=value
+                )
+            elif schema.get('type', '').lower() == 'number':
                 if __field_id in work_item.get_additional_fields():
                     # get the current value of the field from the issue's additional fields
                     value = work_item.get_additional_field_value(__field_id)

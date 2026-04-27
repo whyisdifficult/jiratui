@@ -102,6 +102,7 @@ class IssueParentField(Input):
     """
 
     update_enabled: Reactive[bool | None] = reactive(True)
+    jira_field_is_required: Reactive[bool | None] = reactive(True)
 
     def __init__(self):
         super().__init__()
@@ -116,6 +117,9 @@ class IssueParentField(Input):
         self.update_is_enabled = enabled
         self.disabled = not enabled
 
+    def watch_jira_field_is_required(self, required: bool) -> None:
+        self._update_required_status(required)
+
     @on(Input.Blurred)
     def clean_value(self, event: Input.Blurred) -> None:
         if event.value is not None:
@@ -125,17 +129,13 @@ class IssueParentField(Input):
         if event.value:
             self.value = event.value.strip()
 
-    def update_required_status(self, required: bool) -> None:
+    def _update_required_status(self, required: bool) -> None:
         if required:
             self.border_subtitle = '(*)'
             self.add_class('required')
         else:
             self.border_subtitle = None
             self.remove_class('required')
-
-    def clear(self) -> None:
-        super().clear()
-        self.update_required_status(False)
 
 
 class IssueSummaryField(Input):
@@ -188,32 +188,6 @@ class WorkItemFlagField(Label):
             self.styles.display = 'block'
         else:
             self.styles.display = 'none'
-
-
-class WorkItemLabelsField(Input):
-    """A widget to display and update the labels field of a work item.
-
-    This widget is part of widgets defined statically in the form that allows users to update a work item.
-    """
-
-    update_enabled: Reactive[bool | None] = reactive(True)
-
-    def __init__(self):
-        super().__init__()
-        self.border_title = 'Labels'
-        self.add_class(*['create-update-field-widget', 'cols-3'])
-        self.jira_field_key = 'labels'
-        """The id used by Jira to identify this field in the edit-metadata."""
-        self.update_is_enabled = True
-        """Indicates whether the work item allows editing/updating this field."""
-
-    def on_input_changed(self, event: Input.Changed) -> None:
-        # Allow spaces in labels - no longer converting to dashes
-        pass
-
-    def watch_update_enabled(self, enabled: bool = True) -> None:
-        self.update_is_enabled = enabled
-        self.disabled = not enabled
 
 
 class IssueTypeField(ReadOnlyField):

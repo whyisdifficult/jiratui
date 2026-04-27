@@ -778,7 +778,11 @@ class LabelsWidget(Input):
             return []
 
         # split by comma, strip whitespace, remove internal spaces, filter empty strings
-        return [label.strip().replace(' ', '') for label in self.value.split(',') if label.strip()]
+        return [
+            label.strip().replace(' ', '')
+            for label in self.value.split(',')
+            if label.strip() and label.strip() != '-'
+        ]
 
     def get_value_for_update(self) -> list[str]:
         """Returns labels formatted for Jira API update requests (UPDATE mode).
@@ -794,8 +798,12 @@ class LabelsWidget(Input):
         if not self.value or not self.value.strip():
             return []
 
-        # Split by comma, strip whitespace, remove internal spaces, filter empty strings
-        return [label.strip().replace(' ', '') for label in self.value.split(',') if label.strip()]
+        # split by comma, strip whitespace, remove internal spaces, filter empty strings
+        return [
+            label.strip().replace(' ', '')
+            for label in self.value.split(',')
+            if label.strip() and label.strip() != '-'
+        ]
 
     @property
     def value_has_changed(self) -> bool:

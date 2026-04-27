@@ -46,7 +46,6 @@ from jiratui.widgets.work_item_details.fields import (
     TimeTrackingWidget,
     WorkItemDetailsDueDate,
     WorkItemFlagField,
-    WorkItemLabelsField,
 )
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 from jiratui.widgets.work_item_details.work_log import (
@@ -86,7 +85,6 @@ class IssueDetailsWidget(Vertical):
     - Due Date
     - Resolved
     - Resolution
-    - Labels
 
     Dynamic widgets are composed dynamically based on the work item's edit metadata and the configuration of the
     application, via the variables `enable_updating_additional_fields` and `update_additional_fields_ignore_ids`.
@@ -222,10 +220,6 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(TimeTrackingWidget)
 
     @property
-    def work_item_labels_widget(self) -> WorkItemLabelsField:
-        return self.query_one(WorkItemLabelsField)
-
-    @property
     def issue_resolution_date_field(self) -> ReadOnlyTextField:
         return self.query_one('#issue_resolution_date', expect_type=ReadOnlyTextField)
 
@@ -306,7 +300,7 @@ class IssueDetailsWidget(Vertical):
                     extra_classes='cols-2',
                 )
                 # set widgets in row 9 - cols 3
-                yield WorkItemLabelsField()
+                # yield WorkItemLabelsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()
 
@@ -324,13 +318,7 @@ class IssueDetailsWidget(Vertical):
             self.app.api,  # type:ignore[attr-defined]
             id='details-reporter-autocomplete',
         ).add_class(*['cols-3'])
-        labels_autocomplete = LabelsAutoComplete(
-            self.work_item_labels_widget,
-            self.app.api,  # type:ignore[attr-defined]
-            required=False,
-            title='Labels',
-        )
-        self.mount_all([assignee_autocomplete, reporter_autocomplete, labels_autocomplete])
+        self.mount_all([assignee_autocomplete, reporter_autocomplete])
 
     async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
         # searches and filters users that can be assignees of the work item being edited
@@ -579,7 +567,6 @@ class IssueDetailsWidget(Vertical):
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.set_original_value(None)
-            self.work_item_labels_widget.clear()
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
@@ -604,13 +591,17 @@ class IssueDetailsWidget(Vertical):
     def _build_payload_for_update(self) -> dict | None:
         """Builds the payload needed for updating the work item.
 
+        This extracts the values of both types of widgets in the update form, those defined statically and those added
+        dynamically.
+
         Returns:
             A dictionary with the values for every Jira field that wil need to be updated for the given work item. The
             key of every entry in the dictionary is the value of the `key` attribute found in the field's edit-metadata.
         """
 
-        # maps field id to field value
+        # the keys of this dictionary are the value of the fields' key attribute (as found in the edit metadata)
         payload: dict[str, Any] = {}
+
         # process the "static" fields
         if self.issue_summary_field.update_enabled:
             # check if the summary is not empty and has changed
@@ -672,24 +663,6 @@ class IssueDetailsWidget(Vertical):
                     title='Update Work Item',
                 )
                 return None
-
-        if self.work_item_labels_widget.update_enabled:
-            # update the issue's labels - strip whitespace and remove internal spaces
-            labels: list[str] = (
-                [
-                    label.strip().replace(' ', '')
-                    for label in self.work_item_labels_widget.value.split(',')
-                    if label.strip() and label.strip() != '-'
-                ]
-                if self.work_item_labels_widget.value
-                else []
-            )
-
-            current_labels: list[str] = list(self.issue.labels or [])
-            # case-insensitive comparison, but preserve original case
-            if {lbl.lower() for lbl in labels} != {lbl.lower() for lbl in current_labels}:
-                # update the list of labels (empty list will remove all labels)
-                payload[self.work_item_labels_widget.jira_field_key] = labels
 
         # process dynamically-generated field widgets; e.g. additional system fields and custom fields
         if CONFIGURATION.get().enable_updating_additional_fields:
@@ -798,7 +771,7 @@ class IssueDetailsWidget(Vertical):
             await self._refresh_work_item_details()
 
     @staticmethod
-    def _determine_editable_fields(work_item: JiraIssue) -> dict:
+    def _extract_editable_and_required_fields(work_item: JiraIssue) -> dict:
         """Determines which of the fields of a work item that can be updated via the details form support updates
         based on the work item's edit metadata.
 
@@ -820,19 +793,17 @@ class IssueDetailsWidget(Vertical):
         # if a field does not have edit metadata then we assume we can not edit its value
         # the key of this dictionary is the value of the `key` attribute found in the field's edit-metadata
         editable_fields: dict[str, bool] = {}
+        required_fields: dict[str, bool] = {}
 
         if field_summary := fields.get('summary', {}):
             editable_fields[field_summary.get('key')] = 'set' in field_summary.get('operations', {})
+            required_fields[field_summary.get('key')] = field_summary.get('required', False)
 
         if field_due_date := fields.get('duedate', {}):
             editable_fields[field_due_date.get('key')] = 'set' in field_due_date.get(
                 'operations', {}
             )
-
-        if field_priority := fields.get('priority', {}):
-            editable_fields[field_priority.get('key')] = 'set' in field_priority.get(
-                'operations', {}
-            )
+            required_fields[field_due_date.get('key')] = field_due_date.get('required', False)
 
         if field_parent := fields.get('parent', {}):
             if work_item.issue_type.hierarchy_level == 1:
@@ -843,31 +814,24 @@ class IssueDetailsWidget(Vertical):
                 editable_fields[field_parent.get('key')] = 'set' in field_parent.get(
                     'operations', {}
                 )
+            required_fields[field_parent.get('key')] = field_parent.get('required', False)
 
         if field_assignee := fields.get('assignee', {}):
             editable_fields[field_assignee.get('key')] = 'set' in field_assignee.get(
                 'operations', {}
             )
+            required_fields[field_assignee.get('key')] = field_assignee.get('required', False)
 
         if field_reporter := fields.get('reporter', {}):
             editable_fields[field_reporter.get('key')] = 'set' in field_reporter.get(
                 'operations', {}
             )
+            required_fields[field_reporter.get('key')] = field_reporter.get('required', False)
 
-        if field_labels := fields.get('labels', {}):
-            editable_fields[field_labels.get('key')] = 'set' in field_labels.get('operations', {})
-
-        if field_components := fields.get('components', {}):
-            editable_fields[field_components.get('key')] = 'set' in field_components.get(
-                'operations', {}
-            )
-
-        # include custom fields (fields starting with 'customfield_')
-        for field_id, field_meta in fields.items():
-            if field_id.startswith('customfield_') and field_id not in editable_fields:
-                editable_fields[field_meta.get('key')] = 'set' in field_meta.get('operations', {})
-
-        return editable_fields
+        return {
+            'editable_fields': editable_fields,
+            'required_fields': required_fields,
+        }
 
     async def _retrieve_applicable_status_codes(
         self,
@@ -925,7 +889,9 @@ class IssueDetailsWidget(Vertical):
 
         # check which of the fields in the details form can be updated; disable the widgets of those that do not support
         # updates
-        editable_fields: dict = self._determine_editable_fields(work_item)
+        editable_and_required_fields: dict = self._extract_editable_and_required_fields(work_item)
+        editable_fields = editable_and_required_fields.get('editable_fields', {})
+        required_fields = editable_and_required_fields.get('required_fields', {})
 
         # set the assignee field
         if work_item_assignee := work_item.assignee:
@@ -969,6 +935,9 @@ class IssueDetailsWidget(Vertical):
         self.issue_parent_field.update_enabled = editable_fields.get(
             self.issue_parent_field.jira_field_key
         )
+        self.issue_parent_field.jira_field_is_required = required_fields.get(
+            self.issue_parent_field.jira_field_key
+        )
         self.issue_sprint_field.value = work_item.sprint_name
         self.issue_summary_field.value = work_item.summary
         self.issue_summary_field.update_enabled = editable_fields.get(
@@ -983,12 +952,6 @@ class IssueDetailsWidget(Vertical):
         self._setup_priority_selector(work_item.edit_meta, work_item.priority)
         # set up time tracking widgets
         self._setup_time_tracking(work_item.time_tracking)
-        # set up the labels; if any exists
-        if work_item.labels:
-            self.work_item_labels_widget.value = ','.join(work_item.labels)
-        self.work_item_labels_widget.update_enabled = editable_fields.get(
-            self.work_item_labels_widget.jira_field_key
-        )
         # check if the work item has been flagged; and show a label at the top with a message for the user
         self.run_worker(self._determine_issue_flagged_status(work_item))
 
@@ -1038,9 +1001,13 @@ class IssueDetailsWidget(Vertical):
                 await self.dynamic_fields_widgets_container.mount(
                     MultiUserPickerAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
-            for w in self.dynamic_fields_widgets_container.query(SingleUserPickerWidget):
+            for widget in self.dynamic_fields_widgets_container.query(SingleUserPickerWidget):  # type:ignore[assignment]
                 await self.dynamic_fields_widgets_container.mount(
-                    UsersAutoComplete(target=w, api_controller=self.app.api)  # type:ignore
+                    UsersAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
+                )
+            for widget in self.dynamic_fields_widgets_container.query(LabelsWidget):  # type:ignore[assignment]
+                await self.dynamic_fields_widgets_container.mount(
+                    LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:

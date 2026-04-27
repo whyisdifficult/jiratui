@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for updating the reporter of a work item.
 - Support for fields with `type:number` when we create new work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/203
 - Update the search results table after deleting a work item; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/205
+- Generate a `LabelsWidget` dynamically rather than defining the widget statically at compose time when the user is updating/editing a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
+- Update the `required` state of the parent field's widget based. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
 
 ### Changed
 
