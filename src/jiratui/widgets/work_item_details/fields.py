@@ -23,7 +23,7 @@ class IssueDetailsStatusSelection(IssueStatusSelectionInput):
     WIDGET_ID = 'jira-issue-status-selector-edit'
 
     def __init__(self, statuses: list):
-        super().__init__(statuses)
+        super().__init__(statuses, classes='update-work-item-generic-selector')
         self.border_subtitle = '(z)'
         self.jira_field_key = 'status'
         """The key to used by Jira to identify this field in the edit-metadata."""
@@ -52,6 +52,7 @@ class IssueDetailsPrioritySelection(Select):
         """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled: bool = True
         """Indicates whether the work item allows editing/updating this field."""
+        self.add_class(*['update-work-item-generic-selector'])
 
     def watch_update_enabled(self, enabled: bool = True) -> None:
         self.update_is_enabled = enabled
@@ -67,7 +68,7 @@ class ProjectIDField(ReadOnlyField):
     def __init__(self):
         super().__init__()
         self.border_title = 'Project'
-        self.add_class(*['issue_details_input_field', 'cols-3'])
+        self.add_class(*['create-update-field-widget', 'cols-3'])
 
 
 class IssueSprintField(ReadOnlyField):
@@ -79,7 +80,7 @@ class IssueSprintField(ReadOnlyField):
     def __init__(self):
         super().__init__()
         self.border_title = 'Sprint'
-        self.classes = 'issue_details_input_field'
+        self.classes = 'create-update-field-widget'
 
 
 class IssueKeyField(ReadOnlyField):
@@ -91,7 +92,7 @@ class IssueKeyField(ReadOnlyField):
     def __init__(self):
         super().__init__()
         self.border_title = 'Key'
-        self.add_class(*['issue_details_input_field', 'work-item-key'])
+        self.add_class(*['create-update-field-widget', 'work-item-key'])
 
 
 class IssueParentField(Input):
@@ -105,7 +106,7 @@ class IssueParentField(Input):
     def __init__(self):
         super().__init__()
         self.border_title = 'Parent'
-        self.add_class(*['issue_details_input_field', 'work-item-key'])
+        self.add_class(*['create-update-field-widget', 'work-item-key'])
         self.jira_field_key = 'parent'
         """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
@@ -124,6 +125,18 @@ class IssueParentField(Input):
         if event.value:
             self.value = event.value.strip()
 
+    def update_required_status(self, required: bool) -> None:
+        if required:
+            self.border_subtitle = '(*)'
+            self.add_class('required')
+        else:
+            self.border_subtitle = None
+            self.remove_class('required')
+
+    def clear(self) -> None:
+        super().clear()
+        self.update_required_status(False)
+
 
 class IssueSummaryField(Input):
     """A widget to display and update the summary field of a work item.
@@ -137,7 +150,7 @@ class IssueSummaryField(Input):
         super().__init__()
         self.border_title = 'Summary'
         self.border_subtitle = '(*)'
-        self.add_class(*['issue_details_input_field', 'required', 'cols-3'])
+        self.add_class(*['create-update-field-widget', 'required', 'cols-3'])
         self.jira_field_key = 'summary'
         """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
@@ -188,7 +201,7 @@ class WorkItemLabelsField(Input):
     def __init__(self):
         super().__init__()
         self.border_title = 'Labels'
-        self.add_class(*['issue_details_input_field', 'cols-3'])
+        self.add_class(*['create-update-field-widget', 'cols-3'])
         self.jira_field_key = 'labels'
         """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
@@ -212,7 +225,7 @@ class IssueTypeField(ReadOnlyField):
     def __init__(self):
         super().__init__()
         self.border_title = 'Type'
-        self.classes = 'issue_details_input_field'
+        self.classes = 'create-update-field-widget'
 
 
 class WorkItemDetailsDueDate(DateInputWidget):

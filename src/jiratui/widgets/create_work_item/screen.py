@@ -191,14 +191,14 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         border_title='Reporter',
                         border_subtitle='(*)',
                         jira_field_key='reporter_account_id',
-                    ).add_class(*['required'])
+                    ).add_class(*['required', 'create-update-users-field-widget'])
                     # this input field contains the account id of the Jira user that we can use to set the item's
                     # assignee field
                     yield JiraUserInput(
                         id='create-work-item-assignee-selector',
                         border_title='Assignee',
                         jira_field_key='assignee_account_id',
-                    )
+                    ).add_class(*['create-update-users-field-widget'])
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
                 yield DescriptionWidget(

@@ -37,7 +37,7 @@ class CreateWorkItemIssueSummaryField(Input):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = 'Summary'
-        self.add_class(*['issue_details_input_field', 'required'])
+        self.add_class(*['create-update-field-widget', 'required', 'summary'])
         self.border_subtitle = '(*)'
         self._jira_field_key = 'summary'
 
@@ -63,6 +63,7 @@ class CreateWorkItemParentKeyField(Input):
         self.compact = True
         self.border_title = 'Parent Key'
         self._jira_field_key = 'parent_key'
+        self.add_class(*['create-update-field-widget', 'parent-key'])
 
     @property
     def jira_field_key(self) -> str | None:

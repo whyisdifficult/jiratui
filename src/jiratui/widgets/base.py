@@ -12,7 +12,7 @@ class DateInput(MaskedInput):
     LABEL = 'Date'
     TOOLTIP = ''
     ID: str | None = None
-    CLASSES = 'input-date'
+    CLASSES = 'create-update-field-widget,input-date'
     BORDER_SUBTITLE = ''
 
     def __init__(self, widget_id: str | None = None, valid_empty: bool = True):
@@ -20,10 +20,10 @@ class DateInput(MaskedInput):
             id=widget_id or self.ID,
             template=self.TEMPLATE,
             placeholder=self.PLACEHOLDER,
-            classes=self.CLASSES,
             tooltip=self.TOOLTIP,
             valid_empty=valid_empty,
         )
+        self.add_class(*[value.strip() for value in self.CLASSES.split(',')])
         self.border_title = self.LABEL
         if self.BORDER_SUBTITLE:
             self.border_subtitle = self.BORDER_SUBTITLE
@@ -41,7 +41,7 @@ class ReadOnlyField(Input):
         super().__init__(**kwargs)
         self.disabled = True
         if classes:
-            self.add_class(*classes.split(','))
+            self.add_class(*[value.strip() for value in classes.split(',')])
 
 
 class ReadOnlyTextField(ReadOnlyField):
@@ -49,10 +49,10 @@ class ReadOnlyTextField(ReadOnlyField):
         extra_classes = kwargs.pop('extra_classes', '')
         label = kwargs.pop('label', '')
         super().__init__(**kwargs)
-        self.classes = 'issue_details_input_field'
+        self.classes = 'create-update-field-widget'
         self.border_title = label
         if extra_classes:
-            self.add_class(*extra_classes.split(','))
+            self.add_class(*[value.strip() for value in extra_classes.split(',')])
 
 
 class CustomTitle(Widget):
