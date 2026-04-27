@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `textual-autocomplete` to define a widget for selecting Jira users as assignees when creating work items.
 - Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
 - Add support for updating the reporter of a work item.
-- Support for fields with `type:number` when we create new work items.
+- Support for fields with `type:number` when we create new work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/203
 - Update the search results table after deleting a work item; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/205
 
 ### Changed
@@ -25,23 +25,24 @@ autocomplete feature there is no need to fetch all the users anymore.
 - Refactor the definition of widgets to make it easier to share them across different widgets and use
 cases; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/163. This work in this PR
 has been applied in this [PR](https://github.com/whyisdifficult/jiratui/pull/163) to make resolving conflicts more
-manageable.
+manageable. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/199
 
 ### Bug Fixes
 
 - Use the `--assignee-account-id` cli argument, in addition to the `config.jira_account_id` value to pre-define the
 default reporting user when creating work items.
 - Use relative URLs to download attachments when the user uses Jra DC instance.
-- Fix a bug that prevented updating the parent of a work item
-- Fix bug that display incorrect message when the user opens the modal screen to log work but does not log any work.
+- Fix a bug that prevented updating the parent of a work item. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/210
+- Fix bug that display incorrect message when the user opens the modal screen to log work but does not log any work. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/210
 - Fix bug that causes to show the datetime in the work log details in the incorrect timezone. Dates are now displayed in
-local TZ.
+local TZ. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/210
 
 ### Minor Improvements
 
 - Add/remove/update tests.
 - Refactor the class `UsersAutoComplete` to support custom search functions.
 - Update the documentation to reflect changes in the way we can create new work items.
+- Refactor some CSS classes used by the widgets used when creating and updating work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/225
 
 ## [1.7.0] - 2026-03-28
 
