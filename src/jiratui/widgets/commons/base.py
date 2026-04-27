@@ -238,7 +238,7 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
+            self.add_class('create-update-field-widget')
         else:
             # CREATE mode specific setup
             self.add_class('create-work-item-project-selector')
@@ -357,12 +357,9 @@ class IssueTypeSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
+            self.add_class('create-update-field-widget')
             if original_value:
                 self.value = original_value
-        else:
-            # CREATE mode specific setup
-            self.add_class('create-work-item-issuetype-selector')
 
     @property
     def selection(self) -> str | None:

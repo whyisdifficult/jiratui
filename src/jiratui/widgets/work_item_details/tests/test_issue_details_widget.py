@@ -1530,22 +1530,22 @@ async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
-        assert 'issue_details_input_field' in details_widget.issue_summary_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_key_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_summary_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_key_field.classes
         assert 'work-item-key' in details_widget.issue_key_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_sprint_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_parent_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_sprint_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_parent_field.classes
         assert 'work-item-key' in details_widget.issue_parent_field.classes
-        assert 'issue_details_input_field' in details_widget.project_id_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_created_date_field.classes
+        assert 'create-update-field-widget' in details_widget.project_id_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_created_date_field.classes
         assert 'input-date' in details_widget.issue_created_date_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_last_update_date_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_last_update_date_field.classes
         assert 'input-date' in details_widget.issue_last_update_date_field.classes
         assert 'input-date' in details_widget.issue_due_date_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_resolution_date_field.classes
+        assert 'create-update-field-widget' in details_widget.issue_resolution_date_field.classes
         assert 'input-date' in details_widget.issue_resolution_date_field.classes
-        assert 'issue_details_input_field' in details_widget.issue_resolution_field.classes
-        assert 'issue_details_input_field' in details_widget.work_item_labels_widget.classes
+        assert 'create-update-field-widget' in details_widget.issue_resolution_field.classes
+        assert 'create-update-field-widget' in details_widget.work_item_labels_widget.classes
 
 
 @patch.object(IssueDetailsWidget, 'issue')

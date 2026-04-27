@@ -1,3 +1,5 @@
+"""This module contains the widgets used for the filters of the search functionality used in the main screen."""
+
 from textual import on
 from textual.reactive import Reactive, reactive
 from textual.widgets import Checkbox, Input, Select
@@ -7,6 +9,8 @@ from jiratui.widgets.jql import JQLEditorScreen
 
 
 class ProjectSelectionInput(Select):
+    """A Select widget to select a project from a list of projects."""
+
     HELP = 'See Projects List section in the help'
 
     projects: Reactive[dict | None] = reactive(None, always_update=True)
@@ -20,7 +24,7 @@ class ProjectSelectionInput(Select):
             id='jira-project-selector',
             type_to_search=True,
             compact=True,
-            classes='jira-selector',
+            classes='dropdown',
         )
         self.border_title = 'Project'
         self.border_subtitle = '(p)'
@@ -42,6 +46,8 @@ class ProjectSelectionInput(Select):
 
 
 class IssueTypeSelectionInput(Select):
+    """A Select widget for selecting the type of work item among a list of possible types."""
+
     HELP = 'See Search by Work Item Type section in the help'
 
     def __init__(self, types: list):
@@ -52,7 +58,7 @@ class IssueTypeSelectionInput(Select):
             id='jira-issue-types-selector',
             type_to_search=True,
             compact=True,
-            classes='jira-selector',
+            classes='dropdown',
         )
         self.border_title = 'Issue Type'
         self.border_subtitle = '(t)'
@@ -63,12 +69,15 @@ class IssueTypeSelectionInput(Select):
 
 
 class IssueStatusSelectionInput(Select):
+    """A Select widget for selecting the status of a work item among a list of possible statuses."""
+
     HELP = 'See Search by Status section in the help'
     WIDGET_ID = 'jira-issue-status-selector'
 
     statuses: Reactive[list[tuple[str, str]] | None] = reactive(None, always_update=True)
 
-    def __init__(self, statuses: list):
+    def __init__(self, statuses: list, **kwargs):
+        classes = kwargs.pop('classes', None)
         super().__init__(
             options=statuses,
             prompt='Select a status',
@@ -76,7 +85,7 @@ class IssueStatusSelectionInput(Select):
             id=self.WIDGET_ID,
             type_to_search=True,
             compact=True,
-            classes='jira-selector',
+            classes=classes or 'dropdown',
         )
         self.border_title = 'Status'
         self.border_subtitle = '(s)'
@@ -92,6 +101,8 @@ class IssueStatusSelectionInput(Select):
 
 
 class WorkItemInputWidget(Input):
+    """An input widget that holds the key of a work item."""
+
     HELP = 'See Search by Work Item Key section in the help'
 
     def __init__(self, value: str | None = None):
@@ -99,7 +110,7 @@ class WorkItemInputWidget(Input):
             id='input_issue_key',
             classes='work-item-key',
             type='text',
-            placeholder='e.g. ABC-1234',
+            placeholder='ABC-1234',
             tooltip='Search work items by key',
             value=value,
         )
@@ -117,6 +128,8 @@ class WorkItemInputWidget(Input):
 
 
 class IssueSearchCreatedFromWidget(DateInput):
+    """An input widget that holds a date value to search work items created on or after this date."""
+
     HELP = 'See Search by Created From Date section in the help'
     LABEL = 'Created From'
     TOOLTIP = 'Search issues created after this date (inclusive)'
@@ -129,6 +142,8 @@ class IssueSearchCreatedFromWidget(DateInput):
 
 
 class IssueSearchCreatedUntilWidget(DateInput):
+    """An input widget that holds a date value to search work items created on or before this date."""
+
     HELP = 'See Search by Created Until Date section in the help'
     LABEL = 'Created Until'
     TOOLTIP = 'Search issues created until this date (inclusive)'
@@ -141,6 +156,8 @@ class IssueSearchCreatedUntilWidget(DateInput):
 
 
 class OrderByWidget(Select):
+    """A Select widget to display different alternatives to sort search results."""
+
     def __init__(self, options: list, initial_value: str | None = None):
         super().__init__(
             options=options,
@@ -148,7 +165,7 @@ class OrderByWidget(Select):
             id='issue-search-order-by-selector',
             type_to_search=False,
             compact=True,
-            classes='jira-selector',
+            classes='dropdown',
             value=initial_value,
         )
         self.border_title = 'Sort'
@@ -156,6 +173,8 @@ class OrderByWidget(Select):
 
 
 class ActiveSprintCheckbox(Checkbox):
+    """A check box to search work items in the active sprint."""
+
     HELP = 'See Search by Active Sprint section in the help'
 
     def __init__(self, value: bool = False):
@@ -163,7 +182,6 @@ class ActiveSprintCheckbox(Checkbox):
             id='active-sprint-checkbox',
             label='Active Sprint',
             value=value,
-            classes='active-sprint-checkbox',
         )
         self.border_subtitle = '(v)'
 
@@ -173,6 +191,8 @@ class ActiveSprintCheckbox(Checkbox):
 
 
 class JQLSearchWidget(Input):
+    """An input widget that holds a JQL expression."""
+
     HELP = 'See Searching Using JQL Expressions section in the help'
 
     BINDINGS = [

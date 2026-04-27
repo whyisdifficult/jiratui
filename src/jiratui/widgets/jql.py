@@ -17,7 +17,7 @@ class PreDefinedJQLExpressionsWidget(Select):
             id='issue-search-predefined-jql-selector',
             type_to_search=True,
             compact=True,
-            classes='jira-selector',
+            classes='dropdown',
         )
         self.border_title = 'Expression'
 
@@ -25,7 +25,7 @@ class PreDefinedJQLExpressionsWidget(Select):
 class JQLEditorScreen(ModalScreen[str]):
     """A screen that displays an editor for JQL expressions."""
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close Help')]
+    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'JQL Expression Editor'
 
     def __init__(self, content: str | None = None):

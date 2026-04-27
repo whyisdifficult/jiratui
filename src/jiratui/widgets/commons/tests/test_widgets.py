@@ -51,6 +51,8 @@ class TestDateInputWidget:
         assert widget.border_title == 'Due Date'
         assert widget.compact is False
         assert 'input-date' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
+        assert 'required' not in widget.classes
 
     def test_create_mode_required_field(self):
         """Test DateInputWidget with required flag in CREATE mode."""
@@ -61,10 +63,9 @@ class TestDateInputWidget:
             title='Due Date',
             required=True,
         )
-
+        # THEN
         assert widget.border_subtitle == '(*)'
         assert 'required' in widget.classes
-        assert 'input-date' in widget.classes
         assert widget.valid_empty is False
 
     @pytest.mark.asyncio
@@ -79,13 +80,16 @@ class TestDateInputWidget:
                 original_value='2025-12-23',
                 field_supports_update=True,
             )
-
+            # THEN
             assert widget.mode == FieldMode.UPDATE
             assert widget.field_id == 'duedate'
             assert widget.jira_field_key == 'duedate'
             assert widget.original_value == '2025-12-23'
             assert widget.value == '2025-12-23'
             assert widget.disabled is False
+            assert 'input-date' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
+            assert 'required' not in widget.classes
 
     @pytest.mark.asyncio
     async def test_update_mode_disabled_field(self, app):
@@ -98,7 +102,7 @@ class TestDateInputWidget:
                 original_value='2025-12-23',
                 field_supports_update=False,
             )
-
+            # THEN
             assert widget.disabled is True
 
     @pytest.mark.asyncio
@@ -111,7 +115,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             widget.value = '2025-12-25'
             result = widget.get_value_for_update()
             assert result == '2025-12-25'
@@ -126,7 +130,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             widget.value = ''
             result = widget.get_value_for_update()
             assert result is None
@@ -141,7 +145,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             # MaskedInput validates the value format, so invalid dates raise ValueError
             with pytest.raises(ValueError, match='does not match template'):
                 widget.value = 'invalid-date'
@@ -167,7 +171,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             widget.value = '2025-12-23'
             assert widget.value_has_changed is False
 
@@ -181,7 +185,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             widget.value = '2025-12-25'
             assert widget.value_has_changed is True
 
@@ -195,7 +199,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value=None,
             )
-
+            # THEN
             widget.value = '2025-12-25'
             assert widget.value_has_changed is True
 
@@ -209,7 +213,7 @@ class TestDateInputWidget:
                 jira_field_key='duedate',
                 original_value='2025-12-23',
             )
-
+            # THEN
             widget.value = ''
             assert widget.value_has_changed is True
 
@@ -221,7 +225,7 @@ class TestDateInputWidget:
             jira_field_key='duedate',
             original_value=None,
         )
-
+        # THEN
         widget.value = ''
         assert widget.value_has_changed is False
 
@@ -232,7 +236,7 @@ class TestDateInputWidget:
             field_id='duedate',
             jira_field_key='duedate',
         )
-
+        # THEN
         with pytest.raises(ValueError, match='only valid in UPDATE mode'):
             _ = widget.value_has_changed
 
@@ -258,7 +262,7 @@ class TestDateTimeInputWidget:
         assert widget.mode == FieldMode.CREATE
         assert widget.field_id == 'customfield_10001'
         assert widget.border_title == 'Event Time'
-        assert 'issue_details_input_field' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
 
     @pytest.mark.asyncio
     async def test_update_mode_initialization(self, app):
@@ -277,7 +281,7 @@ class TestDateTimeInputWidget:
             assert widget.jira_field_key == 'customfield_10001'
             assert widget.original_value == '2025-12-23 13:45:10'
             assert widget.value == '2025-12-23 13:45:10'
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
             assert 'required' not in widget.classes
 
     @pytest.mark.asyncio
@@ -293,6 +297,7 @@ class TestDateTimeInputWidget:
 
             widget.value = '2025-12-23 14:30:00'
             result = widget.get_value_for_update()
+            # THEN
             # Should return ISO format
             assert result is not None
             assert '2025-12-23' in result
@@ -308,7 +313,7 @@ class TestDateTimeInputWidget:
                 jira_field_key='customfield_10001',
                 original_value='2025-12-23 13:45:10',
             )
-
+            # THEN
             widget.value = ''
             result = widget.get_value_for_update()
             assert result is None
@@ -351,7 +356,7 @@ class TestTextInputWidget:
         assert widget.border_title == 'Custom Text'
         assert widget.border_subtitle == '(*)'
         assert 'required' in widget.classes
-        assert 'create-work-item-generic-input-field' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
 
     def test_create_mode_with_placeholder(self):
         """Test TextInputWidget with custom placeholder."""
@@ -382,7 +387,7 @@ class TestTextInputWidget:
             assert widget.jira_field_key == 'customfield_10002'
             assert widget.original_value == 'original text'
             assert widget.value == 'original text'
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
 
     @pytest.mark.asyncio
     async def test_get_value_for_update(self, app):
@@ -394,7 +399,7 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='original',
             )
-
+            # THEN
             widget.value = 'updated text'
             result = widget.get_value_for_update()
             assert result == 'updated text'
@@ -409,7 +414,7 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='original text',
             )
-
+            # THEN
             widget.value = 'original text'
             assert widget.value_has_changed is False
 
@@ -423,8 +428,8 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='original text',
             )
-
             widget.value = ' original text '
+            # THEN
             # Should not detect change due to whitespace stripping
             assert widget.value_has_changed is False
 
@@ -438,8 +443,8 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='original text',
             )
-
             widget.value = 'updated text'
+            # THEN
             assert widget.value_has_changed is True
 
     @pytest.mark.asyncio
@@ -466,8 +471,8 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='',
             )
-
             widget.value = 'new text'
+            # THEN
             assert widget.value_has_changed is True
 
     @pytest.mark.asyncio
@@ -480,8 +485,8 @@ class TestTextInputWidget:
                 jira_field_key='customfield_10002',
                 original_value='original text',
             )
-
             widget.value = ''
+            # THEN
             assert widget.value_has_changed is True
 
     @pytest.mark.asyncio
@@ -518,7 +523,7 @@ class TestURLInputWidget:
         assert widget.border_title == 'Custom Text'
         assert widget.border_subtitle == '(*)'
         assert 'required' in widget.classes
-        assert 'create-work-item-generic-input-field' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
 
     def test_create_mode_with_placeholder(self):
         """Test URLWidget with custom placeholder."""
@@ -549,7 +554,7 @@ class TestURLInputWidget:
             assert widget.jira_field_key == 'customfield_10002'
             assert widget.original_value == 'original text'
             assert widget.value == 'original text'
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
 
     @pytest.mark.asyncio
     async def test_get_value_for_update(self, app):
@@ -685,7 +690,7 @@ class TestSprintWidgetWidget:
         assert widget.border_title == 'Custom Text'
         assert widget.border_subtitle == '(*)'
         assert 'required' in widget.classes
-        assert 'create-work-item-generic-input-field' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
 
     def test_create_mode_with_placeholder(self):
         """Test SprintWidgetWidget with custom placeholder."""
@@ -716,7 +721,7 @@ class TestSprintWidgetWidget:
             assert widget.jira_field_key == 'customfield_10002'
             assert widget.original_value == 'original text'
             assert widget.value == 'original text'
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
 
     @pytest.mark.asyncio
     async def test_get_value_for_update(self, app):
@@ -855,7 +860,7 @@ class TestMultiUserPickerWidget:
         assert widget.value == ''
         assert widget.get_value_for_create() == []
         assert 'required' in widget.classes
-        assert 'create-work-item-generic-input-field' in widget.classes
+        assert 'create-update-users-field-widget' in widget.classes
 
     def test_create_mode_with_placeholder(self):
         """Test MultiUserPickerWidget with custom placeholder."""
@@ -887,7 +892,8 @@ class TestMultiUserPickerWidget:
             assert widget.jira_field_key == 'customfield_10002'
             assert widget.original_value == []
             assert widget.value == ''
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-users-field-widget' in widget.classes
+            assert 'required' not in widget.classes
             assert widget.get_value_for_update() == []
 
     @pytest.mark.asyncio
@@ -1062,7 +1068,8 @@ class TestSingleUserPickerWidget:
         assert widget.value == ''
         assert widget.get_value_for_create() is None
         assert 'required' in widget.classes
-        assert 'create-work-item-generic-input-field' in widget.classes
+        assert 'create-update-users-field-widget' in widget.classes
+        assert 'single-user' in widget.classes
 
     def test_create_mode_initialization_with_custom_subtitle(self):
         """Test SingleUserPickerWidget initialization in CREATE mode."""
@@ -1108,7 +1115,8 @@ class TestSingleUserPickerWidget:
             assert widget.original_value is None
             assert widget.value == ''
             assert widget.account_id is None
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-users-field-widget' in widget.classes
+            assert 'single-user' in widget.classes
             assert 'required' not in widget.classes
             assert widget.get_value_for_update() is None
 
@@ -1267,7 +1275,8 @@ class TestNumericInputWidget:
         assert widget.field_id == 'customfield_10001'
         assert widget.border_title == 'Story Points'
         assert widget.compact is False
-        assert 'create-work-item-float-input' in widget.classes
+        assert 'create-update-field-widget' in widget.classes
+        assert 'numeric' in widget.classes
 
     def test_create_mode_required_field(self):
         """Test NumericInputWidget with required flag in CREATE mode."""
@@ -1301,7 +1310,7 @@ class TestNumericInputWidget:
             assert widget.original_value == 5.0
             assert widget.value == '5.0'
             assert widget.disabled is False
-            assert 'issue_details_input_field' in widget.classes
+            assert 'create-update-field-widget' in widget.classes
             assert 'required' not in widget.classes
 
     @pytest.mark.asyncio

@@ -255,7 +255,7 @@ class IssueDetailsWidget(Vertical):
                     jira_field_key='assignee_account_id',
                     border_subtitle='(x)',
                     border_title='Assignee',
-                ).add_class(*['cols-3'])
+                ).add_class(*['cols-3', 'create-update-users-field-widget'])
                 # set widgets in row 3
                 yield IssueDetailsPrioritySelection([])
                 yield IssueDetailsStatusSelection([])
@@ -271,7 +271,7 @@ class IssueDetailsWidget(Vertical):
                     jira_field_key='reporter',
                     border_title='Reporter',
                     required=True,
-                ).add_class(*['cols-3'])
+                ).add_class(*['required', 'create-update-users-field-widget', 'cols-3'])
                 # set widgets in row 6
                 yield ProjectIDField()
                 # set widgets in row 7
@@ -564,22 +564,22 @@ class IssueDetailsWidget(Vertical):
 
         if clear:
             self._work_item_key = None
-            self.issue_summary_field.value = ''
-            self.issue_parent_field.value = ''
-            self.issue_resolution_field.value = ''
-            self.issue_resolution_date_field.value = ''
-            self.issue_last_update_date_field.value = ''
-            self.issue_key_field.value = ''
-            self.project_id_field.value = ''
-            self.issue_type_field.value = ''
-            self.issue_sprint_field.value = ''
+            self.issue_summary_field.clear()
+            self.issue_parent_field.clear()
+            self.issue_resolution_field.clear()
+            self.issue_resolution_date_field.clear()
+            self.issue_last_update_date_field.clear()
+            self.issue_key_field.clear()
+            self.project_id_field.clear()
+            self.issue_type_field.clear()
+            self.issue_sprint_field.clear()
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
             self.reporter_selector.clear()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.set_original_value(None)
-            self.work_item_labels_widget.value = ''
+            self.work_item_labels_widget.clear()
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
@@ -893,11 +893,19 @@ class IssueDetailsWidget(Vertical):
     def watch_issue(self, work_item: JiraIssue | None) -> None:
         """Updates the form fields with the details of the work item selected by the user.
 
+        This method does the following:
+        - resets the widgets in the form.
+        - fills-in the (static) widgets in the form based on the currently selected work item.
+            - retrieves the list of status codes applicable for the selected work item and its type
+            - checks if the work item is flagged and displays the flag
+        - if the app is configured to update additional fields, `config.enable_updating_additional_fields`, then this
+        method will generate and mount widgets for every additional field based on the work item's edit metadata.
+
         Args:
             work_item: a work item selected by the user in the left-hand side panel.
 
         Returns:
-            `None`.
+            None.
         """
 
         # "reset" the form by setting the value of all its elements to the default

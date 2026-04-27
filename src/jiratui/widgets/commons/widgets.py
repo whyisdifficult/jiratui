@@ -270,7 +270,8 @@ class DateTimeInputWidget(MaskedInput, BaseFieldWidget, BaseUpdateFieldWidget):
             original_value: Original datetime value from Jira (UPDATE mode only)
             field_supports_update: Whether field can be updated (UPDATE mode only)
         """
-        # Initialize MaskedInput with datetime template
+
+        # initialize MaskedInput with datetime template
         super().__init__(
             id=field_id,
             template='9999-99-99 99:99:99',
@@ -287,20 +288,17 @@ class DateTimeInputWidget(MaskedInput, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=False,  # DateTime typically not compact
         )
 
-        # Mode-specific setup
+        # mode-specific setup
+        self.add_class(*['create-update-field-widget', 'input-date'])
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
                 jira_field_key=jira_field_key,
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
-            # Set initial value if provided
+            # set initial value if provided
             if original_value:
                 self.value = original_value
-        else:
-            # CREATE mode specific CSS
-            self.add_class('issue_details_input_field')
 
     def get_value_for_update(self) -> str | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -420,20 +418,17 @@ class TextInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
         )
 
-        # Mode-specific setup
+        # mode-specific setup
+        self.add_class('create-update-field-widget')
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
                 jira_field_key=jira_field_key,
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
             # set initial value if provided
             if original_value:
                 self.value = original_value
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-generic-input-field')
 
     def get_value_for_update(self) -> str:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -525,7 +520,7 @@ class SingleUserPickerWidget(Input):
         self._jira_field_key = jira_field_key
         border_subtitle: str | None = kwargs.pop('border_subtitle', None)
         self._placeholder: str | None = (
-            kwargs.pop('placeholder', 'Type to find users...') or 'Type to find users...'
+            kwargs.pop('placeholder', 'Type to find user...') or 'Type to find user...'
         )
 
         # initialize Input widget
@@ -535,14 +530,13 @@ class SingleUserPickerWidget(Input):
         self.border_title = title or 'Users'
 
         # mode-specific behaviour
+        self.add_class(*['create-update-users-field-widget', 'single-user'])
         if self.mode == FieldMode.UPDATE:
-            self.add_class('issue_details_input_field')
             # disable if field doesn't support updates
             self.disabled = not supports_update
             # set initial value for the widget
             self.original_value = original_value
         else:
-            self.add_class('create-work-item-generic-input-field')
             self.original_value = None
 
         # add required indicator
@@ -746,17 +740,14 @@ class LabelsWidget(Input):
         self.border_title = title or 'Labels'
 
         # mode-specific setup
+        self.add_class('create-update-field-widget')
         self._jira_field_key = jira_field_key
         if self.mode == FieldMode.UPDATE:
-            self.add_class('issue_details_input_field')
             # Disable if field doesn't support updates
             self.disabled = not supports_update
             # Set initial value from original_value (list -> comma-separated string)
             if original_value:
                 self.value = ','.join(original_value)
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-generic-input-field')
 
         # Add required indicator
         if required:
@@ -882,21 +873,18 @@ class URLWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         )
 
         # mode-specific setup
+        self.add_class('create-update-field-widget')
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
                 jira_field_key=jira_field_key,
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
             # set initial value if provided
             if original_value:
                 self.value = original_value
             if not field_supports_update:
                 self.disabled = True
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-generic-input-field')
 
     @property
     def original_value(self) -> str:
@@ -971,10 +959,8 @@ class EpicLinkWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
 
         # mode-specific setup
         self._jira_field_key = jira_field_key
-        if mode == FieldMode.CREATE:
-            self.add_class('create-work-item-generic-input-field', 'issue_key')
-        elif mode == FieldMode.UPDATE:
-            self.add_class('issue_details_input_field', ' issue_key')
+        self.add_class('create-update-field-widget', 'issue_key')
+        if mode == FieldMode.UPDATE:
             if original_value:
                 self.value = original_value
             if not field_supports_update:
@@ -1051,6 +1037,7 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
         )
 
         # Mode-specific setup
+        self.add_class('create-update-field-widget')
         self.styles.width = 20
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
@@ -1058,15 +1045,11 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
             # set initial value if provided
             if original_value:
                 self.value = original_value
             if not field_supports_update:
                 self.disabled = True
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-generic-input-field')
 
     @property
     def original_value(self) -> str:
@@ -1201,18 +1184,14 @@ class MultiUserPickerWidget(Input):
         self.border_title = title or 'Users'
 
         # mode-specific setup
+        self.add_class('create-update-users-field-widget')
         self._jira_field_key = jira_field_key
         if self.mode == FieldMode.UPDATE:
-            self.add_class('issue_details_input_field')
             # disable if field doesn't support updates
             self.disabled = not self._field_supports_update
             # set initial value from original_value
             if self._original_value:
                 self.set_value(self._original_value)
-
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-generic-input-field')
 
         # add required indicator
         if required:
@@ -1416,7 +1395,8 @@ class NumericInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
         )
 
-        # Mode-specific setup
+        # mode-specific setup
+        self.add_class(*['create-update-field-widget', 'numeric'])
         if mode == FieldMode.UPDATE:
             # Convert original_value to string for display in Input widget
             str_value = str(original_value) if original_value is not None else ''
@@ -1426,10 +1406,6 @@ class NumericInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
                 field_supports_update=field_supports_update,
             )
             self.value = str_value
-            self.add_class('issue_details_input_field')
-        else:
-            # CREATE mode specific setup
-            self.add_class('create-work-item-float-input')
 
     def get_value_for_update(self) -> float | None:
         """
@@ -1796,7 +1772,7 @@ class DescriptionWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-            self.add_class('issue_details_input_field')
+            self.add_class('create-update-field-widget')
         else:
             # CREATE mode specific CSS
             self.add_class('create-work-item-description')
