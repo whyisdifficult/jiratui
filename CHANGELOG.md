@@ -42,7 +42,9 @@ local TZ. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/2
 - Add/remove/update tests.
 - Refactor the class `UsersAutoComplete` to support custom search functions.
 - Update the documentation to reflect changes in the way we can create new work items.
-- Refactor some CSS classes used by the widgets used when creating and updating work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/225
+- Refactor some CSS classes used by the widgets used when creating and updating work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/225
+- Bump `gitpython` from `3.1.46` to `3.1.47`. by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/228
+- Bump `click` from `8.3.2` to `8.3.3`. by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/228
 
 ## [1.7.0] - 2026-03-28
 
