@@ -81,7 +81,6 @@ def test_create_dynamic_widgets_without_edit_metadata(work_item: JiraIssue):
 @pytest.mark.parametrize(
     'field_key',
     [
-        'labels',
         'comment',
         'duedate',
         'issuelinks',
@@ -106,7 +105,6 @@ def test_create_dynamic_widgets_skip_static_update_fields(field_key: str, work_i
 @pytest.mark.parametrize(
     'field_name',
     [
-        'Labels',
         'comment',
         'duedate',
         'issuelinks',

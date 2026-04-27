@@ -26,6 +26,7 @@ from jiratui.widgets.commons.base import MultiUserPickerAutoComplete
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
+    LabelsWidget,
     MultiUserPickerWidget,
     NumericInputWidget,
     SingleUserPickerWidget,
@@ -341,7 +342,7 @@ async def test_determine_editable_fields_without_edit_metadata(
         await pilot.pause()
 
         # WHEN
-        result = details_widget._determine_editable_fields(jira_issue)
+        result = details_widget._extract_editable_and_required_fields(jira_issue)
         # THEN
         assert result == {}
 
@@ -354,17 +355,23 @@ async def test_determine_editable_fields(jira_issue, app: JiraApp):
         await app.mount(details_widget)
         await pilot.pause()
         # WHEN
-        result = details_widget._determine_editable_fields(jira_issue)
+        result = details_widget._extract_editable_and_required_fields(jira_issue)
         # THEN
         assert result == {
-            'summary': True,
-            'assignee': True,
-            'priority': True,
-            'customfield_10021': True,
-            'parent': True,
-            'duedate': True,
-            'reporter': True,
-            'labels': True,
+            'editable_fields': {
+                'summary': True,
+                'assignee': True,
+                'parent': True,
+                'duedate': True,
+                'reporter': True,
+            },
+            'required_fields': {
+                'summary': True,
+                'assignee': False,
+                'parent': False,
+                'duedate': False,
+                'reporter': True,
+            },
         }
 
 
@@ -377,9 +384,9 @@ async def test_determine_editable_fields_item_without_parent(jira_issue, app: Ji
         await app.mount(details_widget)
         await pilot.pause()
         # WHEN
-        result = details_widget._determine_editable_fields(jira_issue)
+        result = details_widget._extract_editable_and_required_fields(jira_issue)
         # THEN
-        assert result['parent'] is False
+        assert result['editable_fields']['parent'] is False
 
 
 @pytest.mark.asyncio
@@ -391,9 +398,9 @@ async def test_determine_editable_fields_item_with_possible_parent(jira_issue, a
         await app.mount(details_widget)
         await pilot.pause()
         # WHEN
-        result = details_widget._determine_editable_fields(jira_issue)
+        result = details_widget._extract_editable_and_required_fields(jira_issue)
         # THEN
-        assert result['parent'] is True
+        assert result['editable_fields']['parent'] is True
 
 
 @patch.object(APIController, 'get_project_statuses')
@@ -456,7 +463,6 @@ async def test_build_payload_for_update_nothing_to_update(app: JiraApp):
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         # WHEN
         payload = details_widget._build_payload_for_update()
         # THEN
@@ -479,7 +485,6 @@ async def test_build_payload_for_update_nothing_to_update_update_additional_fiel
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -507,7 +512,6 @@ async def test_build_payload_for_update_with_summary_changed(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         # WHEN
         payload = details_widget._build_payload_for_update()
         # THEN
@@ -531,7 +535,6 @@ async def test_build_payload_for_update_with_summary_unchanged(issue_mock: Mock,
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         # WHEN
         payload = details_widget._build_payload_for_update()
         # THEN
@@ -553,7 +556,6 @@ async def test_build_payload_for_update_with_duedate_unchanged(app: JiraApp):
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -578,7 +580,6 @@ async def test_build_payload_for_update_with_duedate_changed(app: JiraApp):
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -605,7 +606,6 @@ async def test_build_payload_for_update_with_priority_unchanged(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -633,7 +633,6 @@ async def test_build_payload_for_update_with_priority_changed_without_priority_s
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -662,7 +661,6 @@ async def test_build_payload_for_update_with_priority_changed_with_priority_sele
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -690,7 +688,6 @@ async def test_build_payload_for_update_with_parent_unchanged(
         details_widget.issue_parent_field.value = 'P2'
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -718,7 +715,6 @@ async def test_build_payload_for_update_with_parent_changed(
         details_widget.issue_parent_field.value = 'WI-1'
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -746,7 +742,6 @@ async def test_build_payload_for_update_with_assignee_unchanged(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = True
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -774,7 +769,6 @@ async def test_build_payload_for_update_with_assignee_changed(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = True
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -802,7 +796,6 @@ async def test_build_payload_for_update_with_reporter_changed(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = True
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -831,7 +824,6 @@ async def test_build_payload_for_update_with_reporter_missing(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = True
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -859,7 +851,6 @@ async def test_build_payload_for_update_with_reporter_unchanged(
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = True
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
 
         # WHEN
@@ -869,17 +860,11 @@ async def test_build_payload_for_update_with_reporter_unchanged(
         assert payload == {}
 
 
-@pytest.mark.parametrize(
-    'labels, expected_labels',
-    [
-        ('test1,test2', ['test1', 'test2']),
-        ('test2', ['test2']),
-    ],
-)
-@patch.object(IssueDetailsWidget, 'issue')
+# TODO
+@patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=False))
 @pytest.mark.asyncio
-async def test_build_payload_for_update_with_labels_changed(
-    issue_mock: Mock, labels, expected_labels, jira_issue, app: JiraApp
+async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_unchanged(
+    app: JiraApp,
 ):
     # GIVEN
     app.config.enable_updating_additional_fields = True
@@ -887,35 +872,32 @@ async def test_build_payload_for_update_with_labels_changed(
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
-        issue_mock.configure_mock(labels=['test1'])
         details_widget.issue_summary_field.update_enabled = False
         details_widget.issue_due_date_field.update_enabled = False
         details_widget.priority_selector.update_enabled = False
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = True
-        details_widget.work_item_labels_widget.value = labels
         await details_widget.dynamic_fields_widgets_container.remove_children()
+        await details_widget.dynamic_fields_widgets_container.mount(
+            LabelsWidget(
+                mode=FieldMode.UPDATE, field_id='a', jira_field_key='a', original_value=['label1']
+            )
+        )
 
         # WHEN
-        payload = details_widget._build_payload_for_update()
-        # THEN
-        assert payload == {'labels': expected_labels}
+        with patch.object(LabelsWidget, 'get_value_for_update') as m:
+            m.return_value = ['label1']
+            payload = details_widget._build_payload_for_update()
+            # THEN
+            assert payload == {}
 
 
-@pytest.mark.parametrize(
-    'new_labels, current_labels',
-    [
-        ('test1,test2', ['test1', 'test2']),
-        ('Test2', ['test2']),
-        ('Test2, test3 ', ['test2', 'test3']),
-    ],
-)
-@patch.object(IssueDetailsWidget, 'issue')
+# TODO
+@patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=True))
 @pytest.mark.asyncio
-async def test_build_payload_for_update_with_labels_unchanged(
-    issue_mock: Mock, new_labels, current_labels, jira_issue, app: JiraApp
+async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_changed(
+    app: JiraApp,
 ):
     # GIVEN
     app.config.enable_updating_additional_fields = True
@@ -923,21 +905,28 @@ async def test_build_payload_for_update_with_labels_unchanged(
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
-        issue_mock.configure_mock(labels=current_labels)
         details_widget.issue_summary_field.update_enabled = False
         details_widget.issue_due_date_field.update_enabled = False
         details_widget.priority_selector.update_enabled = False
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = True
-        details_widget.work_item_labels_widget.value = new_labels
         await details_widget.dynamic_fields_widgets_container.remove_children()
+        await details_widget.dynamic_fields_widgets_container.mount(
+            LabelsWidget(
+                mode=FieldMode.UPDATE,
+                field_id='field_a',
+                jira_field_key='field_a',
+                original_value=['label1'],
+            )
+        )
 
         # WHEN
-        payload = details_widget._build_payload_for_update()
-        # THEN
-        assert payload == {}
+        with patch.object(LabelsWidget, 'get_value_for_update') as m:
+            m.return_value = ['label1', 'label2']
+            payload = details_widget._build_payload_for_update()
+            # THEN
+            assert payload == {'field_a': ['label1', 'label2']}
 
 
 @patch.object(NumericInputWidget, 'value_has_changed', PropertyMock(return_value=False))
@@ -957,7 +946,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_numeric
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
         await details_widget.dynamic_fields_widgets_container.mount(
             NumericInputWidget(mode=FieldMode.UPDATE, field_id='a', jira_field_key='a')
@@ -986,7 +974,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_numeric
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
         await details_widget.dynamic_fields_widgets_container.mount(
             NumericInputWidget(mode=FieldMode.UPDATE, field_id='field_a', jira_field_key='field_a')
@@ -1017,7 +1004,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_numeric
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
         await details_widget.dynamic_fields_widgets_container.mount(
             NumericInputWidget(mode=FieldMode.UPDATE, field_id='field_a', jira_field_key='field_a')
@@ -1051,7 +1037,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_non_num
         details_widget.issue_parent_field.update_enabled = False
         details_widget.assignee_selector.update_enabled = False
         details_widget.reporter_selector.update_enabled = False
-        details_widget.work_item_labels_widget.update_enabled = False
         await details_widget.dynamic_fields_widgets_container.remove_children()
         await details_widget.dynamic_fields_widgets_container.mount(
             DateInputWidget(mode=FieldMode.UPDATE, field_id='field_a', jira_field_key='field_a')
@@ -1114,7 +1099,6 @@ async def test_clear_form(app: JiraApp):
         assert details_widget.priority_selector.selection is None
         assert details_widget.priority_selector.update_enabled is True
         assert details_widget.issue_due_date_field.original_value is None
-        assert details_widget.work_item_labels_widget.value == ''
         assert details_widget._work_item_is_flagged is None
         assert details_widget._issue_supports_flagging is True
         assert details_widget.work_item_flag_widget.show is False
@@ -1356,12 +1340,12 @@ async def test_watch_issue(jira_issue, app: JiraApp):
 @patch.object(IssueDetailsWidget, '_setup_time_tracking')
 @patch.object(IssueDetailsWidget, '_add_dynamic_widgets')
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
-@patch.object(IssueDetailsWidget, '_determine_editable_fields')
+@patch.object(IssueDetailsWidget, '_extract_editable_and_required_fields')
 @patch.object(APIController, 'get_project_statuses')
 @pytest.mark.asyncio
 async def test_watch_issue_with_valid_issue(
     get_project_statuses_mock: AsyncMock,
-    determine_editable_fields_mock: Mock,
+    extract_editable_and_required_fields_mock: Mock,
     determine_issue_flagged_status_mock: Mock,
     add_dynamic_widgets_mock: Mock,
     setup_time_tracking_mock: Mock,
@@ -1377,19 +1361,21 @@ async def test_watch_issue_with_valid_issue(
         get_project_statuses_mock.return_value = APIControllerResponse(
             result={'2': {'issue_type_statuses': [IssueStatus(id='3', name='Done')]}}
         )
-        determine_editable_fields_mock.return_value = {
-            'assignee': True,
-            'reporter': True,
-            'parent': True,
-            'summary': True,
-            'duedate': True,
+        extract_editable_and_required_fields_mock.return_value = {
+            'editable_fields': {
+                'assignee': True,
+                'reporter': True,
+                'parent': True,
+                'summary': True,
+                'duedate': True,
+            }
         }
         # WHEN
         details_widget.watch_issue(jira_issue)
         await pilot.pause()
         # THEN
         get_project_statuses_mock.assert_called_once_with('P1')
-        determine_editable_fields_mock.assert_called_once()
+        extract_editable_and_required_fields_mock.assert_called_once()
         assert details_widget.assignee_selector.account_id == '2'
         assert details_widget.assignee_selector.update_enabled is True
         assert details_widget.reporter_selector.account_id == '1'
@@ -1408,7 +1394,6 @@ async def test_watch_issue_with_valid_issue(
         assert details_widget.issue_summary_field.update_enabled is True
         assert details_widget.issue_due_date_field.value == '2025-10-12'
         assert details_widget.issue_due_date_field.update_enabled is True
-        assert details_widget.work_item_labels_widget.value == ''
         assert details_widget.priority_selector.update_enabled is True
         determine_issue_flagged_status_mock.assert_called_once()
         setup_time_tracking_mock.assert_called_once()
@@ -1418,12 +1403,12 @@ async def test_watch_issue_with_valid_issue(
 @patch.object(IssueDetailsWidget, '_setup_time_tracking')
 @patch.object(IssueDetailsWidget, '_add_dynamic_widgets')
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
-@patch.object(IssueDetailsWidget, '_determine_editable_fields')
+@patch.object(IssueDetailsWidget, '_extract_editable_and_required_fields')
 @patch.object(APIController, 'get_project_statuses')
 @pytest.mark.asyncio
 async def test_watch_issue_with_valid_issue_alternative_values(
     get_project_statuses_mock: AsyncMock,
-    determine_editable_fields_mock: Mock,
+    extract_editable_and_required_fields_mock: Mock,
     determine_issue_flagged_status_mock: Mock,
     add_dynamic_widgets_mock: Mock,
     setup_time_tracking_mock: Mock,
@@ -1439,12 +1424,14 @@ async def test_watch_issue_with_valid_issue_alternative_values(
         get_project_statuses_mock.return_value = APIControllerResponse(
             result={'2': {'issue_type_statuses': [IssueStatus(id='3', name='Done')]}}
         )
-        determine_editable_fields_mock.return_value = {
-            'assignee': True,
-            'reporter': True,
-            'parent': True,
-            'summary': True,
-            'duedate': True,
+        extract_editable_and_required_fields_mock.return_value = {
+            'editable_fields': {
+                'assignee': True,
+                'reporter': True,
+                'parent': True,
+                'summary': True,
+                'duedate': True,
+            }
         }
         jira_issue.assignee = None
         jira_issue.reporter = None
@@ -1456,7 +1443,7 @@ async def test_watch_issue_with_valid_issue_alternative_values(
         await pilot.pause()
         # THEN
         get_project_statuses_mock.assert_called_once_with('P1')
-        determine_editable_fields_mock.assert_called_once()
+        extract_editable_and_required_fields_mock.assert_called_once()
         assert details_widget.assignee_selector.account_id is None
         assert details_widget.assignee_selector.update_enabled is True
         assert details_widget.reporter_selector.account_id is None
@@ -1545,7 +1532,6 @@ async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
         assert 'create-update-field-widget' in details_widget.issue_resolution_date_field.classes
         assert 'input-date' in details_widget.issue_resolution_date_field.classes
         assert 'create-update-field-widget' in details_widget.issue_resolution_field.classes
-        assert 'create-update-field-widget' in details_widget.work_item_labels_widget.classes
 
 
 @patch.object(IssueDetailsWidget, 'issue')
