@@ -216,6 +216,12 @@ class MainScreen(Screen):
             key_display='^g',
             tooltip='Creates a Git branch with the key of the work item',
         ),
+        Binding(
+            key='escape',
+            action='unfocus',
+            description='unfocus',
+            show=False,
+        ),
     ]
 
     def __init__(
@@ -971,6 +977,9 @@ class MainScreen(Screen):
             ),
             exclusive=True,
         )
+
+    def action_unfocus(self) -> None:
+        self.set_focus(None)
 
     def action_focus_widget(self, key: str) -> None:
         """Focuses a widget based on the key pressed by the user.
