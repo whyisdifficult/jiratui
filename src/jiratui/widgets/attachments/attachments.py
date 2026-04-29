@@ -177,12 +177,12 @@ class IssueAttachmentsWidget(VerticalScroll):
     HELP = 'See Attachments section in the help'
     BINDINGS = [
         Binding(
-            key='ctrl+u',
+            key='ctrl+u,n',
             action='add_attachment',
-            description='Attach',
-            key_display='^u',
-            tooltip='Attache new file',
-        )
+            description='Attach File',
+            key_display='n',
+            tooltip='Attach a new file to a work item',
+        ),
     ]
 
     attachments: Reactive[WorkItemAttachments | None] = reactive(None)
