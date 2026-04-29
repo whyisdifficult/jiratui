@@ -270,7 +270,7 @@ async def test_delete_comment(
 ):
     # GIVEN
     urls_config_mock.jira_base_url = 'http://foo.bar'
-    fetch_comments_on_delete_mock.fetch_comments_on_delete = True
+    fetch_comments_on_delete_mock.return_value = True
     get_comments_mock.return_value = APIControllerResponse(result=None)
     delete_comment_mock.return_value = APIControllerResponse()
     async with app.run_test() as pilot:

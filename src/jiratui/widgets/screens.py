@@ -22,7 +22,7 @@ from jiratui.models import (
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.urls import build_external_url_for_issue
-from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
+from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
 from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
@@ -951,7 +951,6 @@ class MainScreen(Screen):
         self.issue_remote_links_widget.issue_key = None
         # clear the attachments
         self.issue_attachments_widget.attachments = None
-        self.issue_attachments_widget.issue_key = None
         # reset the current page
         self.search_results_table.page = 1
         # clear the token-based pagination control
@@ -1166,8 +1165,9 @@ class MainScreen(Screen):
         )
 
         # step 6: populate attachments tab
-        self.issue_attachments_widget.issue_key = work_item.key
-        self.issue_attachments_widget.attachments = work_item.attachments
+        self.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=work_item.key, attachments=work_item.attachments
+        )
 
         # step 7: populate links tab
         if CONFIGURATION.get().show_issue_web_links:
@@ -1288,7 +1288,6 @@ class MainScreen(Screen):
             self.related_issues_widget.issue_key = None
             self.issue_comments_widget.comments = None
             self.issue_attachments_widget.attachments = None
-            self.issue_attachments_widget.issue_key = None
             self.issue_remote_links_widget.issue_key = None
             self.issue_child_work_items_widget.issues = None
             self.issue_child_work_items_widget.issue_key = None

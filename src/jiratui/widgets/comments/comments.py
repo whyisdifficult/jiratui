@@ -97,12 +97,13 @@ class IssueCommentsWidget(VerticalScroll):
         return '#comments'
 
     def _update_comments_after_delete(self, comment_id: str) -> None:
-        self.comments = WorkItemComments(
-            work_item_key=self._work_item_key,
-            comments=[
-                comment for comment in self.comments.comments or [] if comment.id != comment_id
-            ],  # type:ignore[attr-defined]
-        )
+        if self.comments and self.comments.comments:
+            self.comments = WorkItemComments(
+                work_item_key=self._work_item_key,
+                comments=[
+                    comment for comment in self.comments.comments or [] if comment.id != comment_id
+                ],  # type:ignore[attr-defined]
+            )
 
     def on_comment_collapsible_deleted(self, message: CommentCollapsible.Deleted) -> None:
         """Schedules a task to delete a comment."""
