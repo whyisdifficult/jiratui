@@ -28,6 +28,7 @@ def config_for_testing() -> ApplicationConfiguration:
     config_mock = Mock(spec=ApplicationConfiguration)
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',
+        jira_base_url='foo.bar',
         jira_api_username='foo',
         jira_api_token=SecretStr('bar'),
         jira_api_version=3,
@@ -49,6 +50,7 @@ def config_for_testing() -> ApplicationConfiguration:
         update_additional_fields_ignore_ids=None,
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
+        fetch_comments_on_delete=False,
     )
     return config_mock
 

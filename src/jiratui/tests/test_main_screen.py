@@ -391,7 +391,6 @@ async def test_click_search_button_resets_widgets(
         # THEN
         search_issues_mock.assert_called_once()
         assert main_screen.issue_comments_widget.comments is None
-        assert main_screen.issue_comments_widget.issue_key is None
         assert main_screen.related_issues_widget.issues is None
         assert main_screen.related_issues_widget.issue_key is None
         assert main_screen.issue_remote_links_widget.issue_key is None

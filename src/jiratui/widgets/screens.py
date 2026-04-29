@@ -23,7 +23,7 @@ from jiratui.models import (
 )
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
-from jiratui.widgets.comments.comments import IssueCommentsWidget
+from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
@@ -944,7 +944,6 @@ class MainScreen(Screen):
         self.issue_details_widget.clear_form = True
         # clear the comments
         self.issue_comments_widget.comments = None
-        self.issue_comments_widget.issue_key = None
         # clear related issues
         self.related_issues_widget.issue_key = None
         self.related_issues_widget.issues = None
@@ -1162,8 +1161,9 @@ class MainScreen(Screen):
         self.related_issues_widget.issues = work_item.related_issues
 
         # step 5: populate comments tab
-        self.issue_comments_widget.issue_key = work_item.key
-        self.issue_comments_widget.comments = work_item.comments
+        self.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=work_item.key, comments=work_item.comments
+        )
 
         # step 6: populate attachments tab
         self.issue_attachments_widget.issue_key = work_item.key
@@ -1287,7 +1287,6 @@ class MainScreen(Screen):
             self.related_issues_widget.issues = None
             self.related_issues_widget.issue_key = None
             self.issue_comments_widget.comments = None
-            self.issue_comments_widget.issue_key = None
             self.issue_attachments_widget.attachments = None
             self.issue_attachments_widget.issue_key = None
             self.issue_remote_links_widget.issue_key = None
