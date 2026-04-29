@@ -252,6 +252,11 @@ class IssueAttachmentsWidget(VerticalScroll):
                     if response.result is None or not response.result.issues:
                         # fallback to removing the attachment manually based on the id
                         self._update_attachments_after_delete(attachment_id)
+                        self.notify(
+                            f'Failed to find the work item with key: {work_item_key}',
+                            severity='error',
+                            title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                        )
                     else:
                         self.attachments = WorkItemAttachments(
                             work_item_key=work_item_key,
@@ -260,6 +265,11 @@ class IssueAttachmentsWidget(VerticalScroll):
                 else:
                     # fallback to removing the attachment manually based on the id
                     self._update_attachments_after_delete(attachment_id)
+                    self.notify(
+                        f'Failed to find the work item with key: {work_item_key}',
+                        severity='error',
+                        title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                    )
             else:
                 # fallback to removing the attachment manually based on the id
                 self._update_attachments_after_delete(attachment_id)

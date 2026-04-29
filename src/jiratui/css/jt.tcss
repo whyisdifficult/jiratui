@@ -380,7 +380,6 @@ ConfirmDeleteItemScreen {
 }
 ConfirmDeleteItemScreen > Vertical {
     width: 60%;
-    width: 60%;
     height: auto;
     border: round $foreground;
     padding: 0 1;
@@ -744,20 +743,43 @@ AddWorkItemScreen > Vertical {
 
 /* ---------------------------------------- Create Work Item Screen - END ---------------------------------------- */
 
-/* Confirmation Screen */
+/* ----------------------------------------- Confirmation Screen - BEGIN ------------------------------------------*/
 
 ConfirmationScreen {
     align: center middle;
+    background: $background 80%;
 }
-ConfirmationScreen > Grid {
-    grid-size: 2;
-    grid-gutter: 1 2;
-    grid-rows: 1fr 3;
+
+ConfirmationScreen > Vertical {
+    width: 40%;
+    height: 30%;
+    border: round $foreground;
     padding: 0 1;
-    width: 60;
-    height: 11;
-    border: thick $background 80%;
-    background: $surface;
+    & > Static {
+        margin-top: 1;
+    }
+}
+
+#confirmation-button-accept {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+#confirmation-button-cancel {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
+.confirmation-screen-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
 }
 
 #confirmation-question {
@@ -767,13 +789,7 @@ ConfirmationScreen > Grid {
     content-align: center middle;
 }
 
-#confirmation-button-accept {
-    width: 100%;
-}
-
-#confirmation-button-cancel {
-    width: 100%;
-}
+/* ----------------------------------------- Confirmation Screen - END --------------------------------------------*/
 
 /* New Attachment Screen */
 
