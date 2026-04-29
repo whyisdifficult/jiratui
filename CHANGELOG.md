@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update the search results table after deleting a work item; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/205
 - Generate a `LabelsWidget` dynamically rather than defining the widget statically at compose time when the user is updating/editing a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
 - Update the `required` state of the parent field's widget based. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
+- Added a new key binding to attach a file to a work item. You can now press `n`. The old binding `^u` still works but, it will be removed in future versions. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/233
 
 ### Changed
 
@@ -27,7 +28,7 @@ autocomplete feature there is no need to fetch all the users anymore.
 - Refactor the definition of widgets to make it easier to share them across different widgets and use
 cases; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/163. This work in this PR
 has been applied in this [PR](https://github.com/whyisdifficult/jiratui/pull/163) to make resolving conflicts more
-manageable. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/199
+manageable. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/199
 
 ### Bug Fixes
 
@@ -47,6 +48,7 @@ local TZ. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/2
 - Refactor some CSS classes used by the widgets used when creating and updating work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/225
 - Bump `gitpython` from `3.1.46` to `3.1.47`. by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/228
 - Bump `click` from `8.3.2` to `8.3.3`. by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/228
+- Improve the way we handle comments, attachments and links. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/233
 
 ## [1.7.0] - 2026-03-28
 

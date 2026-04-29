@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from io import BytesIO
 import json
 from typing import cast
@@ -6,6 +7,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, VerticalScroll
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
@@ -24,100 +26,12 @@ from jiratui.widgets.attachments.add import AddAttachmentScreen
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
-class IssueAttachmentsWidget(VerticalScroll):
-    """A container for displaying the files attached to a work item."""
+@dataclass
+class WorkItemAttachments:
+    """The data for the reactive attribute that holds the attachments of a work item."""
 
-    HELP = 'See Attachments section in the help'
-    BINDINGS = [
-        Binding(
-            key='ctrl+u',
-            action='add_attachment',
-            description='Attach',
-            key_display='^u',
-            tooltip='Attache new file',
-        )
-    ]
-
-    attachments: Reactive[list[Attachment] | None] = reactive(None)
-    NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
-
-    def __init__(self):
-        super().__init__(id='attachments')
-        self._issue_key: str | None = None
-
-    @property
-    def help_anchor(self) -> str:
-        return '#attachments'
-
-    @property
-    def issue_key(self) -> str | None:
-        return self._issue_key
-
-    @issue_key.setter
-    def issue_key(self, value: str | None) -> None:
-        self._issue_key = value
-
-    def action_add_attachment(self) -> None:
-        """Opens a screen to attach a file to the issue."""
-        if self.issue_key:
-            self.app.push_screen(AddAttachmentScreen(self.issue_key), self.upload_attachment)
-        else:
-            self.notify(
-                'You need to select a work item before attempting to attach a file.',
-                title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                severity='error',
-            )
-
-    def upload_attachment(self, content: str) -> None:
-        """Uploads a file s an attachment to the work item.
-
-        Args:
-            content: the name of the file to attach.
-
-        Returns:
-            None
-        """
-        if content and (file_name := content.strip()):
-            self.notify('Uploading attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
-            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            response: APIControllerResponse = screen.api.add_attachment(self.issue_key, file_name)
-            if not response.success:
-                self.notify(
-                    f'Failed to attach the file: {response.error}',
-                    title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                    severity='error',
-                )
-            else:
-                self.notify(
-                    'File attached successfully',
-                    title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                )
-                # update the list of attachments being displayed in the table
-                current_attachments = self.attachments
-                self.attachments = current_attachments + [response.result]
-
-    def watch_attachments(self, attachments: list[Attachment] | None) -> None:
-        """Updates the table with attached files with new attachments."""
-        self.remove_children()
-        if not attachments:
-            return
-
-        table = AttachmentsDataTable(self.issue_key)
-        table.add_columns(*['File Name', 'Size (KB)', 'Added', 'Author', 'Type'])
-
-        item: Attachment
-        for item in attachments:
-            table.add_row(
-                *[
-                    item.filename,
-                    item.get_size() or '-',
-                    item.created_date,
-                    item.display_author,
-                    item.get_mime_type(),
-                ],
-                key=item.id,
-            )
-        self.mount(table)
+    work_item_key: str | None = None
+    attachments: list[Attachment] | None = None
 
 
 class AttachmentsDataTable(DataTable):
@@ -141,6 +55,17 @@ class AttachmentsDataTable(DataTable):
         ),
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
+
+    class Deleted(Message):
+        """Posted when the user deletes an attachment.
+
+        It holds the key of the work item whose attachment we deleted and the ID of the deleted attachment.
+        """
+
+        def __init__(self, work_item_key: str, attachment_id: str) -> None:
+            self.work_item_key = work_item_key
+            self.attachment_id = attachment_id
+            super().__init__()
 
     def __init__(self, work_item_key: str):
         super().__init__(cursor_type='row')
@@ -210,7 +135,7 @@ class AttachmentsDataTable(DataTable):
         """Opens up a modal screen to prompt the user before attempting to delete an attachment."""
         if not self._selected_attachment_id:
             self.notify(
-                'Select a row, e.g. by clicking on it, before attempting to delete the file.',
+                'Select a row before attempting to delete the file.',
                 severity='error',
                 title=self.NOTIFICATIONS_DEFAULT_TITLE,
             )
@@ -219,14 +144,6 @@ class AttachmentsDataTable(DataTable):
                 ConfirmationScreen('Are you sure you want to delete the file?'),
                 callback=self.handle_delete_choice,
             )
-
-    def _update_attachments_after_delete(self) -> None:
-        updated_attachments: list[Attachment] = []
-        for attachment in self.parent.attachments:  # type:ignore[attr-defined]
-            if attachment.id == self._selected_attachment_id:
-                continue
-            updated_attachments.append(attachment)
-        self.parent.attachments = updated_attachments  # type:ignore[attr-defined]
 
     async def handle_delete_choice(self, result: bool) -> None:
         """Attempts to delete an attachment if the user agrees.
@@ -237,31 +154,189 @@ class AttachmentsDataTable(DataTable):
         Returns:
             None
         """
-        if result is True:
-            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            response: APIControllerResponse = await screen.api.delete_attachment(
-                self._selected_attachment_id
+
+        if result:
+            self.post_message(self.Deleted(self._work_item_key, self._selected_attachment_id))
+
+
+class IssueAttachmentsWidget(VerticalScroll):
+    """A container for displaying the files attached to a work item.
+
+    This widget is responsible for the following:
+
+    - opening the modal screen that allows users to attach files.
+    - processing the result from the modal screen and attaching a file to the work item via the API.
+    - deleting attachments from the work item via the API when the message
+    `jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted` is posted.
+    - updating the list of attachments when an attachment is deleted.
+
+    The config variable `config.fetch_attachments_on_delete` controls whether the widget retrieves the attachments from
+    the work item after an attachment is deleted.
+    """
+
+    HELP = 'See Attachments section in the help'
+    BINDINGS = [
+        Binding(
+            key='ctrl+u,n',
+            action='add_attachment',
+            description='Attach File',
+            key_display='n',
+            tooltip='Attach a new file to a work item',
+        ),
+    ]
+
+    attachments: Reactive[WorkItemAttachments | None] = reactive(None)
+    NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
+
+    def __init__(self):
+        super().__init__(id='attachments')
+        self._issue_key: str | None = None
+
+    @property
+    def help_anchor(self) -> str:
+        return '#attachments'
+
+    @property
+    def issue_key(self) -> str | None:
+        return self._issue_key
+
+    @issue_key.setter
+    def issue_key(self, value: str | None) -> None:
+        self._issue_key = value
+
+    def on_attachments_data_table_deleted(self, message: AttachmentsDataTable.Deleted) -> None:
+        """Schedules a task to delete an attachment."""
+
+        self.run_worker(self._delete_attachment(message.work_item_key, message.attachment_id))
+        message.stop()  # no need to propagate the message
+
+    @staticmethod
+    def _fetch_attachments_on_delete() -> bool:
+        return CONFIGURATION.get().fetch_attachments_on_delete
+
+    def _update_attachments_after_delete(self, attachment_id: str) -> None:
+        """Updates hte list of attachments displayed in the data table after an attachment is deleted.
+
+        Args:
+            attachment_id: the ID of the attachment that was deleted.
+
+        Returns:
+            None
+        """
+
+        if self.attachments and self.attachments.attachments:
+            self.attachments = WorkItemAttachments(
+                work_item_key=self.issue_key,
+                attachments=[
+                    attachment
+                    for attachment in self.attachments.attachments
+                    if attachment.id != attachment_id
+                ],
             )
-            if not response.success:
-                self.notify(
-                    f'Failed to delete the file: {response.error}',
-                    severity='error',
-                    title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                )
-            else:
-                self.notify('File deleted successfully', title=self.NOTIFICATIONS_DEFAULT_TITLE)
-                if CONFIGURATION.get().fetch_attachments_on_delete:
-                    response = await screen.api.get_issue(
-                        self._work_item_key, fields=['attachment']
-                    )
-                    if not response.success or not (result := response.result):
+
+    async def _delete_attachment(self, work_item_key: str, attachment_id: str) -> None:
+        """Attempts to delete an attachment."""
+
+        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await screen.api.delete_attachment(attachment_id)
+        if not response.success:
+            self.notify(
+                f'Failed to delete the file: {response.error}',
+                severity='error',
+                title=self.NOTIFICATIONS_DEFAULT_TITLE,
+            )
+        else:
+            if self._fetch_attachments_on_delete():
+                response = await screen.api.get_issue(work_item_key, fields=['attachment'])
+                if response.success:
+                    if response.result is None or not response.result.issues:
                         # fallback to removing the attachment manually based on the id
-                        self._update_attachments_after_delete()
+                        self._update_attachments_after_delete(attachment_id)
+                        self.notify(
+                            f'Failed to find the work item with key: {work_item_key}',
+                            severity='error',
+                            title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                        )
                     else:
-                        self.parent.attachments = result.issues[0].attachments  # type:ignore[attr-defined]
+                        self.attachments = WorkItemAttachments(
+                            work_item_key=work_item_key,
+                            attachments=response.result.issues[0].attachments,
+                        )
                 else:
                     # fallback to removing the attachment manually based on the id
-                    self._update_attachments_after_delete()
+                    self._update_attachments_after_delete(attachment_id)
+                    self.notify(
+                        f'Failed to find the work item with key: {work_item_key}',
+                        severity='error',
+                        title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                    )
+            else:
+                # fallback to removing the attachment manually based on the id
+                self._update_attachments_after_delete(attachment_id)
+
+    def action_add_attachment(self) -> None:
+        """Opens a screen to attach a file to the issue."""
+
+        if self.issue_key:
+            self.app.push_screen(AddAttachmentScreen(self.issue_key), self.upload_attachment)
+        else:
+            self.notify(
+                'You need to select a work item before attempting to attach a file.',
+                title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                severity='error',
+            )
+
+    def upload_attachment(self, content: str) -> None:
+        """Uploads a file as an attachment to the work item.
+
+        Args:
+            content: the name of the file to attach.
+
+        Returns:
+            None
+        """
+
+        if content and (file_name := content.strip()):
+            self.notify('Uploading attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            response: APIControllerResponse = screen.api.add_attachment(self.issue_key, file_name)
+            if not response.success:
+                self.notify(
+                    f'Failed to attach the file: {response.error}',
+                    title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                    severity='error',
+                )
+            else:
+                # update the list of attachments being displayed in the table
+                # avoid fetching the list from the API to avoid making a request; simple append the new attachment
+                current_attachments = self.attachments.attachments if self.attachments else []
+                new_attachments = [response.result] if response.result else []
+                self.attachments = WorkItemAttachments(
+                    work_item_key=self.issue_key,
+                    attachments=current_attachments + new_attachments,
+                )
+
+    def watch_attachments(self, data: WorkItemAttachments | None) -> None:
+        """Updates the table that displays the attached files with new attachments."""
+
+        self.remove_children()
+        self.issue_key = data.work_item_key if data else None
+        if data and data.attachments:
+            table = AttachmentsDataTable(self.issue_key)
+            table.add_columns(*['File Name', 'Size (KB)', 'Added', 'Author', 'Type'])
+            item: Attachment
+            for item in data.attachments:
+                table.add_row(
+                    *[
+                        item.filename,
+                        item.get_size() or '-',
+                        item.created_date,
+                        item.display_author,
+                        item.get_mime_type(),
+                    ],
+                    key=item.id,
+                )
+            self.mount(table)
 
 
 class ViewAttachmentScreen(ModalScreen):

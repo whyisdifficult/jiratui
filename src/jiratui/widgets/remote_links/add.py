@@ -17,11 +17,6 @@ class RemoteLinkURLInputWidget(Input):
         self.border_title = 'URL'
         self.border_subtitle = '(*)'
 
-    def on_input_changed(self, event: Input.Changed) -> None:
-        if event.value and event.value.strip():
-            if 'http' not in event.value:
-                self.value = 'https://'
-
 
 class RemoteLinkNameInputWidget(Input):
     def __init__(self):
@@ -77,6 +72,10 @@ class AddRemoteLinkScreen(Screen[dict]):
 
     @on(Input.Blurred, 'RemoteLinkURLInputWidget')
     def validate_url(self):
+        if self.link_url.value and self.link_url.value.strip():
+            if 'http' not in self.link_url.value:
+                self.link_url.value = f'https://{self.link_url.value}'
+
         value = self.link_url.value
         self.save_button.disabled = (
             False

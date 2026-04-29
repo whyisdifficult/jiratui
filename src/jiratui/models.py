@@ -163,18 +163,26 @@ class IssueComment(BaseModel):
 
     def short_metadata(self) -> str:
         if self.update_author:
-            return (
-                f'{datetime.strftime(self.created, "%Y-%m-%d %H:%M")} - {self.author.display_name}'
-            )
-        return datetime.strftime(self.created, '%Y-%m-%d %H:%M')
+            if self.created:
+                return f'{datetime.strftime(self.created, "%Y-%m-%d %H:%M")} - {self.author.display_name}'
+            return self.author.display_name
+        if self.created:
+            return datetime.strftime(self.created, '%Y-%m-%d %H:%M')
+        return ''
 
     def updated_on(self) -> str:
         if not self.update_author:
-            return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
-        return f'{datetime.strftime(self.updated, "%Y-%m-%d %H:%M")} by {self.update_author.display_name}'
+            if self.updated:
+                return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
+            return ''
+        if self.updated:
+            return f'{datetime.strftime(self.updated, "%Y-%m-%d %H:%M")} by {self.update_author.display_name}'
+        return ''
 
     def created_on(self) -> str:
-        return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
+        if self.updated:
+            return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
+        return ''
 
     def get_body(self) -> str:
         if not self.body:
