@@ -102,7 +102,7 @@ class TextareaCollapsible(Collapsible):
     @property
     def text_content(self) -> str:
         if isinstance(self.__widget, Static):
-            return self.__widget.content
+            return self.__widget.content  # type:ignore[return-value]
         return self.__widget.text_content
 
     @property

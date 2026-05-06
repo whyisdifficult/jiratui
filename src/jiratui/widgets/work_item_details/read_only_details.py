@@ -21,6 +21,7 @@ from jiratui.widgets.commons.factory_utils import (
     RichTextAreaWidgetData,
     build_read_only_rich_text_widget,
 )
+from jiratui.widgets.commons.widgets import WorkItemTextAreaFieldWidget
 
 
 class WorkItemReadOnlyDetailsScreen(ModalScreen):
@@ -133,6 +134,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                 ]
             )
 
+            widget: ADFTextAreaWidget | Static | WorkItemTextAreaFieldWidget
             # set the content of the description tab
             if issue.description:
                 widget = ADFTextAreaWidget(
