@@ -14,11 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use `textual-autocomplete` to define a widget for selecting Jira users as assignees when creating work items.
 - Use `textual-autocomplete` to define a widget for selecting Jira users as reporters when creating work items.
 - Add support for updating the reporter of a work item.
-- Support for fields with `type:number` when we create new work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/203
+- Add Support for fields with `type:number` when we create new work items. By @whyisdifficult in https://github.com/whyisdifficult/jiratui/pull/203
 - Update the search results table after deleting a work item; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/205
 - Generate a `LabelsWidget` dynamically rather than defining the widget statically at compose time when the user is updating/editing a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
 - Update the `required` state of the parent field's widget based. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/229
-- Added a new key binding to attach a file to a work item. You can now press `n`. The old binding `^u` still works but, it will be removed in future versions. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/233
+- Add a new key binding to attach a file to a work item. You can now press `n`. The old binding `^u` still works but, it will be removed in future versions. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/233
+- Add support for editing rich-text fields such as Description, Environment, etc.. This uses [Marklas](https://github.com/byExist/marklas). By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add new config variable `enable_updating_rich_text` to enable/disable editing fields that use rich text. The default is `True`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add new config variable `text_editor` to define the preferred command for editing fields that use rich text. The default is to use the system's default editor. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ### Changed
 

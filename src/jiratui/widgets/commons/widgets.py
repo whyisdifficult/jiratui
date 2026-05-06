@@ -25,6 +25,7 @@ operations.
 - MultiUserPickerWidget: comma-separated list of users.
 - MultiIssuePickerWidget comma-separated list of issues' keys.
 - SingleUserPickerWidget: text input for providing a single Jira user.
+- WorkItemTextAreaFieldWidget: a TexArea widget that displays non-ADF text in read-only mode.
 """
 
 from typing import Any
@@ -1988,3 +1989,49 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
         original_selected = set(self.original_value or [])
 
         return current_selected != original_selected
+
+
+class WorkItemTextAreaFieldWidget(TextArea, BaseFieldWidget):
+    """A TextArea widget for displaying non-ADF text."""
+
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        title: str | None = None,
+        required: bool = False,
+        # UPDATE mode parameters
+        original_value: str | None = None,
+        field_supports_update: bool = False,
+    ):
+        """Initializes an WorkItemTextAreaFieldWidget.
+
+        Args:
+            mode: the field mode (CREATE or UPDATE)
+            field_id: field identifier, e.g., 'customfield_10745'.
+            jira_field_key: the key of the field that it is used for updating the field value in the API; e.g.,
+            `customfield_10745`.
+            title: display title for the field.
+            required: whether the field is required.
+            original_value: the original value from Jira - always string.
+            field_supports_update: whether field can be updated. Important: this is ignored because we use a
+            screen-based approach for editing its value.
+        """
+
+        # initialize TextArea widget
+        super().__init__(original_value, id=field_id)
+
+        # setup base field properties
+        self.setup_base_field(
+            mode=mode,
+            field_id=field_id,
+            jira_field_key=jira_field_key,
+            title=title or 'Text Area',
+            required=required,
+            compact=True,
+        )
+
+    @property
+    def text_content(self) -> str:
+        return self.text

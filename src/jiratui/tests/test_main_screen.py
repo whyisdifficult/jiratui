@@ -399,7 +399,6 @@ async def test_click_search_button_resets_widgets(
         assert main_screen.search_results_table.token_by_page == {}
         assert main_screen.search_results_table.page == 1
         assert main_screen.issue_info_container.issue_summary_widget.visible is False
-        assert main_screen.issue_info_container.issue_description_widget.visible is False
 
 
 @patch.object(JiraApp, 'copy_to_clipboard')

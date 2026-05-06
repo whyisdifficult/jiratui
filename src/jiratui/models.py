@@ -6,8 +6,6 @@ import enum
 from enum import Enum
 from typing import Any
 
-from jiratui.utils.adf2md.adf2md import adf2md
-
 
 def custom_as_dict_factory(data) -> dict:
     def convert_value(obj):
@@ -55,6 +53,7 @@ class JiraWorkItemFields(Enum):
     LABELS = 'labels'
     DUE_DATE = 'duedate'
     COMPONENTS = 'components'
+    ENVIRONMENT = 'environment'
 
 
 class WorkItemsSearchOrderBy(enum.Enum):
@@ -190,7 +189,9 @@ class IssueComment(BaseModel):
         if isinstance(self.body, str):
             return self.body.strip()
         try:
-            return adf2md(self.body)
+            from jiratui.utils.adf import convert_adf_to_markdown
+
+            return convert_adf_to_markdown(self.body)
         except Exception:
             return ''
 
@@ -331,6 +332,7 @@ class JiraIssue(JiraBaseIssue):
     above. These fields have a key without the prefix 'custom_' and, are rendered dynamically in the UI's update
     form."""
     components: list[JiraIssueComponent] | None = None
+    environment: str | None = None
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -490,8 +492,11 @@ class JiraIssue(JiraBaseIssue):
             return ''
         if isinstance(self.description, str):
             return self.description.strip()
+
         try:
-            return adf2md(self.description)
+            from jiratui.utils.adf import convert_adf_to_markdown
+
+            return convert_adf_to_markdown(self.description)
         except Exception:
             return ''
 
@@ -770,7 +775,9 @@ class JiraWorklog(BaseModel):
         if isinstance(self.comment, str):
             return self.comment.strip()
         try:
-            return adf2md(self.comment)
+            from jiratui.utils.adf import convert_adf_to_markdown
+
+            return convert_adf_to_markdown(self.comment)
         except Exception:
             return ''
 

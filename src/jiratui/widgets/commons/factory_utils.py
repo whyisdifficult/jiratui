@@ -1,9 +1,11 @@
+from dataclasses import dataclass
 from typing import Any
 
 from textual.widget import Widget
-from textual.widgets import Select
+from textual.widgets import Select, Static
 
-from jiratui.widgets.commons import CustomFieldType, FieldMode
+from jiratui.widgets.commons import FieldMode
+from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
@@ -14,6 +16,7 @@ from jiratui.widgets.commons.widgets import (
     SingleUserPickerWidget,
     TextInputWidget,
     URLWidget,
+    WorkItemTextAreaFieldWidget,
 )
 
 
@@ -55,7 +58,7 @@ class FieldMetadata:
         return self.custom_type is not None
 
     def __repr__(self) -> str:
-        return f'FieldMetadata(field_id={self.field_id!r}, name={self.name!r}, custom_type={self.custom_type!r})'
+        return f'FieldMetadata(field_id={self.field_id!r}, key={self.key!r}, name={self.name!r}, custom_type={self.custom_type!r})'
 
 
 class AllowedValuesParser:
@@ -455,99 +458,92 @@ class WidgetBuilder:
         )
 
 
-def map_field_to_widget(
-    mode: FieldMode,
-    metadata: FieldMetadata,
-    current_value: Any = None,
-) -> Widget | None:
-    """
-    Map a field metadata to the appropriate widget based on its type.
-
-    This is the main entry point for widget creation - it examines the field's
-    schema and custom type, then delegates to the appropriate WidgetBuilder method.
-
-    Args:
-        mode: CREATE or UPDATE mode
-        metadata: Parsed field metadata
-        current_value: Current field value (for UPDATE mode)
-
-    Returns:
-        Widget instance, or None if the field type is not supported
-    """
-    builder = WidgetBuilder()
-
-    # Handle custom fields
-    if metadata.is_custom_field:
-        custom_type = metadata.custom_type
-
-        if custom_type == CustomFieldType.USER_PICKER.value:
-            return builder.build_user_picker(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.FLOAT.value:
-            return builder.build_numeric(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.SELECT.value:
-            if metadata.allowed_values:
-                options = AllowedValuesParser.parse_options(metadata.allowed_values)
-                return builder.build_selection(mode, metadata, options, current_value=current_value)
-
-        elif custom_type == CustomFieldType.DATE_PICKER.value:
-            return builder.build_date(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.DATETIME.value:
-            return builder.build_datetime(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.TEXT_FIELD.value:
-            return builder.build_text(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.URL.value:
-            return builder.build_url(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.LABELS.value:
-            return builder.build_labels(mode, metadata, current_value)
-
-        elif custom_type == CustomFieldType.MULTI_CHECKBOXES.value:
-            return builder.build_multicheckboxes(mode, metadata, current_value)
-
-    # Handle non-custom fields
-    else:
-        schema_type = metadata.schema_type.lower()
-
-        if schema_type == 'number':
-            return builder.build_numeric(mode, metadata, current_value)
-
-        elif schema_type == 'date':
-            return builder.build_date(mode, metadata, current_value)
-
-        # Handle fields with allowedValues
-        elif metadata.allowed_values:
-            options = AllowedValuesParser.parse_options(metadata.allowed_values)
-            return builder.build_selection(mode, metadata, options, current_value=current_value)
-
-        # Handle labels array field (CREATE mode special case)
-        elif (
-            mode == FieldMode.CREATE
-            and schema_type == 'array'
-            and metadata.schema.get('items') == 'string'
-            and metadata.field_id == 'labels'
-        ):
-            return builder.build_labels(mode, metadata, None)
-
-    # Default fallback - text input
-    return builder.build_text(mode, metadata, current_value)
+@dataclass
+class RichTextAreaWidgetData:
+    widget: Static | ADFTextAreaWidget | WorkItemTextAreaFieldWidget
+    content: str = ''
 
 
-def should_skip_field(
-    field_id: str,
-    skip_list: list[str],
-) -> bool:
-    """Checks if a field should be skipped during widget creation.
+def build_read_only_rich_text_widget(
+    jira_field_key: str,
+    field_name: str,
+    required: bool = False,
+    content: str | dict | None = None,
+) -> RichTextAreaWidgetData:
+    """A factory method that builds a widget for displaying the content of a textarea field in read-only mode.
+
+    Some Jira issue's fields can contain long rich text. Jira stores these values as either ADF
+    (Atlassian Document Format) (when using theJira CLoud Platform) or, as plain text, when using the Jira DC Platform.
+
+    JiraTUI will display these fields as either a Markdown widget, a TextArea widget or a Static widget according to
+    these rules:
+
+    1. if the value is a `dict` and contains text we assume that the field stores text as ADF. In this case this method
+    will build an instance of `ADFTextAreaWidget`.
+
+    2. if the value is a `str` and contains text we assume that the field stores the value as plain text. In this case
+    this method will build an instance of `WorkItemTextAreaFieldWidget`.
+
+    3. if the field has no value then this method will build an instance of `Static`.
 
     Args:
-        field_id: The field ID to check
-        skip_list: List of field IDs to skip
+        jira_field_key: the Jira field's key (as found in the edit metadata of the Jira issue) that can be used for
+        updating the field.
+        field_name: the name of the field as found in the edit metadata of the Jira issue.
+        required: indicates whether the field is required or not. This is used for setting the style of the widget.
+        content: the actual content of the issue's field. This can be an ADF dict or string.
 
     Returns:
-        True if field should be skipped, False otherwise
+        An instance of `RichTextAreaWidgetData` with the `widget` instance and the `content` of the widget as a simple
+        string.
+
+    Raises:
+        ValueError: if the value is not an instance of `dict` or `str`.
     """
-    return field_id in skip_list
+
+    if content is None:
+        return RichTextAreaWidgetData(
+            widget=Static(
+                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
+                classes='tip',
+            )
+        )
+
+    if isinstance(content, dict):
+        if content.get('content', []):
+            widget = ADFTextAreaWidget(
+                mode=FieldMode.UPDATE,
+                field_id=jira_field_key,
+                jira_field_key=jira_field_key,
+                title=field_name,
+                required=required,
+                original_value=content,
+            )
+            return RichTextAreaWidgetData(widget=widget, content=widget.text_content)
+        return RichTextAreaWidgetData(
+            widget=Static(
+                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
+                classes='tip',
+            )
+        )
+    elif isinstance(content, str):
+        if content:
+            return RichTextAreaWidgetData(
+                widget=WorkItemTextAreaFieldWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=jira_field_key,
+                    jira_field_key=jira_field_key,
+                    title=field_name,
+                    required=required,
+                    original_value=content,
+                ),
+                content=content,
+            )
+        return RichTextAreaWidgetData(
+            widget=Static(
+                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
+                classes='tip',
+            )
+        )
+
+    raise ValueError(f'Expects ADF or string; got {type(content)}.')

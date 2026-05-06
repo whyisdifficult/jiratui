@@ -860,7 +860,6 @@ async def test_build_payload_for_update_with_reporter_unchanged(
         assert payload == {}
 
 
-# TODO
 @patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_unchanged(
@@ -893,7 +892,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_labels_
             assert payload == {}
 
 
-# TODO
 @patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_changed(
@@ -1486,7 +1484,9 @@ async def test_add_dynamic_widgets(
     )
     widget_4 = SingleUserPickerWidget(mode=FieldMode.UPDATE, field_id='user', jira_field_key='user')
     create_dynamic_widgets_for_updating_work_item_mock.return_value = [
-        ADFTextAreaWidget(mode=FieldMode.UPDATE, field_id='environment'),
+        ADFTextAreaWidget(
+            mode=FieldMode.UPDATE, field_id='environment', jira_field_key='environment'
+        ),
         widget_2,
         NumericInputWidget(mode=FieldMode.UPDATE, field_id='score', jira_field_key='score'),
         widget_4,

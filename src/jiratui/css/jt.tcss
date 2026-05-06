@@ -143,11 +143,6 @@ IssueCommentsWidget {
     margin: 1 0 0 0;
 }
 
-IssueDescriptionWidget {
-    background: transparent;
-    margin: 0 0;
-}
-
 /*  Work Item Details */
 
 #issue-details-form {
@@ -416,10 +411,11 @@ WorkItemReadOnlyDetailsScreen {
 }
 
 WorkItemReadOnlyDetailsScreen > VerticalScroll {
-    width: 70%;
+    width: 80%;
     height: 85%;
     border: round $foreground;
     padding: 0 1;
+    scrollbar-size-vertical: 1;
 }
 
 #work-item-readonly-details-dt {
@@ -963,6 +959,73 @@ JQLEditorScreen > Vertical {
 
 /* Work Item Information (description, summary and custom fields) */
 
+.textarea-collapsible {
+    border: round $secondary-lighten-3;
+    background: transparent;
+    padding-bottom: 0;
+    & > Contents {
+        padding: 1 0 0 3;
+    }
+    &.required {
+        border: round $accent;
+    }
+}
+
+DisplayTextContentScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+DisplayTextContentScreen > MarkdownViewer {
+    width: 80%;
+    height: 95%;
+    border: round $foreground;
+    background: $background 70%;
+    padding: 0 1;
+    border-title-align: center;
+    scrollbar-size-vertical: 1;
+    margin-top: 1;
+}
+
+.work-item-info-collapsible {
+    scrollbar-size-vertical: 1;
+}
+
+EditTextContentScreen {
+    align: center middle;
+    background: $background 80%;
+}
+EditTextContentScreen > Vertical {
+    width: 80%;
+    height: 80%;
+    border: round $foreground;
+    background: $background;
+    padding: 0 1;
+    & > TextArea {
+        margin-top: 1;
+        scrollbar-size-vertical: 1;
+        border: round $primary;
+        background: transparent;
+    }
+    & > ItemGrid {
+        margin-top: 1;
+    }
+}
+
+.edit-grid-buttons {
+    grid-size: 2 1;
+    grid-columns: 50% 50%;
+    align: center middle;
+}
+
+.save-cancel-buttons {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+
 #work-item-info-loading-container {
     align: center middle;
     height: 100%;
@@ -970,25 +1033,8 @@ JQLEditorScreen > Vertical {
     display: none;
 }
 
-#work-item-info-description-scroll-container {
-    border: round $secondary-lighten-3;
-    padding: 0 0 0 0;
-    scrollbar-size-vertical: 1;
-}
-
-#work-item-info-extra-scroll-container {
-    border: round $secondary;
-    scrollbar-size-vertical: 1;
-}
-
 .summary-description-container {
     height: auto;
-    margin: 0 0;
-    padding: 0 0;
-}
-
-.work-item-info-custom-field-textarea {
-    border-top: solid $secondary-lighten-3;
     margin: 0 0;
     padding: 0 0;
 }

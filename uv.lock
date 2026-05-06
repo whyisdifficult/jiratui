@@ -570,6 +570,7 @@ dependencies = [
     { name = "click" },
     { name = "gitpython" },
     { name = "httpx" },
+    { name = "marklas" },
     { name = "puremagic" },
     { name = "pydantic-settings", extra = ["yaml"] },
     { name = "python-dateutil" },
@@ -610,6 +611,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.3.3,<9.0.0" },
     { name = "gitpython", specifier = ">=3.1.47,<3.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "marklas", specifier = ">=0.7.0" },
     { name = "puremagic", specifier = ">=2.2.0,<3.0.0" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.13.1,<3.0.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
@@ -735,6 +737,18 @@ linkify = [
 ]
 
 [[package]]
+name = "marklas"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mistune" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/ee/940c7c4be2ba207b767e931a7619021579ea8e73a032febe76e4ffb809cd/marklas-0.7.0.tar.gz", hash = "sha256:90956df6cb6ad13171ff0aa9fc4cbe089e13d73d4e2f4861d839104ae4fe16eb", size = 26496, upload-time = "2026-04-08T01:36:08.122Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/de/1e89247c903cc23061a62aaabadf0a4253695cf53e149aa8035f6296c0b9/marklas-0.7.0-py3-none-any.whl", hash = "sha256:e285f7f99bc45987f56d8c0ce4b03930d5dd0c865d949b318f6bb5735fdf3ec2", size = 30152, upload-time = "2026-04-08T01:36:06.464Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -791,6 +805,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "mistune"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/55/d01f0c4b45ade6536c51170b9043db8b2ec6ddf4a35c7ea3f5f559ac935b/mistune-3.2.0.tar.gz", hash = "sha256:708487c8a8cdd99c9d90eb3ed4c3ed961246ff78ac82f03418f5183ab70e398a", size = 95467, upload-time = "2025-12-23T11:36:34.994Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/f7/4a5e785ec9fbd65146a27b6b70b6cdc161a66f2024e4b04ac06a67f5578b/mistune-3.2.0-py3-none-any.whl", hash = "sha256:febdc629a3c78616b94393c6580551e0e34cc289987ec6c35ed3f4be42d0eee1", size = 53598, upload-time = "2025-12-23T11:36:33.211Z" },
 ]
 
 [[package]]

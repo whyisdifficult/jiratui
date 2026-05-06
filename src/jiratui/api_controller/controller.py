@@ -64,6 +64,7 @@ from jiratui.models import (
     UpdateWorkItemResponse,
     WorkItemsSearchOrderBy,
 )
+from jiratui.utils.adf import convert_markdown_to_adf
 
 
 @dataclass
@@ -1434,6 +1435,8 @@ class APIController:
         - Parent
         - Components
         - Reporter
+        - Environment
+        - Description
         - (Some) Custom and System fields types
 
         Args:
@@ -1586,8 +1589,75 @@ class APIController:
                     extra={'work_item_key': issue.key},
                 )
 
+        if JiraWorkItemFields.DESCRIPTION.value in updates:
+            if not (metadata := metadata_fields.get(JiraWorkItemFields.DESCRIPTION.value, {})):
+                raise UpdateWorkItemException(
+                    f'The field {JiraWorkItemFields.DESCRIPTION.value} can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+            if 'set' not in metadata.get('operations', {}):
+                raise UpdateWorkItemException(
+                    f'The field {JiraWorkItemFields.DESCRIPTION.value} can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+
+            if self.config.cloud:
+                # rich text-based fields in Jira Cloud use ADF
+                try:
+                    payload['fields'][JiraWorkItemFields.DESCRIPTION.value] = (
+                        convert_markdown_to_adf(updates.get(JiraWorkItemFields.DESCRIPTION.value))
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        'Failed to convert markdown to adf.',
+                        extra={'field': JiraWorkItemFields.DESCRIPTION.value, 'details': str(e)},
+                    )
+                    raise UpdateWorkItemException(
+                        f'Failed to convert Markdown to ADF for the field {JiraWorkItemFields.DESCRIPTION.value}.',
+                        extra={'work_item_key': issue.key},
+                    ) from e
+            else:
+                # Jira DC uses plain text
+                payload['fields'][JiraWorkItemFields.DESCRIPTION.value] = updates.get(
+                    JiraWorkItemFields.DESCRIPTION.value
+                )
+
+        if JiraWorkItemFields.ENVIRONMENT.value in updates:
+            if not (metadata := metadata_fields.get(JiraWorkItemFields.ENVIRONMENT.value, {})):
+                raise UpdateWorkItemException(
+                    f'The field {JiraWorkItemFields.ENVIRONMENT.value} can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+            if 'set' not in metadata.get('operations', {}):
+                raise UpdateWorkItemException(
+                    f'The field {JiraWorkItemFields.ENVIRONMENT.value} can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+            if self.config.cloud:
+                # rich text-based fields in Jira Cloud use ADF
+                try:
+                    payload['fields'][JiraWorkItemFields.ENVIRONMENT.value] = (
+                        convert_markdown_to_adf(updates.get(JiraWorkItemFields.ENVIRONMENT.value))
+                    )
+                except Exception as e:
+                    self.logger.error(
+                        'Failed to convert markdown to adf.',
+                        extra={'field': JiraWorkItemFields.ENVIRONMENT.value, 'details': str(e)},
+                    )
+                    raise UpdateWorkItemException(
+                        f'Failed to convert Markdown to ADF for the field {JiraWorkItemFields.ENVIRONMENT.value}.',
+                        extra={'work_item_key': issue.key},
+                    ) from e
+            else:
+                # Jira DC uses plain text
+                payload['fields'][JiraWorkItemFields.ENVIRONMENT.value] = updates.get(
+                    JiraWorkItemFields.ENVIRONMENT.value
+                )
+
         # process additional fields
         if self.config.enable_updating_additional_fields:
+            from jiratui.widgets.commons import CustomFieldType
+
             for field_id, field_value in updates.items():
                 # ignore the fields updated above
                 if field_id in [
@@ -1598,11 +1668,35 @@ class APIController:
                     'assignee_account_id',  # TODO use 'assignee' field id
                     JiraWorkItemFields.LABELS.value,
                     JiraWorkItemFields.COMPONENTS.value,
+                    JiraWorkItemFields.DESCRIPTION.value,
+                    JiraWorkItemFields.ENVIRONMENT.value,
                 ]:
                     continue
                 else:
                     if metadata := metadata_fields.get(field_id, {}):
-                        if 'set' in metadata.get('operations', {}):
+                        if (
+                            metadata.get('schema', {}).get('custom')
+                            == CustomFieldType.TEXTAREA.value
+                        ):
+                            if self.config.cloud:
+                                # rich text-based fields in Jira Cloud use ADF
+                                try:
+                                    payload['fields'][field_id] = convert_markdown_to_adf(
+                                        field_value
+                                    )
+                                except Exception as e:
+                                    self.logger.error(
+                                        'Failed to convert markdown to adf.',
+                                        extra={'field': field_id, 'details': str(e)},
+                                    )
+                                    raise UpdateWorkItemException(
+                                        f'Failed to convert Markdown to ADF for the field {field_id}.',
+                                        extra={'work_item_key': issue.key},
+                                    ) from e
+                            else:
+                                # Jira DC uses plain text
+                                payload['fields'][field_id] = field_value
+                        elif 'set' in metadata.get('operations', {}):
                             payload['update'][field_id] = [{'set': field_value}]
                     else:
                         raise UpdateWorkItemException(
