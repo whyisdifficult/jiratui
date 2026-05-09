@@ -183,6 +183,7 @@ class IssueComment(BaseModel):
             return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
         return ''
 
+    # TODO deprecate
     def get_body(self) -> str:
         if not self.body:
             return ''
@@ -194,6 +195,20 @@ class IssueComment(BaseModel):
             return convert_adf_to_markdown(self.body)
         except Exception:
             return ''
+
+    @staticmethod
+    def rich_text_value_is_empty(value: dict | None) -> bool:
+        from jiratui.config import CONFIGURATION
+
+        if CONFIGURATION.get().cloud:
+            if not value:
+                return True
+            if isinstance(value, dict):
+                if value.get('content', []):
+                    return False
+                return True
+            return False
+        return not value
 
 
 @dataclass

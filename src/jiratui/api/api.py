@@ -821,7 +821,7 @@ class JiraAPI:
             method=httpx.AsyncClient.get, url='user', params={'accountId': account_id}
         )
 
-    async def add_comment(self, issue_id_or_key: str, message: str) -> dict:
+    async def add_comment(self, issue_id_or_key: str, message: str | dict) -> dict:
         """Adds a comment to an issue.
 
         See Also:
@@ -829,27 +829,18 @@ class JiraAPI:
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
-            message: the message of the comment.
+            message: an ADF dictionary with the message of the comment or, a string with the comment if we are
+            connecting to Jira DC API or Jira Cloud Platform API v2.
 
         Returns:
             A dictionary with the details of the comment.
         """
-        payload = self._build_payload_to_add_comment(message)
+
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/comment',
-            data=json.dumps(payload),
+            data=json.dumps({'body': message}),
         )
-
-    @staticmethod
-    def _build_payload_to_add_comment(message: str) -> dict:
-        return {
-            'body': {
-                'content': [{'content': [{'text': message, 'type': 'text'}], 'type': 'paragraph'}],
-                'type': 'doc',
-                'version': 1,
-            }
-        }
 
     async def get_comment(self, issue_id_or_key: str, comment_id: str) -> dict:
         """Retrieves the detail sof a comment.
@@ -1428,10 +1419,6 @@ class JiraAPIv2(JiraAPI):
 
     API_PATH_PREFIX = '/rest/api/2/'
 
-    @staticmethod
-    def _build_payload_to_add_comment(message: str) -> dict:
-        return {'body': message}
-
 
 class JiraDataCenterAPI(JiraAPI):
     """Implements the API exposed by the Jira Data Center (aka. on-premises) platform.
@@ -1693,10 +1680,6 @@ class JiraDataCenterAPI(JiraAPI):
                     follow_redirects=True,
                 )
         return None
-
-    @staticmethod
-    def _build_payload_to_add_comment(message: str) -> dict:
-        return {'body': message}
 
     async def get_issue_work_log(
         self,

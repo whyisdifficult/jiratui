@@ -1904,6 +1904,17 @@ class APIController:
             )
         return APIControllerResponse(result=comments)
 
+    def _convert_comment_message_to_adf(self, message: str) -> dict:
+        try:
+            return convert_markdown_to_adf(message)
+        except Exception as e:
+            self.logger.warning('Failed to convert Markdown to ADF: %s', str(e))
+            return {
+                'content': [{'content': [{'text': message, 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            }
+
     async def add_comment(self, issue_key_or_id: str, message: str) -> APIControllerResponse:
         """Adds a comment to a work item.
 
@@ -1917,7 +1928,11 @@ class APIController:
         if not message:
             return APIControllerResponse(success=False, error='Missing required message.')
         try:
-            response = await self.api.add_comment(issue_key_or_id, message)
+            if self.config.cloud:
+                adf: dict = self._convert_comment_message_to_adf(message)
+                response = await self.api.add_comment(issue_key_or_id, adf)
+            else:
+                response = await self.api.add_comment(issue_key_or_id, message)
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(

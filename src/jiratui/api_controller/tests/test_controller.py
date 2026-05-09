@@ -2745,7 +2745,7 @@ async def test_add_comment(
     # GIVEN
     add_comment_mock.return_value = comment_response
     # WHEN
-    response = await jira_api_controller.add_comment('1', 'text')
+    response = await jira_api_controller.add_comment('1', 'Hello World!')
     # THEN
     assert isinstance(response, APIControllerResponse)
     assert response.success is True
@@ -2774,7 +2774,16 @@ async def test_add_comment(
             ],
         },
     )
-    add_comment_mock.assert_called_once_with('1', 'text')
+    add_comment_mock.assert_called_once_with(
+        '1',
+        {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -2783,9 +2792,10 @@ async def test_add_comment_without_adf(
     add_comment_mock: Mock, comment_response_without_adf: dict, jira_api_controller: APIController
 ):
     # GIVEN
+    jira_api_controller.config.cloud = False
     add_comment_mock.return_value = comment_response_without_adf
     # WHEN
-    response = await jira_api_controller.add_comment('1', 'text')
+    response = await jira_api_controller.add_comment('1', 'Hello World')
     # THEN
     assert isinstance(response, APIControllerResponse)
     assert response.success is True
@@ -2808,7 +2818,7 @@ async def test_add_comment_without_adf(
         ),
         body='Hello World!',
     )
-    add_comment_mock.assert_called_once_with('1', 'text')
+    add_comment_mock.assert_called_once_with('1', 'Hello World')
 
 
 @pytest.mark.asyncio
@@ -2830,13 +2840,22 @@ async def test_add_comment_with_api_error(
     # GIVEN
     add_comment_mock.side_effect = ValueError('some error')
     # WHEN
-    response = await jira_api_controller.add_comment('1', 'text')
+    response = await jira_api_controller.add_comment('1', 'Hello World')
     # THEN
     assert isinstance(response, APIControllerResponse)
     assert response.success is False
     assert response.error == 'some error'
     assert response.result is None
-    add_comment_mock.assert_called_once_with('1', 'text')
+    add_comment_mock.assert_called_once_with(
+        '1',
+        {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World'}]}
+            ],
+        },
+    )
 
 
 @pytest.mark.asyncio

@@ -469,16 +469,13 @@ def build_read_only_rich_text_widget(
     Some Jira issue's fields can contain long rich text. Jira stores these values as either ADF
     (Atlassian Document Format), when using theJira CLoud Platform, or as plain text, when using the Jira DC Platform.
 
-    JiraTUI will display these fields as either a Markdown widget, a TextArea widget or a Static widget according to
-    these rules:
+    JiraTUI will display these fields as either a Markdown widget or a TextArea widget according to these rules:
 
     1. if the value is a `dict` and contains text we assume that the field stores text as ADF. In this case this method
     will build an instance of `ADFTextAreaWidget`.
 
     2. if the value is a `str` and contains text we assume that the field stores the value as plain text. In this case
-    this method will build an instance of `WorkItemTextAreaFieldWidget`.
-
-    3. if the field has no value then this method will build an instance of `Static`.
+    this method will build an instance of `TextAreaWidget`.
 
     Args:
         jira_field_key: the Jira field's key (as found in the edit metadata of the Jira issue) that can be used for
@@ -488,11 +485,7 @@ def build_read_only_rich_text_widget(
         content: the actual content of the issue's field. This can be an ADF dict or string.
 
     Returns:
-        An instance of `RichTextAreaWidgetData` with the `widget` instance and the `content` of the widget as a simple
-        string.
-
-    Raises:
-        ValueError: if the value is not an instance of `dict` or `str`.
+        An instance of `ADFTextAreaWidget` or `TextAreaWidget`.
     """
 
     if CONFIGURATION.get().cloud:
