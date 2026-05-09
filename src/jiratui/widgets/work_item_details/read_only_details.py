@@ -14,14 +14,13 @@ from jiratui.utils.styling import (
     get_style_for_work_item_status,
     get_style_for_work_item_type,
 )
-from jiratui.widgets.commons import CustomFieldType, FieldMode
+from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
-    RichTextAreaWidgetData,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import WorkItemTextAreaFieldWidget
+from jiratui.widgets.commons.widgets import TextAreaWidget
 
 
 class WorkItemReadOnlyDetailsScreen(ModalScreen):
@@ -134,20 +133,17 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                 ]
             )
 
-            widget: ADFTextAreaWidget | Static | WorkItemTextAreaFieldWidget
             # set the content of the description tab
-            if issue.description:
-                widget = ADFTextAreaWidget(
-                    mode=FieldMode.UPDATE,
-                    field_id='description',
-                    jira_field_key='description',
-                    title='Description',
-                    required=False,
-                    original_value=issue.description,
-                )
+            widget: ADFTextAreaWidget | TextAreaWidget | Static
+            if issue.rich_text_value_is_empty(issue.description):
+                widget = Static('There is no Description set. Press "e" to edit it.', classes='tip')
             else:
-                widget = Static("There is no 'Description' set.", classes='tip')
-
+                widget = build_read_only_rich_text_widget(
+                    jira_field_key='description',
+                    field_name='Description',
+                    required=False,
+                    content=issue.description,
+                )
             await self.tab_pane_description.mount(widget)
 
             # display all the editable custom fields with whose type is textarea, i.e. those that support rich text
@@ -172,19 +168,36 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                         metadata.key
                         and metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value
                     ):
-                        # get the value of the field
-                        if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
-                            field_value = issue.environment
-                        else:
-                            field_value = issue.get_custom_field_value(field_id)
+                        field_name = metadata.name or metadata.key.replace('_', ' ').title()
 
-                        widget_data: RichTextAreaWidgetData = build_read_only_rich_text_widget(
-                            metadata.key,
-                            metadata.name,
-                            False,
-                            field_value,
-                        )
-                        widget = widget_data.widget
+                        if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
+                            if issue.rich_text_value_is_empty(issue.environment):
+                                widget = Static(
+                                    f'There is no "{field_name}" set. Press "e" to edit it.',
+                                    classes='tip',
+                                )
+                            else:
+                                widget = build_read_only_rich_text_widget(
+                                    jira_field_key=metadata.key,
+                                    field_name=field_name,
+                                    required=metadata.required,
+                                    content=issue.environment,
+                                )
+                        else:
+                            # get the value of the field
+                            field_value = issue.get_custom_field_value(field_id)
+                            if issue.rich_text_value_is_empty(field_value):
+                                widget = Static(
+                                    f'There is no "{field_name}" set. Press "e" to edit it.',
+                                    classes='tip',
+                                )
+                            else:
+                                widget = build_read_only_rich_text_widget(
+                                    jira_field_key=metadata.key,
+                                    field_name=field_name,
+                                    required=metadata.required,
+                                    content=field_value,
+                                )
 
                         await tabbed.add_pane(
                             TabPane(metadata.name, widget, classes='summary-description-container')

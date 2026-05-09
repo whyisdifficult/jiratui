@@ -487,18 +487,19 @@ class JiraIssue(JiraBaseIssue):
             return {}
         return self.additional_fields
 
-    def get_description(self) -> str:
-        if not self.description:
-            return ''
-        if isinstance(self.description, str):
-            return self.description.strip()
+    @staticmethod
+    def rich_text_value_is_empty(value: dict | None) -> bool:
+        from jiratui.config import CONFIGURATION
 
-        try:
-            from jiratui.utils.adf import convert_adf_to_markdown
-
-            return convert_adf_to_markdown(self.description)
-        except Exception:
-            return ''
+        if CONFIGURATION.get().cloud:
+            if not value:
+                return True
+            if isinstance(value, dict):
+                if value.get('content', []):
+                    return False
+                return True
+            return False
+        return not value
 
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'

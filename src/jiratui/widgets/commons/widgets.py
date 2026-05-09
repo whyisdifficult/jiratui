@@ -1991,7 +1991,7 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
         return current_selected != original_selected
 
 
-class WorkItemTextAreaFieldWidget(TextArea, BaseFieldWidget):
+class TextAreaWidget(TextArea, BaseFieldWidget):
     """A TextArea widget for displaying non-ADF text."""
 
     def __init__(
@@ -2003,7 +2003,6 @@ class WorkItemTextAreaFieldWidget(TextArea, BaseFieldWidget):
         required: bool = False,
         # UPDATE mode parameters
         original_value: str | None = None,
-        field_supports_update: bool = False,
     ):
         """Initializes an WorkItemTextAreaFieldWidget.
 
@@ -2015,8 +2014,6 @@ class WorkItemTextAreaFieldWidget(TextArea, BaseFieldWidget):
             title: display title for the field.
             required: whether the field is required.
             original_value: the original value from Jira - always string.
-            field_supports_update: whether field can be updated. Important: this is ignored because we use a
-            screen-based approach for editing its value.
         """
 
         # initialize TextArea widget

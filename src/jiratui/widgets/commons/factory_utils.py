@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 from typing import Any
 
 from textual.widget import Widget
-from textual.widgets import Select, Static
+from textual.widgets import Select
 
+from jiratui.config import CONFIGURATION
 from jiratui.widgets.commons import FieldMode
 from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.commons.widgets import (
@@ -14,9 +14,9 @@ from jiratui.widgets.commons.widgets import (
     NumericInputWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    TextAreaWidget,
     TextInputWidget,
     URLWidget,
-    WorkItemTextAreaFieldWidget,
 )
 
 
@@ -458,22 +458,16 @@ class WidgetBuilder:
         )
 
 
-@dataclass
-class RichTextAreaWidgetData:
-    widget: Static | ADFTextAreaWidget | WorkItemTextAreaFieldWidget
-    content: str = ''
-
-
 def build_read_only_rich_text_widget(
     jira_field_key: str,
     field_name: str,
     required: bool = False,
     content: str | dict | None = None,
-) -> RichTextAreaWidgetData:
+) -> ADFTextAreaWidget | TextAreaWidget:
     """A factory method that builds a widget for displaying the content of a textarea field in read-only mode.
 
     Some Jira issue's fields can contain long rich text. Jira stores these values as either ADF
-    (Atlassian Document Format) (when using theJira CLoud Platform) or, as plain text, when using the Jira DC Platform.
+    (Atlassian Document Format), when using theJira CLoud Platform, or as plain text, when using the Jira DC Platform.
 
     JiraTUI will display these fields as either a Markdown widget, a TextArea widget or a Static widget according to
     these rules:
@@ -501,49 +495,20 @@ def build_read_only_rich_text_widget(
         ValueError: if the value is not an instance of `dict` or `str`.
     """
 
-    if content is None:
-        return RichTextAreaWidgetData(
-            widget=Static(
-                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
-                classes='tip',
-            )
+    if CONFIGURATION.get().cloud:
+        return ADFTextAreaWidget(
+            mode=FieldMode.UPDATE,
+            field_id=jira_field_key,
+            jira_field_key=jira_field_key,
+            title=field_name,
+            required=required,
+            original_value=content or '',  # type:ignore[arg-type]
         )
-
-    if isinstance(content, dict):
-        if content.get('content', []):
-            widget = ADFTextAreaWidget(
-                mode=FieldMode.UPDATE,
-                field_id=jira_field_key,
-                jira_field_key=jira_field_key,
-                title=field_name,
-                required=required,
-                original_value=content,
-            )
-            return RichTextAreaWidgetData(widget=widget, content=widget.text_content)
-        return RichTextAreaWidgetData(
-            widget=Static(
-                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
-                classes='tip',
-            )
-        )
-    elif isinstance(content, str):
-        if content:
-            return RichTextAreaWidgetData(
-                widget=WorkItemTextAreaFieldWidget(
-                    mode=FieldMode.UPDATE,
-                    field_id=jira_field_key,
-                    jira_field_key=jira_field_key,
-                    title=field_name,
-                    required=required,
-                    original_value=content,
-                ),
-                content=content,
-            )
-        return RichTextAreaWidgetData(
-            widget=Static(
-                f"There is no '{field_name.title()}' set. Press 'e' to edit the field's content.",
-                classes='tip',
-            )
-        )
-
-    raise ValueError(f'Expects ADF or string; got {type(content)}.')
+    return TextAreaWidget(
+        mode=FieldMode.UPDATE,
+        field_id=jira_field_key,
+        jira_field_key=jira_field_key,
+        title=field_name,
+        required=required,
+        original_value=content or '',  # type:ignore[arg-type]
+    )

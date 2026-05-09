@@ -46,8 +46,7 @@ class ADFTextAreaWidget(Markdown, BaseFieldWidget):
         title: str | None = None,
         required: bool = False,
         # UPDATE mode parameters
-        original_value: dict | str | None = None,
-        field_supports_update: bool = False,
+        original_value: dict | None = None,
     ):
         """Initializes an ADFTextAreaWidget.
 
@@ -57,9 +56,7 @@ class ADFTextAreaWidget(Markdown, BaseFieldWidget):
             jira_field_key: the key of the field that it is used for updating the field value in the API; e.g., 'customfield_10745'
             title: display title for the field.
             required: whether the field is required.
-            original_value: the original value from Jira - can be ADF dict, string (for Jira DC REST API), or None.
-            field_supports_update: whether field can be updated. Important: this is ignored because we use a
-            screen-based approach for editing its value.
+            original_value: the original value from Jira. It expects an ADF dict.
         """
 
         # the Markdown text that we want to display; convert ADF to Markdown if needed
@@ -73,7 +70,7 @@ class ADFTextAreaWidget(Markdown, BaseFieldWidget):
             mode=mode,
             field_id=field_id,
             jira_field_key=jira_field_key,
-            title=title or 'Text Area',
+            title=title or jira_field_key.replace('_', ' ').title(),
             required=required,
             compact=True,
         )

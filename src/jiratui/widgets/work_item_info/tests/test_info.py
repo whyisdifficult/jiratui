@@ -3,6 +3,7 @@ from unittest.mock import PropertyMock, patch
 import pytest
 from textual.widgets import Rule
 
+from jiratui.widgets.commons import FieldMode
 from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.work_item_info.info import (
     TextareaCollapsible,
@@ -229,13 +230,18 @@ async def test_work_item_info_container_with_view_content(app):
         widget = TextareaCollapsible(
             'description',
             'description',
-            {
-                'type': 'doc',
-                'version': 1,
-                'content': [
-                    {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
-                ],
-            },
+            ADFTextAreaWidget(
+                mode=FieldMode.UPDATE,
+                jira_field_key='description',
+                field_id='description',
+                original_value={
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                },
+            ),
         )
         await app.screen.mount(widget)
         await pilot.pause()

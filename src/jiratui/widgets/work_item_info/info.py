@@ -2,7 +2,7 @@ import os
 import shlex
 import subprocess
 import tempfile
-from typing import cast
+from typing import Any, cast
 
 from textual import on
 from textual.app import ComposeResult
@@ -28,10 +28,9 @@ from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
-    RichTextAreaWidgetData,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import WorkItemTextAreaFieldWidget
+from jiratui.widgets.commons.widgets import TextAreaWidget
 
 
 class TextareaCollapsible(Collapsible):
@@ -61,7 +60,7 @@ class TextareaCollapsible(Collapsible):
             self, jira_field_key: str, content: str | None = None, title: str | None = None
         ):
             super().__init__()
-            self.content = content
+            self.content = content or ''
             self.jira_field_key = jira_field_key
             self.title = title
 
@@ -69,24 +68,23 @@ class TextareaCollapsible(Collapsible):
         self,
         jira_field_key: str,
         field_name: str,
-        content: str | dict | None = None,
+        widget: ADFTextAreaWidget | TextAreaWidget | Static,
         required: bool = False,
         **kwargs,
     ):
         self.__configuration = CONFIGURATION.get()
         self._jira_field_key: str = jira_field_key
 
-        widget_data: RichTextAreaWidgetData = build_read_only_rich_text_widget(
-            self._jira_field_key,
-            field_name,
-            required,
-            content,
-        )
-        self.__widget: ADFTextAreaWidget | Static | WorkItemTextAreaFieldWidget = widget_data.widget
+        self.__widget: ADFTextAreaWidget | TextAreaWidget | Static = widget
+
         # the string representation of the content stored in the widget within this collapsible.
         # this will contain '' when the content is empty but the Collapsible contains a Static widget
-        self.__content: str = widget_data.content
+        if isinstance(self.__widget, Static):
+            self.__content: str = ''
+        else:
+            self.__content = self.__widget.text_content or ''
 
+        # initialize the Collapsible widget
         super().__init__(self.__widget, **kwargs)
         self.border_title = field_name
         self.title = ''  # let's not set a text next to the arrows for toggling content
@@ -96,26 +94,23 @@ class TextareaCollapsible(Collapsible):
             self.add_class('required')
 
     @property
-    def widget(self) -> Static | ADFTextAreaWidget | WorkItemTextAreaFieldWidget:
+    def widget(self) -> ADFTextAreaWidget | TextAreaWidget | Static:
         return self.__widget
 
     @property
     def text_content(self) -> str:
-        if isinstance(self.__widget, Static):
-            return self.__widget.content  # type:ignore[return-value]
-        return self.__widget.text_content
+        return self.__content
 
     @property
     def _updating_rich_text_is_enabled(self) -> bool:
+        # for easy mocking in tests
         return self.__configuration.enable_updating_rich_text
 
     def action_view_content(self):
         if self.__content:
             self.post_message(self.DisplayContent(self.__content, self.border_title))
         else:
-            self.notify(
-                "The field has no content to display. Press 'e' to edit the field's content."
-            )
+            self.notify('The field has no content to display. Press "e" to edit it.')
 
     def action_edit_content(self):
         if self._updating_rich_text_is_enabled:
@@ -300,15 +295,27 @@ class WorkItemInfoContainer(Vertical):
     async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
         if issue_edit_metadata := work_item.get_edit_metadata():
             if field_metadata := issue_edit_metadata.get(JiraWorkItemFields.DESCRIPTION.value, {}):
-                await self.collapsible_container.mount(
-                    TextareaCollapsible(
-                        field_metadata.get('key'),
-                        content=work_item.description,
-                        field_name=field_metadata.get('name', field_metadata.get('key')).title(),
+                field_name = field_metadata.get('name', field_metadata.get('key')).title()
+                widget_for_collapsible: ADFTextAreaWidget | TextAreaWidget | Static
+                if work_item.rich_text_value_is_empty(work_item.description):  # type:ignore[arg-type]
+                    widget_for_collapsible = Static(
+                        f'There is no "{field_name}" set. Press "e" to edit it.', classes='tip'
+                    )
+                else:
+                    widget_for_collapsible = build_read_only_rich_text_widget(
+                        jira_field_key=field_metadata.get('key'),
+                        field_name=field_name,
                         required=field_metadata.get('required', False),
-                        collapsed=False,
-                    ),
+                        content=work_item.description,
+                    )
+                collapsible = TextareaCollapsible(
+                    jira_field_key=field_metadata.get('key'),
+                    widget=widget_for_collapsible,
+                    field_name=field_name,
+                    required=field_metadata.get('required', False),
+                    collapsed=False,
                 )
+                await self.collapsible_container.mount(collapsible)
 
     def watch_issue(self, work_item: JiraIssue | None) -> None:
         # "reset" the information of any previous widget
@@ -352,26 +359,46 @@ class WorkItemInfoContainer(Vertical):
                 if schema.get('custom') == CustomFieldType.TEXTAREA.value or (
                     metadata.key and metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value
                 ):
-                    # get the value of the field
+                    field_name = metadata.name or metadata.key.replace('_', ' ').title()
+                    widget_for_collapsible: ADFTextAreaWidget | TextAreaWidget | Static
                     if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
-                        field_value = work_item.environment
+                        if work_item.rich_text_value_is_empty(work_item.environment):  # type:ignore[arg-type]
+                            widget_for_collapsible = Static(
+                                f'There is no "{field_name}" set. Press "e" to edit it.',
+                                classes='tip',
+                            )
+                        else:
+                            widget_for_collapsible = build_read_only_rich_text_widget(
+                                jira_field_key=metadata.key,
+                                field_name=field_name,
+                                required=metadata.required,
+                                content=work_item.environment,
+                            )
                     else:
-                        field_value = work_item.get_custom_field_value(field_id)
+                        # get the value of the field
+                        field_value: Any | None = work_item.get_custom_field_value(field_id)
+                        if work_item.rich_text_value_is_empty(field_value):
+                            widget_for_collapsible = Static(
+                                f'There is no "{field_name}" set. Press "e" to edit it.',
+                                classes='tip',
+                            )
+                        else:
+                            widget_for_collapsible = build_read_only_rich_text_widget(
+                                jira_field_key=metadata.key,
+                                field_name=field_name,
+                                required=metadata.required,
+                                content=field_value,
+                            )
 
-                    try:
-                        collapsible_widget = TextareaCollapsible(
+                    widgets.append(
+                        TextareaCollapsible(
                             jira_field_key=metadata.key,
-                            field_name=metadata.name,
-                            content=field_value,
+                            widget=widget_for_collapsible,
+                            field_name=field_name,
                             required=metadata.required,
+                            collapsed=True,
                         )
-                    except ValueError as e:
-                        self.notify(
-                            f'Unable to display the field {metadata.name} - {str(e)}',
-                            severity='error',
-                        )
-                    else:
-                        widgets.append(collapsible_widget)
+                    )
         return widgets
 
     def watch_clear_information(self, clear: bool = False) -> None:
