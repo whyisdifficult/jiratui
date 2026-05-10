@@ -21,7 +21,7 @@ from jiratui.models import (
     TimeTracking,
 )
 from jiratui.widgets.commons import FieldMode
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import MultiUserPickerAutoComplete
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
@@ -860,7 +860,6 @@ async def test_build_payload_for_update_with_reporter_unchanged(
         assert payload == {}
 
 
-# TODO
 @patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_unchanged(
@@ -893,7 +892,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_labels_
             assert payload == {}
 
 
-# TODO
 @patch.object(LabelsWidget, 'value_has_changed', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_build_payload_for_update_update_additional_fields_enabled_labels_field_value_changed(
@@ -1486,7 +1484,7 @@ async def test_add_dynamic_widgets(
     )
     widget_4 = SingleUserPickerWidget(mode=FieldMode.UPDATE, field_id='user', jira_field_key='user')
     create_dynamic_widgets_for_updating_work_item_mock.return_value = [
-        ADFTextAreaWidget(mode=FieldMode.UPDATE, field_id='environment'),
+        ReadOnlyADFMarkdownTextAreaWidget(field_id='environment', jira_field_key='environment'),
         widget_2,
         NumericInputWidget(mode=FieldMode.UPDATE, field_id='score', jira_field_key='score'),
         widget_4,
@@ -1504,10 +1502,10 @@ async def test_add_dynamic_widgets(
         children = list(details_widget.dynamic_fields_widgets_container.children)
         assert isinstance(children[0], MultiUserPickerWidget)
         assert isinstance(children[1], SingleUserPickerWidget)
-        assert isinstance(children[2], NumericInputWidget)
-        assert isinstance(children[3], MultiUserPickerAutoComplete)
-        assert isinstance(children[4], UsersAutoComplete)
-        assert isinstance(children[5], ADFTextAreaWidget)
+        assert isinstance(children[2], ReadOnlyADFMarkdownTextAreaWidget)
+        assert isinstance(children[3], NumericInputWidget)
+        assert isinstance(children[4], MultiUserPickerAutoComplete)
+        assert isinstance(children[5], UsersAutoComplete)
 
 
 @pytest.mark.asyncio

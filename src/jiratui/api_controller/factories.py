@@ -191,6 +191,7 @@ class WorkItemFactory:
             custom_fields=custom_fields_values,
             additional_fields=additional_fields,
             components=components,
+            environment=fields.get(JiraWorkItemFields.ENVIRONMENT.value),
         )
 
 

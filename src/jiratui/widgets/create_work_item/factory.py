@@ -6,6 +6,7 @@ from textual.widgets import Select
 from jiratui.api_controller.controller import APIController
 from jiratui.config import CONFIGURATION
 from jiratui.widgets.commons import CustomFieldType, FieldMode
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import AllowedValuesParser
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
@@ -15,6 +16,7 @@ from jiratui.widgets.commons.widgets import (
     MultiSelectWidget,
     MultiUserPickerWidget,
     NumericInputWidget,
+    PlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
     SprintWidget,
@@ -24,7 +26,9 @@ from jiratui.widgets.commons.widgets import (
 
 
 def create_widgets_for_work_item_creation(
-    data: list[dict], api_controller: APIController | None = None
+    data: list[dict],
+    api_controller: APIController | None = None,
+    adf_support_enabled: bool = True,
 ) -> list[Widget]:
     """Creates a list of Textual widgets for the "form" that allows users to create work items.
 
@@ -36,6 +40,8 @@ def create_widgets_for_work_item_creation(
         data: a list of dictionaries with the create-metadata information for all the fields of a given type of work
         item supported in a project.
         api_controller: an optional APIController instance to make requests to the Jira API; unused, for compatibility.
+        adf_support_enabled: indicates if ADF support is enabled. This means the following:
+        `config.cloud and config.jira_api_version == 3`.
 
     Returns:
         A list of `textual.widget.Widget` instances for every supported field.
@@ -212,6 +218,23 @@ def create_widgets_for_work_item_creation(
                         allow_blank=allow_blank
                         or (initial_value == Select.NULL or not initial_value),
                         prompt=f'Select {item.get("name")}',
+                    )
+            elif custom_type == CustomFieldType.TEXTAREA.value:
+                if adf_support_enabled:
+                    widget = ADFMarkdownTextAreaWidget(
+                        mode=FieldMode.CREATE,
+                        field_id=field_id or '',
+                        jira_field_key=item.get('key') or field_id,
+                        title=item.get('name'),
+                        required=required,
+                    )
+                else:
+                    widget = PlainTextTextAreaWidget(
+                        mode=FieldMode.CREATE,
+                        field_id=field_id or '',
+                        jira_field_key=item.get('key') or field_id,
+                        title=item.get('name'),
+                        required=required,
                     )
             else:
                 # the default widget for any other field

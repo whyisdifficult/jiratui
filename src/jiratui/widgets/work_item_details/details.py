@@ -18,7 +18,6 @@ from jiratui.utils.work_item_updates import (
     work_item_reporter_has_changed,
 )
 from jiratui.widgets.base import ReadOnlyTextField
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
 from jiratui.widgets.commons.base import LabelsAutoComplete, MultiUserPickerAutoComplete
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
@@ -981,19 +980,16 @@ class IssueDetailsWidget(Vertical):
             work_item,
             ignore_filter_ids=ignore_filter_ids,
         ):
-            adf_textarea_widgets: list[ADFTextAreaWidget] = []
             user_picker_widgets: list[MultiUserPickerWidget | SingleUserPickerWidget] = []
             other_widgets = []
             for dynamic_widget in dynamic_widgets:
-                if isinstance(dynamic_widget, ADFTextAreaWidget):
-                    adf_textarea_widgets.append(dynamic_widget)
-                elif isinstance(dynamic_widget, MultiUserPickerWidget) or isinstance(
+                if isinstance(dynamic_widget, MultiUserPickerWidget) or isinstance(
                     dynamic_widget, SingleUserPickerWidget
                 ):
                     user_picker_widgets.append(dynamic_widget)
                 else:
                     other_widgets.append(dynamic_widget)
-            sorted_widgets = user_picker_widgets + other_widgets + adf_textarea_widgets
+            sorted_widgets = user_picker_widgets + other_widgets
             # mount the dynamic widgets
             await self.dynamic_fields_widgets_container.mount(*sorted_widgets)
             # mount autocomplete widgets for the dynamic widgets that require them

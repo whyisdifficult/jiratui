@@ -1093,7 +1093,7 @@ class MainScreen(Screen):
                 if response.result:
                     self.issue_child_work_items_widget.issues = response.result.issues
 
-    async def fetch_issue(self, selected_work_item_key: str) -> None:
+    async def fetch_issue(self, selected_work_item_key: str, force_refresh: bool = False) -> None:
         """Retrieves the details of a work item selected by the user in the search results.
 
         This is triggered from the datatable that holds the search results:
@@ -1112,6 +1112,10 @@ class MainScreen(Screen):
 
         Args:
             selected_work_item_key: the key of the work item selected by the user from the search results datatable.
+            force_refresh: if the currently selected work item needs to be reloaded and this is `True` then the screen
+            fetches the detail sof the work item; otherwise it does not refresh the item. This is useful to avoid
+            reloading the same issue being displayed, i.e. the one currently selected but, it helps to force the
+            reload if the item's details have been updated.
 
         Returns:
             Nothing
@@ -1125,8 +1129,8 @@ class MainScreen(Screen):
             )
             return
 
-        # skip if the same work item is already loaded
-        if self.current_loaded_work_item_key == selected_work_item_key:
+        # skip if the same work item is already loaded; but reload if we force it
+        if self.current_loaded_work_item_key == selected_work_item_key and not force_refresh:
             return
 
         # show loading indicator
@@ -1294,3 +1298,17 @@ class MainScreen(Screen):
             self.issue_info_container.issue = None
             self.issue_details_widget.issue = None
             self.current_loaded_work_item_key = None
+
+    @on(WorkItemInfoContainer.WorkItemUpdated)
+    def _refresh_work_item(self, message: WorkItemInfoContainer.WorkItemUpdated) -> None:
+        """Fetches the work item's details after some of its details have been updated in the Info tab
+
+        Args:
+            message: the message sent by the `WorkItemInfoContainer` widget after some of the details of a work item
+            have been updated.
+
+        Returns:
+            None
+        """
+
+        self.run_worker(self.fetch_issue(message.work_item_key, True), exclusive=True)

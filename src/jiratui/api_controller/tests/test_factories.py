@@ -481,7 +481,6 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
                 'emailAddress': 'bart@simpson.com',
                 'timeZone': 'Europe/Amsterdam',
             },
-            'environment': None,
             'fixVersions': [],
             'issuerestriction': {
                 'issuerestrictions': {},
@@ -539,6 +538,7 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
             'customfield_10021': None,
             'customfield_10036': None,
         },
+        environment='some text',
     )
 
 
@@ -697,7 +697,6 @@ def test_build_issue_instance_with_more_details_no_adf(
                 'emailAddress': 'bart@simpson.com',
                 'timeZone': 'Europe/Amsterdam',
             },
-            'environment': None,
             'fixVersions': [],
             'issuerestriction': {
                 'issuerestrictions': {},
@@ -790,7 +789,6 @@ def test_build_issue_instance_with_more_details_no_adf(
             'emailAddress': 'bart@simpson.com',
             'timeZone': 'Europe/Amsterdam',
         },
-        'environment': None,
         'fixVersions': [],
         'issuerestriction': {
             'issuerestrictions': {},

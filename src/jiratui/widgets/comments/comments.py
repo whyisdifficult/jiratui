@@ -7,13 +7,16 @@ from textual.binding import Binding
 from textual.containers import HorizontalGroup, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
-from textual.widgets import Collapsible, Link, Markdown, Rule, Static
+from textual.widgets import Collapsible, Link, Rule, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import IssueComment
 from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
+from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
@@ -189,16 +192,16 @@ class IssueCommentsWidget(VerticalScroll):
             data.comments.sort(
                 key=lambda x: x.updated if x.updated else datetime.today().date(), reverse=True
             )
-            comment_text: Markdown | Static
+            widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             for comment in data.comments:
-                if content := comment.get_body():
-                    comment_text = Markdown(content)
+                if comment.rich_text_value_is_empty(comment.body):  # type:ignore[arg-type]
+                    widget = Static('There is no "Comment" set.', classes='tip')
                 else:
-                    comment_text = Static(
-                        Text(
-                            'Unable to display the comment. Open the link above to view it.',
-                            style='bold orange',
-                        )
+                    widget = build_read_only_rich_text_widget(
+                        jira_field_key='comment',
+                        field_name='comment',
+                        required=False,
+                        content=comment.body,
                     )
 
                 url = (
@@ -217,7 +220,7 @@ class IssueCommentsWidget(VerticalScroll):
                     CommentCollapsible(
                         hg,
                         Rule(classes='rule-horizontal-compact-70'),
-                        comment_text,
+                        widget,
                         title=Text(comment.short_metadata()),
                         work_item_key=self._work_item_key,
                         comment_id=comment.id,

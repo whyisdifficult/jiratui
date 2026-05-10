@@ -24,6 +24,7 @@ class WorkItemManualUpdateFieldKeys(Enum):
     PRIORITY = 'priority'
     FLAGGED = 'flagged'
     TIME_TRACKING = 'timetracking'
+    REPORTER = 'reporter'
 
 
 class WorkItemManualUpdateFieldNames(Enum):
@@ -40,18 +41,16 @@ class WorkItemManualUpdateFieldNames(Enum):
     PRIORITY = 'priority'
     FLAGGED = 'flagged'
     TIME_TRACKING = 'timetracking'
+    REPORTER = 'reporter'
 
 
 class WorkItemUnsupportedUpdateFieldKeys(Enum):
     """The app does not currently support updating the fields with these keys."""
 
-    REPORTER = 'reporter'
     PROJECT = 'project'
     ISSUE_TYPE = 'issuetype'
-    DESCRIPTION = 'description'
     SPRINT = 'sprint'
     TEAM = 'team'
-    ENVIRONMENT = 'environment'
 
 
 def create_dynamic_widgets_for_updating_work_item(
@@ -280,9 +279,6 @@ def create_dynamic_widgets_for_updating_work_item(
                     original_value=current_ids,
                     field_supports_update=metadata.supports_update,
                 )
-            elif schema_custom_type == CustomFieldType.TEXTAREA.value:
-                # Textarea fields are read-only and not supported for updates; skip creating a widget for this type
-                pass
             elif schema_custom_type == CustomFieldType.SD_REQUEST_LANGUAGE.value:
                 # service Desk request language picker - treated as a select field
                 if __field_id in work_item.get_custom_fields():

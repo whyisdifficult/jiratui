@@ -315,7 +315,7 @@
             "total": 0
         },
         "customfield_10001": null,
-        "environment": null,
+        "environment": "some text",
         "duedate": "2025-12-31",
         "progress":
         {

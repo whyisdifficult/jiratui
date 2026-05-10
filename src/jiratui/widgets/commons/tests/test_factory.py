@@ -1,16 +1,22 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from textual.widgets import Select
 
 from jiratui.widgets.commons import FieldMode
-from jiratui.widgets.commons.factory_utils import FieldMetadata, WidgetBuilder
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
+from jiratui.widgets.commons.factory_utils import (
+    FieldMetadata,
+    WidgetBuilder,
+    build_read_only_rich_text_widget,
+)
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
     LabelsWidget,
     MultiSelectWidget,
     NumericInputWidget,
+    ReadOnlyPlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
     TextInputWidget,
@@ -408,3 +414,56 @@ async def test_build_build_selection_create_mode_with_default_value(metadata, ap
     assert widget.jira_field_key == 'field_a'
     assert widget.mode == FieldMode.CREATE
     assert widget.selection == 'test1'
+
+
+@patch('jiratui.widgets.commons.factory_utils._adf_support_enabled')
+def test_build_read_only_rich_text_widget_with_adf_support_enabled(adf_support_enabled_mock: Mock):
+    # GIVEN
+    adf_support_enabled_mock.return_value = True
+    # WHEN
+    widget = build_read_only_rich_text_widget(
+        jira_field_key='field_a',
+        field_name='Field A',
+        required=True,
+        content={
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        },
+    )
+    # THEN
+    assert isinstance(widget, ReadOnlyADFMarkdownTextAreaWidget)
+    assert widget.jira_field_key == 'field_a'
+    assert widget.required is True
+    assert widget.field_id == 'field_a'
+    assert widget.text_content == 'Some value for the ADF field\n'
+    assert widget.border_title == 'Field A'
+    assert widget.border_subtitle == '(*)'
+
+
+@patch('jiratui.widgets.commons.factory_utils._adf_support_enabled')
+def test_build_read_only_rich_text_widget_without_adf_support_enabled(
+    adf_support_enabled_mock: Mock,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    # WHEN
+    widget = build_read_only_rich_text_widget(
+        jira_field_key='field_a',
+        field_name='Field A',
+        required=True,
+        content='Some value for the ADF field',
+    )
+    # THEN
+    assert isinstance(widget, ReadOnlyPlainTextTextAreaWidget)
+    assert widget.jira_field_key == 'field_a'
+    assert widget.required is True
+    assert widget.field_id == 'field_a'
+    assert widget.text_content == 'Some value for the ADF field'
+    assert widget.border_title == 'Field A'
+    assert widget.border_subtitle == '(*)'

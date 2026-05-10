@@ -6,8 +6,6 @@ import enum
 from enum import Enum
 from typing import Any
 
-from jiratui.utils.adf2md.adf2md import adf2md
-
 
 def custom_as_dict_factory(data) -> dict:
     def convert_value(obj):
@@ -55,6 +53,7 @@ class JiraWorkItemFields(Enum):
     LABELS = 'labels'
     DUE_DATE = 'duedate'
     COMPONENTS = 'components'
+    ENVIRONMENT = 'environment'
 
 
 class WorkItemsSearchOrderBy(enum.Enum):
@@ -184,15 +183,19 @@ class IssueComment(BaseModel):
             return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
         return ''
 
-    def get_body(self) -> str:
-        if not self.body:
-            return ''
-        if isinstance(self.body, str):
-            return self.body.strip()
-        try:
-            return adf2md(self.body)
-        except Exception:
-            return ''
+    @staticmethod
+    def rich_text_value_is_empty(value: dict | None) -> bool:
+        from jiratui.config import CONFIGURATION
+
+        if CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3:
+            if not value:
+                return True
+            if isinstance(value, dict):
+                if value.get('content', []):
+                    return False
+                return True
+            return False
+        return not value
 
 
 @dataclass
@@ -331,6 +334,7 @@ class JiraIssue(JiraBaseIssue):
     above. These fields have a key without the prefix 'custom_' and, are rendered dynamically in the UI's update
     form."""
     components: list[JiraIssueComponent] | None = None
+    environment: str | None = None
 
     def short_title(self) -> str:
         return f'{self.key.strip()} - {self.summary.strip()}'
@@ -485,15 +489,19 @@ class JiraIssue(JiraBaseIssue):
             return {}
         return self.additional_fields
 
-    def get_description(self) -> str:
-        if not self.description:
-            return ''
-        if isinstance(self.description, str):
-            return self.description.strip()
-        try:
-            return adf2md(self.description)
-        except Exception:
-            return ''
+    @staticmethod
+    def rich_text_value_is_empty(value: dict | None) -> bool:
+        from jiratui.config import CONFIGURATION
+
+        if CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3:
+            if not value:
+                return True
+            if isinstance(value, dict):
+                if value.get('content', []):
+                    return False
+                return True
+            return False
+        return not value
 
     def __repr__(self) -> str:
         return f'id:{self.id} - key:{self.key}'
@@ -770,7 +778,9 @@ class JiraWorklog(BaseModel):
         if isinstance(self.comment, str):
             return self.comment.strip()
         try:
-            return adf2md(self.comment)
+            from jiratui.utils.adf import convert_adf_to_markdown
+
+            return convert_adf_to_markdown(self.comment)
         except Exception:
             return ''
 

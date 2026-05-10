@@ -134,10 +134,8 @@ def test_create_dynamic_widgets_skip_static_update_fields_by_name(
         'reporter',
         'project',
         'issuetype',
-        'description',
         'sprint',
         'team',
-        'environment',
     ],
 )
 def test_create_dynamic_widgets_skip_unsupported_fields(field_key: str, work_item: JiraIssue):

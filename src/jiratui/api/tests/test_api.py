@@ -1339,7 +1339,14 @@ async def test_add_comment(jira_api: JiraAPI):
         )
     )
     # WHEN
-    result = await jira_api.add_comment('1', 'Hello')
+    result = await jira_api.add_comment(
+        '1',
+        {
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        },
+    )
     # THEN
     assert route.calls.last.request.url.path == '/rest/api/3/issue/1/comment'
     assert json.loads(route.calls.last.request.content) == {
