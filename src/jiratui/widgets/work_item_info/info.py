@@ -47,6 +47,12 @@ class TextareaCollapsible(Collapsible):
             description='View',
             key_display='v',
         ),
+        Binding(
+            key='c',
+            action='copy_content',
+            description='Copy',
+            key_display='c',
+        ),
     ]
 
     class DisplayContent(Message):
@@ -121,6 +127,12 @@ class TextareaCollapsible(Collapsible):
             self.post_message(
                 self.EditContent(self._jira_field_key, self.__content, self.border_title)
             )
+
+    def action_copy_content(self) -> None:
+        """Copy to the clipboard the content of the field."""
+        if self.__content and self.__content.strip():
+            self.app.copy_to_clipboard(self.__content.strip())
+            self.notify('Content copied!')
 
 
 class DisplayTextContentScreen(ModalScreen):

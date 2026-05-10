@@ -1,8 +1,9 @@
-from unittest.mock import PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
 from textual.widgets import Rule
 
+from jiratui.app import JiraApp
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.work_item_info.info import (
     TextareaCollapsible,
@@ -203,7 +204,6 @@ async def test_work_item_info_container_updating_additional_fields_enable_with_t
     }
     async with app.run_test():
         widget = WorkItemInfoContainer()
-
         await app.screen.mount(widget)
         # WHEN
         widget.issue = jira_issues_with_custom_fields[0]
@@ -248,3 +248,31 @@ async def test_work_item_info_container_with_view_content(app):
         # THEN
         assert isinstance(widget.widget, ReadOnlyADFMarkdownTextAreaWidget)
         assert widget.text_content == 'Hello world\n'
+
+
+@patch.object(JiraApp, 'copy_to_clipboard')
+@pytest.mark.asyncio
+async def test_copy_content_to_clipboard(copy_to_clipboard_mock: Mock, app):
+    async with app.run_test() as pilot:
+        # GIVEN
+        widget = TextareaCollapsible(
+            'description',
+            'description',
+            ReadOnlyADFMarkdownTextAreaWidget(
+                jira_field_key='description',
+                field_id='description',
+                original_value={
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world'}]}
+                    ],
+                },
+            ),
+        )
+        await app.screen.mount(widget)
+        await pilot.pause()
+        # WHEN
+        widget.action_copy_content()
+        # THEN
+        copy_to_clipboard_mock.assert_called_once_with('Hello world')
