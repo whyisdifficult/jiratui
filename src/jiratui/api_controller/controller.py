@@ -1612,7 +1612,7 @@ class APIController:
                     )
                 except Exception as e:
                     self.logger.error(
-                        'Failed to convert markdown to adf.',
+                        'Failed to convert markdown to ADF',
                         extra={'field': JiraWorkItemFields.DESCRIPTION.value, 'details': str(e)},
                     )
                     raise UpdateWorkItemException(

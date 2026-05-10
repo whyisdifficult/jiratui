@@ -2404,6 +2404,520 @@ async def test_update_issue_with_additional_fields(
 
 
 @pytest.mark.asyncio
+async def test_update_issue_description_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field description can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'description': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_description_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'description': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field description can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'description': 'Some text'})
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_description_field_adf_not_supported(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'description': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'description': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with('WI1', {'fields': {'description': 'Some text'}})
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_description_field_adf_supported(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = True
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'description': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'description': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1',
+        {
+            'fields': {
+                'description': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Some text'}]}
+                    ],
+                }
+            }
+        },
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_description_field_adf_support_adf_conversion_fails(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = True
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'description': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    convert_markdown_to_adf.side_effect = ValueError('test')
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException, match='Failed to convert Markdown to ADF for the field description'
+    ):
+        await jira_api_controller.update_issue(work_item, {'description': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_environment_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field environment can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_environment_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'environment': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field environment can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_environment_field_adf_not_supported(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'environment': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with('WI1', {'fields': {'environment': 'Some text'}})
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_environment_field_adf_supported(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = True
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'environment': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1',
+        {
+            'fields': {
+                'environment': {
+                    'type': 'doc',
+                    'version': 1,
+                    'content': [
+                        {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Some text'}]}
+                    ],
+                }
+            }
+        },
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_environment_field_adf_support_adf_conversion_fails(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = True
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'environment': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    convert_markdown_to_adf.side_effect = ValueError('test')
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException, match='Failed to convert Markdown to ADF for the field environment'
+    ):
+        await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_components_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field components can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'components': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_components_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'components': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field components can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'components': 'Some text'})
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_components_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'components': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'components': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1', {'update': {'components': [{'set': 'Some text'}]}}
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_labels_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'labels': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'labels': 'Some-text'})
+    # THEN
+    update_issue_mock.assert_called_once_with('WI1', {'update': {'labels': [{'set': 'Some-text'}]}})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_parent_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field parent can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'parent': 'WI2'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_parent_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'parent': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field parent can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'parent': 'WI2'})
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_parent_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'parent': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'parent': 'WI2'})
+    # THEN
+    update_issue_mock.assert_called_once_with('WI1', {'fields': {'parent': {'key': 'WI2'}}})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_priority_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field priority can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'priority': 'P1'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_priority_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'priority': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field priority can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'priority': 'P1'})
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_priority_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'priority': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'priority': 'P1'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1', {'update': {'priority': [{'set': {'id': 'P1'}}]}}
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_issue_duedate_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field duedate can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'duedate': '2026-01-01'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_duedate_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'duedate': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field duedate can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'duedate': '2026-01-01'})
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_duedate_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'duedate': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'duedate': '2026-01-01'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1', {'update': {'duedate': [{'set': '2026-01-01'}]}}
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_issue_summary_field_without_metadata(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'field_a': {}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field summary can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'summary': 'Some text'})
+
+
+@pytest.mark.asyncio
+async def test_update_issue_summary_field_no_set_operation(
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'summary': {'operations': ['add']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='The field summary can not be updated for the selected work item.',
+    ):
+        await jira_api_controller.update_issue(work_item, {'summary': 'Some text'})
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_summary_field_success(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.return_value = {}
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'summary': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'summary': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        'WI1', {'update': {'summary': [{'set': 'Some text'}]}}
+    )
+
+
+@pytest.mark.asyncio
 @patch.object(JiraAPI, 'transitions')
 async def test_transitions(transitions_mock: Mock, jira_api_controller: APIController):
     # GIVEN
