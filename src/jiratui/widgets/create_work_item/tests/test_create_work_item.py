@@ -4,15 +4,16 @@ import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueType, Project
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
-    DescriptionWidget,
     LabelsWidget,
     MultiSelectWidget,
     MultiUserPickerWidget,
     NumericInputWidget,
+    PlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
     SprintWidget,
@@ -199,6 +200,18 @@ def create_metadata_with_editable_reporter() -> dict:
                 'hasDefaultValue': False,
                 'operations': ['add', 'set', 'remove'],
                 'fieldId': 'customfield_10095',
+            },
+            {
+                'required': False,
+                'schema': {
+                    'type': 'string',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                    'customId': 10147,
+                },
+                'name': 'Context for the Task',
+                'key': 'customfield_10147',
+                'fieldId': 'customfield_10147',
+                'operations': ['set'],
             },
         ]
     }
@@ -581,6 +594,7 @@ async def test_save_excludes_reporter_when_not_editable(
         assert dismiss_args['summary'] == 'Test Summary'
 
 
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_reporter_when_editable(
@@ -649,11 +663,138 @@ async def test_save_includes_reporter_when_editable(
         assert dismiss_args['reporter_account_id'] == 'reporter123'
         assert dismiss_args['project_key'] == 'TEST'
         assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['description'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'content': [{'type': 'text', 'text': 'Test Description'}], 'type': 'paragraph'}
+            ],
+        }
 
 
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
-async def test_save_includes_additional_fields(
+async def test_save_includes_additional_fields_with_adf_support_enabled(
+    get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(MultiSelectWidget, 'get_value_for_create') as mock_components,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(
+                URLWidget, 'value', new_callable=PropertyMock(return_value='http://example.bar')
+            ),
+            patch.object(
+                DateTimeInputWidget,
+                'value',
+                new_callable=PropertyMock(return_value='2026-05-05 12:30'),
+            ),
+            patch.object(
+                LabelsWidget, 'value', new_callable=PropertyMock(return_value='test1, test2')
+            ),
+            patch.object(
+                NumericInputWidget, 'value', new_callable=PropertyMock(return_value='123.45')
+            ),
+            patch.object(SingleUserPickerWidget, 'get_value_for_create') as mock_user_picker,
+            patch.object(MultiUserPickerWidget, 'get_value_for_create') as mock_multi_user_picker,
+            patch.object(
+                ADFMarkdownTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_adf_markdown,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_components.return_value = [{'id': '10000'}]
+            mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
+            mock_user_picker.return_value = '12345qwerty'
+            mock_textarea_adf_markdown.return_value = {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {
+                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                        'type': 'paragraph',
+                    }
+                ],
+            }
+
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 17
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['assignee_account_id'] == 'reporter123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['components'] == [{'id': '10000'}]
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['customfield_10015'] == 'http://example.bar'
+        assert dismiss_args['customfield_10098'] == '2026-05-05 12:30'
+        assert set(dismiss_args['labels']) == {'test1', 'test2'}
+        assert dismiss_args['customfield_10097'] == 123.45
+        assert dismiss_args['customfield_10095'] == [{'accountId': '3'}, {'accountId': '4'}]
+        assert dismiss_args['customfield_10096'] == '12345qwerty'
+        assert dismiss_args['customfield_10147'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        }
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_includes_additional_fields_without_adf_support_enabled(
     get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
 ):
     """Test that save handler includes additional fields and the same reporter and assignee."""
@@ -716,6 +857,9 @@ async def test_save_includes_additional_fields(
             ),
             patch.object(SingleUserPickerWidget, 'get_value_for_create') as mock_user_picker,
             patch.object(MultiUserPickerWidget, 'get_value_for_create') as mock_multi_user_picker,
+            patch.object(
+                PlainTextTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_non_adf_markdown,
         ):
             mock_project.return_value = 'TEST'
             mock_issue_type.return_value = 'task-123'
@@ -726,6 +870,7 @@ async def test_save_includes_additional_fields(
             mock_components.return_value = [{'id': '10000'}]
             mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
             mock_user_picker.return_value = '12345qwerty'
+            mock_textarea_non_adf_markdown.return_value = 'Some value for the ADF field'
 
             # WHEN
             screen.handle_save()
@@ -733,13 +878,12 @@ async def test_save_includes_additional_fields(
         # THEN
         # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 16
+        assert len(dismiss_args.keys()) == 17
         assert dismiss_args['project_key'] == 'TEST'
         assert dismiss_args['parent_key'] == 'issue-1'
         assert dismiss_args['issue_type_id'] == 'task-123'
         assert dismiss_args['assignee_account_id'] == 'reporter123'
         assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['description'] == 'Test Description'
         assert dismiss_args['reporter_account_id'] == 'reporter123'
         assert dismiss_args['components'] == [{'id': '10000'}]
         assert dismiss_args['duedate'] == '2026-10-10'
@@ -750,6 +894,29 @@ async def test_save_includes_additional_fields(
         assert dismiss_args['customfield_10097'] == 123.45
         assert dismiss_args['customfield_10095'] == [{'accountId': '3'}, {'accountId': '4'}]
         assert dismiss_args['customfield_10096'] == '12345qwerty'
+        assert dismiss_args['customfield_10147'] == 'Some value for the ADF field'
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_description_widget_with_adf_support(app, create_metadata_with_editable_reporter):
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        assert isinstance(screen.description_field, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_description_widget_without_adf_support(app, create_metadata_with_editable_reporter):
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        assert isinstance(screen.description_field, PlainTextTextAreaWidget)
 
 
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
@@ -788,7 +955,9 @@ async def test_jira_field_key(
         assert screen.description_field.jira_field_key == 'description'
 
 
-def test_jira_field_key_for_additional_fields(config_for_testing):
+def test_create_widgets_for_work_item_creation_additional_fields_with_adf_support_enabled(
+    config_for_testing,
+):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
     fields = [
@@ -1039,9 +1208,21 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
             'operations': ['add', 'set', 'remove'],
             'fieldId': 'customfield_10003',
         },
+        {
+            'required': False,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                'customId': 10147,
+            },
+            'name': 'Context for the Task',
+            'key': 'customfield_10147',
+            'operations': ['set'],
+            'fieldId': 'customfield_10147',
+        },
     ]
     # WHEN
-    widgets = create_widgets_for_work_item_creation(fields)
+    widgets = create_widgets_for_work_item_creation(fields, None, True)
     # THEN
     for widget in widgets:
         assert widget.jira_field_key is not None
@@ -1093,10 +1274,340 @@ def test_jira_field_key_for_additional_fields(config_for_testing):
         elif widget.id == 'user-picker':
             assert widget.jira_field_key == 'user-picker'
             assert isinstance(widget, SingleUserPickerWidget)
-    assert len(widgets) == 14
+        elif widget.id == 'customfield_10147':
+            assert widget.jira_field_key == 'customfield_10147'
+            assert isinstance(widget, ADFMarkdownTextAreaWidget)
+    assert len(widgets) == 15
 
 
-def test_jira_field_key_for_non_required_additional_fields_with_ignore_list(app):
+def test_create_widgets_for_work_item_creation_additional_fields_without_adf_support_enabled(
+    config_for_testing,
+):
+    # GIVEN
+    config_for_testing.enable_creating_additional_fields = True
+    fields = [
+        {
+            'required': True,
+            'schema': {'type': 'array', 'items': 'attachment', 'system': 'attachment'},
+            'name': 'Attachment',
+            'key': 'attachment',
+            'hasDefaultValue': False,
+            'operations': ['set', 'copy'],
+            'fieldId': 'attachment',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'any',
+                'custom': 'com.atlassian.jira.plugins.jira-development-integration-plugin:devsummarycf',
+                'customId': 10000,
+            },
+            'name': 'Development',
+            'key': 'customfield_10000',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10000',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'team',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+                'customId': 10001,
+                'configuration': {
+                    'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team': True
+                },
+            },
+            'name': 'Team',
+            'key': 'customfield_10001',
+            'autoCompleteUrl': 'https://example.atlassian.net/gateway/api/v1/recommendations',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10001',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'date',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:datepicker',
+                'customId': 10015,
+            },
+            'name': 'Start date',
+            'key': 'customfield_10015',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10015',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'number',
+                'custom': 'com.pyxis.greenhopper.jira:jsw-story-points',
+                'customId': 10016,
+            },
+            'name': 'Story point estimate',
+            'key': 'customfield_10016',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10016',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.pyxis.greenhopper.jira:jsw-issue-color',
+                'customId': 10017,
+            },
+            'name': 'Issue color',
+            'key': 'customfield_10017',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10017',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'any',
+                'custom': 'com.pyxis.greenhopper.jira:gh-lexo-rank',
+                'customId': 10019,
+            },
+            'name': 'Rank',
+            'key': 'customfield_10019',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10019',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'array',
+                'items': 'option',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes',
+                'customId': 10021,
+            },
+            'name': 'Flagged',
+            'key': 'customfield_10021',
+            'hasDefaultValue': False,
+            'operations': ['add', 'set', 'remove'],
+            'allowedValues': [
+                {
+                    'self': 'https://example.atlassian.net/rest/api/3/customFieldOption/10019',
+                    'value': 'Impediment',
+                    'id': '10019',
+                }
+            ],
+            'fieldId': 'customfield_10021',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'any',
+                'custom': 'com.atlassian.jira.plugins.jira-development-integration-plugin:vulnerabilitycf',
+                'customId': 10035,
+            },
+            'name': 'Vulnerability',
+            'key': 'customfield_10035',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10035',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'array',
+                'items': 'design.field.name',
+                'custom': 'com.atlassian.jira.plugins.jira-development-integration-plugin:designcf',
+                'customId': 10037,
+            },
+            'name': 'Design',
+            'key': 'customfield_10037',
+            'autoCompleteUrl': '',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10037',
+        },
+        {
+            'required': True,
+            'schema': {'type': 'date', 'system': 'duedate'},
+            'name': 'Due date',
+            'key': 'duedate',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'duedate',
+        },
+        {
+            'required': True,
+            'schema': {'type': 'array', 'items': 'issuelinks', 'system': 'issuelinks'},
+            'name': 'Linked Issues',
+            'key': 'issuelinks',
+            'autoCompleteUrl': 'https://example.atlassian.net/rest/api/3/issue/picker?currentProjectId=&showSubTaskParent=true&showSubTasks=true&currentIssueKey=null&query=',
+            'hasDefaultValue': False,
+            'operations': ['add', 'copy'],
+            'fieldId': 'issuelinks',
+        },
+        {
+            'required': True,
+            'schema': {'type': 'array', 'items': 'string', 'system': 'labels'},
+            'name': 'Labels',
+            'key': 'labels',
+            'autoCompleteUrl': 'https://example.atlassian.net/rest/api/1.0/labels/suggest?query=',
+            'hasDefaultValue': False,
+            'operations': ['add', 'set', 'remove'],
+            'fieldId': 'labels',
+        },
+        {
+            'required': True,
+            'schema': {'type': 'user', 'system': 'assignee'},
+            'name': 'Assignee',
+            'key': 'assignee',
+            'autoCompleteUrl': 'https://example.atlassian.net/rest/api/3/user/assignable/search?project=JT&query=',
+            'hasDefaultValue': True,
+            'operations': ['set'],
+            'fieldId': 'assignee',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:url',
+                'customId': 1111,
+            },
+            'name': 'Some URL',
+            'key': 'url',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'url',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:datetime',
+                'customId': 1111,
+            },
+            'name': 'Some Datetime',
+            'key': 'date-time',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'date-time',
+        },
+        {
+            'required': True,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:userpicker',
+                'customId': 2222,
+            },
+            'name': 'Some Datetime',
+            'key': 'user-picker',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'user-picker',
+        },
+        {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'user',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker',
+                'customId': 10003,
+            },
+            'name': 'Approvers',
+            'key': 'customfield_10003',
+            'autoCompleteUrl': 'https://example.net/rest/api/1.0/users/picker?fieldName=customfield_10003&showAvatar=true&query=',
+            'hasDefaultValue': False,
+            'operations': ['add', 'set', 'remove'],
+            'fieldId': 'customfield_10003',
+        },
+        {
+            'required': False,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                'customId': 10147,
+            },
+            'name': 'Context for the Task',
+            'key': 'customfield_10147',
+            'operations': ['set'],
+            'fieldId': 'customfield_10147',
+        },
+    ]
+    # WHEN
+    widgets = create_widgets_for_work_item_creation(fields, None, False)
+    # THEN
+    for widget in widgets:
+        assert widget.jira_field_key is not None
+        if widget.id == 'customfield_10000':
+            assert widget.jira_field_key == 'customfield_10000'
+            assert isinstance(widget, TextInputWidget)
+        if widget.id == 'customfield_10003':
+            assert widget.jira_field_key == 'customfield_10003'
+            assert isinstance(widget, MultiUserPickerWidget)
+        elif widget.id == 'customfield_10001':
+            assert widget.jira_field_key == 'customfield_10001'
+            assert isinstance(widget, TextInputWidget)
+        elif widget.id == 'customfield_10015':
+            assert widget.jira_field_key == 'customfield_10015'
+            assert isinstance(widget, DateInputWidget)
+        elif widget.id == 'customfield_10016':
+            assert widget.jira_field_key == 'customfield_10016'
+            assert isinstance(widget, NumericInputWidget)
+        elif widget.id == 'customfield_10017':
+            assert widget.jira_field_key == 'customfield_10017'
+            assert isinstance(widget, TextInputWidget)
+        elif widget.id == 'customfield_10019':
+            assert widget.jira_field_key == 'customfield_10019'
+            assert isinstance(widget, TextInputWidget)
+        elif widget.id == 'customfield_10020':
+            assert widget.jira_field_key == 'customfield_10020'
+            assert isinstance(widget, SprintWidget)
+        elif widget.id == 'customfield_10021':
+            assert widget.jira_field_key == 'customfield_10021'
+            assert isinstance(widget, MultiSelectWidget)
+        elif widget.id == 'customfield_10035':
+            assert widget.jira_field_key == 'customfield_10035'
+            assert isinstance(widget, TextInputWidget)
+        elif widget.id == 'customfield_10037':
+            assert widget.jira_field_key == 'customfield_10037'
+            assert isinstance(widget, TextInputWidget)
+        elif widget.id == 'duedate':
+            assert widget.jira_field_key == 'duedate'
+            assert isinstance(widget, DateInputWidget)
+        elif widget.id == 'labels':
+            assert widget.jira_field_key == 'labels'
+            assert isinstance(widget, LabelsWidget)
+        elif widget.id == 'url':
+            assert widget.jira_field_key == 'url'
+            assert isinstance(widget, URLWidget)
+        elif widget.id == 'date-time':
+            assert widget.jira_field_key == 'date-time'
+            assert isinstance(widget, DateTimeInputWidget)
+        elif widget.id == 'user-picker':
+            assert widget.jira_field_key == 'user-picker'
+            assert isinstance(widget, SingleUserPickerWidget)
+        elif widget.id == 'customfield_10147':
+            assert widget.jira_field_key == 'customfield_10147'
+            assert isinstance(widget, PlainTextTextAreaWidget)
+    assert len(widgets) == 15
+
+
+def test_create_widgets_for_work_item_creation_for_non_required_additional_fields_with_ignore_list(
+    app,
+):
     # GIVEN
     app.config.enable_creating_additional_fields = True
     app.config.create_additional_fields_ignore_ids = ['attachment']
@@ -1117,7 +1628,7 @@ def test_jira_field_key_for_non_required_additional_fields_with_ignore_list(app)
     assert widgets == []
 
 
-def test_jira_field_key_for_non_required_additional_fields_without_ignore_list_non_optional_processing(
+def test_create_widgets_for_work_item_creation_for_non_required_additional_fields_without_ignore_list_non_optional_processing(
     app,
 ):
     # GIVEN
@@ -1140,7 +1651,7 @@ def test_jira_field_key_for_non_required_additional_fields_without_ignore_list_n
     assert widgets == []
 
 
-def test_jira_field_key_no_fields(
+def test_create_widgets_for_work_item_creation_without_data(
     config_for_testing,
 ):
     # WHEN
@@ -1149,7 +1660,7 @@ def test_jira_field_key_no_fields(
     assert widgets == []
 
 
-def test_jira_field_key_field_not_supported(
+def test_create_widgets_for_work_item_creation_field_not_supported(
     config_for_testing,
 ):
     # GIVEN
@@ -1170,7 +1681,7 @@ def test_jira_field_key_field_not_supported(
     assert widgets == []
 
 
-def test_jira_field_key_field_custom_field_with_tooltip(
+def test_create_widgets_for_work_item_creation_custom_field_with_tooltip(
     config_for_testing,
 ):
     # GIVEN
@@ -1197,7 +1708,7 @@ def test_jira_field_key_field_custom_field_with_tooltip(
     assert widgets[0].tooltip == 'Design (Tip: to ignore use id: customfield_10037)'
 
 
-def test_jira_field_key_field_custom_field_with_allowed_values_non_array_type(
+def test_create_widgets_for_work_item_creation_custom_field_with_allowed_values_non_array_type(
     config_for_testing,
 ):
     # GIVEN
@@ -1306,7 +1817,7 @@ async def test_validate_required_fields_reporter_is_editable_and_not_selected(
         assert result is False
 
 
-@patch.object(DescriptionWidget, 'required', PropertyMock(return_value=True))
+@patch.object(PlainTextTextAreaWidget, 'required', PropertyMock(return_value=True))
 @patch.object(JiraUserInput, 'account_id', PropertyMock(return_value=None))
 @patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
 @patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))

@@ -187,7 +187,7 @@ class IssueComment(BaseModel):
     def rich_text_value_is_empty(value: dict | None) -> bool:
         from jiratui.config import CONFIGURATION
 
-        if CONFIGURATION.get().cloud:
+        if CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3:
             if not value:
                 return True
             if isinstance(value, dict):
@@ -493,7 +493,7 @@ class JiraIssue(JiraBaseIssue):
     def rich_text_value_is_empty(value: dict | None) -> bool:
         from jiratui.config import CONFIGURATION
 
-        if CONFIGURATION.get().cloud:
+        if CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3:
             if not value:
                 return True
             if isinstance(value, dict):

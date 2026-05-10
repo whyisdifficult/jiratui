@@ -3,8 +3,7 @@ from unittest.mock import PropertyMock, patch
 import pytest
 from textual.widgets import Rule
 
-from jiratui.widgets.commons import FieldMode
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.work_item_info.info import (
     TextareaCollapsible,
     WorkItemInfoContainer,
@@ -230,8 +229,7 @@ async def test_work_item_info_container_with_view_content(app):
         widget = TextareaCollapsible(
             'description',
             'description',
-            ADFTextAreaWidget(
-                mode=FieldMode.UPDATE,
+            ReadOnlyADFMarkdownTextAreaWidget(
                 jira_field_key='description',
                 field_id='description',
                 original_value={
@@ -248,5 +246,5 @@ async def test_work_item_info_container_with_view_content(app):
         # WHEN
         widget.action_view_content()
         # THEN
-        assert isinstance(widget.widget, ADFTextAreaWidget)
+        assert isinstance(widget.widget, ReadOnlyADFMarkdownTextAreaWidget)
         assert widget.text_content == 'Hello world\n'

@@ -9,8 +9,10 @@ from textual.widget import Widget
 from textual.widgets import Button, Input, Rule, Select, Static, TextArea
 
 from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.config import CONFIGURATION
 from jiratui.models import IssueType, Project
 from jiratui.widgets.commons import CustomFieldType
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import (
     FieldMode,
     LabelsAutoComplete,
@@ -18,10 +20,10 @@ from jiratui.widgets.commons.base import (
 )
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
-    DescriptionWidget,
     LabelsWidget,
     MultiSelectWidget,
     MultiUserPickerWidget,
+    PlainTextTextAreaWidget,
     SingleUserPickerWidget,
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
@@ -89,6 +91,11 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         self._field_metadata: dict[str, dict] = {}
         # this is used for determining whether the reporter field should be requested to the user and updated
         self._reporter_is_editable: bool = True  # default to editable
+        self.__configuration = CONFIGURATION.get()
+
+    @property
+    def adf_support_enabled(self) -> bool:
+        return self.__configuration.cloud and self.__configuration.jira_api_version == 3
 
     @property
     def reporter_account_id(self) -> str | None:
@@ -127,8 +134,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         return self.query_one(CreateWorkItemIssueSummaryField)
 
     @property
-    def description_field(self) -> DescriptionWidget:
-        return self.query_one(DescriptionWidget)
+    def description_field(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
+        if self.adf_support_enabled:
+            return self.query_one(ADFMarkdownTextAreaWidget)
+        return self.query_one(PlainTextTextAreaWidget)
 
     @property
     def parent_key_field(self) -> CreateWorkItemParentKeyField:
@@ -159,7 +168,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         basic_fields_valid = all(required_checks)
 
         # check if description is required and has a value
-        if self.description_field.required and not self.description_field.text.strip():
+        if self.description_field.required and self.description_field.value_is_empty:
             return False
 
         return basic_fields_valid
@@ -201,9 +210,20 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     ).add_class(*['create-update-users-field-widget'])
                 yield CreateWorkItemParentKeyField(self._parent_work_item_key)
                 yield CreateWorkItemIssueSummaryField()
-                yield DescriptionWidget(
-                    mode=FieldMode.CREATE, field_id='description', title='Description'
-                )
+                if self.adf_support_enabled:
+                    yield ADFMarkdownTextAreaWidget(
+                        mode=FieldMode.CREATE,
+                        jira_field_key='description',
+                        field_id='description',
+                        title='Description',
+                    )
+                else:
+                    yield PlainTextTextAreaWidget(
+                        mode=FieldMode.CREATE,
+                        jira_field_key='description',
+                        field_id='description',
+                        title='Description',
+                    )
                 yield VerticalScroll(id='create-additional-fields')
             with ItemGrid(classes='add-work-item-grid-buttons'):
                 yield Button(
@@ -379,8 +399,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
             # create all the widgets for the additional fields supported
             metadata_fields: list[Widget] = create_widgets_for_work_item_creation(
-                fields_data,
+                data=fields_data,
                 api_controller=application.api,
+                adf_support_enabled=self.adf_support_enabled,
             )
             await self.additional_fields.mount_all(metadata_fields)
 
@@ -493,10 +514,14 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 self.issue_type_selector.jira_field_key: self.issue_type_selector.selection,
                 self.assignee_selector.jira_field_key: self.assignee_selector.account_id,
                 self.summary_field.jira_field_key: self.summary_field.value,
-                self.description_field.jira_field_key: self.description_field.text.strip()
-                if self.description_field.text
-                else None,
             }
+
+            if self.description_field.value_is_empty:
+                data[self.description_field.jira_field_key] = None
+            else:
+                data[self.description_field.jira_field_key] = (
+                    self.description_field.get_value_for_create()
+                )
 
             # only include reporter if it's editable
             if self._reporter_is_editable:
@@ -524,6 +549,12 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, LabelsWidget):
+                    if value := widget.get_value_for_create():
+                        data[widget.jira_field_key] = value
+                    continue
+                elif isinstance(widget, ADFMarkdownTextAreaWidget) or isinstance(
+                    widget, PlainTextTextAreaWidget
+                ):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value
                     continue

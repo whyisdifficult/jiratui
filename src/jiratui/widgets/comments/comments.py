@@ -14,9 +14,9 @@ from jiratui.config import CONFIGURATION
 from jiratui.models import IssueComment
 from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
-from jiratui.widgets.commons.widgets import TextAreaWidget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 
 
@@ -192,7 +192,7 @@ class IssueCommentsWidget(VerticalScroll):
             data.comments.sort(
                 key=lambda x: x.updated if x.updated else datetime.today().date(), reverse=True
             )
-            widget: ADFTextAreaWidget | TextAreaWidget | Static
+            widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             for comment in data.comments:
                 if comment.rich_text_value_is_empty(comment.body):  # type:ignore[arg-type]
                     widget = Static('There is no "Comment" set.', classes='tip')

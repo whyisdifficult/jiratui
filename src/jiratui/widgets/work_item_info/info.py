@@ -25,12 +25,12 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, JiraWorkItemFields
 from jiratui.widgets.commons import CustomFieldType
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import TextAreaWidget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 
 
 class TextareaCollapsible(Collapsible):
@@ -68,14 +68,16 @@ class TextareaCollapsible(Collapsible):
         self,
         jira_field_key: str,
         field_name: str,
-        widget: ADFTextAreaWidget | TextAreaWidget | Static,
+        widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static,
         required: bool = False,
         **kwargs,
     ):
         self.__configuration = CONFIGURATION.get()
         self._jira_field_key: str = jira_field_key
 
-        self.__widget: ADFTextAreaWidget | TextAreaWidget | Static = widget
+        self.__widget: (
+            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+        ) = widget
 
         # the string representation of the content stored in the widget within this collapsible.
         # this will contain '' when the content is empty but the Collapsible contains a Static widget
@@ -94,7 +96,9 @@ class TextareaCollapsible(Collapsible):
             self.add_class('required')
 
     @property
-    def widget(self) -> ADFTextAreaWidget | TextAreaWidget | Static:
+    def widget(
+        self,
+    ) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static:
         return self.__widget
 
     @property
@@ -296,7 +300,9 @@ class WorkItemInfoContainer(Vertical):
         if issue_edit_metadata := work_item.get_edit_metadata():
             if field_metadata := issue_edit_metadata.get(JiraWorkItemFields.DESCRIPTION.value, {}):
                 field_name = field_metadata.get('name', field_metadata.get('key')).title()
-                widget_for_collapsible: ADFTextAreaWidget | TextAreaWidget | Static
+                widget_for_collapsible: (
+                    ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                )
                 if work_item.rich_text_value_is_empty(work_item.description):  # type:ignore[arg-type]
                     widget_for_collapsible = Static(
                         f'There is no "{field_name}" set. Press "e" to edit it.', classes='tip'
@@ -360,7 +366,9 @@ class WorkItemInfoContainer(Vertical):
                     metadata.key and metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value
                 ):
                     field_name = metadata.name or metadata.key.replace('_', ' ').title()
-                    widget_for_collapsible: ADFTextAreaWidget | TextAreaWidget | Static
+                    widget_for_collapsible: (
+                        ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                    )
                     if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
                         if work_item.rich_text_value_is_empty(work_item.environment):  # type:ignore[arg-type]
                             widget_for_collapsible = Static(

@@ -5,8 +5,13 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
+from jiratui.config import CONFIGURATION
 from jiratui.models import IssueComment, JiraIssueSearchResponse, JiraUser, JiraUserGroup
 from jiratui.utils.adf import convert_adf_to_markdown
+
+
+def _adf_support_enabled() -> bool:
+    return CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3
 
 
 class Renderer:
@@ -79,9 +84,7 @@ class JiraIssueCommentRenderer(Renderer):
 
         comment_text = ''
         if content.body:
-            from jiratui.config import CONFIGURATION
-
-            if CONFIGURATION.get().cloud:
+            if _adf_support_enabled():
                 if not content.rich_text_value_is_empty(content.body):  # type:ignore[arg-type]
                     try:
                         comment_text = convert_adf_to_markdown(content.body)  # type:ignore[arg-type]
@@ -117,9 +120,7 @@ class JiraIssueCommentTextRenderer(Renderer):
             return
         comment_text = ''
         if content.body:
-            from jiratui.config import CONFIGURATION
-
-            if CONFIGURATION.get().cloud:
+            if _adf_support_enabled():
                 if not content.rich_text_value_is_empty(content.body):  # type:ignore[arg-type]
                     try:
                         comment_text = convert_adf_to_markdown(content.body)  # type:ignore[arg-type]
@@ -150,9 +151,7 @@ class JiraIssueCommentsRenderer(Renderer):
         for comment in content.get('comments', []):
             comment_text = ''
             if comment.body:
-                from jiratui.config import CONFIGURATION
-
-                if CONFIGURATION.get().cloud:
+                if _adf_support_enabled():
                     if not comment.rich_text_value_is_empty(comment.body):
                         try:
                             comment_text = convert_adf_to_markdown(comment.body)

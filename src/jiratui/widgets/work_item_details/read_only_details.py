@@ -15,12 +15,12 @@ from jiratui.utils.styling import (
     get_style_for_work_item_type,
 )
 from jiratui.widgets.commons import CustomFieldType
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import TextAreaWidget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 
 
 class WorkItemReadOnlyDetailsScreen(ModalScreen):
@@ -134,7 +134,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
             )
 
             # set the content of the description tab
-            widget: ADFTextAreaWidget | TextAreaWidget | Static
+            widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             if issue.rich_text_value_is_empty(issue.description):
                 widget = Static('There is no Description set. Press "e" to edit it.', classes='tip')
             else:

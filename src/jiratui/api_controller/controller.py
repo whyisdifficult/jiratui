@@ -111,6 +111,9 @@ class APIController:
         self.logger = logging.getLogger(LOGGER_NAME)
         self._required_fields_cache: dict[str, list[str]] = {}
 
+    def _adf_support_enabled(self) -> bool:
+        return self.config.cloud and self.config.jira_api_version == 3
+
     @staticmethod
     def _extract_exception_details(exception: Exception) -> dict:
         extra: dict = getattr(exception, 'extra', {}) or {}
@@ -1601,7 +1604,7 @@ class APIController:
                     extra={'work_item_key': issue.key},
                 )
 
-            if self.config.cloud:
+            if self._adf_support_enabled():
                 # rich text-based fields in Jira Cloud use ADF
                 try:
                     payload['fields'][JiraWorkItemFields.DESCRIPTION.value] = (
@@ -1633,7 +1636,7 @@ class APIController:
                     f'The field {JiraWorkItemFields.ENVIRONMENT.value} can not be updated for the selected work item.',
                     extra={'work_item_key': issue.key},
                 )
-            if self.config.cloud:
+            if self._adf_support_enabled():
                 # rich text-based fields in Jira Cloud use ADF
                 try:
                     payload['fields'][JiraWorkItemFields.ENVIRONMENT.value] = (
@@ -1678,7 +1681,7 @@ class APIController:
                             metadata.get('schema', {}).get('custom')
                             == CustomFieldType.TEXTAREA.value
                         ):
-                            if self.config.cloud:
+                            if self._adf_support_enabled():
                                 # rich text-based fields in Jira Cloud use ADF
                                 try:
                                     payload['fields'][field_id] = convert_markdown_to_adf(
@@ -1928,7 +1931,7 @@ class APIController:
         if not message:
             return APIControllerResponse(success=False, error='Missing required message.')
         try:
-            if self.config.cloud:
+            if self._adf_support_enabled():
                 adf: dict = self._convert_comment_message_to_adf(message)
                 response = await self.api.add_comment(issue_key_or_id, adf)
             else:
@@ -2214,25 +2217,9 @@ class APIController:
         if priority_id := data.get('priority'):
             fields['priority'] = {'id': priority_id}
 
-        if description := data.get('description'):
-            if self.api_version == 2:
-                fields['description'] = description
-            else:
-                fields['description'] = {
-                    'content': [
-                        {
-                            'content': [
-                                {
-                                    'type': 'text',
-                                    'text': description,
-                                }
-                            ],
-                            'type': 'paragraph',
-                        }
-                    ],
-                    'type': 'doc',
-                    'version': 1,
-                }
+        description = data.get('description') or ''
+        if description:
+            fields['description'] = description
 
         if not fields:
             return APIControllerResponse(
@@ -2256,8 +2243,8 @@ class APIController:
                     # single component ID
                     fields['components'] = [{'id': field_value}]
             else:
-                # For all other fields (including custom fields), pass as-is
-                # The caller is responsible for proper formatting
+                # for all other fields (including custom fields), pass as-is
+                # the caller is responsible for proper formatting
                 fields[field_key] = field_value
 
         try:

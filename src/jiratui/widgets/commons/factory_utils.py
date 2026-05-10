@@ -5,16 +5,16 @@ from textual.widgets import Select
 
 from jiratui.config import CONFIGURATION
 from jiratui.widgets.commons import FieldMode
-from jiratui.widgets.commons.adf import ADFTextAreaWidget
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
     LabelsWidget,
     MultiSelectWidget,
     NumericInputWidget,
+    ReadOnlyPlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
-    TextAreaWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -463,7 +463,7 @@ def build_read_only_rich_text_widget(
     field_name: str,
     required: bool = False,
     content: str | dict | None = None,
-) -> ADFTextAreaWidget | TextAreaWidget:
+) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget:
     """A factory method that builds a widget for displaying the content of a textarea field in read-only mode.
 
     Some Jira issue's fields can contain long rich text. Jira stores these values as either ADF
@@ -488,20 +488,22 @@ def build_read_only_rich_text_widget(
         An instance of `ADFTextAreaWidget` or `TextAreaWidget`.
     """
 
-    if CONFIGURATION.get().cloud:
-        return ADFTextAreaWidget(
-            mode=FieldMode.UPDATE,
+    if _adf_support_enabled():
+        return ReadOnlyADFMarkdownTextAreaWidget(
             field_id=jira_field_key,
             jira_field_key=jira_field_key,
             title=field_name,
             required=required,
-            original_value=content or '',  # type:ignore[arg-type]
+            original_value=content,  # type:ignore[arg-type]
         )
-    return TextAreaWidget(
-        mode=FieldMode.UPDATE,
+    return ReadOnlyPlainTextTextAreaWidget(
         field_id=jira_field_key,
         jira_field_key=jira_field_key,
         title=field_name,
         required=required,
         original_value=content or '',  # type:ignore[arg-type]
     )
+
+
+def _adf_support_enabled() -> bool:
+    return CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3
