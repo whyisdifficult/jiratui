@@ -2303,6 +2303,31 @@ async def test_update_issue_with_update_fields_update_allowed(
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_assignee_for_non_cloud_api(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.cloud = False
+    work_item.edit_meta = {
+        'fields': {'assignee': {'operations': {'set': 'new value'}, 'key': 'assignee'}}
+    }
+    work_item.key = 'WI1'
+    update_issue_mock.return_value = {'fields': {'assignee_account_id': 'new value'}}
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'assignee_account_id': 'value'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'update': {'assignee': [{'set': {'name': 'value'}}]}}
+    )
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=['assignee_account_id'])
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
 async def test_update_issue_labels_no_metadata(
     update_issue_mock: Mock, work_item: JiraIssue, jira_api_controller: APIController
 ):
@@ -2401,6 +2426,105 @@ async def test_update_issue_with_additional_fields(
     assert result == APIControllerResponse(
         result=UpdateWorkItemResponse(success=True, updated_fields=updated_fields)
     )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_additional_fields_adf_support_enabled(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    convert_markdown_to_adf_mock.return_value = {'type': 'doc', 'version': 1, 'content': []}
+    adf_support_enabled_mock.return_value = True
+    jira_api_controller.config.enable_updating_additional_fields = True
+    work_item.key = 'WI1'
+    work_item.edit_meta = {
+        'fields': {
+            'customfield_1': {
+                'operations': {'set': 'allowed'},
+                'schema': {'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'},
+            }
+        }
+    }
+    update_issue_mock.return_value = {}
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'customfield_1': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'fields': {'customfield_1': {'type': 'doc', 'version': 1, 'content': []}}}
+    )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_additional_fields_adf_support_enabled_converting_adf_fails(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    convert_markdown_to_adf_mock.side_effect = ValueError('some error')
+    adf_support_enabled_mock.return_value = True
+    jira_api_controller.config.enable_updating_additional_fields = True
+    work_item.key = 'WI1'
+    work_item.edit_meta = {
+        'fields': {
+            'customfield_1': {
+                'operations': {'set': 'allowed'},
+                'schema': {'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'},
+            }
+        }
+    }
+    update_issue_mock.return_value = {}
+    # WHEN
+    with pytest.raises(
+        UpdateWorkItemException,
+        match='ailed to convert Markdown to ADF for the field customfield_1',
+    ):
+        await jira_api_controller.update_issue(work_item, {'customfield_1': 'Some text'})
+
+
+@pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_with_additional_fields_adf_support_not_enabled(
+    update_issue_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    jira_api_controller.config.enable_updating_additional_fields = True
+    work_item.key = 'WI1'
+    work_item.edit_meta = {
+        'fields': {
+            'customfield_1': {
+                'operations': {'set': 'allowed'},
+                'schema': {'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'},
+            }
+        }
+    }
+    update_issue_mock.return_value = {}
+    # WHEN
+    await jira_api_controller.update_issue(work_item, {'customfield_1': 'Some text'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'fields': {'customfield_1': 'Some text'}}
+    )
+    convert_markdown_to_adf_mock.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -2552,11 +2676,13 @@ async def test_update_issue_environment_field_no_set_operation(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.api_controller.controller.convert_markdown_to_adf')
 @patch.object(APIController, '_adf_support_enabled')
 @patch.object(JiraAPI, 'update_issue')
 async def test_update_issue_environment_field_adf_not_supported(
     update_issue_mock: Mock,
     adf_support_enabled_mock: Mock,
+    convert_markdown_to_adf_mock: Mock,
     work_item: JiraIssue,
     jira_api_controller: APIController,
 ):
@@ -2570,6 +2696,7 @@ async def test_update_issue_environment_field_adf_not_supported(
     await jira_api_controller.update_issue(work_item, {'environment': 'Some text'})
     # THEN
     update_issue_mock.assert_called_once_with('WI1', {'fields': {'environment': 'Some text'}})
+    convert_markdown_to_adf_mock.assert_not_called()
 
 
 @pytest.mark.asyncio

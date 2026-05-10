@@ -1659,7 +1659,7 @@ class APIController:
 
         # process additional fields
         if self.config.enable_updating_additional_fields:
-            from jiratui.widgets.commons import CustomFieldType
+            from jiratui.widgets.commons import CustomFieldType  # avoid circular dependency
 
             for field_id, field_value in updates.items():
                 # ignore the fields updated above
@@ -1697,7 +1697,7 @@ class APIController:
                                         extra={'work_item_key': issue.key},
                                     ) from e
                             else:
-                                # Jira DC uses plain text
+                                # Jira DC and Jira Cloud Platform API v2 use plain text
                                 payload['fields'][field_id] = field_value
                         elif 'set' in metadata.get('operations', {}):
                             payload['update'][field_id] = [{'set': field_value}]
