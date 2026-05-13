@@ -509,17 +509,31 @@ project and a type of work item.
 
 #### Basic Workflow
 
-The modal displays these four required fields:
+The modal displays these fields:
+
+
+The form includes a fixed set of fields and, a set of fields that are dynamically created depending on the project and
+type of work item that you want to create. These fields are always present in the form:
 
 - **Project** (dropdown) – Select which project the work item belongs to
 - **Issue Type** (dropdown) – Choose the type of work item (e.g., Task, Bug, Story)
 - **Reporter** (searchable field) – Enter your name or email; autocomplete filters by display name or email address
 - **Summary** (text field) – Provide a brief description of the work item
-
-In addition to these required fields, the form also includes two optional fields:
-
 - **Assignee** (searchable field) – Specify who will work on the item
-- **Parent Issue** (text field) – Enter the key of a parent issue if this is a sub-task
+- **Parent Key** (text field) – Enter the key of a parent issue if this is a sub-task
+- **Description**: If your Jira instance runs on the cloud and uses API v3 then it supports ADF. In this case you can
+write your description in CommonMark. If you Jira instance runs on your DC or uses API v2 then ADF is not supported
+and the text you provide will be treated as plain text.
+
+When you select a type of issue the form will be updated to include additional fields. These are created dynamically
+based on the create-metadata associated to the type of issue you want to create. These fields are controlled by 2
+configuration variables. See the section below for more details:
+
+- `enable_creating_additional_fields`: this controls whether the form should include dynamic fields or not.
+- `create_additional_fields_ignore_ids`: this controls which dynamic fields to skip. You can specify a list of field ids
+to skip.
+
+*Tip*: when you hover over a field's input widget a tooltip will give you the id of the field.
 
 #### Selecting Projects and Issue Types
 

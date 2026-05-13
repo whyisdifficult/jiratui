@@ -29,11 +29,14 @@ operations.
 - ReadOnlyTextAreaWidget: a TexArea widget that displays non-ADF text in read-only mode.
 """
 
+from dataclasses import dataclass
 import hashlib
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
+from textual.binding import Binding
 from textual.events import Key
+from textual.message import Message
 from textual.validation import Number, ValidationResult
 from textual.widgets import Input, MaskedInput, Select, SelectionList, TextArea
 from textual.widgets.selection_list import Selection
@@ -1380,6 +1383,14 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     ```
     """
 
+    BINDINGS = [
+        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+    ]
+
+    @dataclass
+    class EditContent(Message):
+        content: str
+
     def __init__(
         self,
         mode: FieldMode,
@@ -1423,10 +1434,10 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-            self.add_class('create-update-field-widget')
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-description')
+        self.add_class('create-work-item-description')
+
+    def action_edit_content(self):
+        self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> str | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
