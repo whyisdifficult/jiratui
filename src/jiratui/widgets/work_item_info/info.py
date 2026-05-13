@@ -36,10 +36,10 @@ from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 class TextareaCollapsible(Collapsible):
     BINDINGS = [
         Binding(
-            key='e',
+            key='ctrl+e',
             action='edit_content',
             description='Edit',
-            key_display='e',
+            key_display='^e',
         ),
         Binding(
             key='v',

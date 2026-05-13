@@ -51,6 +51,21 @@ from jiratui.widgets.create_work_item.fields import (
 )
 
 
+class TextAreaTabPane(TabPane):
+    """A custom TabPane that contains wither ADFMarkdownTextAreaWidget or PlainTextTextAreaWidget as its child."""
+
+    def __init__(
+        self, title: str, widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget, **kwargs
+    ):
+        super().__init__(title, widget, id=f'pane-{widget.jira_field_key}', **kwargs)
+        self.__widget = widget
+        self.add_class('create-work-item-textarea-field-pane')
+
+    @property
+    def widget(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
+        return self.__widget
+
+
 class TextAreaTabbedContent(TabbedContent):
     """Custom TabbedContent with a key binding for editing content."""
 
@@ -561,12 +576,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             await self._remove_textarea_panes()
             for textarea_widget in textarea_widgets:
                 await self.textarea_fields_tabbed_content.add_pane(
-                    TabPane(
-                        textarea_widget.border_title,
-                        textarea_widget,
-                        classes='create-work-item-textarea-field-pane',
-                        id=f'pane-{textarea_widget.jira_field_key}',
-                    )
+                    TextAreaTabPane(textarea_widget.border_title, textarea_widget)
                 )
 
             # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
@@ -605,7 +615,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             None.
         """
 
-        if panes := self.textarea_fields_tabbed_content.query('TabPane'):
+        if panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
             for pane in panes:
                 if pane.id != 'pane-description':
                     await self.textarea_fields_tabbed_content.remove_pane(pane.id)
@@ -757,14 +767,12 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
             # process textarea widgets that are created dynamically
             # iterate over every TabPane created dynamically to extract the value of its widget
-            if tab_panes := self.textarea_fields_tabbed_content.query('TabPane'):
-                pane_inner_widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None
+            if tab_panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
+                pane: TextAreaTabPane
                 for pane in tab_panes:
-                    if self.adf_support_enabled:
-                        pane_inner_widget = pane.query_one_optional(ADFMarkdownTextAreaWidget)
-                    else:
-                        pane_inner_widget = pane.query_one_optional(PlainTextTextAreaWidget)
-
+                    pane_inner_widget: (
+                        ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None
+                    ) = pane.widget
                     if pane_inner_widget and (value := pane_inner_widget.get_value_for_create()):
                         data[pane_inner_widget.jira_field_key] = value
 
