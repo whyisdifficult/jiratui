@@ -89,22 +89,19 @@ class TextAreaTabbedContent(TabbedContent):
                 return None
 
     def _edit_text_content(self, content: str) -> None:
-        if self.__configuration.enable_updating_rich_text:  # TODO what happens if this is False?
-            if not self.__configuration.text_editor:
-                self.notify(
-                    severity='error',
-                    message='Rich text editor is not enabled. Check the configuration text_editor',
-                )
-            else:
-                new_content = self._open_as_temporary_file(
-                    self.__configuration.text_editor, content
-                )
-                # update the content of the textarea widget
-                widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
-                    self._get_textarea_widget()
-                )
-                if widget is not None:
-                    widget.text = new_content.strip() if new_content else ''
+        if not self.__configuration.text_editor:
+            self.notify(
+                severity='error',
+                message='Rich text editor is not enabled. Check config.text_editor',
+            )
+        else:
+            new_content = self._open_as_temporary_file(self.__configuration.text_editor, content)
+            # update the content of the textarea widget
+            widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+                self._get_textarea_widget()
+            )
+            if widget is not None:
+                widget.text = new_content.strip() if new_content else ''
 
     @on(ADFMarkdownTextAreaWidget.EditContent)
     def edit_adf_content(self, event: ADFMarkdownTextAreaWidget.EditContent) -> None:
