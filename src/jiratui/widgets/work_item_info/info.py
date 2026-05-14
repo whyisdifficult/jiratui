@@ -8,16 +8,19 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, ItemGrid, Vertical, VerticalGroup, VerticalScroll
+from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
-    Collapsible,
+    Footer,
     LoadingIndicator,
     MarkdownViewer,
     Rule,
     Static,
+    TabbedContent,
+    TabPane,
     TextArea,
 )
 
@@ -31,108 +34,6 @@ from jiratui.widgets.commons.factory_utils import (
     build_read_only_rich_text_widget,
 )
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
-
-
-class TextareaCollapsible(Collapsible):
-    BINDINGS = [
-        Binding(
-            key='ctrl+e',
-            action='edit_content',
-            description='Edit',
-            key_display='^e',
-        ),
-        Binding(
-            key='v',
-            action='view_content',
-            description='View',
-            key_display='v',
-        ),
-        Binding(
-            key='c',
-            action='copy_content',
-            description='Copy',
-            key_display='c',
-        ),
-    ]
-
-    class DisplayContent(Message):
-        def __init__(self, content: str, title: str | None = None):
-            super().__init__()
-            self.content = content
-            self.title = title
-
-    class EditContent(Message):
-        def __init__(
-            self, jira_field_key: str, content: str | None = None, title: str | None = None
-        ):
-            super().__init__()
-            self.content = content or ''
-            self.jira_field_key = jira_field_key
-            self.title = title
-
-    def __init__(
-        self,
-        jira_field_key: str,
-        field_name: str,
-        widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static,
-        required: bool = False,
-        **kwargs,
-    ):
-        self.__configuration = CONFIGURATION.get()
-        self._jira_field_key: str = jira_field_key
-
-        self.__widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
-        ) = widget
-
-        # the string representation of the content stored in the widget within this collapsible.
-        # this will contain '' when the content is empty but the Collapsible contains a Static widget
-        if isinstance(self.__widget, Static):
-            self.__content: str = ''
-        else:
-            self.__content = self.__widget.text_content or ''
-
-        # initialize the Collapsible widget
-        super().__init__(self.__widget, **kwargs)
-        self.border_title = field_name
-        self.title = ''  # let's not set a text next to the arrows for toggling content
-        self.add_class('textarea-collapsible')
-        if required:
-            self.border_subtitle = '(*)'
-            self.add_class('required')
-
-    @property
-    def widget(
-        self,
-    ) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static:
-        return self.__widget
-
-    @property
-    def text_content(self) -> str:
-        return self.__content
-
-    @property
-    def _updating_rich_text_is_enabled(self) -> bool:
-        # for easy mocking in tests
-        return self.__configuration.enable_updating_rich_text
-
-    def action_view_content(self):
-        if self.__content:
-            self.post_message(self.DisplayContent(self.__content, self.border_title))
-        else:
-            self.notify('The field has no content to display. Press "e" to edit it.')
-
-    def action_edit_content(self):
-        if self._updating_rich_text_is_enabled:
-            self.post_message(
-                self.EditContent(self._jira_field_key, self.__content, self.border_title)
-            )
-
-    def action_copy_content(self) -> None:
-        """Copy to the clipboard the content of the field."""
-        if self.__content and self.__content.strip():
-            self.app.copy_to_clipboard(self.__content.strip())
-            self.notify('Content copied!')
 
 
 class DisplayTextContentScreen(ModalScreen):
@@ -150,7 +51,10 @@ class DisplayTextContentScreen(ModalScreen):
 class EditTextContentScreen(Screen[dict]):
     """A modal screen that displays a TextArea editor to allow users to edit Plain Text/Markdown content."""
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
+    BINDINGS = [
+        Binding('escape', 'app.pop_screen', 'Close'),
+        Binding('ctrl+s', 'save_content', 'Save', show=True, key_display='^s'),
+    ]
 
     def __init__(self, content: str, jira_field_key: str, title: str | None = None):
         super().__init__()
@@ -165,7 +69,11 @@ class EditTextContentScreen(Screen[dict]):
     def compose(self) -> ComposeResult:
         with Vertical():
             widget = TextArea.code_editor(
-                self.__content, language='markdown', show_line_numbers=False, compact=True
+                self.__content,
+                language='markdown',
+                show_line_numbers=False,
+                compact=True,
+                theme='css',
             )
             widget.border_title = self.title
             yield widget
@@ -182,6 +90,8 @@ class EditTextContentScreen(Screen[dict]):
                     id='edit-description-button-quit',
                     classes='save-cancel-buttons',
                 )
+            yield Static()
+        yield Footer(compact=True, show_command_palette=False)
 
     def on_mount(self):
         self.post_message(TextArea.Changed(self.query_one(TextArea)))
@@ -198,6 +108,108 @@ class EditTextContentScreen(Screen[dict]):
         self.dismiss(
             {'content': self.textarea.text.strip(), 'jira_field_key': self.__jira_field_key}
         )
+
+    def action_save_content(self) -> None:
+        self.handle_save()
+
+
+class TextAreaTabPane(TabPane):
+    """A custom TabPane that contains either ReadOnlyADFMarkdownTextAreaWidget or ReadOnlyPlainTextTextAreaWidget as
+    its child."""
+
+    def __init__(self, title: str, widget_id: str, **kwargs):
+        super().__init__(title=title, id=widget_id, **kwargs)
+
+
+class InfoTabbedContent(TabbedContent):
+    """Custom TabbedContent with key bindings for editing, viewing and copying the content of the currently active
+    pane/tab."""
+
+    BINDINGS = [
+        Binding(
+            key='ctrl+e', action='edit_content', description='Edit', show=True, key_display='^e'
+        ),
+        Binding(key='v', action='view_content', description='View', key_display='v'),
+        Binding(key='c', action='copy_content', description='Copy', key_display='c'),
+    ]
+
+    class DisplayContent(Message):
+        def __init__(self, content: str, title: str | None = None):
+            super().__init__()
+            self.content = content
+            self.title = title
+
+    class EditContent(Message):
+        def __init__(
+            self, jira_field_key: str, content: str | None = None, title: str | None = None
+        ):
+            super().__init__()
+            self.content = content or ''
+            self.jira_field_key = jira_field_key
+            self.title = title
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _get_textarea_widget(
+        self,
+    ) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None:
+        if (active_pane := self.active_pane) is None:
+            return None
+        try:
+            return active_pane.query_one(ReadOnlyADFMarkdownTextAreaWidget)
+        except NoMatches:
+            try:
+                return active_pane.query_one(ReadOnlyPlainTextTextAreaWidget)
+            except NoMatches:
+                try:
+                    return active_pane.query_one(Static)
+                except NoMatches:
+                    return None
+
+    def action_edit_content(self) -> None:
+        """Sends an `InfoTabbedContent.EditContent` message to the parent to edit the content of the active pane's
+        widget."""
+
+        widget: (
+            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+        ) = self._get_textarea_widget()
+        if widget is not None:
+            if isinstance(widget, Static):
+                content_to_edit = ''
+                jira_field_key = widget.id
+                title = widget.name
+            else:
+                content_to_edit = widget.text_content
+                jira_field_key = widget.jira_field_key
+                title = widget.field_title
+            self.post_message(self.EditContent(jira_field_key, content_to_edit, title))
+
+    def action_view_content(self) -> None:
+        """Sends an `InfoTabbedContent.DisplayContent` message to the parent to view the content of the active
+        pane's widget."""
+
+        widget: (
+            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+        ) = self._get_textarea_widget()
+        if widget is not None:
+            if isinstance(widget, Static):
+                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
+            else:
+                self.post_message(self.DisplayContent(widget.text_content, widget.field_title))
+
+    def action_copy_content(self) -> None:
+        """Copy to the clipboard the content of the field."""
+
+        widget: (
+            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+        ) = self._get_textarea_widget()
+        if widget is not None:
+            if isinstance(widget, Static):
+                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
+            else:
+                self.app.copy_to_clipboard(widget.text_content.strip())
+                self.notify('Content copied!')
 
 
 class WorkItemInfoContainer(Vertical):
@@ -221,11 +233,6 @@ class WorkItemInfoContainer(Vertical):
         self.can_focus = True
         self.__configuration = CONFIGURATION.get()
 
-    @on(TextareaCollapsible.DisplayContent)
-    def _display_content(self, event: TextareaCollapsible.DisplayContent) -> None:
-        self.app.push_screen(DisplayTextContentScreen(event.content, event.title))
-        event.stop()
-
     @property
     def _updating_rich_text_is_enabled(self) -> bool:
         return self.__configuration.enable_updating_rich_text
@@ -242,8 +249,8 @@ class WorkItemInfoContainer(Vertical):
     def _editor(self) -> str | None:
         return self.__configuration.text_editor
 
-    @on(TextareaCollapsible.EditContent)
-    def _edit_content(self, event: TextareaCollapsible.EditContent) -> None:
+    @on(InfoTabbedContent.EditContent)
+    def _edit_content(self, event: InfoTabbedContent.EditContent) -> None:
         if self._updating_rich_text_is_enabled:
             if self._editor:
                 new_content = self._open_as_temporary_file(self._editor, event.content)
@@ -253,14 +260,21 @@ class WorkItemInfoContainer(Vertical):
                     )
                 )
             else:
+                # fallback to built-in rudimentary editor
                 self.app.push_screen(
                     EditTextContentScreen(event.content, event.jira_field_key, event.title),
                     self._update_field,
                 )
         event.stop()
 
+    @on(InfoTabbedContent.DisplayContent)
+    def _display_content(self, event: InfoTabbedContent.DisplayContent) -> None:
+        self.app.push_screen(DisplayTextContentScreen(event.content, event.title))
+        event.stop()
+
     async def _update_field(self, data: dict) -> None:
         """Updates the value of a text-based field in the work item."""
+
         if self._updating_rich_text_is_enabled:
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             payload = {data.get('jira_field_key'): data.get('content')}
@@ -295,8 +309,12 @@ class WorkItemInfoContainer(Vertical):
         return self.query_one('#work-item-info-content', expect_type=VerticalGroup)
 
     @property
-    def collapsible_container(self) -> VerticalScroll:
-        return self.query_one('#collapsible-container', expect_type=VerticalScroll)
+    def tabs_container(self) -> VerticalScroll:
+        return self.query_one('#tabs-container', expect_type=VerticalScroll)
+
+    @property
+    def info_tabbed_content(self) -> InfoTabbedContent:
+        return self.query_one('#info-tabbed-content', expect_type=InfoTabbedContent)
 
     def compose(self) -> ComposeResult:
         with Center(id='work-item-info-loading-container') as loading_container:
@@ -306,58 +324,88 @@ class WorkItemInfoContainer(Vertical):
             vg.can_focus = False
             yield Static(id='issue_summary', markup=False)
             yield Rule()
-            yield VerticalScroll(id='collapsible-container', classes='work-item-info-collapsible')
+            with VerticalScroll(id='tabs-container', classes='work-item-info-tabs-container'):
+                yield InfoTabbedContent(
+                    id='info-tabbed-content'
+                )  # Container for dynamic fields - textarea fields
+
+    def watch_issue(self, work_item: JiraIssue | None) -> None:
+        self.run_worker(self._refresh_tabs_and_set_work_item(work_item))
+
+    def _clear_static_widgets(self) -> None:
+        self.issue_summary_widget.update('')
+        self.issue_summary_widget.visible = False
+        self.query_one(Rule).visible = False
 
     async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
         if issue_edit_metadata := work_item.get_edit_metadata():
             if field_metadata := issue_edit_metadata.get(JiraWorkItemFields.DESCRIPTION.value, {}):
                 field_name = field_metadata.get('name', field_metadata.get('key')).title()
-                widget_for_collapsible: (
-                    ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
-                )
+                widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
                 if work_item.rich_text_value_is_empty(work_item.description):  # type:ignore[arg-type]
-                    widget_for_collapsible = Static(
-                        f'There is no "{field_name}" set. Press "e" to edit it.', classes='tip'
+                    widget = Static(
+                        f'There is no "{field_name}" set. Press "^e" to edit it.', classes='tip'
                     )
                 else:
-                    widget_for_collapsible = build_read_only_rich_text_widget(
+                    widget = build_read_only_rich_text_widget(
                         jira_field_key=field_metadata.get('key'),
                         field_name=field_name,
                         required=field_metadata.get('required', False),
                         content=work_item.description,
                     )
-                collapsible = TextareaCollapsible(
-                    jira_field_key=field_metadata.get('key'),
-                    widget=widget_for_collapsible,
-                    field_name=field_name,
-                    required=field_metadata.get('required', False),
-                    collapsed=False,
-                )
-                await self.collapsible_container.mount(collapsible)
+                pane = TextAreaTabPane(title='Description', widget_id='pane-description')
+                await self.info_tabbed_content.add_pane(pane)
+                await pane.mount(widget)
 
-    def watch_issue(self, work_item: JiraIssue | None) -> None:
-        # "reset" the information of any previous widget
-        self.clear_information = True
+    async def _refresh_tabs_and_set_work_item(self, work_item: JiraIssue | None):
+        self._clear_static_widgets()
 
-        if not work_item:
-            return None
+        # re-build the InfoTabbedContent widget by removing it first
+        info_tabbed_content: InfoTabbedContent | None = self.query_one_optional(
+            '#info-tabbed-content', expect_type=InfoTabbedContent
+        )
+        if info_tabbed_content is not None:
+            # remove all existing TextAreaTabPane children
+            await info_tabbed_content.query(TextAreaTabPane).remove()
+            # remove the tabbed content widget
+            await info_tabbed_content.remove()
 
-        # set the summary of the work item and make the widget visible
-        self.issue_summary_widget.update(work_item.summary)
-        self.issue_summary_widget.visible = True
-        self.query_one(Rule).visible = True
+        # create and mount a new InfoTabbedContent
+        await self.tabs_container.mount(InfoTabbedContent(id='info-tabbed-content'))
 
-        # set the description of the work item and make the widget visible
-        self.run_worker(self._setup_work_item_description(work_item))
+        if work_item:
+            # set the summary and make the widget visible
+            self.issue_summary_widget.update(work_item.summary)
+            self.issue_summary_widget.visible = True
+            self.query_one(Rule).visible = True
 
-        # build widgets for the fields with rich-text support
-        if self._enable_updating_additional_fields:
-            widgets: list[TextareaCollapsible] = self._build_textarea_widgets(work_item)
-            self.collapsible_container.mount_all(widgets)
-        return None
+            # set the description
+            await self._setup_work_item_description(work_item)
 
-    def _build_textarea_widgets(self, work_item: JiraIssue) -> list[TextareaCollapsible]:
-        widgets: list[TextareaCollapsible] = []
+            # build widgets for the fields with rich-text support
+            if self._enable_updating_additional_fields:
+                widgets: list[
+                    ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                ] = self._build_textarea_widgets(work_item)
+                for widget in widgets:
+                    if isinstance(widget, Static):
+                        pane_title = widget.name
+                        pane_id = f'pane-{widget.id}'
+                    else:
+                        pane_title = widget.field_title
+                        pane_id = f'pane-{widget.jira_field_key}'
+
+                    pane = TextAreaTabPane(title=pane_title, widget_id=pane_id)
+                    await self.info_tabbed_content.add_pane(pane)
+                    await pane.mount(widget)
+
+    def _build_textarea_widgets(
+        self,
+        work_item: JiraIssue,
+    ) -> list[ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static]:
+        widgets: list[
+            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+        ] = []
         if issue_edit_metadata := work_item.get_edit_metadata():
             ignored_fields = self._update_additional_fields_ignore_ids
             for field_id, field in issue_edit_metadata.items():
@@ -378,17 +426,19 @@ class WorkItemInfoContainer(Vertical):
                     metadata.key and metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value
                 ):
                     field_name = metadata.name or metadata.key.replace('_', ' ').title()
-                    widget_for_collapsible: (
+                    textarea_widget: (
                         ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
                     )
                     if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
                         if work_item.rich_text_value_is_empty(work_item.environment):  # type:ignore[arg-type]
-                            widget_for_collapsible = Static(
-                                f'There is no "{field_name}" set. Press "e" to edit it.',
+                            textarea_widget = Static(
+                                f'There is no "{field_name}" set. Press "^e" to edit it.',
                                 classes='tip',
+                                id=metadata.key,
+                                name=field_name,
                             )
                         else:
-                            widget_for_collapsible = build_read_only_rich_text_widget(
+                            textarea_widget = build_read_only_rich_text_widget(
                                 jira_field_key=metadata.key,
                                 field_name=field_name,
                                 required=metadata.required,
@@ -398,36 +448,37 @@ class WorkItemInfoContainer(Vertical):
                         # get the value of the field
                         field_value: Any | None = work_item.get_custom_field_value(field_id)
                         if work_item.rich_text_value_is_empty(field_value):
-                            widget_for_collapsible = Static(
-                                f'There is no "{field_name}" set. Press "e" to edit it.',
+                            textarea_widget = Static(
+                                f'There is no "{field_name}" set. Press "^e" to edit it.',
                                 classes='tip',
+                                id=metadata.key,
+                                name=field_name,
                             )
                         else:
-                            widget_for_collapsible = build_read_only_rich_text_widget(
+                            textarea_widget = build_read_only_rich_text_widget(
                                 jira_field_key=metadata.key,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=field_value,
                             )
 
-                    widgets.append(
-                        TextareaCollapsible(
-                            jira_field_key=metadata.key,
-                            widget=widget_for_collapsible,
-                            field_name=field_name,
-                            required=metadata.required,
-                            collapsed=True,
-                        )
-                    )
+                    widgets.append(textarea_widget)
         return widgets
 
     def watch_clear_information(self, clear: bool = False) -> None:
         if clear:
-            # reset the value of the summary and hide the widget
-            self.issue_summary_widget.update('')
-            self.issue_summary_widget.visible = False
-            self.collapsible_container.remove_children()
-            self.query_one(Rule).visible = False
+            self._clear_static_widgets()
+            self.run_worker(self._clear_dynamic_tabs)
+
+    async def _clear_dynamic_tabs(self) -> None:
+        info_tabbed_content: InfoTabbedContent | None = self.query_one_optional(
+            '#info-tabbed-content', expect_type=InfoTabbedContent
+        )
+        if info_tabbed_content is not None:
+            # remove all existing TextAreaTabPane children
+            await info_tabbed_content.query(TextAreaTabPane).remove()
+            # remove the tabbed content widget
+            await info_tabbed_content.remove()
 
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""

@@ -1549,6 +1549,7 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
         self._jira_field_key = jira_field_key
         self.border_title = title or jira_field_key.replace('_', ' ').title()
         self._required = required
+        self.__title = title or jira_field_key.replace('_', ' ').title()
 
         if self._required:
             self.border_subtitle = '(*)'
@@ -1575,6 +1576,10 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
     @property
     def text_content(self) -> str:
         return self.text
+
+    @property
+    def field_title(self) -> str:
+        return self.__title
 
 
 # ============================================================================

@@ -52,7 +52,7 @@ from jiratui.widgets.create_work_item.fields import (
 
 
 class TextAreaTabPane(TabPane):
-    """A custom TabPane that contains wither ADFMarkdownTextAreaWidget or PlainTextTextAreaWidget as its child."""
+    """A custom TabPane that contains either ADFMarkdownTextAreaWidget or PlainTextTextAreaWidget as its child."""
 
     def __init__(
         self, title: str, widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget, **kwargs
@@ -89,7 +89,6 @@ class TextAreaTabbedContent(TabbedContent):
                 return None
 
     def _edit_text_content(self, content: str) -> None:
-        self.notify(content)
         if self.__configuration.enable_updating_rich_text:  # TODO what happens if this is False?
             if not self.__configuration.text_editor:
                 self.notify(
@@ -356,12 +355,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                                     field_id='description',
                                     title='Description',
                                 )
-                            yield TabPane(
-                                'Description',
-                                widget,
-                                classes='create-work-item-textarea-field-pane',
-                                id='pane-description',
-                            )
+                            yield TextAreaTabPane('Description', widget)
                 # right-hand side panel
                 with Vertical():
                     yield VerticalScroll(
@@ -766,7 +760,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     data[field_id] = value
 
             # process textarea widgets that are created dynamically
-            # iterate over every TabPane created dynamically to extract the value of its widget
+            # iterate over every TextAreaTabPane created dynamically to extract the value of its widget
             if tab_panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
                 pane: TextAreaTabPane
                 for pane in tab_panes:

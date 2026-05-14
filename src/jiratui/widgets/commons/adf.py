@@ -73,6 +73,7 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         self._jira_field_key = jira_field_key
         self.border_title = title or jira_field_key.replace('_', ' ').title()
         self._required = required
+        self.__title = title or jira_field_key.replace('_', ' ').title()
 
         if self._required:
             self.border_subtitle = '(*)'
@@ -134,6 +135,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
     def text_content(self) -> str:
         """Retrieves the Markdown representation of this ADF value being displayed in this widget."""
         return self.__markdown_text
+
+    @property
+    def field_title(self) -> str:
+        return self.__title
 
 
 class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):

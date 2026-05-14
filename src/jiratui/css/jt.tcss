@@ -1012,7 +1012,7 @@ DisplayTextContentScreen > MarkdownViewer {
     margin-top: 1;
 }
 
-.work-item-info-collapsible {
+.work-item-info-tabs-container {
     scrollbar-size-vertical: 1;
 }
 
