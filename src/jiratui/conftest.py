@@ -173,6 +173,7 @@ def app() -> JiraApp:
         update_additional_fields_ignore_ids=None,
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
+        styling=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

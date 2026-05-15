@@ -6,22 +6,13 @@ from typing import Any, cast
 
 from textual import on
 from textual.app import ComposeResult
-from textual.binding import Binding
-from textual.containers import Center, ItemGrid, Vertical, VerticalGroup, VerticalScroll
-from textual.css.query import NoMatches
+from textual.containers import Center, Vertical, VerticalGroup, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
-from textual.screen import ModalScreen, Screen
 from textual.widgets import (
-    Button,
-    Footer,
     LoadingIndicator,
-    MarkdownViewer,
     Rule,
     Static,
-    TabbedContent,
-    TabPane,
-    TextArea,
 )
 
 from jiratui.api_controller.controller import APIControllerResponse
@@ -34,182 +25,8 @@ from jiratui.widgets.commons.factory_utils import (
     build_read_only_rich_text_widget,
 )
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
-
-
-class DisplayTextContentScreen(ModalScreen):
-    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
-
-    def __init__(self, content: str, title: str | None = None):
-        super().__init__()
-        self.__content = content
-        self.title = title
-
-    def compose(self) -> ComposeResult:
-        yield MarkdownViewer(self.__content)
-
-
-class EditTextContentScreen(Screen[dict]):
-    """A modal screen that displays a TextArea editor to allow users to edit Plain Text/Markdown content."""
-
-    BINDINGS = [
-        Binding('escape', 'app.pop_screen', 'Close'),
-        Binding('ctrl+s', 'save_content', 'Save', show=True, key_display='^s'),
-    ]
-
-    def __init__(self, content: str, jira_field_key: str, title: str | None = None):
-        super().__init__()
-        self.__content: str = content
-        self.__jira_field_key = jira_field_key
-        self.title = title
-
-    @property
-    def textarea(self) -> TextArea:
-        return self.query_one(TextArea)
-
-    def compose(self) -> ComposeResult:
-        with Vertical():
-            widget = TextArea.code_editor(
-                self.__content,
-                language='markdown',
-                show_line_numbers=False,
-                compact=True,
-                theme='css',
-            )
-            widget.border_title = self.title
-            yield widget
-            with ItemGrid(classes='edit-grid-buttons'):
-                yield Button(
-                    'Save',
-                    variant='success',
-                    id='edit-description-button-save',
-                    classes='save-cancel-buttons',
-                )
-                yield Button(
-                    'Cancel',
-                    variant='error',
-                    id='edit-description-button-quit',
-                    classes='save-cancel-buttons',
-                )
-            yield Static()
-        yield Footer(compact=True, show_command_palette=False)
-
-    def on_mount(self):
-        self.post_message(TextArea.Changed(self.query_one(TextArea)))
-
-    def save_button(self) -> Button:
-        return self.query_one('#edit-description-button-save', Button)
-
-    @on(Button.Pressed, '#edit-description-button-quit')
-    def handle_cancel(self) -> None:
-        self.dismiss({})
-
-    @on(Button.Pressed, '#edit-description-button-save')
-    def handle_save(self) -> None:
-        self.dismiss(
-            {'content': self.textarea.text.strip(), 'jira_field_key': self.__jira_field_key}
-        )
-
-    def action_save_content(self) -> None:
-        self.handle_save()
-
-
-class TextAreaTabPane(TabPane):
-    """A custom TabPane that contains either ReadOnlyADFMarkdownTextAreaWidget or ReadOnlyPlainTextTextAreaWidget as
-    its child."""
-
-    def __init__(self, title: str, widget_id: str, **kwargs):
-        super().__init__(title=title, id=widget_id, **kwargs)
-
-
-class InfoTabbedContent(TabbedContent):
-    """Custom TabbedContent with key bindings for editing, viewing and copying the content of the currently active
-    pane/tab."""
-
-    BINDINGS = [
-        Binding(
-            key='ctrl+e', action='edit_content', description='Edit', show=True, key_display='^e'
-        ),
-        Binding(key='v', action='view_content', description='View', key_display='v'),
-        Binding(key='c', action='copy_content', description='Copy', key_display='c'),
-    ]
-
-    class DisplayContent(Message):
-        def __init__(self, content: str, title: str | None = None):
-            super().__init__()
-            self.content = content
-            self.title = title
-
-    class EditContent(Message):
-        def __init__(
-            self, jira_field_key: str, content: str | None = None, title: str | None = None
-        ):
-            super().__init__()
-            self.content = content or ''
-            self.jira_field_key = jira_field_key
-            self.title = title
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _get_textarea_widget(
-        self,
-    ) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None:
-        if (active_pane := self.active_pane) is None:
-            return None
-        try:
-            return active_pane.query_one(ReadOnlyADFMarkdownTextAreaWidget)
-        except NoMatches:
-            try:
-                return active_pane.query_one(ReadOnlyPlainTextTextAreaWidget)
-            except NoMatches:
-                try:
-                    return active_pane.query_one(Static)
-                except NoMatches:
-                    return None
-
-    def action_edit_content(self) -> None:
-        """Sends an `InfoTabbedContent.EditContent` message to the parent to edit the content of the active pane's
-        widget."""
-
-        widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
-        ) = self._get_textarea_widget()
-        if widget is not None:
-            if isinstance(widget, Static):
-                content_to_edit = ''
-                jira_field_key = widget.id
-                title = widget.name
-            else:
-                content_to_edit = widget.text_content
-                jira_field_key = widget.jira_field_key
-                title = widget.field_title
-            self.post_message(self.EditContent(jira_field_key, content_to_edit, title))
-
-    def action_view_content(self) -> None:
-        """Sends an `InfoTabbedContent.DisplayContent` message to the parent to view the content of the active
-        pane's widget."""
-
-        widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
-        ) = self._get_textarea_widget()
-        if widget is not None:
-            if isinstance(widget, Static):
-                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
-            else:
-                self.post_message(self.DisplayContent(widget.text_content, widget.field_title))
-
-    def action_copy_content(self) -> None:
-        """Copy to the clipboard the content of the field."""
-
-        widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
-        ) = self._get_textarea_widget()
-        if widget is not None:
-            if isinstance(widget, Static):
-                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
-            else:
-                self.app.copy_to_clipboard(widget.text_content.strip())
-                self.notify('Content copied!')
+from jiratui.widgets.work_item_info.screens import DisplayTextContentScreen, EditTextContentScreen
+from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
 
 
 class WorkItemInfoContainer(Vertical):

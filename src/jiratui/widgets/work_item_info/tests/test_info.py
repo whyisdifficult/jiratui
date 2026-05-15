@@ -8,10 +8,9 @@ from jiratui.models import JiraIssue
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
 from jiratui.widgets.work_item_info.info import (
-    InfoTabbedContent,
-    TextAreaTabPane,
     WorkItemInfoContainer,
 )
+from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
 
 
 @pytest.mark.asyncio
