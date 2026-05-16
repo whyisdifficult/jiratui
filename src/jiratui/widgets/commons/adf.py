@@ -1,8 +1,11 @@
 """ADF TextArea Widget - Handles Atlassian Document Format conversion and rendering."""
 
+from dataclasses import dataclass
 import hashlib
 import logging
 
+from textual.binding import Binding
+from textual.message import Message
 from textual.widgets import Markdown, TextArea
 
 from jiratui.utils.adf import convert_adf_to_markdown, convert_markdown_to_adf
@@ -70,6 +73,7 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         self._jira_field_key = jira_field_key
         self.border_title = title or jira_field_key.replace('_', ' ').title()
         self._required = required
+        self.__title = title or jira_field_key.replace('_', ' ').title()
 
         if self._required:
             self.border_subtitle = '(*)'
@@ -132,6 +136,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         """Retrieves the Markdown representation of this ADF value being displayed in this widget."""
         return self.__markdown_text
 
+    @property
+    def field_title(self) -> str:
+        return self.__title
+
 
 class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified Markdown-based textarea widget for fields that support ADF and that supports CREATE and UPDATE modes.
@@ -175,6 +183,14 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
     ```
     """
 
+    BINDINGS = [
+        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+    ]
+
+    @dataclass
+    class EditContent(Message):
+        content: str
+
     def __init__(
         self,
         mode: FieldMode,
@@ -210,9 +226,7 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
                 markdown = str(original_value)
 
         # initialize TextArea
-        super().__init__(
-            text=markdown, id=field_id, language='markdown', tab_behavior='indent', theme='monokai'
-        )
+        super().__init__(text=markdown, id=field_id, language='markdown', tab_behavior='indent')
 
         # setup base field properties
         self.setup_base_field(
@@ -231,10 +245,10 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-            self.add_class('create-update-field-widget')
-        else:
-            # CREATE mode specific CSS
-            self.add_class('create-work-item-description')
+        self.add_class('create-work-item-description')
+
+    def action_edit_content(self):
+        self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> dict | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).

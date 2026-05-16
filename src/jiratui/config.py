@@ -222,7 +222,8 @@ class ApplicationConfiguration(BaseSettings):
     """Configuration for styling components like work item status, priorities and type colors."""
     enable_updating_rich_text: bool = True
     """Enables/Disable updating fields that use rich text. These are the fields that support Atlassian's ADF. Refer to
-    for more details."""
+    https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version and
+    https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/ for more details."""
     text_editor: str | None = Field(default=os.getenv('EDITOR'))
     """The command to use for editing text-based fields. The default is the system's default editor. Set it to `None` to
      use a simpler built-in Markdown editor."""

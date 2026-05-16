@@ -1,12 +1,28 @@
+import os
+import shlex
+import subprocess
+import tempfile
 from typing import Any, cast
 
 from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import ItemGrid, Vertical, VerticalScroll
+from textual.binding import Binding
+from textual.containers import Horizontal, ItemGrid, Vertical, VerticalScroll
+from textual.css.query import NoMatches
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Input, Rule, Select, Static, TextArea
+from textual.widgets import (
+    Button,
+    Footer,
+    Input,
+    Rule,
+    Select,
+    Static,
+    TabbedContent,
+    TabPane,
+    TextArea,
+)
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -35,8 +51,103 @@ from jiratui.widgets.create_work_item.fields import (
 )
 
 
+class TextAreaTabPane(TabPane):
+    """A custom TabPane that contains either ADFMarkdownTextAreaWidget or PlainTextTextAreaWidget as its child."""
+
+    def __init__(
+        self, title: str, widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget, **kwargs
+    ):
+        super().__init__(title, widget, id=f'pane-{widget.jira_field_key}', **kwargs)
+        self.__widget = widget
+        self.add_class('create-work-item-textarea-field-pane')
+
+    @property
+    def widget(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
+        return self.__widget
+
+
+class TextAreaTabbedContent(TabbedContent):
+    """Custom TabbedContent with a key binding for editing content."""
+
+    BINDINGS = [
+        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__configuration = CONFIGURATION.get()
+
+    def _get_textarea_widget(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None:
+        if (active_pane := self.active_pane) is None:
+            return None
+        try:
+            return active_pane.query_one(ADFMarkdownTextAreaWidget)
+        except NoMatches:
+            try:
+                return active_pane.query_one(PlainTextTextAreaWidget)
+            except NoMatches:
+                return None
+
+    def _edit_text_content(self, content: str) -> None:
+        if not self.__configuration.text_editor:
+            self.notify(
+                severity='error',
+                message='Rich text editor is not enabled. Check config.text_editor',
+            )
+        else:
+            new_content = self._open_as_temporary_file(self.__configuration.text_editor, content)
+            # update the content of the textarea widget
+            widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+                self._get_textarea_widget()
+            )
+            if widget is not None:
+                widget.text = new_content.strip() if new_content else ''
+
+    @on(ADFMarkdownTextAreaWidget.EditContent)
+    def edit_adf_content(self, event: ADFMarkdownTextAreaWidget.EditContent) -> None:
+        self._edit_text_content(event.content)
+
+    @on(PlainTextTextAreaWidget.EditContent)
+    def edit_plain_text_content(self, event: PlainTextTextAreaWidget.EditContent) -> None:
+        self._edit_text_content(event.content)
+
+    def action_edit_content(self) -> None:
+        """Handle '^e' key press in this widget."""
+        widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+            self._get_textarea_widget()
+        )
+        if widget is not None:
+            self.notify(f'Trying to update content of the textarea widget: {widget.id}')
+            self._edit_text_content(widget.text)
+
+    def _open_as_temporary_file(self, command: str, content: str) -> str:
+        editor_args: list[str] = shlex.split(command)
+        with tempfile.NamedTemporaryFile(suffix='.md', delete=False) as temp_file:
+            temp_file_name = temp_file.name
+            temp_file.write(content.encode('utf-8'))
+            temp_file.flush()
+
+        editor_args.append(temp_file_name)
+        with self.app.suspend():
+            try:
+                subprocess.call(editor_args)
+            except OSError:
+                self.app.notify(
+                    severity='error',
+                    title="Can't run command",
+                    message=f'The command [b]{command}[/b] failed to run.',
+                )
+
+        new_content = content
+        with open(temp_file_name, 'r', encoding='utf-8') as temp_file:
+            new_content = temp_file.read()
+
+        os.remove(temp_file_name)
+        return new_content
+
+
 class AddWorkItemScreen(Screen[dict[str, Any]]):
-    """A modal screen for adding work items.
+    """A modal screen for creating work items.
 
     The screen is pushed from the main screen of the application. It is responsible for:
 
@@ -62,8 +173,13 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     ```
     """
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
-    TITLE = 'Create Work Item'
+    BINDINGS = [
+        Binding('ctrl+s', 'save_work_item', 'Save', show=True, key_display='^s'),
+        Binding('escape', 'app.pop_screen', 'Close'),
+    ]
+
+    TITLE = 'New Work Item'
+    HELP = 'See Creating Work Items section in the help'
 
     def __init__(
         self,
@@ -94,7 +210,12 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         self.__configuration = CONFIGURATION.get()
 
     @property
+    def help_anchor(self) -> str:
+        return '#creating-work-items'
+
+    @property
     def adf_support_enabled(self) -> bool:
+        # determines if the application is connecting to a Jira API instance that supports ADF
         return self.__configuration.cloud and self.__configuration.jira_api_version == 3
 
     @property
@@ -136,8 +257,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     @property
     def description_field(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
         if self.adf_support_enabled:
-            return self.query_one(ADFMarkdownTextAreaWidget)
-        return self.query_one(PlainTextTextAreaWidget)
+            return self.query_one('#description', expect_type=ADFMarkdownTextAreaWidget)
+        return self.query_one('#description', expect_type=PlainTextTextAreaWidget)
 
     @property
     def parent_key_field(self) -> CreateWorkItemParentKeyField:
@@ -146,6 +267,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     @property
     def additional_fields(self) -> VerticalScroll:
         return self.query_one('#create-additional-fields', expect_type=VerticalScroll)
+
+    @property
+    def textarea_fields_tabbed_content(self) -> TextAreaTabbedContent:
+        return self.query_one('#textarea-fields-tabs', expect_type=TextAreaTabbedContent)
 
     def _validate_required_fields(self) -> bool:
         """Checks if all required fields for saving the form data have values.
@@ -178,58 +303,67 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         vertical.border_title = self.TITLE
         with vertical:
             yield Static(
-                Text(
-                    'You can configure the additional fields to exclude via the variables config.enable_creating_additional_fields and config.create_additional_fields_ignore_ids'
-                ),
-                classes='create-work-item-tip',
+                Text('Important: fields marked with (*) are required.', style='orange italic')
             )
-            yield Static(
-                Text('Important: fields marked with (*) are required.', style='orange italic'),
-            )
-            yield Rule(classes='rule-20')
-            with VerticalScroll(id='add-work-item-form'):
-                with ItemGrid(classes='add-work-item-fields-grid'):
-                    # set widgets in row 1
-                    yield CreateWorkItemProjectSelectionInput()
-                    yield CreateWorkItemIssueTypeSelectionInput([])
-                    # set widgets in row 2
-                    # this input field contains the account id of the Jira user that we can use to set the item's
-                    # reporter field
-                    yield JiraUserInput(
-                        id='create-work-item-reporter-selector',
-                        border_title='Reporter',
-                        border_subtitle='(*)',
-                        jira_field_key='reporter_account_id',
-                    ).add_class(*['required', 'create-update-users-field-widget'])
-                    # this input field contains the account id of the Jira user that we can use to set the item's
-                    # assignee field
-                    yield JiraUserInput(
-                        id='create-work-item-assignee-selector',
-                        border_title='Assignee',
-                        jira_field_key='assignee_account_id',
-                    ).add_class(*['create-update-users-field-widget'])
-                yield CreateWorkItemParentKeyField(self._parent_work_item_key)
-                yield CreateWorkItemIssueSummaryField()
-                if self.adf_support_enabled:
-                    yield ADFMarkdownTextAreaWidget(
-                        mode=FieldMode.CREATE,
-                        jira_field_key='description',
-                        field_id='description',
-                        title='Description',
-                    )
-                else:
-                    yield PlainTextTextAreaWidget(
-                        mode=FieldMode.CREATE,
-                        jira_field_key='description',
-                        field_id='description',
-                        title='Description',
-                    )
-                yield VerticalScroll(id='create-additional-fields')
-            with ItemGrid(classes='add-work-item-grid-buttons'):
-                yield Button(
-                    'Save', variant='success', id='add-work-item-button-save', disabled=True
-                )
-                yield Button('Cancel', variant='error', id='add-work-item-button-quit')
+            yield Rule()
+            with Horizontal():
+                # left-hand side panel
+                with VerticalScroll(classes='add-work-item-form'):
+                    # statically-defined widgets
+                    with ItemGrid(classes='add-work-item-fields-grid'):
+                        # set widgets in row 1
+                        yield CreateWorkItemProjectSelectionInput()
+                        yield CreateWorkItemIssueTypeSelectionInput([])
+                        # set widgets in row 2
+                        # this input field contains the account id of the Jira user that we can use to set the item's
+                        # reporter field
+                        yield JiraUserInput(
+                            id='create-work-item-reporter-selector',
+                            border_title='Reporter',
+                            border_subtitle='(*)',
+                            jira_field_key='reporter_account_id',
+                        ).add_class(*['required', 'create-update-users-field-widget'])
+                        # this input field contains the account id of the Jira user that we can use to set the item's
+                        # assignee field
+                        yield JiraUserInput(
+                            id='create-work-item-assignee-selector',
+                            border_title='Assignee',
+                            jira_field_key='assignee_account_id',
+                        ).add_class(*['create-update-users-field-widget'])
+                        yield CreateWorkItemIssueSummaryField()
+                        yield CreateWorkItemParentKeyField(self._parent_work_item_key)
+                    # dynamically-created widgets
+                    with VerticalScroll(classes='add-work-item-form-textarea-fields'):
+                        with TextAreaTabbedContent(
+                            id='textarea-fields-tabs'
+                        ):  # Container for dynamic fields - textarea fields
+                            widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget
+                            if self.adf_support_enabled:
+                                widget = ADFMarkdownTextAreaWidget(
+                                    mode=FieldMode.CREATE,
+                                    jira_field_key='description',
+                                    field_id='description',
+                                    title='Description',
+                                )
+                            else:
+                                widget = PlainTextTextAreaWidget(
+                                    mode=FieldMode.CREATE,
+                                    jira_field_key='description',
+                                    field_id='description',
+                                    title='Description',
+                                )
+                            yield TextAreaTabPane('Description', widget)
+                # right-hand side panel
+                with Vertical():
+                    yield VerticalScroll(
+                        id='create-additional-fields'
+                    )  # Container for dynamic fields - non-textarea fields
+                    with ItemGrid(classes='add-work-item-grid-buttons'):
+                        yield Button(
+                            'Save', variant='success', id='add-work-item-button-save', disabled=True
+                        )
+                        yield Button('Cancel', variant='error', id='add-work-item-button-quit')
+        yield Footer(compact=True, show_command_palette=False)
 
     def on_mount(self):
         """Mounts the widgets.
@@ -289,6 +423,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         """Fetches the applicable types of work items for the selected project and updates the issue type dropdown
         widget.
 
+        This also removes all the dynamically-created textarea-based widgets. This does not remove the pane that
+        contains the description widget.
+
         Args:
             project_key: the key of the project selected by the user.
 
@@ -298,6 +435,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         key = project_key or self.project_selector.selection
+        # clean up the panes that contain dynamically-created textarea-based widgets
+        await self._remove_textarea_panes()
+        # clean up the list of options
+        self.issue_type_selector.set_options([])
         if key:
             response: APIControllerResponse = await application.api.get_issue_types_for_project(key)
             types: list[IssueType] = []
@@ -311,13 +452,17 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     def handle_project_selection(self) -> None:
         """Fetches the applicable types of work items for creating issues in the selected project.
 
-        This also updates the status of the "Save" button.
+        This also:
+        - updates the status of the "Save" button.
+        - remove all the panes used for displaying textarea-based field widgets.
 
         Returns:
             None.
         """
 
         self.run_worker(self.fetch_available_issue_types(self.project_selector.selection))
+        # clean up the panes that contain textarea-based widgets
+        self.additional_fields.remove_children()
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
@@ -403,7 +548,27 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 api_controller=application.api,
                 adf_support_enabled=self.adf_support_enabled,
             )
-            await self.additional_fields.mount_all(metadata_fields)
+
+            # split the fields based on type so we can mount them in different places in the UI
+            textarea_widgets: list[ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget] = []
+            non_textarea_widgets: list[Widget] = []
+            for widget in metadata_fields:
+                if isinstance(widget, ADFMarkdownTextAreaWidget) or isinstance(
+                    widget, PlainTextTextAreaWidget
+                ):
+                    textarea_widgets.append(widget)
+                else:
+                    non_textarea_widgets.append(widget)
+
+            # mount the (non-textarea) widgets on the left column
+            await self.additional_fields.mount_all(non_textarea_widgets)
+            # mount the widgets on the right column but before make sure we remove all the panes except the
+            # statically-defined pane that contains the description widget
+            await self._remove_textarea_panes()
+            for textarea_widget in textarea_widgets:
+                await self.textarea_fields_tabbed_content.add_pane(
+                    TextAreaTabPane(textarea_widget.border_title, textarea_widget)
+                )
 
             # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
             for input_widget in self.additional_fields.query(Input):
@@ -430,6 +595,21 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     await self.additional_fields.mount(
                         UsersAutoComplete(target=input_widget, api_controller=application.api)
                     )
+
+    async def _remove_textarea_panes(self) -> None:
+        """Removes the panes that contain dynamically-created textarea-based widgets.
+
+        Important: this does not remove the description's widget because we always need at least 1 pane in the tabbed
+        content widget.
+
+        Returns:
+            None.
+        """
+
+        if panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
+            for pane in panes:
+                if pane.id != 'pane-description':
+                    await self.textarea_fields_tabbed_content.remove_pane(pane.id)
 
     @staticmethod
     def _format_field_value(field_id: str, value: Any, field_metadata: dict) -> Any:
@@ -492,6 +672,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         # default: pass value as-is
         return value
 
+    def action_save_work_item(self) -> None:
+        self.handle_save()
+
     @on(Button.Pressed, '#add-work-item-button-save')
     def handle_save(self) -> None:
         """Builds the necessary payload data for creating a new work item.
@@ -501,7 +684,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         payload.
 
         Returns:
-            None.
+            None
         """
 
         if not self._validate_required_fields():
@@ -527,7 +710,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             if self._reporter_is_editable:
                 data[self.reporter_selector.jira_field_key] = self.reporter_selector.account_id
 
-            # process widgets that are created dynamically
+            # process non-textarea widgets that are created dynamically
             for widget in self.additional_fields.children:
                 if not hasattr(widget, 'field_id'):
                     continue
@@ -552,12 +735,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value
                     continue
-                elif isinstance(widget, ADFMarkdownTextAreaWidget) or isinstance(
-                    widget, PlainTextTextAreaWidget
-                ):
-                    if value := widget.get_value_for_create():
-                        data[widget.jira_field_key] = value
-                    continue
                 elif isinstance(widget, Select):
                     value = widget.selection
                 elif isinstance(widget, Input):
@@ -578,6 +755,17 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 elif value:
                     # no metadata available, pass as-is
                     data[field_id] = value
+
+            # process textarea widgets that are created dynamically
+            # iterate over every TextAreaTabPane created dynamically to extract the value of its widget
+            if tab_panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
+                pane: TextAreaTabPane
+                for pane in tab_panes:
+                    pane_inner_widget: (
+                        ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None
+                    ) = pane.widget
+                    if pane_inner_widget and (value := pane_inner_widget.get_value_for_create()):
+                        data[pane_inner_widget.jira_field_key] = value
 
             self.notify('Creating the work item...', title='Create Work Item')
             self.dismiss(data)

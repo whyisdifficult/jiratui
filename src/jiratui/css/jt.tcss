@@ -159,8 +159,6 @@ IssueCommentsWidget {
    align: left middle;
 }
 
-
-
 .create-update-field-widget {
     box_sizing: content-box;
     height: 1;
@@ -179,10 +177,10 @@ IssueCommentsWidget {
         width: 15;
     }
     &.summary {
-        width: 95%;
+        width: 100%;
     }
     &.parent-key {
-        width: 20;
+        width: 15;
     }
     &.numeric {
         width: 80%;
@@ -669,8 +667,29 @@ CreateWorkItemIssueTypeSelectionInput {
     }
 }
 
-#add-work-item-form {
-    width: 100%;
+.add-work-item-form {
+    box_sizing: border-box;
+
+    margin: 0 0;
+    padding: 0 0;
+    scrollbar-size-vertical: 1;
+}
+.add-work-item-form-textarea-fields {
+    box_sizing: border-box;
+
+    margin: 0 0;
+    padding: 0 0;
+    scrollbar-size-vertical: 1;
+}
+.add-work-item-buttons {
+    height: auto;
+}
+
+.create-work-item-textarea-field-pane {
+    box_sizing: content-box;
+    margin: 0 0;
+    padding: 0 0;
+    height: 1fr;
 }
 
 AddWorkItemScreen {
@@ -678,11 +697,14 @@ AddWorkItemScreen {
     background: $background 80%;
 }
 AddWorkItemScreen > Vertical {
-    width: 70%;
+    width: 95%;
     height: auto;
     border: round $foreground;
     padding: 0 1;
     & > Static {
+        margin-top: 1;
+    }
+    & > Rule {
         margin-top: 1;
     }
 }
@@ -693,6 +715,7 @@ AddWorkItemScreen > Vertical {
     box_sizing: content-box;
     border-top: blank $surface-lighten-1;
     border-bottom: blank $surface-lighten-1;
+    margin: 0 0;
 }
 #add-work-item-button-quit {
     width: 20%;
@@ -700,10 +723,12 @@ AddWorkItemScreen > Vertical {
     box_sizing: content-box;
     border-top: blank $surface-lighten-1;
     border-bottom: blank $surface-lighten-1;
+    margin: 0 0;
 }
 
+/* a grid for the layout of the static fields in the form that creates work items */
 .add-work-item-fields-grid {
-    grid-size: 2 3;
+    grid-size: 2 4;
     grid-columns: 50% 50%;
 }
 
@@ -714,9 +739,9 @@ AddWorkItemScreen > Vertical {
 }
 
 .create-work-item-description {
-    box_sizing: content-box;
-    height: 20%;
-    width: 80%;
+    box_sizing: border-box;
+    height: 100%;
+    width: 100%;
     border: round $primary-lighten-3;
     margin: 0 0;
     padding: 0 1;
@@ -987,7 +1012,7 @@ DisplayTextContentScreen > MarkdownViewer {
     margin-top: 1;
 }
 
-.work-item-info-collapsible {
+.work-item-info-tabs-container {
     scrollbar-size-vertical: 1;
 }
 

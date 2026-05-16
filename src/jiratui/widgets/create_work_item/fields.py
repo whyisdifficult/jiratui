@@ -37,7 +37,7 @@ class CreateWorkItemIssueSummaryField(Input):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.border_title = 'Summary'
-        self.add_class(*['create-update-field-widget', 'required', 'summary'])
+        self.add_class(*['create-update-field-widget', 'required', 'summary', 'cols-2'])
         self.border_subtitle = '(*)'
         self._jira_field_key = 'summary'
 

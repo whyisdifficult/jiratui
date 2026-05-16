@@ -443,6 +443,7 @@ def test_build_read_only_rich_text_widget_with_adf_support_enabled(adf_support_e
     assert widget.field_id == 'field_a'
     assert widget.text_content == 'Some value for the ADF field\n'
     assert widget.border_title == 'Field A'
+    assert widget.field_title == 'Field A'
     assert widget.border_subtitle == '(*)'
 
 
@@ -466,4 +467,5 @@ def test_build_read_only_rich_text_widget_without_adf_support_enabled(
     assert widget.field_id == 'field_a'
     assert widget.text_content == 'Some value for the ADF field'
     assert widget.border_title == 'Field A'
+    assert widget.field_title == 'Field A'
     assert widget.border_subtitle == '(*)'

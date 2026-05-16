@@ -1,4 +1,5 @@
 import datetime
+from typing import cast
 
 from rich.text import Text
 from textual import log
@@ -55,7 +56,8 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
     async def on_mount(self) -> None:
         if not self._work_item_key:
             return
-        response: APIControllerResponse = await self.parent.api.get_issue(  # type:ignore[attr-defined]
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        response: APIControllerResponse = await application.api.get_issue(  # type:ignore[attr-defined]
             issue_id_or_key=self._work_item_key
         )
         if not response.success:
@@ -136,7 +138,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
             # set the content of the description tab
             widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             if issue.rich_text_value_is_empty(issue.description):
-                widget = Static('There is no Description set. Press "e" to edit it.', classes='tip')
+                widget = Static('There is no Description set.', classes='tip')
             else:
                 widget = build_read_only_rich_text_widget(
                     jira_field_key='description',
@@ -173,7 +175,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                         if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
                             if issue.rich_text_value_is_empty(issue.environment):
                                 widget = Static(
-                                    f'There is no "{field_name}" set. Press "e" to edit it.',
+                                    f'There is no "{field_name}" set.',
                                     classes='tip',
                                 )
                             else:
@@ -188,7 +190,7 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                             field_value = issue.get_custom_field_value(field_id)
                             if issue.rich_text_value_is_empty(field_value):
                                 widget = Static(
-                                    f'There is no "{field_name}" set. Press "e" to edit it.',
+                                    f'There is no "{field_name}" set.',
                                     classes='tip',
                                 )
                             else:
@@ -200,5 +202,10 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                                 )
 
                         await tabbed.add_pane(
-                            TabPane(metadata.name, widget, classes='summary-description-container')
+                            TabPane(
+                                metadata.name,
+                                widget,
+                                id=f'tab-{field_id}',
+                                classes='summary-description-container',
+                            )
                         )

@@ -794,7 +794,7 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
-async def test_save_includes_additional_fields_without_adf_support_enabled(
+async def test_save_includes_additional_fields_with_adf_support_disabled(
     get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
 ):
     """Test that save handler includes additional fields and the same reporter and assignee."""
