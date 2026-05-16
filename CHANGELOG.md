@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.8.0] - 2026-05-16
 
 ### Added
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add new config variable `enable_updating_rich_text` to enable/disable editing fields that use rich text. The default is `True`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/235
 - Add new config variable `text_editor` to define the preferred command for editing fields that use rich text. The default is to use the system's default editor. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/235
 - Add support for copying the content of textarea-based fields to the clipboard. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/235
-- Add support for editing rich-text based fields when creating new work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add support for editing rich-text based fields when creating new work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/242
 
 ### Changed
 
@@ -34,8 +34,8 @@ autocomplete feature there is no need to fetch all the users anymore.
 cases; by [@vkhitrin](https://github.com/vkhitrin) in https://github.com/whyisdifficult/jiratui/pull/163. This work in this PR
 has been applied in this [PR](https://github.com/whyisdifficult/jiratui/pull/163) to make resolving conflicts more
 manageable. By [@whyisdifficult](https://github.com/whyisdifficult)  in https://github.com/whyisdifficult/jiratui/pull/199
-- Display rich-text based fields in tabs within the Info tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Refactor the UI for adding ew work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Display rich-text based fields in tabs within the Info tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/242
+- Refactor the UI for adding ew work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/242
 
 ### Bug Fixes
 
