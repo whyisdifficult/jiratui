@@ -6,10 +6,11 @@ from textual.screen import ModalScreen
 from textual.widgets import Select, TextArea
 
 from jiratui.config import CONFIGURATION
-from jiratui.widgets.base import CustomTitle
 
 
 class PreDefinedJQLExpressionsWidget(Select):
+    """A custom Select widget for selecting pre-defined JQL expressions loaded for the configuration file."""
+
     def __init__(self, options: list):
         super().__init__(
             options=options,
@@ -31,9 +32,13 @@ class JQLEditorScreen(ModalScreen[str]):
     def __init__(self, content: str | None = None):
         super().__init__()
         self.content = content or ''
-        self.predefined_jql_expressions: dict | None = None
+        self.predefined_jql_expressions: dict | None = self._pre_defined_jql_expressions
+
+    @property
+    def _pre_defined_jql_expressions(self) -> dict | None:
         if CONFIGURATION.get().pre_defined_jql_expressions:
-            self.predefined_jql_expressions = CONFIGURATION.get().pre_defined_jql_expressions
+            return CONFIGURATION.get().pre_defined_jql_expressions
+        return None
 
     @property
     def expressions(self) -> list:
@@ -42,8 +47,8 @@ class JQLEditorScreen(ModalScreen[str]):
         return []
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield CustomTitle('JQL Expression Editor')
+        with Vertical() as widget:
+            widget.border_title = self.TITLE
             yield PreDefinedJQLExpressionsWidget(
                 [(item.get('label'), key) for key, item in self.expressions]
             )
@@ -52,6 +57,7 @@ class JQLEditorScreen(ModalScreen[str]):
                 language='sql',
                 classes='jql-expression-editor',
                 show_line_numbers=False,
+                theme='css',
             )
 
     def on_key(self, event: Key):
