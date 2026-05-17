@@ -41,6 +41,7 @@ class CommandHandler:
 
         Raises:
             CLIException: if an error occurs while fetching the users.
+            CLIException: if no email or name is provided.
         """
         if not email_or_name:
             raise CLIException('You need do provide a value (name or email) to search users.')
@@ -280,6 +281,20 @@ class CommandHandler:
         return False
 
     async def update_issue_status(self, key: str, status_id: int | None = None) -> bool:
+        """Updates the status of a work item.
+
+        Args:
+            key: the key of the work item.
+            status_id: the ID od the new status.
+
+        Returns:
+            True if the status was updated successfully; False otherwise.
+
+        Raises:
+            CLIException: If a work item with the given key can not be found.
+            CLIException: If the status couldn't be updated.
+        """
+
         response: APIControllerResponse = await self.api.get_issue(issue_id_or_key=key)
         if not response.success or not response.result or not response.result.issues:
             raise CLIException(
@@ -292,8 +307,8 @@ class CommandHandler:
             )
 
         issue = response.result.issues[0]
-
         response = await self.api.transition_issue_status(issue.key, str(status_id))
+
         if not response.success:
             raise CLIException(
                 f'Unable to transition the selected work item to the status with ID: {status_id}.',
@@ -313,6 +328,21 @@ class CommandHandler:
         created_from: date | None = None,
         created_until: date | None = None,
     ) -> JiraIssueSearchResponse:
+        """Searches work items based on different search criteria.
+
+        Args:
+            project_key: searches items within the project with this key.
+            assignee_account_id: searches items assigned to this user.
+            limit: retrieves items up to this limit.
+            created_from: searches items created from this date (inclusive).
+            created_until: searches items created until this date (inclusive).
+
+        Returns:
+            An instance of `JiraIssueSearchResponse` with the list of work items found.
+
+        Raises:
+            CLIException: if the search fails.
+        """
         response: APIControllerResponse = asyncio.run(
             self.api.search_issues(
                 project_key=project_key,
@@ -352,6 +382,7 @@ class CommandHandler:
         Raises:
             CLIException: if an error occurs while getting the comment(s).
         """
+
         response: APIControllerResponse = asyncio.run(
             self.api.get_issue(issue_id_or_key=key, fields=fields)
         )
@@ -362,7 +393,28 @@ class CommandHandler:
             extra={'work_item_key': key, 'error_message': response.error},
         )
 
-    async def get_metadata(self, key: str) -> dict:
+    async def get_metadata(self, key: str, field_id: str | None = None) -> dict:
+        """Retrieves the metadata of a work item.
+
+        Args:
+            key: the key of the work item whose metadata we want to retrieve.
+            field_id: the id of a field related to the work item whose edit-metadata we want to retrieve.
+
+        Returns:
+            A dictionary with the following keys:
+            - types
+            - transitions
+            - current_state
+            - current_work_item_type
+            - current_priority
+            - priorities
+            - field_edit_metadata
+
+        Raises:
+            CLIException: when the function fails to find the issue by key.
+            CLIException: when the function fails to retrieve metadata related to issue transitions.
+        """
+
         response: APIControllerResponse = await self.api.get_issue(issue_id_or_key=key)
         if not response.success:
             raise CLIException(
@@ -385,6 +437,7 @@ class CommandHandler:
         # retrieve metadata related to updates of other fields
         available_issue_types: list[dict] = []
         priorities: list[dict] = []
+        field_edit_metadata: dict | None = None
 
         if fields := issue.edit_meta.get('fields', {}):
             if priority := fields.get('priority', {}):
@@ -405,6 +458,10 @@ class CommandHandler:
                             'description': allowed.get('description'),
                         }
                     )
+
+            if field_id and (field_meta := fields.get(field_id, {})):
+                field_edit_metadata = {'field_id': field_id, 'metadata': field_meta}
+
         return {
             'types': available_issue_types,
             'transitions': [t.as_dict() for t in transitions],
@@ -412,4 +469,34 @@ class CommandHandler:
             'current_work_item_type': issue.issue_type.id if issue.issue_type else None,
             'current_priority': issue.priority.id if issue.priority else None,
             'priorities': priorities,
+            'field_edit_metadata': field_edit_metadata,
         }
+
+    async def get_create_metadata(self, project_key: str, work_item_type_id: str) -> dict:
+        """Retrieves create-metadata for the requested project and type of work item.
+
+        Args:
+            project_key: the key of a project.
+            work_item_type_id: the ID of a type of work item.
+
+        Returns:
+            A dictionary with a key `metadata` with the create-metadata for the given project and type of work item.
+
+        Raises:
+            CLIException: when the function fails to get the create-metadata.
+        """
+
+        response: APIControllerResponse = await self.api.get_issue_create_metadata(
+            project_id_or_key=project_key,
+            issue_type_id=work_item_type_id,
+        )
+        if not response.success:
+            raise CLIException(
+                response.error,
+                extra={
+                    'project_key': project_key,
+                    'work_item_type_id': work_item_type_id,
+                    'error_message': response.error,
+                },
+            )
+        return {'metadata': response.result}

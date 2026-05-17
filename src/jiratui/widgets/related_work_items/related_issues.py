@@ -1,8 +1,11 @@
+from dataclasses import dataclass
 from typing import cast
 
 from rich.text import Text
+from textual import on
 from textual.binding import Binding
 from textual.containers import VerticalScroll
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
@@ -36,6 +39,10 @@ class RelatedIssueCollapsible(Collapsible):
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Related Work Items'
 
+    @dataclass
+    class LinkDeleted(Message):
+        link_id: str
+
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
         self._link_id: str | None = kwargs.pop('link_id', None)
@@ -56,17 +63,18 @@ class RelatedIssueCollapsible(Collapsible):
         )
 
     def handle_delete_choice(self, result: bool) -> None:
-        if result is True:
+        if result:
             self.run_worker(self.delete_link())
 
     async def delete_link(self) -> None:
         """Removes a link between two work items.
 
-        After removing a link the list of links is updated by removing the item from the list without fetching data
-        from the API.
+        After removing a link this method will post the
+        message `jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted` to update the
+        list of related issues in the parent widget.
 
         Returns:
-            Nothing
+            None
         """
 
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
@@ -82,7 +90,7 @@ class RelatedIssueCollapsible(Collapsible):
                 'Link between work items deleted successfully',
                 title=self.NOTIFICATIONS_DEFAULT_TITLE,
             )
-            self.parent.issues = [i for i in self.parent.issues or [] if i.id != self._link_id]  # type:ignore[attr-defined]
+            self.post_message(self.LinkDeleted(self._link_id))
 
 
 class RelatedIssuesWidget(VerticalScroll):
@@ -197,3 +205,7 @@ class RelatedIssuesWidget(VerticalScroll):
 
             rows.append(collapsible)
         self.mount_all(rows)
+
+    @on(RelatedIssueCollapsible.LinkDeleted)
+    def _refresh_issues_after_delete(self, event: RelatedIssueCollapsible.LinkDeleted) -> None:
+        self.issues = [issue for issue in self.issues or [] if issue.id != event.link_id]

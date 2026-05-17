@@ -10,6 +10,8 @@ from jiratui.models import LinkIssueType
 
 
 class LinkedWorkItemInputWidget(Input):
+    """A custom Input widget for entering the key of a work item."""
+
     def __init__(self):
         super().__init__(
             classes='required',
@@ -22,6 +24,8 @@ class LinkedWorkItemInputWidget(Input):
 
 
 class IssueLinkTypeSelector(Select):
+    """A custom Select widget for selecting the type of link between 2 items."""
+
     def __init__(self, items: list[tuple[str, str]]):
         super().__init__(
             options=items,

@@ -977,6 +977,7 @@ JQLEditorScreen > Vertical {
     border: round $primary-lighten-3;
     margin: 0 0 1 0;
     width: 100%;
+    scrollbar-size-vertical: 1;
     &:focus {
         border: round $accent-lighten-3;
     }

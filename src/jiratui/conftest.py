@@ -18,6 +18,7 @@ from jiratui.models import (
     JiraSprint,
     JiraUser,
     JiraWorklog,
+    LinkIssueType,
     Project,
     WorkItemsSearchOrderBy,
 )
@@ -562,5 +563,23 @@ def jira_issues_with_components_field() -> list[JiraIssue]:
                 }
             },
             components=[JiraIssueComponent(id='2', name='Option 2')],
+        ),
+    ]
+
+
+@pytest.fixture
+def link_issue_types() -> list[LinkIssueType]:
+    return [
+        LinkIssueType(
+            id='1',
+            name='Link Issue Type A',
+            inward='https://foo.bar/in',
+            outward='https://foo.bar/out',
+        ),
+        LinkIssueType(
+            id='2',
+            name='Link Issue Type B',
+            inward='https://foo.bar/in',
+            outward='https://foo.bar/out',
         ),
     ]

@@ -9,7 +9,7 @@ class ConfirmationScreen(ModalScreen[bool]):
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close Screen')]
 
-    def __init__(self, message: str):
+    def __init__(self, message: str | None = None):
         super().__init__()
         self.message = message or 'Are you sure you want to perform this action?'
 

@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from rich.console import Console
@@ -253,7 +254,36 @@ class JiraIssueMetadataRenderer(Renderer):
                 else '',
                 f'<CLI> issues update <ITEM-KEY> --status-id {transition.get("to_state").get("id")}',
             )
+        if field_metadata := content.get('field_edit_metadata', {}):
+            table = Table(
+                title=f'Edit metadata for field with ID: {field_metadata.get("field_id")}'
+            )
+            table.add_column('ID', style='magenta')
+            table.add_column('Edit Metadata', style='magenta')
+            table.add_row(
+                field_metadata.get('field_id'),
+                json.dumps(field_metadata.get('metadata', {})),
+            )
         console.print(table)
+
+
+class CreateMetadataRenderer(Renderer):
+    def render(self, console: Console, content: dict, **kwargs) -> None:
+        console.print(Rule())
+        if not content:
+            console.print(Text.assemble(('No issues to show', 'bold red')))
+            return
+        project_key = kwargs.get('project_key')
+        work_item_type_id = kwargs.get('work_item_type_id')
+        if metadata := content.get('metadata', {}):
+            table = Table(
+                title=f'Create metadata for project: {project_key} and type of work with ID: {work_item_type_id}'
+            )
+            table.add_column('Create Metadata', style='magenta')
+            table.add_row(
+                json.dumps({'fields': metadata.get('fields', [])}),
+            )
+            console.print(table)
 
 
 class ThemesRenderer(Renderer):

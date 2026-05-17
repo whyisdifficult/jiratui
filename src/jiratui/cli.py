@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -14,6 +15,7 @@ from jiratui.app import JiraApp
 from jiratui.commands.handler import CommandHandler
 from jiratui.commands.render import (
     CLIExceptionRenderer,
+    CreateMetadataRenderer,
     JiraIssueCommentRenderer,
     JiraIssueCommentsRenderer,
     JiraIssueCommentTextRenderer,
@@ -42,6 +44,11 @@ def comments():
 
 @cli.group(help='Use it to search, update or delete work items.')
 def issues():
+    pass
+
+
+@cli.group(help='Use it to manage information related to projects.')
+def projects():
     pass
 
 
@@ -170,7 +177,12 @@ def search_issues(
 
 @issues.command('metadata')
 @click.argument('work-item-key')
-def issue_metadata(work_item_key: str) -> None:
+@click.option(
+    '--field-id',
+    type=str,
+    help='The ID of a field related to the work item whose metadata for editing we want to retrieve.',
+)
+def issue_metadata(work_item_key: str, field_id: str | None = None) -> None:
     """Retrieves metadata associated to the work item identified by WORK_ITEM_KEY.
 
     WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
@@ -178,7 +190,7 @@ def issue_metadata(work_item_key: str) -> None:
     handler = CommandHandler()
     with console.status('Fetching metadata for the selected work item...'):
         try:
-            metadata: dict = asyncio.run(handler.get_metadata(work_item_key))
+            metadata: dict = asyncio.run(handler.get_metadata(work_item_key, field_id=field_id))
         except CLIException as e:
             console.print(str(e))
         else:
@@ -301,6 +313,45 @@ def update_issue(
                     console.print('Work item updated successfully.')
                 else:
                     console.print('Work item not updated.')
+
+
+# -- PROJECTS --
+
+
+@projects.command('metadata')
+@click.argument('project-key')
+@click.argument('work-item-type-id')
+@click.option(
+    '--save-as',
+    '-s',
+    type=str,
+    help='An optional filename to export the JSON result.',
+)
+def create_metadata(project_key: str, work_item_type_id: str, save_as: str | None = None) -> None:
+    """Retrieves create-metadata for the requested project key and type of work item.
+
+    PROJECT_KEY case-sensitive key that identifies a project in your organization.
+    WORK_ITEM_TYPE_ID the id that identifies a type of work item in the project.
+    """
+
+    handler = CommandHandler()
+    with console.status(
+        'Fetching create-metadata for the selected project and type of work item...'
+    ):
+        try:
+            response: dict = asyncio.run(
+                handler.get_create_metadata(project_key, work_item_type_id)
+            )
+        except CLIException as e:
+            console.print(str(e))
+        else:
+            render = CreateMetadataRenderer()
+            render.render(
+                console, response, project_key=project_key, work_item_type_id=work_item_type_id
+            )
+            if save_as:
+                with open(save_as, 'w') as f:
+                    f.write(json.dumps({'fields': response.get('metadata', {}).get('fields', [])}))
 
 
 # -- COMMENTS --
