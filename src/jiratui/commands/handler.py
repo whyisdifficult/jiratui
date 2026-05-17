@@ -393,11 +393,12 @@ class CommandHandler:
             extra={'work_item_key': key, 'error_message': response.error},
         )
 
-    async def get_metadata(self, key: str) -> dict:
+    async def get_metadata(self, key: str, field_id: str | None = None) -> dict:
         """Retrieves the metadata of a work item.
 
         Args:
             key: the key of the work item whose metadata we want to retrieve.
+            field_id: the id of a field related to the work item whose edit-metadata we want to retrieve.
 
         Returns:
             A dictionary with the following keys:
@@ -407,6 +408,7 @@ class CommandHandler:
             - current_work_item_type
             - current_priority
             - priorities
+            - field_edit_metadata
 
         Raises:
             CLIException: when the function fails to find the issue by key.
@@ -435,6 +437,7 @@ class CommandHandler:
         # retrieve metadata related to updates of other fields
         available_issue_types: list[dict] = []
         priorities: list[dict] = []
+        field_edit_metadata: dict | None = None
 
         if fields := issue.edit_meta.get('fields', {}):
             if priority := fields.get('priority', {}):
@@ -455,6 +458,10 @@ class CommandHandler:
                             'description': allowed.get('description'),
                         }
                     )
+
+            if field_id and (field_meta := fields.get(field_id, {})):
+                field_edit_metadata = {'field_id': field_id, 'metadata': field_meta}
+
         return {
             'types': available_issue_types,
             'transitions': [t.as_dict() for t in transitions],
@@ -462,4 +469,34 @@ class CommandHandler:
             'current_work_item_type': issue.issue_type.id if issue.issue_type else None,
             'current_priority': issue.priority.id if issue.priority else None,
             'priorities': priorities,
+            'field_edit_metadata': field_edit_metadata,
         }
+
+    async def get_create_metadata(self, project_key: str, work_item_type_id: str) -> dict:
+        """Retrieves create-metadata for the requested project and type of work item.
+
+        Args:
+            project_key: the key of a project.
+            work_item_type_id: the ID of a type of work item.
+
+        Returns:
+            A dictionary with a key `metadata` with the create-metadata for the given project and type of work item.
+
+        Raises:
+            CLIException: when the function fails to get the create-metadata.
+        """
+
+        response: APIControllerResponse = await self.api.get_issue_create_metadata(
+            project_id_or_key=project_key,
+            issue_type_id=work_item_type_id,
+        )
+        if not response.success:
+            raise CLIException(
+                response.error,
+                extra={
+                    'project_key': project_key,
+                    'work_item_type_id': work_item_type_id,
+                    'error_message': response.error,
+                },
+            )
+        return {'metadata': response.result}

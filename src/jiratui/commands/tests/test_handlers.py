@@ -702,11 +702,6 @@ def test_get_issue_failure(config_mock, get_issue_mock: AsyncMock, config_for_te
     get_issue_mock.assert_called_once_with(issue_id_or_key='PROJ-999', fields=None)
 
 
-###
-###
-###
-
-
 @pytest.mark.asyncio
 @patch.object(APIController, 'transitions')
 @patch.object(APIController, 'get_issue')
@@ -757,6 +752,7 @@ async def test_get_metadata_success_with_priority_and_issue_type(
     assert len(result['types']) == 2
     assert result['types'][0] == {'id': '10001', 'name': 'Bug', 'description': 'A bug'}
     assert result['current_priority'] == '3'
+    assert result['field_edit_metadata'] is None
 
 
 @pytest.mark.asyncio
@@ -790,6 +786,7 @@ async def test_get_metadata_no_edit_meta(
     transitions_mock.assert_called_once_with('PROJ-1')
     assert result['priorities'] == []
     assert result['types'] == []
+    assert result['field_edit_metadata'] is None
 
 
 @pytest.mark.asyncio
@@ -832,6 +829,7 @@ async def test_get_metadata_priority_but_no_issue_type(
     transitions_mock.assert_called_once_with('PROJ-1')
     assert len(result['priorities']) == 2
     assert result['types'] == []
+    assert result['field_edit_metadata'] is None
 
 
 @pytest.mark.asyncio
@@ -874,6 +872,7 @@ async def test_get_metadata_issue_type_but_no_priority(
     transitions_mock.assert_called_once_with('PROJ-1')
     assert result['priorities'] == []
     assert len(result['types']) == 2
+    assert result['field_edit_metadata'] is None
 
 
 @pytest.mark.asyncio
@@ -893,3 +892,167 @@ async def test_get_metadata_get_issue_failure(
     # THEN
     get_issue_mock.assert_called_once_with(issue_id_or_key='PROJ-999')
     transitions_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transitions')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_get_metadata_success_with_unknown_field_id(
+    config_mock, get_issue_mock: AsyncMock, transitions_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        key='PROJ-1',
+        status=IssueStatus(id='1', name='To Do'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        edit_meta={
+            'fields': {
+                'priority': {
+                    'allowedValues': [
+                        {'id': '1', 'name': 'Low'},
+                        {'id': '3', 'name': 'Medium'},
+                        {'id': '5', 'name': 'High'},
+                    ]
+                },
+                'issuetype': {
+                    'allowedValues': [
+                        {'id': '10001', 'name': 'Bug', 'description': 'A bug'},
+                        {'id': '10002', 'name': 'Task', 'description': 'A task'},
+                    ]
+                },
+            }
+        },
+    )
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[issue])
+    )
+    transition1 = IssueTransition(id='1', name='To In Progress')
+    transitions_mock.return_value = APIControllerResponse(result=[transition1])
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.get_metadata(key='PROJ-1', field_id='some_field_id')
+    # THEN
+    get_issue_mock.assert_called_once_with(issue_id_or_key='PROJ-1')
+    transitions_mock.assert_called_once_with('PROJ-1')
+    assert len(result['priorities']) == 3
+    assert result['priorities'][0] == {'id': '1', 'name': 'Low'}
+    assert len(result['types']) == 2
+    assert result['types'][0] == {'id': '10001', 'name': 'Bug', 'description': 'A bug'}
+    assert result['current_priority'] == '3'
+    assert result['field_edit_metadata'] is None
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transitions')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_get_metadata_success_with_known_field_id_metadata(
+    config_mock, get_issue_mock: AsyncMock, transitions_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        key='PROJ-1',
+        status=IssueStatus(id='1', name='To Do'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        edit_meta={
+            'fields': {
+                'priority': {
+                    'allowedValues': [
+                        {'id': '1', 'name': 'Low'},
+                        {'id': '3', 'name': 'Medium'},
+                        {'id': '5', 'name': 'High'},
+                    ]
+                },
+                'issuetype': {
+                    'allowedValues': [
+                        {'id': '10001', 'name': 'Bug', 'description': 'A bug'},
+                        {'id': '10002', 'name': 'Task', 'description': 'A task'},
+                    ]
+                },
+            }
+        },
+    )
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[issue])
+    )
+    transition1 = IssueTransition(id='1', name='To In Progress')
+    transitions_mock.return_value = APIControllerResponse(result=[transition1])
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.get_metadata(key='PROJ-1', field_id='priority')
+    # THEN
+    get_issue_mock.assert_called_once_with(issue_id_or_key='PROJ-1')
+    transitions_mock.assert_called_once_with('PROJ-1')
+    assert len(result['priorities']) == 3
+    assert result['priorities'][0] == {'id': '1', 'name': 'Low'}
+    assert len(result['types']) == 2
+    assert result['types'][0] == {'id': '10001', 'name': 'Bug', 'description': 'A bug'}
+    assert result['current_priority'] == '3'
+    assert result['field_edit_metadata'] == {
+        'field_id': 'priority',
+        'metadata': {
+            'allowedValues': [
+                {'id': '1', 'name': 'Low'},
+                {'id': '3', 'name': 'Medium'},
+                {'id': '5', 'name': 'High'},
+            ]
+        },
+    }
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_get_create_metadata_success(
+    config_mock, get_issue_create_metadata_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    expected_metadata = {
+        'fields': {
+            'summary': {'name': 'Summary', 'required': True},
+            'description': {'name': 'Description', 'required': False},
+            'priority': {'name': 'Priority', 'required': True},
+        }
+    }
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(result=expected_metadata)
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.get_create_metadata(project_key='PROJ', work_item_type_id='10001')
+    # THEN
+    get_issue_create_metadata_mock.assert_called_once_with(
+        project_id_or_key='PROJ',
+        issue_type_id='10001',
+    )
+    assert result == {'metadata': expected_metadata}
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_get_create_metadata_failure(
+    config_mock, get_issue_create_metadata_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        success=False, error='Project or issue type not found'
+    )
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(CLIException, match='Project or issue type not found'):
+        await handler.get_create_metadata(project_key='INVALID', work_item_type_id='99999')
+    # THEN
+    get_issue_create_metadata_mock.assert_called_once_with(
+        project_id_or_key='INVALID',
+        issue_type_id='99999',
+    )
