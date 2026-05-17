@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Minor Improvements
 
-- JT-31: Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- JT-31: Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/244
+
+### Bug Fixes
+
+- JT-32: Fix bug that causes pixelated images (https://github.com/whyisdifficult/jiratui/issues/224) by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/245
 
 ## [1.8.0] - 2026-05-16
 

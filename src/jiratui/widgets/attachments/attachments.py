@@ -12,6 +12,7 @@ from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import DataTable, LoadingIndicator, Markdown, Static, TextArea
+from textual_image.widget import Image
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -436,7 +437,6 @@ class FileAttachmentWidget:
 
         if is_image(file_type) and _image_support_is_enabled():
             from PIL import UnidentifiedImageError
-            from textual_image.widget import Image
 
             try:
                 return Image(BytesIO(content))
