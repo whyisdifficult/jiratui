@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import (
@@ -411,3 +412,160 @@ async def test_refresh_issues_after_delete(
                 priority=IssuePriority(id='1', name='Medium'),
             )
         ]
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_fails_to_get_issue_types(
+    issue_link_types_mock: AsyncMock, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test():
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen()
+        await app.push_screen(screen)
+        # THEN
+        assert screen.work_item_key is None
+        assert screen.relationship_type.selection is None
+        assert screen.relationship_type._options == [('', Select.NULL)]
+        assert screen.save_button.disabled
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_with_issue_types(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test():
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        # THEN
+        assert screen.work_item_key == 'WI-1'
+        assert screen.relationship_type.selection is None
+        assert screen.relationship_type._options == [
+            ('', Select.NULL),
+            ('https://foo.bar/in', '1:inward'),
+            ('https://foo.bar/out', '1:outward'),
+            ('https://foo.bar/in', '2:inward'),
+            ('https://foo.bar/out', '2:outward'),
+        ]
+        assert screen.save_button.disabled
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_save_enabled(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('enter')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('tab')
+        await pilot.press('a')
+        # THEN
+        assert not screen.save_button.disabled
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_save_disabled(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('enter')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('backspace')
+        # THEN
+        assert screen.save_button.disabled
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_save_disabled_when_link_type_changes(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('enter')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('enter')
+        await pilot.press('up')
+        await pilot.press('enter')
+        # THEN
+        assert screen.save_button.disabled
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_cancel_with_data_in(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.press('enter')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        assert screen.dismiss.call_args[0][0] == {}
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_save(
+    issue_link_types_mock: AsyncMock, link_issue_types, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(result=link_issue_types)
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.press('enter')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        assert screen.dismiss.call_args[0][0] == {
+            'right_issue_key': 'a',
+            'link_type': 'inward',
+            'link_type_id': '1',
+        }

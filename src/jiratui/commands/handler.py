@@ -41,6 +41,7 @@ class CommandHandler:
 
         Raises:
             CLIException: if an error occurs while fetching the users.
+            CLIException: if no email or name is provided.
         """
         if not email_or_name:
             raise CLIException('You need do provide a value (name or email) to search users.')
@@ -280,6 +281,20 @@ class CommandHandler:
         return False
 
     async def update_issue_status(self, key: str, status_id: int | None = None) -> bool:
+        """Updates the status of a work item.
+
+        Args:
+            key: the key of the work item.
+            status_id: the ID od the new status.
+
+        Returns:
+            True if the status was updated successfully; False otherwise.
+
+        Raises:
+            CLIException: If a work item with the given key can not be found.
+            CLIException: If the status couldn't be updated.
+        """
+
         response: APIControllerResponse = await self.api.get_issue(issue_id_or_key=key)
         if not response.success or not response.result or not response.result.issues:
             raise CLIException(
@@ -292,8 +307,8 @@ class CommandHandler:
             )
 
         issue = response.result.issues[0]
-
         response = await self.api.transition_issue_status(issue.key, str(status_id))
+
         if not response.success:
             raise CLIException(
                 f'Unable to transition the selected work item to the status with ID: {status_id}.',
@@ -313,6 +328,21 @@ class CommandHandler:
         created_from: date | None = None,
         created_until: date | None = None,
     ) -> JiraIssueSearchResponse:
+        """Searches work items based on different search criteria.
+
+        Args:
+            project_key: searches items within the project with this key.
+            assignee_account_id: searches items assigned to this user.
+            limit: retrieves items up to this limit.
+            created_from: searches items created from this date (inclusive).
+            created_until: searches items created until this date (inclusive).
+
+        Returns:
+            An instance of `JiraIssueSearchResponse` with the list of work items found.
+
+        Raises:
+            CLIException: if the search fails.
+        """
         response: APIControllerResponse = asyncio.run(
             self.api.search_issues(
                 project_key=project_key,
@@ -352,6 +382,7 @@ class CommandHandler:
         Raises:
             CLIException: if an error occurs while getting the comment(s).
         """
+
         response: APIControllerResponse = asyncio.run(
             self.api.get_issue(issue_id_or_key=key, fields=fields)
         )
@@ -363,6 +394,25 @@ class CommandHandler:
         )
 
     async def get_metadata(self, key: str) -> dict:
+        """Retrieves the metadata of a work item.
+
+        Args:
+            key: the key of the work item whose metadata we want to retrieve.
+
+        Returns:
+            A dictionary with the following keys:
+            - types
+            - transitions
+            - current_state
+            - current_work_item_type
+            - current_priority
+            - priorities
+
+        Raises:
+            CLIException: when the function fails to find the issue by key.
+            CLIException: when the function fails to retrieve metadata related to issue transitions.
+        """
+
         response: APIControllerResponse = await self.api.get_issue(issue_id_or_key=key)
         if not response.success:
             raise CLIException(
