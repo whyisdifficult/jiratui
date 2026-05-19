@@ -504,14 +504,14 @@ class MainScreen(Screen):
         """
 
         # fetch the list of projects
-        workers: list[Worker] = [self.run_worker(self.fetch_projects)]
+        workers: list[Worker] = [self.run_worker(self.fetch_projects())]
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
         # status codes and work item types after the project dropdown is updated with the selection.
         # the same happens when the user configures the app to fetch only projects on start up
         if not self.config.on_start_up_only_fetch_projects and not self.initial_project_key:
             # in this case we need to fetch users, status codes and work item types
-            self.run_worker(self.fetch_issue_types)
-            self.run_worker(self.fetch_statuses)
+            self.run_worker(self.fetch_issue_types())
+            self.run_worker(self.fetch_statuses())
 
         # if the user launched the app with a pre-defined user account id then let's fetch the details of the user
         # and set the user selection widget with the corresponding user; if any exists
