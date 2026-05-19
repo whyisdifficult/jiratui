@@ -92,6 +92,9 @@ class WorkItemInfoContainer(Vertical):
     async def _update_field(self, data: dict) -> None:
         """Updates the value of a text-based field in the work item."""
 
+        if not data or not data.get('jira_field_key'):
+            return
+
         if self._updating_rich_text_is_enabled:
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             payload = {data.get('jira_field_key'): data.get('content')}

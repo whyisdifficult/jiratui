@@ -16,11 +16,12 @@ then `fetch_single_project` is ignored and all available projects will be fetche
 
 ### Minor Improvements
 
-- JT-31: Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/244
+- Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/244
 
 ### Bug Fixes
 
-- JT-32: Fix bug that causes pixelated images (https://github.com/whyisdifficult/jiratui/issues/224) by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/245
+- Fix bug that causes pixelated images (https://github.com/whyisdifficult/jiratui/issues/224) by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/245
+- Fix bug when the user cancels editing a rich-text field; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/247
 
 ## [1.8.0] - 2026-05-16
 
