@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Add a config variable `fetch_single_project`. When `default_project_key_or_id` is set the application will fetch a
+single project from the API, the one indicated by `default_project_key_or_id`. This may speed up the launch. If this
+variable is false then the app will fetch all the available projects. When `default_project_key_or_id` is not set
+then `fetch_single_project` is ignored and all available projects will be fetched; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+
 ### Minor Improvements
 
 - JT-31: Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/244

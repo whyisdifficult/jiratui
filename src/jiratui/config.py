@@ -111,6 +111,11 @@ class ApplicationConfiguration(BaseSettings):
     default_project_key_or_id: str | None = None
     """A case-sensitive string that identifies a Jira project. If set then the app will use is as the default selected
     project in the projects dropdown and will only fetch this project from your Jira instance."""
+    fetch_single_project: bool = False
+    """When `default_project_key_or_id` is set the application will fetch a single project from the API, the one
+    indicated by `default_project_key_or_id`. This may speed up the launch. If this variable is false then the app will
+    fetch all the available projects. When `default_project_key_or_id` is not set then `fetch_single_project` is
+    ignored and all available projects will be fetched."""
     active_sprint_on_startup: bool = False
     """If True, the Active Sprint checkbox will be enabled by default when the application starts, filtering search
     results to show only work items in the currently active sprint."""
