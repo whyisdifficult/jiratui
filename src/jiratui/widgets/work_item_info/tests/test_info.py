@@ -5,6 +5,7 @@ from textual.widgets import Rule, Static
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
+from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
@@ -667,6 +668,7 @@ async def test_work_item_info_container_clear_information(
         assert len(widget.tabs_container.children) == 0
 
 
+@patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
 @patch.object(APIController, 'update_issue')
 @pytest.mark.parametrize(
     'update_field_data, expected_result',
@@ -675,6 +677,7 @@ async def test_work_item_info_container_clear_information(
 @pytest.mark.asyncio
 async def test_update_field_data_parameter(
     update_issue_mock: AsyncMock,
+    send_work_item_updated_message_mock: Mock,
     update_field_data,
     expected_result,
     app,
@@ -692,8 +695,10 @@ async def test_update_field_data_parameter(
         # THEN
         assert result == expected_result
         update_issue_mock.assert_not_called()
+        send_work_item_updated_message_mock.assert_not_called()
 
 
+@patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
 @patch.object(APIController, 'update_issue')
 @patch.object(
     WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=False)
@@ -701,6 +706,7 @@ async def test_update_field_data_parameter(
 @pytest.mark.asyncio
 async def test_update_field_updating_rich_text_is_enabled_false(
     update_issue_mock: AsyncMock,
+    send_work_item_updated_message_mock: Mock,
     app,
 ):
     # GIVEN
@@ -716,8 +722,10 @@ async def test_update_field_updating_rich_text_is_enabled_false(
         # THEN
         assert result is None
         update_issue_mock.assert_not_called()
+        send_work_item_updated_message_mock.assert_not_called()
 
 
+@patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
 @patch.object(APIController, 'update_issue')
 @patch.object(
     WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=True)
@@ -725,11 +733,12 @@ async def test_update_field_updating_rich_text_is_enabled_false(
 @pytest.mark.asyncio
 async def test_update_field_updating_rich_text_is_enabled_true(
     update_issue_mock: AsyncMock,
+    send_work_item_updated_message_mock: Mock,
     jira_issues_with_custom_fields,
     app,
 ):
     # GIVEN
-    update_issue_mock.return_value = APIControllerResponse()
+    update_issue_mock.return_value = APIControllerResponse(success=True)
     async with app.run_test() as pilot:
         widget = WorkItemInfoContainer()
         await app.screen.mount(widget)
@@ -744,3 +753,37 @@ async def test_update_field_updating_rich_text_is_enabled_true(
         update_issue_mock.assert_called_once_with(
             jira_issues_with_custom_fields[0], {'description': 'abcd'}
         )
+        send_work_item_updated_message_mock.assert_called_once()
+
+
+@pytest.mark.parametrize('error_type', [UpdateWorkItemException(), ValidationError(), ValueError()])
+@patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
+@patch.object(APIController, 'update_issue')
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=True)
+)
+@pytest.mark.asyncio
+async def test_update_field_update_issue_raises_error(
+    update_issue_mock: AsyncMock,
+    send_work_item_updated_message_mock: Mock,
+    jira_issues_with_custom_fields,
+    error_type,
+    app,
+):
+    # GIVEN
+    update_issue_mock.side_effect = error_type
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issue = jira_issues_with_custom_fields[0]
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        # WHEN
+        result = await widget._update_field({'jira_field_key': 'description', 'content': 'abcd'})  # type:ignore[func-returns-value]
+        # THEN
+        assert result is None
+        update_issue_mock.assert_called_once_with(
+            jira_issues_with_custom_fields[0], {'description': 'abcd'}
+        )
+        send_work_item_updated_message_mock.assert_not_called()

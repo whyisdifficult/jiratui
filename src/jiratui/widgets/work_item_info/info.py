@@ -17,6 +17,7 @@ from textual.widgets import (
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
+from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue, JiraWorkItemFields
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
@@ -98,19 +99,32 @@ class WorkItemInfoContainer(Vertical):
         if self._updating_rich_text_is_enabled:
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
             payload = {data.get('jira_field_key'): data.get('content')}
-            response: APIControllerResponse = await application.api.update_issue(
-                self.issue, payload
-            )
-            if not response.success:
-                self.notify(f'Unable to update the work item: {response.error}', severity='error')
+            try:
+                response: APIControllerResponse = await application.api.update_issue(
+                    self.issue, payload
+                )
+            except UpdateWorkItemException as e:
+                self.notify(str(e), severity='error', title='Work item update error')
+            except ValidationError as e:
+                self.notify(str(e), severity='error', title='Data validation error')
+            except Exception as e:
+                self.notify(str(e), severity='error', title='Unknown error')
             else:
-                self.post_message(self.WorkItemUpdated(self.issue.key))
-                self.notify('Work item updated successfully')
+                if not response.success:
+                    self.notify(
+                        f'Unable to update the work item: {response.error}', severity='error'
+                    )
+                else:
+                    self._send_work_item_updated_message(self.issue.key)
+                    self.notify('Work item updated successfully')
         else:
             self.notify(
                 'Updating this field is not enabled. Check config.enable_updating_rich_text',
                 severity='warning',
             )
+
+    def _send_work_item_updated_message(self, work_item_key: str) -> None:
+        self.post_message(self.WorkItemUpdated(work_item_key))
 
     @property
     def help_anchor(self) -> str:
