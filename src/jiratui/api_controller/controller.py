@@ -1708,7 +1708,19 @@ class APIController:
                         )
 
         if payload:
-            response: dict = await self.api.update_issue(issue.key, payload)
+            try:
+                response: dict = await self.api.update_issue(issue.key, payload)
+            except Exception as e:
+                exception_details: dict = self._extract_exception_details(e)
+                self.logger.error(
+                    'There was an error updating the work item.',
+                    extra={
+                        'issue_id_or_key': issue.key,
+                        'payload': payload,
+                        **exception_details.get('extra', {}),
+                    },
+                )
+                return APIControllerResponse(success=False, error=exception_details.get('message'))
             updated_fields: list[str] = []
             if fields := response.get('fields', {}):
                 updated_fields = list(fields.keys())

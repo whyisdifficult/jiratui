@@ -1,5 +1,5 @@
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
 
 from pydantic import SecretStr
 import pytest
@@ -33,7 +33,7 @@ from jiratui.widgets.filters import (
 )
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
-from jiratui.widgets.screens import WorkItemSearchResult
+from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
 from jiratui.widgets.search import IssuesSearchResultsTable
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
@@ -60,6 +60,7 @@ def app() -> JiraApp:
         cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
+        fetch_single_project=False,
         active_sprint_on_startup=False,
         jira_account_id=None,
         tui_title=None,
@@ -147,6 +148,106 @@ async def test_fetch_projects(
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert main_screen.project_selector.selection is None
         assert main_screen.project_selector._options == [
+            ('', Select.NULL),
+            ('(P1) Project A', 'P1'),
+            ('(P2) Project B', 'P2'),
+        ]
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch.object(APIController, 'search_projects')
+@pytest.mark.asyncio
+async def test_fetch_projects_without_initial_project_key(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[
+            Project(id='2', name='Project B', key='P2'),
+            Project(id='1', name='Project A', key='P1'),
+        ]
+    )
+    async with app.run_test():
+        screen = MainScreen()
+        screen.initial_project_key = ''
+        screen.config.fetch_single_project = True
+        # WHEN
+        await app.push_screen(screen)
+        await app.workers.wait_for_complete()
+        # THEN
+        search_projects_mock.assert_has_calls([call(keys=[])])
+        assert screen.project_selector.selection is None
+        assert screen.project_selector._options == [
+            ('', Select.NULL),
+            ('(P1) Project A', 'P1'),
+            ('(P2) Project B', 'P2'),
+        ]
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch.object(APIController, 'search_projects')
+@pytest.mark.asyncio
+async def test_fetch_projects_with_initial_project_key_fetch_single_project_true(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[
+            Project(id='1', name='Project A', key='P1'),
+        ]
+    )
+    async with app.run_test():
+        screen = MainScreen()
+        screen.initial_project_key = 'P1'
+        screen.config.fetch_single_project = True
+        # WHEN
+        await app.push_screen(screen)
+        await app.workers.wait_for_complete()
+        # THEN
+        search_projects_mock.assert_has_calls([call(keys=['P1'])])
+        assert screen.project_selector.selection == 'P1'
+        assert screen.project_selector._options == [
+            ('', Select.NULL),
+            ('(P1) Project A', 'P1'),
+        ]
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch.object(APIController, 'search_projects')
+@pytest.mark.asyncio
+async def test_fetch_projects_with_initial_project_key_fetch_single_project_false(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[
+            Project(id='1', name='Project A', key='P1'),
+            Project(id='2', name='Project B', key='P2'),
+        ]
+    )
+    async with app.run_test():
+        screen = MainScreen()
+        screen.initial_project_key = 'P1'
+        screen.config.fetch_single_project = False
+        # WHEN
+        await app.push_screen(screen)
+        await app.workers.wait_for_complete()
+        # THEN
+        search_projects_mock.assert_has_calls([call(keys=[])])
+        assert screen.project_selector.selection == 'P1'
+        assert screen.project_selector._options == [
             ('', Select.NULL),
             ('(P1) Project A', 'P1'),
             ('(P2) Project B', 'P2'),
