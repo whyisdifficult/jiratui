@@ -2883,6 +2883,25 @@ async def test_update_issue_parent_field_success(
 
 
 @pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_updating_fails(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    update_issue_mock.side_effect = ValueError('some error')
+    jira_api_controller.config.enable_updating_additional_fields = False
+    work_item.edit_meta = {'fields': {'parent': {'operations': ['set']}}}
+    work_item.key = 'WI1'
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'parent': 'WI2'})
+    # THEN
+    update_issue_mock.assert_called_once_with('WI1', {'fields': {'parent': {'key': 'WI2'}}})
+    assert result == APIControllerResponse(success=False, error='some error')
+
+
+@pytest.mark.asyncio
 async def test_update_issue_priority_field_without_metadata(
     work_item: JiraIssue,
     jira_api_controller: APIController,

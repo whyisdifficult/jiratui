@@ -267,6 +267,7 @@ class MainScreen(Screen):
             '7': '#issue_remote_links',
             '8': '#issue_subtasks',
         }
+        self.config = CONFIGURATION.get()
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -364,9 +365,8 @@ class MainScreen(Screen):
         """
 
         # Only render header if tui_custom_title is not explicitly set to empty string
-        config = CONFIGURATION.get()
         should_show_header = True
-        if config.tui_custom_title is not None and config.tui_custom_title == '':
+        if self.config.tui_custom_title is not None and self.config.tui_custom_title == '':
             should_show_header = False
 
         if should_show_header:
@@ -387,9 +387,9 @@ class MainScreen(Screen):
                 yield IssueSearchCreatedUntilWidget()
                 yield OrderByWidget(
                     WorkItemsSearchOrderBy.to_choices(),
-                    initial_value=CONFIGURATION.get().search_results_default_order.value,
+                    initial_value=self.config.search_results_default_order.value,
                 )
-                yield ActiveSprintCheckbox(value=CONFIGURATION.get().active_sprint_on_startup)
+                yield ActiveSprintCheckbox(value=self.config.active_sprint_on_startup)
                 yield JQLSearchWidget()
                 yield Button(
                     'Search',
@@ -500,7 +500,7 @@ class MainScreen(Screen):
         ```
 
         Returns:
-
+            None
         """
 
         # fetch the list of projects
@@ -508,7 +508,7 @@ class MainScreen(Screen):
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
         # status codes and work item types after the project dropdown is updated with the selection.
         # the same happens when the user configures the app to fetch only projects on start up
-        if not CONFIGURATION.get().on_start_up_only_fetch_projects and not self.initial_project_key:
+        if not self.config.on_start_up_only_fetch_projects and not self.initial_project_key:
             # in this case we need to fetch users, status codes and work item types
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
@@ -529,7 +529,7 @@ class MainScreen(Screen):
                 )
 
         if self.initial_jql_expression_id and (
-            pre_defined_jql_expressions := CONFIGURATION.get().pre_defined_jql_expressions
+            pre_defined_jql_expressions := self.config.pre_defined_jql_expressions
         ):
             if (
                 expression_data := pre_defined_jql_expressions.get(self.initial_jql_expression_id)
@@ -539,7 +539,7 @@ class MainScreen(Screen):
                 )
 
         # Trigger search on startup if enabled
-        if CONFIGURATION.get().search_on_startup:
+        if self.config.search_on_startup:
             # make sure to wait for the related workers so the method that searches work items have the necessary
             # filters set up, e.g. the selected project (if any) and the selected users (if any)
             await self.app.workers.wait_for_complete(workers)
@@ -578,11 +578,16 @@ class MainScreen(Screen):
         Returns:
             Nothing.
         """
-        project_keys = [self.initial_project_key] if self.initial_project_key else []
+
+        project_keys: list[str] = []
+        if self.initial_project_key:
+            if self.config.fetch_single_project:
+                project_keys = [self.initial_project_key]
         response: APIControllerResponse = await self.api.search_projects(keys=project_keys)
         if not response.success:
             self.notify(f'Failed to fetch the list of projects: {response.error}')
         projects = response.result or []
+        projects = list(projects)  # sort is async!
         projects.sort(key=lambda x: x.name)
         self.project_selector.projects = {
             'projects': projects,
@@ -771,12 +776,12 @@ class MainScreen(Screen):
         jql_query: str | None = self._build_jql_query(
             search_term=search_term,
             jql_expression=self.jql_expression_input.value,
-            use_advance_search=CONFIGURATION.get().enable_advanced_full_text_search,
+            use_advance_search=self.config.enable_advanced_full_text_search,
         )
 
         # search work items by different criteria
         response: APIControllerResponse
-        if CONFIGURATION.get().cloud:
+        if self.config.cloud:
             response = await self.api.search_issues(
                 project_key=project_key,
                 created_from=search_field_created_from,
@@ -787,7 +792,7 @@ class MainScreen(Screen):
                 search_in_active_sprint=self.active_sprint_checkbox.value,
                 jql_query=jql_query,
                 next_page_token=next_page_token,
-                limit=CONFIGURATION.get().search_results_per_page,
+                limit=self.config.search_results_per_page,
                 order_by=order_by,
             )
         else:
@@ -801,7 +806,7 @@ class MainScreen(Screen):
                 search_in_active_sprint=self.active_sprint_checkbox.value,
                 jql_query=jql_query,
                 page=page,
-                limit=CONFIGURATION.get().search_results_per_page,
+                limit=self.config.search_results_per_page,
                 order_by=order_by,
             )
 
@@ -814,7 +819,7 @@ class MainScreen(Screen):
             return WorkItemSearchResult(total=0, start=0, end=0)
 
         # estimation of search results count is only available in Jira Cloud
-        if not CONFIGURATION.get().cloud:
+        if not self.config.cloud:
             calculate_total = False
 
         result: JiraIssueSearchResponse = response.result
@@ -1174,7 +1179,7 @@ class MainScreen(Screen):
         )
 
         # step 7: populate links tab
-        if CONFIGURATION.get().show_issue_web_links:
+        if self.config.show_issue_web_links:
             self.issue_remote_links_widget.issue_key = work_item.key
 
         # step 8: populate subtasks tab
@@ -1184,7 +1189,7 @@ class MainScreen(Screen):
         value = value or ''
         if (value := value.strip()) and len(value) >= max(
             FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH,
-            int(CONFIGURATION.get().full_text_search_minimum_term_length),
+            int(self.config.full_text_search_minimum_term_length),
         ):
             self.run_worker(self.action_search(search_term=value))
         else:
