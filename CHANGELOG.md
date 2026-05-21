@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.8.1] - 2026-05-21
 
 ### Added
 
@@ -17,6 +17,9 @@ then `fetch_single_project` is ignored and all available projects will be fetche
 ### Minor Improvements
 
 - Add missing tests by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/244
+- Update `textual` by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/249
+- Update `click` by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/249
+- Update `pydantic-settings` by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/249
 
 ### Bug Fixes
 

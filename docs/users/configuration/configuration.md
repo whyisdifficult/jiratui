@@ -34,7 +34,7 @@ The application sets the theme based on these rules:
 2. If `--theme` (`-t`) and `config.theme` are not defined then the app uses the default
 3. If the name of theme you provide is not recognized then the app uses the default
 
-Finally, the app proves a CLI command to list the supported themes.
+Finally, the app provides CLI command to list the supported themes.
 
 ```shell
 jiratui themes
@@ -80,7 +80,7 @@ pre_defined_jql_expressions:
 
 When this setting is `True` the application will only load the list of available projects at startup. The list of
 status codes, users and work items types will be loaded when the user selects a project. On the other hand, if this is
-`False` then the application fill load (i.e. fetch from the API) available status codes, users and work items types in
+`False` then the application will fetch from the API the available status codes, users and work items types in
 addition to the available projects. This may make the startup a bit slower.
 
 ## Include Jira Server Title in the UI Title
