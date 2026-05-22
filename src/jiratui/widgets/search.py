@@ -430,8 +430,9 @@ class SearchResultsContainer(Container):
     widget's border subtitle with the page number and total records in the result."""
 
     def __init__(self, *args, **kwargs):
+        border_title = kwargs.pop('border_title', None)
         super().__init__(*args, **kwargs)
-        self.border_title = 'Work Items'
+        self.border_title = border_title or 'Work Items'
         self.config = CONFIGURATION.get()
         self._total_results = None
         self._page_number = None

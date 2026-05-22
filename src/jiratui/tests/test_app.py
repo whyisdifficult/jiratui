@@ -38,6 +38,7 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -69,6 +70,7 @@ def app_with_input_and_config_theme() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -100,6 +102,7 @@ def app_with_input_theme() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -131,6 +134,7 @@ def app_without_config_theme() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -162,6 +166,7 @@ def app() -> JiraApp:
         ssl=None,
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -549,6 +554,7 @@ def config_dict() -> dict:
         'enable_advanced_full_text_search': True,
         'full_text_search_minimum_term_length': 3,
         'search_on_startup': False,
+        'show_keybinding_hints': False,
     }
 
 

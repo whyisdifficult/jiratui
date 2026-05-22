@@ -268,6 +268,18 @@ class MainScreen(Screen):
             '8': '#issue_subtasks',
         }
         self.config = CONFIGURATION.get()
+        self.work_item_tabs_titles: dict = {}
+        if self.config.show_keybinding_hints:
+            self.work_item_tabs_titles = {
+                'search_results_container': 'Work Items (1)',
+                'work_item_info_container': 'Info (2)',
+                'issue_details': 'Details (3)',
+                'issue_comments': 'Comments (4)',
+                'related_issues': 'Related (5)',
+                'attachments': 'Attachments (6)',
+                'issue_remote_links': 'Links (7)',
+                'issue_subtasks': 'Subtasks (8)',
+            }
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -400,23 +412,38 @@ class MainScreen(Screen):
                     compact=True,
                 )
             with Horizontal():
-                with SearchResultsContainer(id='search_results_container'):
+                with SearchResultsContainer(
+                    id='search_results_container',
+                    border_title=self.work_item_tabs_titles.get('search_results_container'),
+                ):
                     yield DataTableSearchInput()
                     yield IssuesSearchResultsTable()
                 with TabbedContent(id='tabs'):
-                    with TabPane(title='Info', classes='summary-description-container'):
+                    with TabPane(
+                        title=self.work_item_tabs_titles.get('work_item_info_container', 'Info'),
+                        classes='summary-description-container',
+                        id='tab-pane-info',
+                    ):
                         yield WorkItemInfoContainer()
-                    with TabPane(title='Details'):
+                    with TabPane(title=self.work_item_tabs_titles.get('issue_details', 'Details')):
                         yield IssueDetailsWidget()  # will contain a form to view and update some of the fields of the issue
-                    with TabPane(title='Comments'):
+                    with TabPane(
+                        title=self.work_item_tabs_titles.get('issue_comments', 'Comments')
+                    ):
                         yield IssueCommentsWidget()
-                    with TabPane(title='Related'):
+                    with TabPane(title=self.work_item_tabs_titles.get('related_issues', 'Related')):
                         yield RelatedIssuesWidget()
-                    with TabPane(title='Attachments'):
+                    with TabPane(
+                        title=self.work_item_tabs_titles.get('attachments', 'Attachments')
+                    ):
                         yield IssueAttachmentsWidget()
-                    with TabPane(title='Links'):
+                    with TabPane(
+                        title=self.work_item_tabs_titles.get('issue_remote_links', 'Links')
+                    ):
                         yield IssueRemoteLinksWidget()
-                    with TabPane(title='Subtasks'):
+                    with TabPane(
+                        title=self.work_item_tabs_titles.get('issue_subtasks', 'Subtasks')
+                    ):
                         yield IssueChildWorkItemsWidget()
         yield Footer(show_command_palette=False)
 

@@ -34,7 +34,7 @@ from jiratui.widgets.filters import (
 from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
-from jiratui.widgets.search import IssuesSearchResultsTable
+from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
@@ -78,6 +78,7 @@ def app() -> JiraApp:
         search_results_style_work_item_type=None,
         search_results_per_page=10,
         search_on_startup=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -125,6 +126,55 @@ async def test_quick_access_keys(
         await pilot.press(key)
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert isinstance(main_screen.focused, widget)
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_keybinding_hints(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    app.config.show_keybinding_hints = True
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # THEN
+        assert main_screen.work_item_tabs_titles == {
+            'search_results_container': 'Work Items (1)',
+            'work_item_info_container': 'Info (2)',
+            'issue_details': 'Details (3)',
+            'issue_comments': 'Comments (4)',
+            'related_issues': 'Related (5)',
+            'attachments': 'Attachments (6)',
+            'issue_remote_links': 'Links (7)',
+            'issue_subtasks': 'Subtasks (8)',
+        }
+        widget = main_screen.query_one(SearchResultsContainer)
+        assert widget.border_title == 'Work Items (1)'
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_keybinding_hints_disabled(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    app.config.show_keybinding_hints = False
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # THEN
+        assert main_screen.work_item_tabs_titles == {}
+        widget = main_screen.query_one(SearchResultsContainer)
+        assert widget.border_title == 'Work Items'
 
 
 @patch('jiratui.widgets.screens.APIController.search_projects')
