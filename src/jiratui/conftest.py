@@ -52,6 +52,7 @@ def config_for_testing() -> ApplicationConfiguration:
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
         fetch_comments_on_delete=False,
+        show_keybinding_hints=False,
     )
     return config_mock
 
@@ -81,6 +82,7 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         update_additional_fields_ignore_ids=None,
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
+        show_keybinding_hints=False,
     )
     return config_mock
 
@@ -111,6 +113,7 @@ def jira_api_controller() -> APIController:
         update_additional_fields_ignore_ids=None,
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
+        show_keybinding_hints=False,
     )
     return APIController(config_mock)
 
@@ -141,6 +144,7 @@ def jira_api_controller_for_jira_dc() -> APIController:
         update_additional_fields_ignore_ids=None,
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
+        show_keybinding_hints=False,
     )
     return APIController(config_mock)
 
@@ -175,6 +179,7 @@ def app() -> JiraApp:
         enable_creating_additional_fields=False,
         create_additional_fields_ignore_ids=None,
         styling=None,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
