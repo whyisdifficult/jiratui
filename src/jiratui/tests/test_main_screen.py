@@ -78,7 +78,7 @@ def app() -> JiraApp:
         search_results_style_work_item_type=None,
         search_results_per_page=10,
         search_on_startup=False,
-        show_keybinds_hints=False,
+        show_keybinding_hints=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -132,14 +132,14 @@ async def test_quick_access_keys(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_show_keybinds_hints(
+async def test_show_keybinding_hints(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     app,
 ):
     # GIVEN
-    app.config.show_keybinds_hints = True
+    app.config.show_keybinding_hints = True
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
@@ -161,14 +161,14 @@ async def test_show_keybinds_hints(
 @patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screens.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_show_keybinds_hints_2(
+async def test_show_keybinding_hints_disabled(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     app,
 ):
     # GIVEN
-    app.config.show_keybinds_hints = False
+    app.config.show_keybinding_hints = False
     async with app.run_test():
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN

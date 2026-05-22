@@ -232,7 +232,7 @@ class ApplicationConfiguration(BaseSettings):
     text_editor: str | None = Field(default=os.getenv('EDITOR'))
     """The command to use for editing text-based fields. The default is the system's default editor. Set it to `None` to
      use a simpler built-in Markdown editor."""
-    show_keybinds_hints: bool = False
+    show_keybinding_hints: bool = False
     """If this is True the app will show the hints for the key bindings to use for switching between the tabs when the
     user selects a work item. The default tis False."""
 

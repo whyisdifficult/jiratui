@@ -269,7 +269,7 @@ class MainScreen(Screen):
         }
         self.config = CONFIGURATION.get()
         self.work_item_tabs_titles: dict = {}
-        if self.config.show_keybinds_hints:
+        if self.config.show_keybinding_hints:
             self.work_item_tabs_titles = {
                 'search_results_container': 'Work Items (1)',
                 'work_item_info_container': 'Info (2)',
