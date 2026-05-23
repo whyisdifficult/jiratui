@@ -4,9 +4,10 @@
 # Settings
 
 The following table describe all the configuration options you can set for the application. All the settings can be set
-using env variables with the format `JIRA_TUI_<name>`, where `<name>` is the name of the setting in the table below.
+using env variables. To do that you can define an env variable using an uppercase version of the variables defined in
+the table below.
 
-Example: these are equivalent `JIRA_TUI_JIRA_API_USERNAME=foo@bar`, `jira_api_username=foo@bar`
+Example: these are equivalent `JIRA_API_USERNAME=foo@bar`, `jira_api_username=foo@bar`
 
 The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
 config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
