@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add config variable `show_keybinds_hints` to control whether to show keybinding hints in the tabs when the user
-selects a work item. the default is `False`, i.e. no hints are shown.
+selects a work item. the default is `False`, i.e. no hints are shown; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/252
+
+### Minor Improvements
+
+- Update dev, docs and lint dependencies; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/253
 
 ## [1.8.1] - 2026-05-21
 
