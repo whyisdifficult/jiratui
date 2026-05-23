@@ -18,23 +18,23 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.2.0
         with:
           python-version-file: ".python-version"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.9.7"
+          version: "0.10.7"
           enable-cache: true
 
       - name: Build the package
         run: uv build
 
       - name: Upload package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.14.0
         with:
           packages-dir: ./dist/

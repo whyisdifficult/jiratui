@@ -19,11 +19,11 @@ jobs:
         python-version: ["3.12", "3.13", "3.14"]
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v8.1.0
       with:
-        version: "0.9.7"
+        version: "0.10.7"
         enable-cache: true
         python-version: ${{ matrix.python-version }}
     - run: uv python install
@@ -33,7 +33,7 @@ jobs:
       run: |
           uv run make lint
     - name: Store snapshot report on failure
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       if: failure()
       with:
         name: Snapshot Report ${{ matrix.os }} ${{ matrix.py }}
