@@ -41,4 +41,4 @@ html_static_path = ['_static']
 # -- https://www.jsdelivr.com/package/npm/mermaid
 mermaid_version = 'latest'
 # -- https://www.jsdelivr.com/package/npm/@mermaid-js/layout-elk
-mermaid_include_elk = '0.1.7'
+mermaid_include_elk = '0.2.1'
