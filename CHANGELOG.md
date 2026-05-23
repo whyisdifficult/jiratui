@@ -15,6 +15,11 @@ selects a work item. the default is `False`, i.e. no hints are shown; by [@whyis
 ### Minor Improvements
 
 - Update dev, docs and lint dependencies; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/253
+- Update github actions; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/254
+
+### Documentation
+
+- Update configuration reference documentation to rename outdated env variable format; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/255
 
 ## [1.8.1] - 2026-05-21
 
