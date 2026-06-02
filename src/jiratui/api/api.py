@@ -20,22 +20,18 @@ class JiraAPI:
     """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
 
     **Supported Versions**
-
-    - https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
-    - https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version
+    - [https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version)
+    - [https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version)
 
     **Versions**
-
-    [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
+    - [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
     [version 3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) of the API offer the same collection of
-    operations. However, version 3 provides support for the
-    [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
-
-    - body in comments, including where comments are used in issue, issue link, and transition resources.
-    - comment in work-logs.
-    - description and environment fields in issues.
-    - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a
-    string and don't handle Atlassian Document Format content.
+    operations. However, version 3 provides support for the [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
+        - body in comments, including where comments are used in issue, issue link, and transition resources.
+        - comment in work-logs.
+        - description and environment fields in issues.
+        - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a
+        string and don't handle Atlassian Document Format content.
     """
 
     API_PATH_PREFIX = '/rest/api/3/'
@@ -98,10 +94,10 @@ class JiraAPI:
         order_by: str | None = None,
         keys: list[str] = None,
     ) -> dict:
-        """Retrieves a paginated list of projects visible to the user (making the request).
+        """Retrieves a paginated list of projects visible to the user making the request.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
+        **See Also**:
+        - [api-rest-api-3-project-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get)
 
         Args:
             offset: the index of the first item to return in a page of results (page offset).
@@ -137,8 +133,8 @@ class JiraAPI:
         The statuses are grouped by issue type, as each project has a set of valid issue types and each issue type has
         a set of valid statuses.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-statuses-get
+        **See Also**:
+        - [api-rest-api-3-project-projectidorkey-statuses-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-statuses-get)
 
         Args:
             project_key: the (case-sensitive) project ID or project key.
@@ -153,8 +149,8 @@ class JiraAPI:
     async def get_issue_types_for_user(self) -> list[dict]:
         """Retrieves all the issue types.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
+        **See Also**:
+        - [api-rest-api-3-issuetype-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get)
 
         Returns:
             A list of dictionaries with the details of the types of issues.
@@ -169,8 +165,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a paginated list of statuses that match a search on project.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-status/#api-rest-api-3-statuses-search-get
+        **See Also**:
+        - [api-group-status/#api-rest-api-3-statuses-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-status/#api-rest-api-3-statuses-search-get)
 
         Args:
             project_id: the ID of the project the status is part of or null for global statuses.
@@ -197,7 +193,8 @@ class JiraAPI:
     async def get_project(self, key: str) -> dict:
         """Retrieves the details of a project.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
+        **See Also**:
+        - [api-rest-api-3-project-projectidorkey-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get)
 
         Args:
             key: the project ID or project key (case-sensitive).
@@ -219,8 +216,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves a list of users that can be assigned to an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-search-get
+        **See Also**:
+        - [api-group-user-search/#api-rest-api-3-user-assignable-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-search-get)
 
         Args:
             project_id_or_key: the project ID or project key (case-sensitive). Required, unless `issue_key` or
@@ -272,8 +269,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves the users who can be assigned issues in one or more projects.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get
+        **See Also**:
+        - [api-rest-api-3-user-assignable-multiprojectsearch-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get)
 
         Args:
             project_keys: a list of project keys (case-sensitive). This parameter accepts a comma-separated list.
@@ -314,8 +311,8 @@ class JiraAPI:
         search and check for moved issues is performed. If a matching issue is found its details are returned, a 302
         or other redirect is not returned. The issue key returned in the response is the key of the issue found.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get)
 
         Args:
             issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
@@ -386,8 +383,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves the remote issue links for an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-get
+        **See Also**:
+        -[api-rest-api-3-issue-issueidorkey-remotelink-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-get)
 
         Args:
             issue_id_or_key: the key or ID of the issue whose remote links we want to retrieve.
@@ -1412,9 +1409,9 @@ class JiraAPI:
 class JiraAPIv2(JiraAPI):
     """Implements methods to connect to the REST API v2 exposed by the Jira Cloud Platform.
 
-    **API Docs**: https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about
-
     This class implements methods for connecting to Jira REST API v2.
+
+    - [API Docs](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about)
     """
 
     API_PATH_PREFIX = '/rest/api/2/'
@@ -1423,11 +1420,11 @@ class JiraAPIv2(JiraAPI):
 class JiraDataCenterAPI(JiraAPI):
     """Implements the API exposed by the Jira Data Center (aka. on-premises) platform.
 
-    **API Docs**: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
+    - [API Docs](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted)
     """
 
-    # see: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure
     API_PATH_PREFIX = '/rest/api/2/'
+    """See https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure"""
 
     async def search_projects(
         self,
@@ -1441,7 +1438,7 @@ class JiraDataCenterAPI(JiraAPI):
         'Browse projects' or 'Administer projects' permission. If no user is logged in, it returns all projects that
         are visible for anonymous users.
 
-        See Also:
+        **See Also**:
             - https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-project/#api-api-2-project-get
             - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/project-getAllProjects
 
@@ -1479,7 +1476,7 @@ class JiraDataCenterAPI(JiraAPI):
         """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
         results.
 
-        See Also:
+        **See Also**:
             - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-search/#api-api-2-search-post
             - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/search-search
 

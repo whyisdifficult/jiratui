@@ -94,7 +94,12 @@ class RelatedIssueCollapsible(Collapsible):
 
 
 class RelatedIssuesWidget(VerticalScroll):
-    """A container for displaying the work items related to a work item."""
+    """A container for displaying the work items related to a work item.
+
+    **See Also**:
+    - [Use Case: Relate Work Items](#use-case-relate-work-items)
+    - [Architecture](#architecture-related-work-items-classes)
+    """
 
     HELP = 'See Related Work Items section in the help'
     BINDINGS = [

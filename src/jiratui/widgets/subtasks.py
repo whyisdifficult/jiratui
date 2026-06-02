@@ -42,6 +42,15 @@ class ChildWorkItemCollapsible(Collapsible):
 
 
 class IssueChildWorkItemsWidget(VerticalScroll):
+    """A container for displaying the subtasks of a work item.
+
+    This class defines a key binding to open a modal screen to allow users to create a new work item as a subtask of
+    the work item currently selected. Adding the subtask is handled by the main screen.
+
+    **See Also**:
+    - [Architecture](#architecture-work-item-subtasks-classes)
+    """
+
     HELP = 'See Subtasks section in the help'
     issues: Reactive[list[JiraIssue] | None] = reactive(None, always_update=True)
 

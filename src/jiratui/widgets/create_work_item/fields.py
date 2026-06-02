@@ -1,3 +1,5 @@
+"""This module contains widgets used by the screen that allows users to create new work items."""
+
 from textual import on
 from textual.widgets import Input
 

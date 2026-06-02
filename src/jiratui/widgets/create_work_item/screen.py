@@ -1,3 +1,5 @@
+"""This module contains the screen used for creating new work items."""
+
 import os
 import shlex
 import subprocess
@@ -171,6 +173,11 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     This screen does not actually create the work item. Instead, upon dismissing the screen the caller will receive the
     necessary data to create the work item via the Jira API.
     ```
+
+    **See Also**:
+    - [Create Work Item Screen Design](#components-create-work-item-screen)
+    - [Use Case: Create Work Item](#use-case-create-work-item)
+    - [Architecture](#architecture-create-work-item-classes)
     """
 
     BINDINGS = [

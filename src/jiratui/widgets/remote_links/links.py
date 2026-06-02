@@ -18,6 +18,9 @@ class IssueRemoteLinkCollapsible(Collapsible):
 
     The widget posts the message `jiratui.widgets.remote_links.links.IssueRemoteLinkCollapsible.Deleted` when a link
     is deleted.
+
+    **See Also**:
+    - [Use Case: Delete Web Link](#use-case-delete-web-link)
     """
 
     BINDINGS = [
@@ -72,6 +75,10 @@ class IssueRemoteLinksWidget(VerticalScroll):
     - fetching the list of remote links associated to the work item.
     - adding a new link to the work item.
     - deleting a link when the message `jiratui.widgets.remote_links.links.IssueRemoteLinkCollapsible.Deleted` is posted
+
+    **See Also**:
+    - [Use Case: Add Web Link](#use-case-add-web-link)
+    - [Architecture: Create Work Item](#architecture-work-item-links-classes)
     """
 
     HELP = 'See Web Links section in the help'

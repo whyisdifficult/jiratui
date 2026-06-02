@@ -1,3 +1,5 @@
+"""Widgets for listing the comments associated to a work item and for deleting comments."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import cast
@@ -29,7 +31,11 @@ class WorkItemComments:
 
 
 class CommentCollapsible(Collapsible):
-    """A collapsible to show a comment associated to a work item."""
+    """A collapsible to show a comment associated to a work item.
+
+    **See Also**:
+    - [Use Case: Delete Comment](#use-case-delete-comment)
+    """
 
     BINDINGS = [
         Binding(
@@ -77,6 +83,10 @@ class IssueCommentsWidget(VerticalScroll):
     - deleting comments from the work item via the API when the message
     `jiratui.widgets.comments.comments.CommentCollapsible.Deleted` is posted.
     - updating the list of comments when a comment is deleted.
+
+    **See Also**:
+    - [Use Case: Add Comment](#use-case-add-comment)
+    - [Architecture](#architecture-work-item-comments-classes)
     """
 
     HELP = 'See Comments section in the help'

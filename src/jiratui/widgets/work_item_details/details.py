@@ -1,3 +1,58 @@
+"""Form widget for viewing and editing Jira work item details.
+
+This module provides a comprehensive details form widget that allows users to view and edit
+the fields associated with a Jira work item (issue) within the TUI application. The form
+supports both static (core) and dynamic (custom and additional system) field types, with
+full reactive state management and validation.
+
+Classes:
+    `DynamicFieldsWidgets`: A container widget that holds dynamically generated field widgets for custom fields and
+    additional system fields. Inherits from `ItemGrid`.
+
+    `StaticFieldsWidgets`: A container widget that organizes static (core) work item field widgets in a grid
+    layout. Inherits from `ItemGrid`.
+
+    `IssueDetailsWidget`: The main form widget that displays and manages a comprehensive set of work item fields
+    including summary, assignee, reporter, priority, status, parent, sprint, type, dates, time tracking, and resolution
+    information. Supports both viewing and editing with change detection, validation, and asynchronous updates to Jira.
+
+Key Features:
+    - Displays work item details in an organized form layout
+    - Editable fields with reactive state management
+    - Change detection to track which fields have been modified
+    - Dynamic field generation based on work item edit metadata and configuration
+    - Autocomplete support for user selection (assignees and reporters)
+    - Keyboard shortcuts for quick access (Ctrl+S to save, Ctrl+L for worklog, etc.)
+    - Asynchronous API communication with Jira for updating work items
+    - Support for work item flagging with optional notes
+    - Work log viewing and creation workflows
+    - Time tracking display and management
+    - Priority, status, and parent issue transitions
+
+Typical Usage:
+    The IssueDetailsWidget is typically embedded within a larger screen or view that
+    manages work items:
+
+    ```python
+    from jiratui.widgets.work_item_details.details import IssueDetailsWidget
+
+    details_widget = IssueDetailsWidget()
+    details_widget.issue = jira_issue_object  # Set the work item to display
+    ```
+
+    Users can then interact with the form to view and update work item fields, with
+    changes being persisted to Jira via Ctrl+S.
+
+Dependencies:
+    - textual: TUI framework for widgets and containers
+    - jiratui.models: JiraIssue and related domain models
+    - jiratui.api_controller: API controller for Jira operations
+    - jiratui.widgets.work_item_details.fields: Specialized field widgets
+    - jiratui.widgets.commons: Common widgets and autocomplete providers
+    - jiratui.widgets.work_item_details.work_log: Work log viewing and logging
+    - jiratui.widgets.work_item_details.flag_work_item: Work item flagging
+"""
+
 from datetime import datetime, timezone
 from typing import Any, cast
 
@@ -87,6 +142,10 @@ class IssueDetailsWidget(Vertical):
 
     Dynamic widgets are composed dynamically based on the work item's edit metadata and the configuration of the
     application, via the variables `enable_updating_additional_fields` and `update_additional_fields_ignore_ids`.
+
+    **See Also**:
+    - [Use Case: Update Work Item](#use-case-update-work-item)
+    - [Architecture](#architecture-update-work-item-classes)
     """
 
     HELP = 'See Updating Work Items section in the help'
@@ -961,10 +1020,9 @@ class IssueDetailsWidget(Vertical):
     async def _add_dynamic_widgets(self, work_item: JiraIssue) -> None:
         """Builds and mounts a list of (dynamic) widgets to support updating (some) system and custom field types
 
-        This method sorts the dynamic widgets before mounting them so `ADFTextAreaWidget` instances appear last and
-        `MultiUserPickerWidget` instances appear first. This ensures that the autocomplete feature for multi-user
-        picker widgets works well in the UI and that `Textarea` fields with rendered Markdown are displayed at the
-        bottom.
+        This method sorts the dynamic widgets before mounting them so `MultiUserPickerWidget` instances appear
+        first. This ensures that the autocomplete feature for multi-user picker widgets works well in the UI and that
+        `Textarea` fields with rendered Markdown are displayed at the bottom.
 
         Args:
             work_item: the work item.

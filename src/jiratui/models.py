@@ -1,3 +1,14 @@
+"""These are classes that model different types of JiraAPI resources that the application uses for implementing the
+different use cases.
+
+```{important}
+The attributes in these classes **may not** reflect the complete resource models supported by the Jira API. Classes only
+model the relevant attributes required y all the use cases supported by JiraTUI. These models can be extended or
+modified based on the needs of new or updated use cases. The design principle is to keep them as light as possible to
+avoid fetching unnecessary data from the API.
+```
+"""
+
 import dataclasses
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -57,12 +68,20 @@ class JiraWorkItemFields(Enum):
 
 
 class WorkItemsSearchOrderBy(enum.Enum):
+    """Different modes to sort search results when searching for work items."""
+
     CREATED_ASC = 'created asc'
+    """Sort the work items by creation date in ascending order."""
     CREATED_DESC = 'created desc'
+    """Sort the work items by creation date in descending order."""
     PRIORITY_ASC = 'priority asc'
+    """Sort the work items by priority in ascending order."""
     PRIORITY_DESC = 'priority desc'
+    """Sort the work items by priority in descending order."""
     KEY_ASC = 'key asc'
+    """Sort the work items by key in ascending order."""
     KEY_DESC = 'key desc'
+    """Sort the work items by key in descending order."""
 
     @classmethod
     def to_choices(cls):
@@ -331,7 +350,7 @@ class JiraIssue(JiraBaseIssue):
     issue's edit metadata"""
     additional_fields: dict[str, Any] | None = None
     """These are fields that are not custom but whose values are not stored in a specific field; like the ones
-    above. These fields have a key without the prefix 'custom_' and, are rendered dynamically in the UI's update
+    above. These fields have a key without the prefix `custom_` and, are rendered dynamically in the UI's update
     form."""
     components: list[JiraIssueComponent] | None = None
     environment: str | None = None
@@ -816,7 +835,7 @@ class PaginatedJiraWorklog(BaseModel):
 class JiraField(BaseModel):
     """Represents a Jira field as returned by the endpoint that retrieves fields.
 
-    See: https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
+    **Also See**: [api-rest-api-3-field-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get)
     """
 
     id: str

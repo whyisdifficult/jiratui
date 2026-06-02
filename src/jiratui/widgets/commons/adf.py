@@ -15,23 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
-    """Read-only Markdown widget that handles Atlassian Document Format (ADF) conversion.
+    """Read-only Markdown widget that handles [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/)
+    conversion.
 
     This widget automatically converts ADF JSON to Markdown and renders it with formatting.
     It is read-only and displays rich text content with proper rendering (bold, italics, links, etc.).
 
-    This widget can be used when we want to display fields that support ADF. Jira Cloud Platform API v3 uses such
+    The widget can be used when we want to display fields that support ADF. Jira Cloud Platform API v3 uses such
     fields.
 
     Use it in the Info tab or to display comment's content or to display fields in the read-only work item details
     screen.
 
-    Features:
+    **Features**:
     - Automatic ADF to Markdown conversion on initialization
     - Rich text rendering (not editable Markdown)
     - Read-only display
 
-    Usage:
+    **Usage**:
 
     ```python
     widget = ReadOnlyADFTextAreaWidget(
@@ -52,7 +53,7 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         required: bool = False,
         original_value: dict | None = None,
     ):
-        """Initializes an ReadOnlyADFTextAreaWidget.
+        """Initializes a [ReadOnlyADFMarkdownTextAreaWidget](#jiratui.widgets.commons.adf.ReadOnlyADFMarkdownTextAreaWidget).
 
         Args:
             field_id: field identifier, e.g., 'customfield_10745'.
@@ -144,14 +145,16 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
 class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified Markdown-based textarea widget for fields that support ADF and that supports CREATE and UPDATE modes.
 
-    Features:
+    **Features**:
+
     - Multi-line text input for fields with textarea custom type.
     - ADF-to-Markdown and Markdown-toADF conversion.
     - Mode-aware behavior (CREATE vs UPDATE)
     - Change tracking for UPDATE mode
     - Required field support
 
-    Usage in CREATE mode:
+    **Usage in CREATE mode**:
+
     ```python
     widget = ADFMarkdownTextAreaWidget(
         mode=FieldMode.CREATE,
@@ -164,7 +167,8 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
     widget.text
     ```
 
-    Usage in UPDATE mode:
+    **Usage in UPDATE mode**:
+
     ```python
     widget = ADFMarkdownTextAreaWidget(
         mode=FieldMode.UPDATE,
@@ -189,6 +193,8 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
 
     @dataclass
     class EditContent(Message):
+        """A message sent when the content of the field is edited."""
+
         content: str
 
     def __init__(
@@ -202,7 +208,7 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
         original_value: dict | None = None,
         field_supports_update: bool = True,
     ):
-        """Initializes a ADFMarkdownTextAreaWidget.
+        """Initializes a [ADFMarkdownTextAreaWidget](#jiratui.widgets.commons.adf.ADFMarkdownTextAreaWidget).
 
         Args:
             mode: the field mode (CREATE or UPDATE)

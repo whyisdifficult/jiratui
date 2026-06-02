@@ -11,6 +11,11 @@ class AddCommentScreen(Screen[str]):
 
     The screen does not add the comment to the work item. Instead, it returns the comment's text to the caller via the
     `dismiss()` call and the caller will proceed to add the comment via the API.
+
+    **See Also**:
+    - [Add Comment Screen Design](#components-add-comment-screen)
+    - [Use Case: Add Comment](#use-case-add-comment)
+    - [Architecture](#architecture-work-item-comments-classes)
     """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]

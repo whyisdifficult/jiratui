@@ -60,7 +60,27 @@ class WorkItemSearchResult:
 
 
 class MainScreen(Screen):
-    """The main screen of the application."""
+    """The main screen of the application.
+
+    This is the main screen of the application. It is responsible for:
+
+    - handling different types of work item search
+    - handling events for focusing different widgets based on custom key-bindings
+    - handling the logic for creating work items
+    - handling the logic for copying the key of the currently selected work item
+    - handling the logic for copying the url of the currently selected work item
+    - handling the logic for creating a local Git branch for the currently selected work item
+    - searching Jira users for the assignee input filter
+    - searching projects for the project input
+    - searching types of issues for the issue type input filter
+    - composing the widgets in the UI
+
+    **See Also**:
+    - [Use Case: Filter-based search](#use-case-filter-based-search)
+    - [Use Case: Text-based search](#use-case-text-based-search)
+    - [Use Case: Work item search](#use-case-work-item-search)
+    - [Use Case: Create work items](#use-case-create-work-item)
+    """
 
     BINDINGS = [
         Binding(
@@ -1129,17 +1149,14 @@ class MainScreen(Screen):
         """Retrieves the details of a work item selected by the user in the search results.
 
         This is triggered from the datatable that holds the search results:
-        `jiratui.widgets.search.IssuesSearchResultsTable`
+        [IssuesSearchResultsTable](#jiratui.widgets.search.IssuesSearchResultsTable)
 
         Every time a user selects a work item in the search results the application will do the following:
 
         - retrieve the details of the work item by sending a request to the
         API's [get_issue](#jiratui.api_controller.controller.APIController.get_issue) method.
-
         - update the information on the description tab (summary and description)
-
         - retrieve the subtasks associated to the selected work item
-
         - update the data in all the other tabs
 
         Args:
@@ -1150,7 +1167,7 @@ class MainScreen(Screen):
             reload if the item's details have been updated.
 
         Returns:
-            Nothing
+            None
         """
 
         if not selected_work_item_key:
@@ -1233,7 +1250,7 @@ class MainScreen(Screen):
             position: the 1-based position of the work item in the search results to focus and open.
 
         Returns:
-            Nothing.
+            None
         """
         import asyncio
 

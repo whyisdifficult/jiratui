@@ -259,6 +259,8 @@ class LogWorkScreen(Screen[dict]):
     """A modal screen to allow the user to log work for a work item.
 
     The screen's result is a dictionary with the following keys:
+
+    ```python
     {
         'key': the key of the issue whose work lo we are updating.
         'time_spent': the time spent as provided by the user in the screen's form.
@@ -267,6 +269,10 @@ class LogWorkScreen(Screen[dict]):
         'started': an optional datetime string.
         'current_remaining_estimate': the issue's current remaining time.
     }
+    ```
+
+    **See Also**:
+    - [Use Case: Log Work](#use-case-log-work)
     """
 
     BINDINGS = [

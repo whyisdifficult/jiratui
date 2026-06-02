@@ -173,6 +173,9 @@ class IssueAttachmentsWidget(VerticalScroll):
 
     The config variable `config.fetch_attachments_on_delete` controls whether the widget retrieves the attachments from
     the work item after an attachment is deleted.
+
+    **See Also**:
+    - [Architecture](#architecture-work-item-attachments-classes)
     """
 
     HELP = 'See Attachments section in the help'
