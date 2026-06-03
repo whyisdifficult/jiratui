@@ -67,6 +67,7 @@ docs = [
     "sphinxcontrib-mermaid>=2.0.2,<2.1.0",
 ]
 lint = [
+    "import-linter>=2.11",
     "mypy>=2.1.0,<3.0.0",
     "ruff>=0.15.14,<0.16.0",
 ]
@@ -90,3 +91,13 @@ strict_optional = false
 ignore_missing_imports = true
 show_error_context = false
 exclude = ["docs", "test"]
+
+[tool.importlinter]
+root_package = 'jiratui'
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = 'Importing from docs directory'
+type = 'forbidden'
+source_modules = 'jiratui'
+forbidden_modules = 'docs'

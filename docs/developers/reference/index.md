@@ -51,7 +51,6 @@ widgets/common-users.md
 widgets/common-widgets.md
 widgets/filters.md
 widgets/search.md
-widgets/text-search.md
 widgets/work-item-creation.md
 widgets/work-item-details.md
 widgets/related-work-items.md

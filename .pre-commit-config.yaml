@@ -23,3 +23,12 @@ repos:
     rev: 'v2.1.0'
     hooks:
       - id: mypy
+  - repo: https://github.com/seddonym/import-linter
+    rev: v2.11
+    hooks:
+      - id: import-linter
+        name: '[Imports] Lint'
+        stages:
+          - pre-commit
+        files: '^jiratui*'
+        exclude: ^.*\/docs\/.*$

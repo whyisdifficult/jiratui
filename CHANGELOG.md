@@ -20,6 +20,7 @@ selects a work item. the default is `False`, i.e. no hints are shown; by [@whyis
 ### Documentation
 
 - Update configuration reference documentation to rename outdated env variable format; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/255
+- Documentation for developers and contributors; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ## [1.8.1] - 2026-05-21
 
