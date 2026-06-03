@@ -69,10 +69,6 @@ autodoc2_docstring_parser_regexes = [
 ]
 autodoc2_packages = [
     {'path': 'jiratui', 'auto_mode': False},
-    # {
-    #     'path': 'developers',
-    #     'auto_mode': False
-    # }
 ]
 autodoc2_render_plugin = 'myst'
 autodoc2_hidden_objects = ['undoc', 'dunder', 'private', 'inherited']
