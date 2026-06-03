@@ -1,3 +1,40 @@
+"""User input and autocomplete widgets for Jira user selection.
+
+This module provides specialized Textual widgets for selecting Jira users within the TUI application. It combines an
+input field with autocomplete functionality to allow users to search and select from available Jira users.
+
+**Classes**:
+
+- [JiraUserInput](#jiratui.widgets.commons.users.JiraUserInput): An input field widget that stores the selected Jira user's account ID alongside the display
+value. Supports reactive state management for enabled/disabled states and integrates with the autocomplete provider.
+
+- [UsersAutoComplete](#jiratui.widgets.commons.users.UsersAutoComplete): An autocomplete provider that dynamically searches for Jira users via the API as the user
+types. Implements caching to improve performance and supports custom user search functions for advanced filtering.
+
+**Typical Usage**:
+
+The [JiraUserInput](#jiratui.widgets.commons.users.JiraUserInput) and [UsersAutoComplete](#jiratui.widgets.commons.users.UsersAutoComplete)
+widgets are typically used together to create a user selection field with live search capabilities:
+
+```python
+from textual.widgets import Input
+from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
+
+user_input = JiraUserInput(id='user_selector')
+UsersAutoComplete(
+    target=user_input, api_controller=api_controller, user_search_function=custom_search_fn
+)
+```
+
+The selected user's account ID can be retrieved via the `account_id` property of the `JiraUserInput` instance.
+
+**Dependencies**:
+
+- `textual`: TUI framework
+- `textual-autocomplete`: Autocomplete widget extension
+- `jiratui.controllers.api`: API controller for Jira queries
+"""
+
 import logging
 from typing import Callable
 
@@ -16,14 +53,15 @@ class JiraUserInput(Input):
     This widget is specifically designed for statically composed widgets; i.e. widgets that are defined in the
     `compose()` method of other widgets.
 
-    If you need to support single/multi-user selection for dynamically created widgets then use `SingleUserPickerWidget`
-    and `MultiUserPickerWidget`.
+    If you need to support single/multi-user selection for dynamically created widgets then use
+    [SingleUserPickerWidget](#jiratui.widgets.commons.widgets.SingleUserPickerWidget)
+    and [MultiUserPickerWidget](#jiratui.widgets.commons.widgets.MultiUserPickerWidget).
 
     This widget holds the Jira user's account id that is used to identify the user. The widget MUST implement
     a property called `account_id` to retrieve and set the account id of the selected user.
 
-    This widget can be used with the `jiratui.widgets.commons.users.UsersAutoComplete` widget to support autocomplete
-    search functionality.
+    This widget can be used with the [UsersAutoComplete](#jiratui.widgets.commons.users.UsersAutoComplete) widget to
+    support autocomplete search functionality.
 
     Example:
     users_selector = JiraUserInput(

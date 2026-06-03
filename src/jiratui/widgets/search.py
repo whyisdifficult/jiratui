@@ -1,3 +1,5 @@
+"""This module contains widgets for implementing work item search functionality."""
+
 from typing import cast
 
 from rich.text import Text

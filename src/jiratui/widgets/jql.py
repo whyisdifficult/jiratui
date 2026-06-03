@@ -24,7 +24,11 @@ class PreDefinedJQLExpressionsWidget(Select):
 
 
 class JQLEditorScreen(ModalScreen[str]):
-    """A screen that displays an editor for JQL expressions."""
+    """A screen that displays an editor for JQL expressions.
+
+    **See Also**:
+    - [Use Case: Filter-based search](#use-case-filter-based-search)
+    """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'JQL Expression Editor'

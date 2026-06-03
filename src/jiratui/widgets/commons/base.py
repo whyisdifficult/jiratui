@@ -1,3 +1,63 @@
+"""This module provides foundational building blocks for field widgets that support both CREATE (new work item)
+and UPDATE (existing work item) modes.
+
+It contains base classes for field widgets, selection widgets, and autocomplete implementations that enable users to
+input and modify Jira work item data.
+
+The architecture is built on mixins and composition, allowing flexible widget creation while maintaining consistent
+interfaces and behavior across different field types.
+
+## AutoComplete Implementations
+
+The module provides three specialized AutoComplete widgets that enable suggestion-based input for complex fields. All
+extend `textual_autocomplete.AutoComplete` and implement fetching suggestions from the Jira API asynchronously.
+
+All three autocomplete implementations follow the same architectural pattern:
+
+| Aspect                       | Details                                                                                      |
+|------------------------------|----------------------------------------------------------------------------------------------|
+| Suggestion Caching | Cached suggestions are updated asynchronously; synchronous methods return cached results     |
+| Async Fetching                       | Private `_fetch_*` or `_search_*` methods fetch suggestions from the Jira API asynchronously |
+| Search String Extraction                       | `get_search_string()` extracts the relevant search term (handles comma-separated lists)                                                                        |
+| Dropdown Control                      | `should_show_dropdown()`  determines whether to display suggestions based on option count    |
+| Completion Application                      | `apply_completion()` applies the user's selection and updates the target widget              |
+
+## Design Patterns
+
+### Mixin-Based Architecture
+
+Instead of deep inheritance chains, the module uses multiple inheritance with mixins:
+
+```shell
+ProjectSelectionWidget
+├── Select (Textual base)
+├── BaseFieldWidget (field properties)
+└── BaseUpdateFieldWidget (change tracking)
+```
+
+This allows:
+
+- **Flexibility**: Mix and match functionality as needed
+- **Clarity**: Each mixin has a single responsibility
+- **Reusability**: Mixins can be combined with different base widgets
+
+### Mode-Aware Initialization
+
+Both selection widgets support CREATE and UPDATE modes with conditional behavior:
+
+**CREATE mode**: Focus on data collection
+**UPDATE mode**: Track original values and changes
+
+### Target Widget Protocol
+
+`MultiUserPickerAutoComplete` and `MultiIssuePickerAutoComplete` expect target widgets to implement specific methods:
+
+- `add_user(account_id, name)` — Stores user selection
+- `update_issues_data(issue_key)` — Stores issue selection
+
+This allows flexible reuse across different Input widget implementations.
+"""
+
 from enum import Enum
 import logging
 from typing import Any, Callable
@@ -16,18 +76,30 @@ class FieldMode(Enum):
     """Enum to distinguish between field creation and update contexts."""
 
     CREATE = 'create'
+    """Used for cases where all field values are provided from scratch."""
     UPDATE = 'update'
+    """User modifies values while tracking original state and changes."""
 
 
 class BaseFieldWidget:
     """Base mixin for common field widget patterns.
 
-    Provides:
-    - Required field indication via border_subtitle
-    - Standard CSS class management
-    - Mode-aware behavior
+    **Key Properties**:
 
-    ```{Note}
+    - `mode`: The current operational mode (CREATE or UPDATE)
+    - `field_id`: Internal identifier for the field (e.g., "project", "issue_type")
+    - `jira_field_key`: The Jira API field key used when sending values to the Jira API
+    - `required`: Whether the field is mandatory
+
+    **Key Methods**:
+
+    - `setup_base_field()`: Initializes common field properties and visual indicators (border title, required marker (*))
+    - `mark_required()`: Dynamically marks a field as required after initialization
+
+    **Use Case**: Any widget that represents a Jira field should inherit from this mixin to ensure consistent
+    initialization  and UI presentation.
+
+    ```{Important}
     This is a mixin, not a standalone widget. It should be combined with Textual widget classes via multiple
     inheritance.
     ```
@@ -90,13 +162,20 @@ class BaseFieldWidget:
 class BaseUpdateFieldWidget:
     """Base mixin for UPDATE mode widgets with change tracking.
 
-    Provides:
-    - Original value storage
-    - Change detection via value_has_changed property
-    - Update capability management
+    **Key Properties**:
 
-    This is used for widgets in the `work_item_details` context where we need to track changes from the original Jira
-    value.
+    - `original_value`: The original value from Jira before user modifications
+    - `value_has_changed: bool`: A property that determines if the current value differs from the original (must be
+    implemented by subclasses based on their value type)
+
+    **Key Methods**:
+
+    - `setup_base_field()`: Initializes UPDATE mode properties including original value storage and update capability
+    management.
+
+    **Use Case**: Widgets that support the UPDATE mode must inherit from this mixin to track changes and determine what
+    needs to be sent back to Jira. This is used for widgets in the `work_item_details` context where we need to track
+    changes from the original Jira value.
     """
 
     def setup_update_field(
@@ -172,7 +251,37 @@ class ValidationUtils:
 
 
 class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
-    """Unified project selection widget that works in both CREATE and UPDATE modes."""
+    """A unified Select dropdown for choosing a Jira project that works in both CREATE and UPDATE modes.
+
+    **Features**:
+
+    - Type-to-search capability for quick project lookup
+    - Dynamic project population via the projects reactive property (CREATE mode only)
+    - Original value restoration in UPDATE mode
+    - Selection tracking with the selection property
+
+    **Initialization Pattern**:
+
+    ```python
+    # CREATE mode
+    project_widget = ProjectSelectionWidget(
+        mode=FieldMode.CREATE,
+        field_id='project',
+        jira_field_key='project',
+        title='Project',
+        required=True,
+    )
+
+    # UPDATE mode
+    project_widget = ProjectSelectionWidget(
+        mode=FieldMode.UPDATE,
+        field_id='project',
+        jira_field_key='project',
+        original_value='PROJ',
+        field_supports_update=True,
+    )
+    ```
+    """
 
     projects: Reactive[dict | None] = reactive(None, init=False, always_update=True)
     """A dictionary with 2 keys:
@@ -295,7 +404,26 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
 
 class IssueTypeSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
-    """Unified issue type selection widget that works in both CREATE and UPDATE modes."""
+    """A unified Select dropdown for choosing a Jira issue type, supporting both CREATE and UPDATE modes.
+
+    Features:
+    - Pre-populated options provided at initialization (unlike ProjectSelectionWidget)
+    - Type-to-search for quick issue type lookup
+    - Mode-aware behavior with original value restoration in UPDATE mode
+
+    Initialization Pattern:
+
+    ```python
+    # CREATE mode with options
+    issue_type_widget = IssueTypeSelectionWidget(
+        mode=FieldMode.CREATE,
+        field_id='issue_type',
+        jira_field_key='issuetype',
+        options=[('Bug', '10001'), ('Story', '10002'), ('Task', '10003')],
+        required=True,
+    )
+    ```
+    """
 
     def __init__(
         self,
@@ -394,9 +522,21 @@ class IssueTypeSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
 
 class LabelsAutoComplete(AutoComplete):
-    """AutoComplete for labels that fetches suggestions from Jira API.
+    """Autocomplete for comma-separated labels that fetches suggestions from Jira as the user types.
 
-    This widget works in both CREATE and UPDATE modes, fetching label suggestions dynamically as the user types.
+    **Features**:
+    - Searches the Jira labels field for autocomplete suggestions
+    - Handles comma-separated list input (user can add multiple labels)
+    - Appends selected labels and allows continuation of typing
+    - Minimum query length: 1 character
+
+    **Workflow**:
+
+    - User types a partial label name
+    - Widget calls `_fetch_suggestions()` asynchronously via Jira API
+    - Suggestions are cached and dropdown is displayed
+    - User selects a label
+    - Widget appends it to the existing list and adds a comma for the next entry
     """
 
     def __init__(
@@ -504,7 +644,22 @@ class LabelsAutoComplete(AutoComplete):
 class MultiUserPickerAutoComplete(AutoComplete):
     """AutoComplete for selecting multiple users.
 
-    This widget works in both CREATE and UPDATE modes, fetching users suggestions dynamically as the user types.
+    Features:
+    - Searches users by display name and email address
+    - Handles comma-separated list of user names
+    - Tracks account IDs separately from display names for API compatibility
+    - Minimum query length: 2 characters (`MIN_QUERY_TERM_LENGTH`)
+    - Supports custom search functions via the `user_search_function` parameter
+
+    Workflow:
+
+    - User types user name or email (≥2 chars)
+    - Widget calls the provided `user_search_function` asynchronously
+    - Matching users are returned as suggestions with account IDs
+    - User selects a user
+    - Widget calls `target.add_user()` to store both name and account ID
+    - Display refreshes to show user name; account ID stored internally
+
 
     ````{important}
     The target Input widget will display a comma-separated list of names. However, the widget needs to keep track of
@@ -652,7 +807,22 @@ class MultiUserPickerAutoComplete(AutoComplete):
 class MultiIssuePickerAutoComplete(AutoComplete):
     """AutoComplete for selecting multiple work items by key.
 
-    This widget works in both CREATE and UPDATE modes, fetching issues suggestions dynamically as the user types.
+    Features:
+
+    - Searches issues by key and summary via Jira API issue picker
+    - Handles comma-separated list of issue keys
+    - Displays issue key + truncated summary in dropdown, but stores only the key
+    - Minimum query length: 3 characters (`MIN_QUERY_TERM_LENGTH`)
+    - Supports custom search functions via the `issue_search_function` parameter
+
+    Workflow:
+
+    - User types issue key or summary (≥3 chars)
+    - Widget calls the provided `issue_search_function` asynchronously
+    - Matching issues are returned with key + summary preview
+    - User selects an issue
+    - Widget calls `target.update_issues_data()` to store the issue key
+    - Display shows only the issue key (removes summary to keep input clean)
 
     ````{important}
     The target Input widget will display a comma-separated list of issues keys. However, the widget needs to keep

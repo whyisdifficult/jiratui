@@ -39,6 +39,27 @@ class IssueLinkTypeSelector(Select):
 
 
 class AddWorkItemRelationshipScreen(Screen[dict]):
+    """A modal screen that allows users to relate 2 work items.
+
+    The screen does not create the relationship between the work items. Instead, it returns the relationship's data
+    to the caller via the `dismiss()` call and the caller will proceed to create the relationship via the API.
+
+    The screen sends back the caller the following dictionary:
+
+    ```python
+    {
+        'right_issue_key': 'WI-123',
+        'link_type': 'relates-to',
+        'link_type_id': 1,
+    }
+    ```
+
+    **See Also**:
+    - [Relate Work Items Screen Design](#components-add-relationship-between-work-items)
+    - [Use Case: Relate Work Items](#use-case-relate-work-items)
+    - [Architecture](#architecture-related-work-items-classes)
+    """
+
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'Link Work Items'
 

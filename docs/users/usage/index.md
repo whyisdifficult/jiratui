@@ -356,7 +356,7 @@ To activate full-text search press `/`. Enter the search term in the pop-up and 
 
 #### Searching Using JQL Expressions
 
-Another way to search work items in JiraTUI is by crafting your own [JQL query](). You can do so using the JQL Query
+Another way to search work items in JiraTUI is by crafting your own [JQL query](https://confluence.atlassian.com/jirakb/run-jql-search-query-using-jira-cloud-rest-api-1289424308.html). You can do so using the JQL Query
 input field. In addition, you can also define your own JQL query expressions and save them in the config file using the
 setting `pre_defined_jql_expressions`. This is a YAML dictionary of expressions. When you focus on the JQL Query input
 field (`j`) and press `ctrl+e` the JQL Editor opens. Here you can write a complex query or, choose one from the
@@ -921,7 +921,7 @@ $ jiratui issues update SCRUM-1 -t 6
 ```
 
 This will allow you to transition the work item with key `SCRUM-1` from the current status to the status Done. See the
-[metadata command](index.md#show-metadata) above for the context.
+[metadata command](#show-metadata) above for the context.
 
 #### Update Priority
 
@@ -933,7 +933,7 @@ $ jiratui issues update SCRUM-1 -p 1
 ```
 
 This will allow you to set the priority of the work item with key `SCRUM-1` to High. See the
-[metadata command](show-metadata) above for the context.
+[metadata command](#show-metadata) above for the context.
 
 ### Listing Comments
 

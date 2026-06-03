@@ -1,3 +1,6 @@
+"""This module contains factory classes and functions to generate widgets used for updating different fields of a work
+item."""
+
 from enum import Enum
 from typing import Any
 

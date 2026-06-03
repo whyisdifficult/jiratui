@@ -1,6 +1,4 @@
-"""
-This module contains the widgets used for displaying and updating fields associated to a work item.
-"""
+"""This module contains the widgets used for displaying and updating fields associated to a work item."""
 
 from textual import on
 from textual.app import ComposeResult

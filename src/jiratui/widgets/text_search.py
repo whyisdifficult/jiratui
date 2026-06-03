@@ -5,8 +5,12 @@ from textual.widgets import Input
 
 
 class TextSearchScreen(ModalScreen[str]):
-    """A modal screen that shows an inout field to allow the user to provide a text for searching work items using
-    full-text search."""
+    """A modal screen that shows an input field to allow the user to provide a text for searching work items using
+    full-text search.
+
+    **See Also**:
+    - [Use Case: Text-based search](#use-case-text-based-search)
+    """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close Help')]
 

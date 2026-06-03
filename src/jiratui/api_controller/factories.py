@@ -25,7 +25,7 @@ from jiratui.utils.fields import get_additional_fields_values, get_custom_fields
 class WorkItemFactory:
     @staticmethod
     def create_work_item(data: dict) -> JiraIssue:
-        """Creates an instance of `JiraIssue` for a work item as returned by the API.
+        """Creates an instance of [JiraIssue](#jiratui.models.JiraIssue) for a work item as returned by the API.
 
         Args:
             data: the work item as returned by the API.
@@ -196,13 +196,13 @@ class WorkItemFactory:
 
 
 def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
-    """Builds a list of `IssueComment`.
+    """Builds a list of [IssueComment](#jiratui.models.IssueComment).
 
     Args:
-        raw_comments: a list of dictionaries with the details of comments.
+        raw_comments: a list of dictionaries with the details of comments. This is the result of the API.
 
     Returns:
-        A list of instances `IssueComment`.
+        A list of `IssueComment` instances.
     """
     comments: list[IssueComment] = []
     for comment in raw_comments:
@@ -237,7 +237,7 @@ def build_comments(raw_comments: list[dict]) -> list[IssueComment]:
 
 
 def build_related_work_items(links: list[dict]) -> list[RelatedJiraIssue]:
-    """Builds a list of `RelatedJiraIssue` representing the items related to another item.
+    """Builds a list of [RelatedJiraIssue](#jiratui.models.RelatedJiraIssue) representing the items related to another item.
 
     Args:
         links: a dictionary with the details of the related items.

@@ -20,22 +20,18 @@ class JiraAPI:
     """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
 
     **Supported Versions**
-
-    - https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version
-    - https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version
+    - [https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version)
+    - [https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#version)
 
     **Versions**
-
-    [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
+    - [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
     [version 3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) of the API offer the same collection of
-    operations. However, version 3 provides support for the
-    [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
-
-    - body in comments, including where comments are used in issue, issue link, and transition resources.
-    - comment in work-logs.
-    - description and environment fields in issues.
-    - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a
-    string and don't handle Atlassian Document Format content.
+    operations. However, version 3 provides support for the [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
+        - body in comments, including where comments are used in issue, issue link, and transition resources.
+        - comment in work-logs.
+        - description and environment fields in issues.
+        - textarea type custom fields (multi-line text fields) in issues. Single line custom fields (textfield) accept a
+        string and don't handle Atlassian Document Format content.
     """
 
     API_PATH_PREFIX = '/rest/api/3/'
@@ -98,10 +94,10 @@ class JiraAPI:
         order_by: str | None = None,
         keys: list[str] = None,
     ) -> dict:
-        """Retrieves a paginated list of projects visible to the user (making the request).
+        """Retrieves a paginated list of projects visible to the user making the request.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
+        **See Also**:
+        - [api-rest-api-3-project-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get)
 
         Args:
             offset: the index of the first item to return in a page of results (page offset).
@@ -137,8 +133,8 @@ class JiraAPI:
         The statuses are grouped by issue type, as each project has a set of valid issue types and each issue type has
         a set of valid statuses.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-statuses-get
+        **See Also**:
+        - [api-rest-api-3-project-projectidorkey-statuses-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-statuses-get)
 
         Args:
             project_key: the (case-sensitive) project ID or project key.
@@ -153,8 +149,8 @@ class JiraAPI:
     async def get_issue_types_for_user(self) -> list[dict]:
         """Retrieves all the issue types.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
+        **See Also**:
+        - [api-rest-api-3-issuetype-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get)
 
         Returns:
             A list of dictionaries with the details of the types of issues.
@@ -169,8 +165,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a paginated list of statuses that match a search on project.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-status/#api-rest-api-3-statuses-search-get
+        **See Also**:
+        - [api-rest-api-3-statuses-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-status/#api-rest-api-3-statuses-search-get)
 
         Args:
             project_id: the ID of the project the status is part of or null for global statuses.
@@ -197,7 +193,8 @@ class JiraAPI:
     async def get_project(self, key: str) -> dict:
         """Retrieves the details of a project.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
+        **See Also**:
+        - [api-rest-api-3-project-projectidorkey-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get)
 
         Args:
             key: the project ID or project key (case-sensitive).
@@ -219,8 +216,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves a list of users that can be assigned to an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-search-get
+        **See Also**:
+        - [api-rest-api-3-user-assignable-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-search-get)
 
         Args:
             project_id_or_key: the project ID or project key (case-sensitive). Required, unless `issue_key` or
@@ -272,8 +269,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves the users who can be assigned issues in one or more projects.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get
+        **See Also**:
+        - [api-rest-api-3-user-assignable-multiprojectsearch-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get)
 
         Args:
             project_keys: a list of project keys (case-sensitive). This parameter accepts a comma-separated list.
@@ -314,8 +311,8 @@ class JiraAPI:
         search and check for moved issues is performed. If a matching issue is found its details are returned, a 302
         or other redirect is not returned. The issue key returned in the response is the key of the issue found.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-get)
 
         Args:
             issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
@@ -386,8 +383,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves the remote issue links for an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-remotelink-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-get)
 
         Args:
             issue_id_or_key: the key or ID of the issue whose remote links we want to retrieve.
@@ -408,8 +405,8 @@ class JiraAPI:
     async def create_issue_remote_link(self, issue_id_or_key: str, url: str, title: str) -> None:
         """Creates or updates a remote issue link for an issue.
 
-        See Also:
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-post
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-remotelink-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-post)
 
         Args:
             issue_id_or_key: the ID or case-sensitive key of the work item
@@ -434,8 +431,8 @@ class JiraAPI:
     async def delete_issue_remote_link(self, issue_id_or_key: str, link_id: str) -> None:
         """Deletes a web link associated to a work item.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-linkid-delete
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-remotelink-linkid-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-remote-links/#api-rest-api-3-issue-issueidorkey-remotelink-linkid-delete)
 
         Args:
             issue_id_or_key: the ID or case-sensitive key of the work item
@@ -471,8 +468,8 @@ class JiraAPI:
         """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
         results.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post
+        **See Also**:
+        - [api-rest-api-3-search-jql-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post)
 
         Args:
             project_key: search items that belong to the project with this (case-sensitive) key.
@@ -542,11 +539,13 @@ class JiraAPI:
         """Provides an estimated count of the issues that match the JQL. Recent updates might not be immediately visible
         in the returned output. This endpoint requires JQL to be bounded.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post
+        **See Also**:
+        - [api-rest-api-3-search-approximate-count-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-approximate-count-post)
 
-        Important: this is only available for the Jira cloud platform. For on-premises we need another way or to disable
+        ```{Important}
+        This is only available for the Jira cloud platform. For on-premises we need another way or to disable
         the feature.
+        ```
 
         Args:
             project_key: search items that belong to the project with this (case-sensitive) key.
@@ -583,8 +582,8 @@ class JiraAPI:
     ) -> dict:
         """Evaluates a JQL expression.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-jira-expressions/#api-rest-api-3-expression-evaluate-post
+        **See Also**:
+        - [api-rest-api-3-expression-evaluate-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-jira-expressions/#api-rest-api-3-expression-evaluate-post)
 
         Args:
             expression: a JQL expression.
@@ -611,8 +610,8 @@ class JiraAPI:
         These settings determine whether optional features (for example, subtasks, time tracking, and others) are
         enabled. If time tracking is enabled, this operation also returns the time tracking configuration.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-jira-settings/#api-rest-api-3-configuration-get
+        **See Also**:
+        - [api-rest-api-3-configuration-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-jira-settings/#api-rest-api-3-configuration-get)
 
         Returns:
             A dictionary with the settings.
@@ -622,8 +621,8 @@ class JiraAPI:
     async def server_info(self) -> dict:
         """Retrieves information of the Jira server.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-server-info/#api-group-server-info
+        **See Also**:
+        - [api-group-server-info](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-server-info/#api-group-server-info)
 
         Returns:
             A dictionary with the details.
@@ -633,8 +632,8 @@ class JiraAPI:
     async def myself(self) -> dict:
         """Retrieves information of the Jira user connecting to the Jira server.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-myself/#api-rest-api-3-myself-get
+        **See Also**:
+        - [api-rest-api-3-myself-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-myself/#api-rest-api-3-myself-get)
 
         Returns:
             A dictionary with the details.
@@ -649,8 +648,8 @@ class JiraAPI:
         """Retrieves a list of all users, including active users, inactive users and previously deleted users that have
         an Atlassian account.
 
-        See Also:
-           https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get
+        **See Also**:
+        - [api-rest-api-3-users-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-users-search-get)
 
         Args:
             offset: the index of the first item to return.
@@ -678,8 +677,8 @@ class JiraAPI:
     ) -> list[dict]:
         """Retrieves a list of active users that match the search string and property.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get
+        **See Also**:
+        - [api-rest-api-3-user-search-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get)
 
         Args:
             username: the username to filter users.
@@ -723,8 +722,8 @@ class JiraAPI:
             limit: the maximum number of items to return. The total number of matched users is returned in the `total`
             key. The default value is 50.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-picker-get
+        **See Also**:
+        - [api-rest-api-3-user-picker-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-picker-get)
 
         Returns:
             A dictionary with a `users` key that contains the list of users found.
@@ -746,7 +745,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a paginated list of groups.
 
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-bulk-get
+        **See Also**:
+        - [api-rest-api-3-group-bulk-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-bulk-get)
 
         Args:
             offset: the index of the first item to return in a page of results (page offset).
@@ -775,12 +775,14 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a paginated list of all (active) users in a group.
 
+        ```{note}
         Note that users are ordered by username, however the username is not returned in the results due to privacy
         reasons.
+        ```
 
-        See Also:
-            - https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-member-get
-            - https://support.atlassian.com/user-management/docs/default-groups-and-permissions/
+        **See Also**:
+        - [api-rest-api-3-group-member-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-member-get)
+        - [default-groups-and-permissions](https://support.atlassian.com/user-management/docs/default-groups-and-permissions/)
 
         Args:
             group_id: The ID of the group.
@@ -806,15 +808,18 @@ class JiraAPI:
     async def get_user(self, account_id: str) -> dict:
         """Retrieves the details of a single user.
 
-        See Also:
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-get
+        **See Also**:
+        - [api-rest-api-3-user-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-get)
 
         Args:
             account_id: the account ID of the user, which uniquely identifies the user across all Atlassian
-            products. For example, 5b10ac8d82e05b22cc7d4ef5.
+            products.
 
         Returns:
             A dictionary with the details of the user
+
+        Example:
+        get_user(account_id='5b10ac8d82e05b22cc7d4ef5')
         """
 
         return await self._client.make_request(
@@ -824,8 +829,8 @@ class JiraAPI:
     async def add_comment(self, issue_id_or_key: str, message: str | dict) -> dict:
         """Adds a comment to an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-post
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-comment-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-post)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
@@ -845,8 +850,8 @@ class JiraAPI:
     async def get_comment(self, issue_id_or_key: str, comment_id: str) -> dict:
         """Retrieves the detail sof a comment.
 
-        See Also:
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-comment-id-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
@@ -865,8 +870,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves the comments of a work item.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-comment-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item whose comment we want to retrieve.
@@ -890,8 +895,8 @@ class JiraAPI:
     async def delete_comment(self, issue_id_or_key: str, comment_id: str) -> None:
         """Deletes a comment.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-delete
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-comment-id-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-delete)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item whose comment we want to delete.
@@ -909,8 +914,8 @@ class JiraAPI:
     async def issue_edit_metadata(self, issue_id_or_key: str) -> dict:
         """Retrieves the edit screen fields for an issue that are visible to and editable by the user.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-editmeta-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -925,8 +930,8 @@ class JiraAPI:
     async def update_issue(self, issue_id_or_key: str, payload: dict) -> dict:
         """Updates a work item.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-put
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-put)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -950,8 +955,8 @@ class JiraAPI:
         If we want to change this then we would need to take care of the difference in the format of the
         environment field for API v2 (does nto support ADF) and v3 (supports ADF).
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+        **See Also**:
+        - [api-rest-api-3-issue-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post)
 
         Args:
             fields: a dictionary with the fields and their values to create the item.
@@ -970,8 +975,8 @@ class JiraAPI:
         An issue cannot be deleted if it has one or more subtasks. To delete an issue with subtasks, set the query
         parameter `deleteSubtasks`. This causes the issue's subtasks to be deleted with the issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-delete
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-delete)
 
         Args:
             issue_id_or_key: the id of the work item we want to delete.
@@ -990,8 +995,8 @@ class JiraAPI:
     async def transitions(self, issue_id_or_key: str) -> dict:
         """Retrieves the applicable transitions for a work item.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-transitions-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -1006,15 +1011,15 @@ class JiraAPI:
     async def transition_issue(self, issue_id_or_key: str, transition_id: str) -> None:
         """Performs an issue transition.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-post
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-transitions-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-transitions-post)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
             transition_id: the ID of the status transition.
 
         Returns:
-            Nothing.
+            None
         """
         payload = {'transition': transition_id}
         await self._client.make_request(
@@ -1038,8 +1043,8 @@ class JiraAPI:
         work items. If we want to change this then we would need to take care of the difference in the format of the
         comment field for API v2 (does nto support ADF) and v3 (supports ADF).
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/#api-rest-api-3-issuelink-post
+        **See Also**:
+        - [api-rest-api-3-issuelink-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-links/#api-rest-api-3-issuelink-post)
 
         Args:
             left_issue_key: the case-sensitive key of the work item.
@@ -1048,7 +1053,7 @@ class JiraAPI:
             link_type_id: the ID of the type of link.
 
         Returns:
-            Nothing.
+            None.
         """
         payload = {
             'type': {
@@ -1071,8 +1076,8 @@ class JiraAPI:
     async def issue_link_types(self) -> dict:
         """Retrieves a list of all issue link types.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-link-types/#api-rest-api-3-issuelinktype-get
+        **See Also**:
+        - [api-rest-api-3-issuelinktype-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-link-types/#api-rest-api-3-issuelinktype-get)
 
         Returns:
             A dictionary with the types of links between work items.
@@ -1088,8 +1093,8 @@ class JiraAPI:
     ) -> dict:
         """Retrieves a page of field metadata for a specified project and type of issue id.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get
+        **See Also**:
+        - [api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-projectidorkey-issuetypes-issuetypeid-get)
 
         Args:
             project_id_or_key: the case-sensitive key of the project.
@@ -1120,10 +1125,10 @@ class JiraAPI:
     ) -> list[dict]:
         """Adds an attachment to an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-issue-issueidorkey-attachments-post
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-attachments-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-issue-issueidorkey-attachments-post)
 
-        Attachments are posted as multipart/form-data (RFC 1867).
+        Attachments are posted as `multipart/form-data` (RFC 1867).
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -1171,14 +1176,14 @@ class JiraAPI:
     async def delete_attachment(self, attachment_id: str) -> None:
         """Deletes an attachment from an issue.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-delete
+        **See Also**:
+        - [api-rest-api-3-attachment-id-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-delete)
 
         Args:
             attachment_id: The ID of the attachment.
 
         Returns:
-            `None`; HTTP 204 if successful or an exception otherwise.
+            None; HTTP 204 if successful or an exception otherwise.
         """
         await self._client.make_request(
             method=httpx.AsyncClient.delete, url=f'attachment/{attachment_id}'
@@ -1188,9 +1193,9 @@ class JiraAPI:
     async def get_attachment(self, attachment_id: str) -> dict:
         """Retrieves an attachment (metadata).
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-get
-            https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-id-get
+        **See Also**:
+        - [api-rest-api-3-attachment-id-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-id-get)
+        - [api-rest-api-2-attachment-id-get](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-id-get)
 
         Args:
             attachment_id: the ID of the attachment.
@@ -1205,9 +1210,9 @@ class JiraAPI:
     async def get_attachment_content(self, attachment_id: str) -> Any:
         """Retrieves the contents of an attachment.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-content-id-get
-            https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-content-id-get
+        **See Also**:
+        - [api-rest-api-3-attachment-content-id-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-attachment-content-id-get)
+        - [api-rest-api-2-attachment-content-id-get](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-attachments/#api-rest-api-2-attachment-content-id-get)
 
         Args:
             attachment_id: The ID of the attachment.
@@ -1235,8 +1240,8 @@ class JiraAPI:
         [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
         ```
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-get
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-worklog-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -1272,8 +1277,8 @@ class JiraAPI:
         [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
         ```
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-post
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-worklog-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-post)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -1313,8 +1318,8 @@ class JiraAPI:
         [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
         ```
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-id-delete
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-worklog-id-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-id-delete)
 
         Args:
             issue_id_or_key: the ID or key of the issue.
@@ -1355,8 +1360,8 @@ class JiraAPI:
         - For all other fields, this operation only returns the fields that the user has permission to view (that is,
         the field is used in at least one project that the user has Browse Projects project permission for.)
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
+        **See Also**:
+        - [api-rest-api-3-field-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get)
 
         Returns:
             A list of dictionaries.
@@ -1412,9 +1417,9 @@ class JiraAPI:
 class JiraAPIv2(JiraAPI):
     """Implements methods to connect to the REST API v2 exposed by the Jira Cloud Platform.
 
-    **API Docs**: https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about
-
     This class implements methods for connecting to Jira REST API v2.
+
+    - [API Docs](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#about)
     """
 
     API_PATH_PREFIX = '/rest/api/2/'
@@ -1423,11 +1428,11 @@ class JiraAPIv2(JiraAPI):
 class JiraDataCenterAPI(JiraAPI):
     """Implements the API exposed by the Jira Data Center (aka. on-premises) platform.
 
-    **API Docs**: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted
+    - [API Docs](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted)
     """
 
-    # see: https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure
     API_PATH_PREFIX = '/rest/api/2/'
+    """See https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#structure"""
 
     async def search_projects(
         self,
@@ -1441,9 +1446,9 @@ class JiraDataCenterAPI(JiraAPI):
         'Browse projects' or 'Administer projects' permission. If no user is logged in, it returns all projects that
         are visible for anonymous users.
 
-        See Also:
-            - https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-project/#api-api-2-project-get
-            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/project-getAllProjects
+        **See Also**:
+        - [api-api-2-project-get](https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-project/#api-api-2-project-get)
+        - [project-getAllProjects](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/project-getAllProjects)
 
         Args:
             offset: N/A
@@ -1479,9 +1484,9 @@ class JiraDataCenterAPI(JiraAPI):
         """Searches for issues using JQL. Recent updates might not be immediately visible in the returned search
         results.
 
-        See Also:
-            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-search/#api-api-2-search-post
-            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/search-search
+        **See Also**:
+        - [api-api-2-search-post](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-search/#api-api-2-search-post)
+        - [search-search](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/search-search)
 
         Args:
             project_key: search items that belong to the project with this (case-sensitive) key.
@@ -1554,9 +1559,9 @@ class JiraDataCenterAPI(JiraAPI):
     async def server_info(self) -> dict:
         """Retrieves information of the Jira server.
 
-        See Also:
-            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/serverInfo-getServerInfo
-            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-serverinfo/#api-api-2-serverinfo-get
+        **See Also**:
+        - [serverInfo-getServerInfo](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/serverInfo-getServerInfo)
+        - [api-api-2-serverinfo-get](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-serverinfo/#api-api-2-serverinfo-get)
 
         Returns:
             A dictionary with the details.
@@ -1566,9 +1571,9 @@ class JiraDataCenterAPI(JiraAPI):
     async def myself(self) -> dict:
         """Retrieves information of the Jira user connecting to the Jira server.
 
-        See Also:
-            - https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/myself-getUser
-            - https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-myself/#api-group-myself
+        **See Also**:
+        - [myself-getUser](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/myself-getUser)
+        - [api-group-myself](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-myself/#api-group-myself)
 
         Returns:
             A dictionary with the details.
@@ -1584,9 +1589,8 @@ class JiraDataCenterAPI(JiraAPI):
     ) -> list[dict]:
         """Retrieves a list of active users that match the search string and property.
 
-        See Also:
-            - https://docs.atlassian.com/software/jira/docs/api/REST/9.17.0/#api/2/user-findUsers
-            -
+        **See Also**:
+        - [user-findUsers](https://docs.atlassian.com/software/jira/docs/api/REST/9.17.0/#api/2/user-findUsers)
 
         Args:
             username: A query string used to search username, name or e-mail address.
@@ -1608,8 +1612,8 @@ class JiraDataCenterAPI(JiraAPI):
     ) -> list[dict]:
         """Retrieves the users who can be assigned issues in one or more projects.
 
-        See Also:
-            https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get
+        **See Also**:
+        - [api-rest-api-3-user-assignable-multiprojectsearch-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-assignable-multiprojectsearch-get)
 
         Args:
             project_keys: a list of project keys (case-sensitive). This parameter accepts a comma-separated list.
@@ -1637,9 +1641,9 @@ class JiraDataCenterAPI(JiraAPI):
     async def get_attachment(self, attachment_id: str) -> dict:
         """Retrieves an attachment (metadata).
 
-        See Also:
-            https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment-getAttachment
-            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get
+        **See Also**:
+        - [attachment-getAttachment](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment-getAttachment)
+        - [api-api-2-attachment-id-get](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get)
 
         Args:
             attachment_id: the ID of the attachment.
@@ -1653,9 +1657,9 @@ class JiraDataCenterAPI(JiraAPI):
     async def get_attachment_content(self, attachment_id: str) -> Any:
         """Retrieves the contents of an attachment.
 
-        See Also:
-            https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment
-            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get
+        **See Also**:
+        - [attachment](https://docs.atlassian.com/software/jira/docs/api/REST/1000.1580.0/#api/2/attachment)
+        - [api-api-2-attachment-id-get](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-attachment/#api-api-2-attachment-id-get)
 
         Args:
             attachment_id: The ID of the attachment.
@@ -1690,8 +1694,8 @@ class JiraDataCenterAPI(JiraAPI):
         """Retrieves all work logs for an issue. Work logs won't be returned if the Log work field is hidden for the
         project.
 
-        See Also:
-            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-issue/#api-api-2-issue-issueidorkey-worklog-get
+        **See Also**:
+        - [api-api-2-issue-issueidorkey-worklog-get](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-issue/#api-api-2-issue-issueidorkey-worklog-get)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.
@@ -1713,8 +1717,8 @@ class JiraDataCenterAPI(JiraAPI):
     ) -> dict:
         """Adds a worklog to an issue.
 
-        See Also:
-            https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-issue/#api-api-2-issue-issueidorkey-worklog-post
+        **See Also**:
+        - [api-api-2-issue-issueidorkey-worklog-post](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-issue/#api-api-2-issue-issueidorkey-worklog-post)
 
         Args:
             issue_id_or_key: the case-sensitive key of the work item.

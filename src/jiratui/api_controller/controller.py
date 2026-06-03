@@ -69,6 +69,8 @@ from jiratui.utils.adf import convert_markdown_to_adf
 
 @dataclass
 class APIControllerResponse(BaseModel):
+    """The response that the API controller returns on every method."""
+
     success: bool = True
     result: Any | None = None
     error: str | None = None

@@ -9,7 +9,13 @@ from jiratui.config import CONFIGURATION
 
 
 class AddAttachmentScreen(Screen[str]):
-    """The screen to select files to attach and attach them to a work item."""
+    """The screen to select files to attach and attach them to a work item.
+
+    **See Also**:
+    - [Attach File Screen Design](#components-attach-file-screen)
+    - [Use Case: Attach File](#use-case-attach-file)
+    - [Architecture](#architecture-work-item-attachments-classes)
+    """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'Attach File'

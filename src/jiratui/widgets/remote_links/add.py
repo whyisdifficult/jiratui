@@ -31,7 +31,11 @@ class RemoteLinkNameInputWidget(Input):
 
 
 class AddRemoteLinkScreen(Screen[dict]):
-    """A screen that allows a user to add a new remote link to a work item."""
+    """A screen that allows a user to add a new remote link, aka. web link, to a work item.
+
+    **See Also**:
+    - [Use Case: Add Web Link](#use-case-add-web-link)
+    """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close')]
     TITLE = 'New Web Link'

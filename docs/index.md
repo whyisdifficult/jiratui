@@ -23,6 +23,10 @@ users/configuration/configuration.md
 ```
 
 ```{toctree}
-:caption: Documentation for Develoeprs
+:caption: Documentation for Developers
 :maxdepth: 1
-developers/index.md
+developers/getting-started/index.md
+developers/explanation/index.md
+developers/reference/index.md
+developers/guides/index.md
+```

@@ -59,12 +59,15 @@ dev = [
 docs = [
     "myst-parser>=5.1.0,<6.0.0",
     "sphinx>=9.1.0,<10.0.0",
+    "sphinx-autodoc2[cli]>=0.5.0",
     "sphinx-design>=0.6.1",
     "sphinx-markdown-builder>=0.6.10,<0.7.0",
     "sphinx-rtd-theme>=3.0.2",
+    "sphinx-togglebutton>=0.4.5",
     "sphinxcontrib-mermaid>=2.0.2,<2.1.0",
 ]
 lint = [
+    "import-linter>=2.11",
     "mypy>=2.1.0,<3.0.0",
     "ruff>=0.15.14,<0.16.0",
 ]
@@ -88,3 +91,13 @@ strict_optional = false
 ignore_missing_imports = true
 show_error_context = false
 exclude = ["docs", "test"]
+
+[tool.importlinter]
+root_package = 'jiratui'
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = 'Importing from docs directory'
+type = 'forbidden'
+source_modules = 'jiratui'
+forbidden_modules = 'docs'
