@@ -118,7 +118,7 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         self._work_item_project_key = work_item_subtasks.project_key
 
         rows: list[ChildWorkItemCollapsible] = []
-        for issue in work_item_subtasks.issues:
+        for issue in work_item_subtasks.issues or []:
             children: list[Widget] = [
                 Static(Text(f'Type: {issue.issue_type.name}')),
                 Static(Text(f'Assignee: {issue.display_assignee()}')),
