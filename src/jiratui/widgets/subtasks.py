@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import cast
 
 from rich.text import Text
@@ -13,6 +14,13 @@ from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+
+
+@dataclass
+class WorkItemSubtasks:
+    work_item_key: str
+    project_key: str | None = None
+    issues: list[JiraIssue] | None = None
 
 
 class ChildWorkItemCollapsible(Collapsible):
@@ -52,7 +60,7 @@ class IssueChildWorkItemsWidget(VerticalScroll):
     """
 
     HELP = 'See Subtasks section in the help'
-    issues: Reactive[list[JiraIssue] | None] = reactive(None, always_update=True)
+    issues: Reactive[WorkItemSubtasks | None] = reactive(None, always_update=True)
 
     BINDINGS = [
         # override the binding to be able to inject the current work item as a prent of the subtask
@@ -67,28 +75,21 @@ class IssueChildWorkItemsWidget(VerticalScroll):
 
     def __init__(self):
         super().__init__(id='issue_subtasks')
-        self._issue_key: str | None = None
+        self._work_item_key: str | None = None
+        self._work_item_project_key: str | None = None
 
     @property
     def help_anchor(self) -> str:
         return '#subtasks'
 
-    @property
-    def issue_key(self) -> str | None:
-        return self._issue_key
-
-    @issue_key.setter
-    def issue_key(self, value: str | None) -> None:
-        self._issue_key = value
-
     async def action_create_work_item_subtask(self) -> None:
-        if self._issue_key:
+        if self._work_item_key:
             screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
             await self.app.push_screen(
                 AddWorkItemScreen(
-                    project_key=screen.project_selector.selection,
+                    project_key=self._work_item_project_key,
                     reporter_account_id=CONFIGURATION.get().jira_account_id,
-                    parent_work_item_key=self.issue_key,
+                    parent_work_item_key=self._work_item_key,
                 ),
                 callback=screen.create_work_item,
             )
@@ -97,21 +98,27 @@ class IssueChildWorkItemsWidget(VerticalScroll):
                 'Select a work item before attempting to create a subtask.', title='Create Subtask'
             )
 
-    def watch_issues(self, items: list[JiraIssue]) -> None:
+    def watch_issues(self, work_item_subtasks: WorkItemSubtasks | None = None) -> None:
         """Updates the list of work items that are subtasks of the currently-selected item.
 
         Args:
-            items: the list of items that are subtasks of the current work item.
+            work_item_subtasks: the subtasks associated to a work item. This contains the work item's key and the work
+            item's project's key as well.
 
         Returns:
             None
         """
 
         self.remove_children()
-        if not items:
+
+        if work_item_subtasks is None:
             return
+
+        self._work_item_key = work_item_subtasks.work_item_key
+        self._work_item_project_key = work_item_subtasks.project_key
+
         rows: list[ChildWorkItemCollapsible] = []
-        for issue in items:
+        for issue in work_item_subtasks.issues:
             children: list[Widget] = [
                 Static(Text(f'Type: {issue.issue_type.name}')),
                 Static(Text(f'Assignee: {issue.display_assignee()}')),

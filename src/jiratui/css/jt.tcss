@@ -596,12 +596,12 @@ LinkedWorkItemInputWidget {
 
 /* ---------------------------------------- Create Work Item Screen - BEGIN ---------------------------------------- */
 
-CreateWorkItemProjectSelectionInput {
+WorkItemProjectSelectionField {
     border: round $accent;
     padding: 0 1;
 }
 
-CreateWorkItemIssueTypeSelectionInput {
+WorkItemTypeSelectionField {
     border: round $accent;
     padding: 0 1;
 }
@@ -1325,6 +1325,29 @@ UsersAutoComplete {
     /* Customize the dropdown */
     & AutoCompleteList {
         max-height: 6;                  /* The number of lines before scrollbars appear */
+        constrain: none inside;
+        background: $primary-muted;     /* The background color of the dropdown */
+        color: $text-primary;           /* The color of the text */
+    }
+
+    /* Customize the matching substring highlighting */
+    & .autocomplete--highlight-match {
+        color: $text-accent;
+        text-style: bold;
+    }
+
+    /* Customize the text the cursor is over */
+    & .option-list--option-highlighted {
+        color: $text-success;
+        background: $error 50%;  /* 50% opacity, blending into background */
+        text-style: italic;
+    }
+}
+
+WorkItemKeyAutoComplete {
+    /* Customize the dropdown */
+    & AutoCompleteList {
+        max-height: 10;                 /* The number of lines before scrollbars appear */
         constrain: none inside;
         background: $primary-muted;     /* The background color of the dropdown */
         color: $text-primary;           /* The color of the text */

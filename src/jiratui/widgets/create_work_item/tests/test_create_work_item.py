@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.models import IssueType, Project
+from jiratui.models import IssueType, JiraIssueSearchResponse, Project
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
@@ -22,9 +22,9 @@ from jiratui.widgets.commons.widgets import (
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
-    CreateWorkItemIssueSummaryField,
-    CreateWorkItemIssueTypeSelectionInput,
-    CreateWorkItemProjectSelectionInput,
+    SummaryField,
+    WorkItemProjectSelectionField,
+    WorkItemTypeSelectionField,
 )
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 
@@ -1757,9 +1757,9 @@ async def test_validate_required_fields_is_false(app, create_metadata_without_ed
         assert result is False
 
 
-@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(WorkItemTypeSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(SummaryField, 'value', PropertyMock(return_value='summary text'))
 @pytest.mark.asyncio
 async def test_validate_required_fields(app, create_metadata_without_editable_reporter):
     app.config.create_additional_fields_ignore_ids = []
@@ -1776,9 +1776,9 @@ async def test_validate_required_fields(app, create_metadata_without_editable_re
 
 
 @patch.object(JiraUserInput, 'account_id', PropertyMock(return_value='1'))
-@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(WorkItemTypeSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(SummaryField, 'value', PropertyMock(return_value='summary text'))
 @pytest.mark.asyncio
 async def test_validate_required_fields_reporter_is_editable_and_selected(
     app, create_metadata_without_editable_reporter
@@ -1797,9 +1797,9 @@ async def test_validate_required_fields_reporter_is_editable_and_selected(
 
 
 @patch.object(JiraUserInput, 'account_id', PropertyMock(return_value=None))
-@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(WorkItemTypeSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(SummaryField, 'value', PropertyMock(return_value='summary text'))
 @pytest.mark.asyncio
 async def test_validate_required_fields_reporter_is_editable_and_not_selected(
     app, create_metadata_without_editable_reporter
@@ -1819,9 +1819,9 @@ async def test_validate_required_fields_reporter_is_editable_and_not_selected(
 
 @patch.object(PlainTextTextAreaWidget, 'required', PropertyMock(return_value=True))
 @patch.object(JiraUserInput, 'account_id', PropertyMock(return_value=None))
-@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueTypeSelectionInput, 'selection', PropertyMock(return_value=Mock()))
-@patch.object(CreateWorkItemIssueSummaryField, 'value', PropertyMock(return_value='summary text'))
+@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(WorkItemTypeSelectionField, 'selection', PropertyMock(return_value=Mock()))
+@patch.object(SummaryField, 'value', PropertyMock(return_value='summary text'))
 @pytest.mark.asyncio
 async def test_validate_required_fields_description_is_required_and_not_set(
     app, create_metadata_without_editable_reporter
@@ -1901,7 +1901,7 @@ async def test_save_button_status_after_description_update(
 
 
 @pytest.mark.parametrize('validate_required_fields', [True, False])
-@patch.object(CreateWorkItemProjectSelectionInput, 'selection', PropertyMock(return_value=None))
+@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=None))
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @pytest.mark.asyncio
 async def test_save_button_status_after_issue_type_selection(
@@ -2163,3 +2163,177 @@ async def test_format_field_value_fallback(app):
         result = screen._format_field_value('field_a', 'test1', metadata)
         # THEN
         assert result == 'test1'
+
+
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_empty_query_term(search_issues_mock: AsyncMock, app):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('')
+        # THEN
+        assert result is None
+        search_issues_mock.assert_not_called()
+
+
+@patch.object(AddWorkItemScreen, '_use_advanced_full_text_search')
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_advanced_search_disabled_no_project_selected(
+    search_issues_mock: AsyncMock,
+    use_advanced_full_text_search_mock: Mock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    use_advanced_full_text_search_mock.return_value = False
+    search_issues_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('test')
+        # THEN
+        assert screen.project_selector.selection is None
+        assert result == jira_issues
+        search_issues_mock.assert_called_once_with(
+            jql_query='summary ~ "test" OR description ~ "test" OR workItemKey ~ "test"',
+            fields=['id', 'key', 'summary'],
+        )
+
+
+@patch.object(AddWorkItemScreen, '_use_advanced_full_text_search')
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_advanced_search_disabled_no_project_selected_nothing_found(
+    search_issues_mock: AsyncMock,
+    use_advanced_full_text_search_mock: Mock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    use_advanced_full_text_search_mock.return_value = False
+    search_issues_mock.return_value = APIControllerResponse(result=None)
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('test')
+        # THEN
+        assert screen.project_selector.selection is None
+        assert result is None
+        search_issues_mock.assert_called_once_with(
+            jql_query='summary ~ "test" OR description ~ "test" OR workItemKey ~ "test"',
+            fields=['id', 'key', 'summary'],
+        )
+
+
+@patch.object(AddWorkItemScreen, '_use_advanced_full_text_search')
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_advanced_search_enabled_no_project_selected(
+    search_issues_mock: AsyncMock,
+    use_advanced_full_text_search_mock: Mock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    use_advanced_full_text_search_mock.return_value = True
+    search_issues_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('test')
+        # THEN
+        assert screen.project_selector.selection is None
+        assert result == jira_issues
+        search_issues_mock.assert_called_once_with(
+            jql_query='text ~ "test" OR workItemKey ~ "test"',
+            fields=['id', 'key', 'summary'],
+        )
+
+
+@patch.object(AddWorkItemScreen, '_use_advanced_full_text_search')
+@patch.object(APIController, 'get_issue_types_for_project')
+@patch.object(APIController, 'search_projects')
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_advanced_search_disabled_project_selected(
+    search_issues_mock: AsyncMock,
+    search_projects_mock: AsyncMock,
+    get_issue_types_for_project_mock: AsyncMock,
+    use_advanced_full_text_search_mock: Mock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    use_advanced_full_text_search_mock.return_value = False
+    search_issues_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[Project('1', 'Project 1', 'P1')]
+    )
+    get_issue_types_for_project_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('test')
+        # THEN
+        assert screen.project_selector.selection == 'P1'
+        assert result == jira_issues
+        search_issues_mock.assert_called_once_with(
+            jql_query='(summary ~ "test" OR description ~ "test" OR workItemKey ~ "test") AND (spaceJira = "P1")',
+            fields=['id', 'key', 'summary'],
+        )
+
+
+@patch.object(AddWorkItemScreen, '_use_advanced_full_text_search')
+@patch.object(APIController, 'get_issue_types_for_project')
+@patch.object(APIController, 'search_projects')
+@patch.object(APIController, 'search_issues')
+@pytest.mark.asyncio
+async def test_search_work_items_with_advanced_search_enabled_project_selected(
+    search_issues_mock: AsyncMock,
+    search_projects_mock: AsyncMock,
+    get_issue_types_for_project_mock: AsyncMock,
+    use_advanced_full_text_search_mock: Mock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    use_advanced_full_text_search_mock.return_value = True
+    search_issues_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    search_projects_mock.return_value = APIControllerResponse(
+        result=[Project('1', 'Project 1', 'P1')]
+    )
+    get_issue_types_for_project_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._search_work_items('test')
+        # THEN
+        assert screen.project_selector.selection == 'P1'
+        assert result == jira_issues
+        search_issues_mock.assert_called_once_with(
+            jql_query='(text ~ "test" OR workItemKey ~ "test") AND (spaceJira = "P1")',
+            fields=['id', 'key', 'summary'],
+        )

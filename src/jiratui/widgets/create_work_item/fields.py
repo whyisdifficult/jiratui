@@ -1,4 +1,4 @@
-"""This module contains widgets used by the screen that allows users to create new work items."""
+"""these widgets are used by the screen that allows users to create new work items."""
 
 from textual import on
 from textual.widgets import Input
@@ -6,8 +6,9 @@ from textual.widgets import Input
 from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget, ProjectSelectionWidget
 
 
-class CreateWorkItemProjectSelectionInput(ProjectSelectionWidget):
-    """A Select widget for choosing the project for which we want to create a new work item."""
+class WorkItemProjectSelectionField(ProjectSelectionWidget):
+    """A [ProjectSelectionWidget](#jiratui.widgets.commons.base.ProjectSelectionWidget) widget for choosing the project
+    for which we want to create a new work item."""
 
     def __init__(self):
         super().__init__(
@@ -19,8 +20,9 @@ class CreateWorkItemProjectSelectionInput(ProjectSelectionWidget):
         )
 
 
-class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
-    """A Select widget for choosing the type of issue we want to create."""
+class WorkItemTypeSelectionField(IssueTypeSelectionWidget):
+    """A [IssueTypeSelectionWidget](#jiratui.widgets.commons.base.IssueTypeSelectionWidget) widget for choosing the type
+    of issue we want to create."""
 
     def __init__(self, options: list[tuple[str, str]]):
         super().__init__(
@@ -33,7 +35,7 @@ class CreateWorkItemIssueTypeSelectionInput(IssueTypeSelectionWidget):
         )
 
 
-class CreateWorkItemIssueSummaryField(Input):
+class SummaryField(Input):
     """An Input widget for setting the summary field of the issue we want to create."""
 
     def __init__(self, **kwargs):
@@ -53,7 +55,7 @@ class CreateWorkItemIssueSummaryField(Input):
             self.value = event.value.strip()
 
 
-class CreateWorkItemParentKeyField(Input):
+class ParentKeyField(Input):
     """An Input widget for setting the key of an issue that acts as a parent to the issue we want to create."""
 
     def __init__(self, value: str | None = None):
@@ -71,7 +73,7 @@ class CreateWorkItemParentKeyField(Input):
     def jira_field_key(self) -> str | None:
         return self._jira_field_key
 
-    @on(Input.Changed)
-    def clean_value(self, event: Input.Changed) -> None:
+    @on(Input.Blurred)
+    def clean_value(self, event: Input.Blurred) -> None:
         if event.value is not None:
-            self.value = event.value.strip()
+            self.value = event.value.strip().replace(' ', '')

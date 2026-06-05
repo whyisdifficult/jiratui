@@ -3,24 +3,24 @@
 ```{autodoc2-docstring} jiratui.widgets.create_work_item.fields
 ```
 
-## CreateWorkItemProjectSelectionInput
+## WorkItemProjectSelectionField
 
-```{autodoc2-object} jiratui.widgets.create_work_item.fields.CreateWorkItemProjectSelectionInput
+```{autodoc2-object} jiratui.widgets.create_work_item.fields.WorkItemProjectSelectionField
 ```
 
-## CreateWorkItemIssueTypeSelectionInput
+## WorkItemTypeSelectionField
 
-```{autodoc2-object} jiratui.widgets.create_work_item.fields.CreateWorkItemIssueTypeSelectionInput
+```{autodoc2-object} jiratui.widgets.create_work_item.fields.WorkItemTypeSelectionField
 ```
 
-## CreateWorkItemIssueSummaryField
+## SummaryField
 
-```{autodoc2-object} jiratui.widgets.create_work_item.fields.CreateWorkItemIssueSummaryField
+```{autodoc2-object} jiratui.widgets.create_work_item.fields.SummaryField
 ```
 
-## CreateWorkItemParentKeyField
+## ParentKeyField
 
-```{autodoc2-object} jiratui.widgets.create_work_item.fields.CreateWorkItemParentKeyField
+```{autodoc2-object} jiratui.widgets.create_work_item.fields.ParentKeyField
 ```
 
 ## TextAreaTabbedContent

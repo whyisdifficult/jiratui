@@ -236,10 +236,10 @@ the application takes to create a new work item.
 The following are the main components used by the application to support this use case:
 
 - [AddWorkItemScreen](#jiratui.widgets.create_work_item.screen.AddWorkItemScreen): Main screen that orchestrates the entire flow
-- [CreateWorkItemProjectSelectionInput](#jiratui.widgets.create_work_item.fields.CreateWorkItemProjectSelectionInput): Project selector
-- [CreateWorkItemIssueTypeSelectionInput](#jiratui.widgets.create_work_item.fields.CreateWorkItemIssueTypeSelectionInput): Issue type selector
-- [CreateWorkItemIssueSummaryField](#jiratui.widgets.create_work_item.fields.CreateWorkItemIssueSummaryField): Summary input
-- [CreateWorkItemParentKeyField](#jiratui.widgets.create_work_item.fields.CreateWorkItemParentKeyField): Parent work item key input
+- [WorkItemProjectSelectionField](#jiratui.widgets.create_work_item.fields.WorkItemProjectSelectionField): Project selector
+- [WorkItemTypeSelectionField](#jiratui.widgets.create_work_item.fields.WorkItemTypeSelectionField): Issue type selector
+- [SummaryField](#jiratui.widgets.create_work_item.fields.SummaryField): Summary input
+- [ParentKeyField](#jiratui.widgets.create_work_item.fields.ParentKeyField): Parent work item key input
 - [JiraUserInput](#jiratui.widgets.commons.users.JiraUserInput): Reporter and Assignee selectors
 - [ADFMarkdownTextAreaWidget](#jiratui.widgets.commons.adf.ADFMarkdownTextAreaWidget), [PlainTextTextAreaWidget](#jiratui.widgets.commons.widgets.PlainTextTextAreaWidget): Description and custom textarea fields
 - [LabelsWidget](#jiratui.widgets.commons.widgets.LabelsWidget), [MultiSelectWidget](#jiratui.widgets.commons.widgets.MultiSelectWidget), [SingleUserPickerWidget](#jiratui.widgets.commons.widgets.SingleUserPickerWidget), [MultiUserPickerWidget](#jiratui.widgets.commons.widgets.MultiUserPickerWidget): Dynamic custom fields

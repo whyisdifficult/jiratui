@@ -28,13 +28,14 @@ from textual.widgets import (
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.models import IssueType, Project
+from jiratui.models import IssueType, JiraIssue, Project
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import (
     FieldMode,
     LabelsAutoComplete,
     MultiUserPickerAutoComplete,
+    WorkItemKeyAutoComplete,
 )
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
@@ -46,10 +47,10 @@ from jiratui.widgets.commons.widgets import (
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
-    CreateWorkItemIssueSummaryField,
-    CreateWorkItemIssueTypeSelectionInput,
-    CreateWorkItemParentKeyField,
-    CreateWorkItemProjectSelectionInput,
+    ParentKeyField,
+    SummaryField,
+    WorkItemProjectSelectionField,
+    WorkItemTypeSelectionField,
 )
 
 
@@ -234,12 +235,12 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         return self.query_one('#add-work-item-button-save', expect_type=Button)
 
     @property
-    def project_selector(self) -> CreateWorkItemProjectSelectionInput:
-        return self.query_one(CreateWorkItemProjectSelectionInput)
+    def project_selector(self) -> WorkItemProjectSelectionField:
+        return self.query_one(WorkItemProjectSelectionField)
 
     @property
-    def issue_type_selector(self) -> CreateWorkItemIssueTypeSelectionInput:
-        return self.query_one(CreateWorkItemIssueTypeSelectionInput)
+    def issue_type_selector(self) -> WorkItemTypeSelectionField:
+        return self.query_one(WorkItemTypeSelectionField)
 
     @property
     def reporter_selector(self) -> JiraUserInput:
@@ -258,8 +259,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         return self.query_one('#assignee-autocomplete', expect_type=UsersAutoComplete)
 
     @property
-    def summary_field(self) -> CreateWorkItemIssueSummaryField:
-        return self.query_one(CreateWorkItemIssueSummaryField)
+    def summary_field(self) -> SummaryField:
+        return self.query_one(SummaryField)
 
     @property
     def description_field(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
@@ -268,8 +269,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         return self.query_one('#description', expect_type=PlainTextTextAreaWidget)
 
     @property
-    def parent_key_field(self) -> CreateWorkItemParentKeyField:
-        return self.query_one(CreateWorkItemParentKeyField)
+    def parent_key_field(self) -> ParentKeyField:
+        return self.query_one(ParentKeyField)
 
     @property
     def additional_fields(self) -> VerticalScroll:
@@ -319,8 +320,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     # statically-defined widgets
                     with ItemGrid(classes='add-work-item-fields-grid'):
                         # set widgets in row 1
-                        yield CreateWorkItemProjectSelectionInput()
-                        yield CreateWorkItemIssueTypeSelectionInput([])
+                        yield WorkItemProjectSelectionField()
+                        yield WorkItemTypeSelectionField([])
                         # set widgets in row 2
                         # this input field contains the account id of the Jira user that we can use to set the item's
                         # reporter field
@@ -337,8 +338,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                             border_title='Assignee',
                             jira_field_key='assignee_account_id',
                         ).add_class(*['create-update-users-field-widget'])
-                        yield CreateWorkItemIssueSummaryField()
-                        yield CreateWorkItemParentKeyField(self._parent_work_item_key)
+                        yield SummaryField()
+                        yield ParentKeyField(self._parent_work_item_key)
                     # dynamically-created widgets
                     with VerticalScroll(classes='add-work-item-form-textarea-fields'):
                         with TextAreaTabbedContent(
@@ -381,7 +382,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         2. It fetches the available types of issues that can be created.
         3. If the reporter account id is set and the reporter field is editable then this will also fetch the details of
         the user identified by the reporter account and will set the reporter dropdown if the user exists.
-        4. It mounts the autocomplete widgets required for selecting reporter and assignee.
+        4. It mounts the autocomplete widgets required for selecting reporter, assignee and parent key.
         """
 
         self.run_worker(self.fetch_available_projects())
@@ -399,7 +400,42 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             id='assignee-autocomplete',
             user_search_function=self._search_and_filter_assignees,
         )
-        self.mount_all([reporter_autocomplete, assignee_autocomplete])
+        work_item_parent_key_autocomplete = WorkItemKeyAutoComplete(
+            self.parent_key_field,
+            self.app.api,  # type:ignore[attr-defined]
+            work_items_search_function=self._search_work_items,
+        )
+        self.mount_all(
+            [reporter_autocomplete, assignee_autocomplete, work_item_parent_key_autocomplete]
+        )
+
+    def _use_advanced_full_text_search(self) -> bool:
+        return self.__configuration.enable_advanced_full_text_search
+
+    async def _search_work_items(self, query: str) -> list[JiraIssue] | None:
+        """Search and retrieve work items to fill in the autocomplete suggestions for parent key.
+
+        See Also: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
+
+        Args:
+            query: the search term to find work items.
+
+        Returns:
+            A list of `JiraIssue` instances of None if it fails to search work items.
+        """
+
+        if query:
+            jql_query = f'summary ~ "{query}" OR description ~ "{query}" OR workItemKey ~ "{query}"'
+            if self._use_advanced_full_text_search():
+                jql_query = f'text ~ "{query}" OR workItemKey ~ "{query}"'
+            if self.project_selector.selection:
+                jql_query = f'({jql_query}) AND (spaceJira = "{self.project_selector.selection}")'
+            response: APIControllerResponse = await self.app.api.search_issues(  # type:ignore[attr-defined]
+                jql_query=jql_query, fields=['id', 'key', 'summary']
+            )
+            if response.success and response.result:
+                return response.result.issues
+        return None
 
     async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
         # searches and filters users that can be assignees of the work item being created.
@@ -455,7 +491,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             options = [(t.name, t.id) for t in types]
             self.issue_type_selector.set_options(options)
 
-    @on(Select.Changed, 'CreateWorkItemProjectSelectionInput')
+    @on(Select.Changed, 'WorkItemProjectSelectionField')
     def handle_project_selection(self) -> None:
         """Fetches the applicable types of work items for creating issues in the selected project.
 
@@ -472,7 +508,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         self.additional_fields.remove_children()
         self.save_button.disabled = not self._validate_required_fields()
 
-    @on(Select.Changed, 'CreateWorkItemIssueTypeSelectionInput')
+    @on(Select.Changed, 'WorkItemTypeSelectionField')
     def handle_issue_type_selection(self) -> None:
         """Fetches metadata for creating issues in the selected project and of the selected type.
 
@@ -496,7 +532,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         self.save_button.disabled = not self._validate_required_fields()
 
-    @on(Input.Blurred, 'CreateWorkItemIssueSummaryField')
+    @on(Input.Blurred, 'SummaryField')
     def handle_summary_value_change(self) -> None:
         """Updates the status of the "Save" button after the user updates the summary field."""
 
