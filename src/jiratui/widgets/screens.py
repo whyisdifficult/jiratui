@@ -1125,27 +1125,26 @@ class MainScreen(Screen):
                 )
 
     async def retrieve_issue_subtasks(self, work_item: JiraIssue) -> None:
-        if work_item.key:
-            work_item_subtasks = WorkItemSubtasks(
-                work_item_key=work_item.key, project_key=work_item.project.key
+        work_item_subtasks = WorkItemSubtasks(
+            work_item_key=work_item.key, project_key=work_item.project.key
+        )
+        response: APIControllerResponse = await self.api.search_issues(
+            jql_query=f'parent={work_item.key}',
+            fields=['id', 'key', 'status', 'summary', 'issuetype', 'assignee'],
+        )
+        if response.success and response.result:
+            work_item_subtasks.issues = response.result.issues
+        elif not response.success:
+            self.logger.error(
+                'Unable to retrieve the sub tasks of the work item',
+                extra={'error': response.error, 'issue_key': work_item.key},
             )
-            response: APIControllerResponse = await self.api.search_issues(
-                jql_query=f'parent={work_item.key}',
-                fields=['id', 'key', 'status', 'summary', 'issuetype', 'assignee'],
+            self.notify(
+                'Unable to retrieve the sub tasks of the work item',
+                severity='warning',
+                title='Work Item Search',
             )
-            if response.success and response.result:
-                work_item_subtasks.issues = response.result.issues
-            elif not response.success:
-                self.logger.error(
-                    'Unable to retrieve the sub tasks of the work item',
-                    extra={'error': response.error, 'issue_key': work_item.key},
-                )
-                self.notify(
-                    'Unable to retrieve the sub tasks of the work item',
-                    severity='warning',
-                    title='Work Item Search',
-                )
-            self.issue_child_work_items_widget.issues = work_item_subtasks
+        self.issue_child_work_items_widget.issues = work_item_subtasks
 
     async def fetch_issue(self, selected_work_item_key: str, force_refresh: bool = False) -> None:
         """Retrieves the details of a work item selected by the user in the search results.
