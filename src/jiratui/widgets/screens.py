@@ -45,10 +45,10 @@ from jiratui.widgets.search import (
     IssuesSearchResultsTable,
     SearchResultsContainer,
 )
-from jiratui.widgets.subtasks import IssueChildWorkItemsWidget, WorkItemSubtasks
 from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
+from jiratui.widgets.work_item_subtasks.subtasks import IssueChildWorkItemsWidget, WorkItemSubtasks
 
 
 @dataclass
@@ -1067,6 +1067,19 @@ class MainScreen(Screen):
             callback=self.create_work_item,
         )
 
+    @on(IssueChildWorkItemsWidget.CreateSubtask)
+    async def _create_work_item_subtask(
+        self, message: IssueChildWorkItemsWidget.CreateSubtask
+    ) -> None:
+        await self.app.push_screen(
+            AddWorkItemScreen(
+                project_key=message.project_key,
+                reporter_account_id=self.initial_assignee_account_id,
+                parent_work_item_key=message.parent_work_item_key,
+            ),
+            callback=self.create_work_item,
+        )
+
     async def create_work_item(self, data: dict) -> None:
         """Handles the event to create a work item after the user clicks on the "save" button in the create-work-item
         screen.
@@ -1075,7 +1088,7 @@ class MainScreen(Screen):
             data: a dictionary with the details of the fields and values to create the item.
 
         Returns:
-            Nothing.
+            None
         """
 
         if data:

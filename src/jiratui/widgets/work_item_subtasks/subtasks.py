@@ -1,18 +1,16 @@
 from dataclasses import dataclass
-from typing import cast
 
 from rich.text import Text
 from textual.binding import Binding
 from textual.containers import VerticalScroll
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Rule, Static
 
-from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
-from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
 
 
@@ -73,6 +71,17 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         ),
     ]
 
+    class CreateSubtask(Message):
+        """Posted when the user wants to add a subtask to the work item.
+
+        It holds the key of the work item's project and the key of the subtask's parent work item.
+        """
+
+        def __init__(self, project_key: str, parent_work_item_key: str) -> None:
+            self.project_key = project_key
+            self.parent_work_item_key = parent_work_item_key
+            super().__init__()
+
     def __init__(self):
         super().__init__(id='issue_subtasks')
         self._work_item_key: str | None = None
@@ -84,14 +93,11 @@ class IssueChildWorkItemsWidget(VerticalScroll):
 
     async def action_create_work_item_subtask(self) -> None:
         if self._work_item_key:
-            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            await self.app.push_screen(
-                AddWorkItemScreen(
+            self.post_message(
+                self.CreateSubtask(
                     project_key=self._work_item_project_key,
-                    reporter_account_id=CONFIGURATION.get().jira_account_id,
                     parent_work_item_key=self._work_item_key,
-                ),
-                callback=screen.create_work_item,
+                )
             )
         else:
             self.notify(

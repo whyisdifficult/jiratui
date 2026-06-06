@@ -339,7 +339,7 @@ C4Component
         }
 
         class IssueChildWorkItemsWidget {
-            <<jiratui.widgets.subtasks>>
+            <<jiratui.widgets.work_item_subtasks>>
         }
 
         class IssueAttachmentsWidget {

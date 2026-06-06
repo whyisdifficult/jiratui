@@ -69,6 +69,13 @@ class CommentCollapsible(Collapsible):
         )
 
     def handle_delete_choice(self, result: bool) -> None:
+        """Posts a [CommentCollapsible.Deleted](#jiratui.widgets.comments.comments.CommentCollapsible.Deleted)
+        to delete a comment.
+
+        Args:
+            result: if True then the message to delete the comment is posted. Otherwise nothing is done.
+        """
+
         if result:
             self.post_message(self.Deleted(self._work_item_key, self._comment_id))
 
@@ -81,7 +88,7 @@ class IssueCommentsWidget(VerticalScroll):
     - opening the modal screen that allows users to write comments.
     - processing the result from the modal screen and adding the comment to the work item via the API.
     - deleting comments from the work item via the API when the message
-    `jiratui.widgets.comments.comments.CommentCollapsible.Deleted` is posted.
+    [CommentCollapsible.Deleted](#jiratui.widgets.comments.comments.CommentCollapsible.Deleted) is posted.
     - updating the list of comments when a comment is deleted.
 
     **See Also**:
@@ -119,7 +126,16 @@ class IssueCommentsWidget(VerticalScroll):
             )
 
     def on_comment_collapsible_deleted(self, message: CommentCollapsible.Deleted) -> None:
-        """Schedules a task to delete a comment."""
+        """Schedules a task to delete a comment.
+
+        Args:
+            message: the [CommentCollapsible.Deleted](#jiratui.widgets.comments.comments.CommentCollapsible.Deleted)
+            message containing the id of the comment to be deleted.
+
+        Returns:
+            None
+        """
+
         self.run_worker(self._delete_comment(message.work_item_key, message.comment_id))
         message.stop()  # no need to propagate the message
 
