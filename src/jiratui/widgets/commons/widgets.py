@@ -540,7 +540,7 @@ class SingleUserPickerWidget(Input):
 
         Args:
             mode: either CREATE or UPDATE mode.
-            field_id: Jira field ID (e.g., "users" or "customfield_10001")
+            field_id: Jira field ID (e.g., `users` or `customfield_10001`)
             jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: the display title for the field.
             required: indicates whether the field is required or not.
@@ -754,7 +754,7 @@ class LabelsWidget(Input):
 
         Args:
             mode: CREATE or UPDATE mode
-            field_id: Jira field ID (e.g., "labels" or "customfield_10001")
+            field_id: Jira field ID (e.g., `labels` or `customfield_10001`)
             jira_field_key: the key of the field that it is used for updating the field value in the API.
             title: Display title for the field
             required: Whether the field is required

@@ -34,3 +34,8 @@
 
 ```{autodoc2-object} jiratui.widgets.commons.base.MultiIssuePickerAutoComplete
 ```
+
+## WorkItemKeyAutoComplete
+
+```{autodoc2-object} jiratui.widgets.commons.base.WorkItemKeyAutoComplete
+```

@@ -339,7 +339,7 @@ C4Component
         }
 
         class IssueChildWorkItemsWidget {
-            <<jiratui.widgets.subtasks>>
+            <<jiratui.widgets.work_item_subtasks>>
         }
 
         class IssueAttachmentsWidget {
@@ -1291,10 +1291,10 @@ C4Component
         }
 
         namespace jiratui.widgets.create_work_item.fields {
-            class CreateWorkItemProjectSelectionInput
-            class CreateWorkItemIssueTypeSelectionInput
-            class CreateWorkItemIssueSummaryField
-            class CreateWorkItemParentKeyField
+            class WorkItemProjectSelectionField
+            class WorkItemTypeSelectionField
+            class SummaryField
+            class ParentKeyField
         }
 
         namespace textual {
@@ -1311,12 +1311,12 @@ C4Component
         Screen <|-- AddWorkItemScreen
         TabPane <|-- TextAreaTabPane
         TabbedContent <|-- TextAreaTabbedContent
-        Input <|-- CreateWorkItemIssueSummaryField
-        Input <|-- CreateWorkItemParentKeyField
-        AddWorkItemScreen *-- CreateWorkItemProjectSelectionInput
-        AddWorkItemScreen *-- CreateWorkItemIssueTypeSelectionInput
-        AddWorkItemScreen *-- CreateWorkItemIssueSummaryField
-        AddWorkItemScreen *-- CreateWorkItemParentKeyField
+        Input <|-- SummaryField
+        Input <|-- ParentKeyField
+        AddWorkItemScreen *-- WorkItemProjectSelectionField
+        AddWorkItemScreen *-- WorkItemTypeSelectionField
+        AddWorkItemScreen *-- SummaryField
+        AddWorkItemScreen *-- ParentKeyField
         AddWorkItemScreen *-- JiraUserInput
         AddWorkItemScreen *-- UsersAutoComplete
         AddWorkItemScreen *-- TextAreaTabbedContent

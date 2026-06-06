@@ -20,6 +20,7 @@ from jiratui.models import (
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.commons.users import JiraUserInput
+from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
     IssueSearchCreatedFromWidget,
@@ -35,9 +36,9 @@ from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidge
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
-from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
+from jiratui.widgets.work_item_subtasks.subtasks import IssueChildWorkItemsWidget
 
 
 @pytest.fixture()
@@ -754,3 +755,23 @@ async def test_search_users_with_custom_search_function_by_project(
         search_users_assignable_to_issue_mock.assert_called_once_with(
             project_id_or_key='PR1', query='tes'
         )
+
+
+@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_subtask(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        # WHEN
+        app.screen.post_message(
+            IssueChildWorkItemsWidget.CreateSubtask(project_key='PR1', parent_work_item_key='key-1')
+        )
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, AddWorkItemScreen)

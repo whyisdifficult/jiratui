@@ -62,12 +62,14 @@ from enum import Enum
 import logging
 from typing import Any, Callable
 
+from textual import work
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Select
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.models import JiraUser, JQLAutocompleteSuggestion
+from jiratui.config import CONFIGURATION
+from jiratui.models import JiraIssue, JiraUser, JQLAutocompleteSuggestion
 
 logger = logging.getLogger(__name__)
 
@@ -302,7 +304,7 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         original_value: str | None = None,
         field_supports_update: bool = True,
     ):
-        """Initializes a ProjectSelectionWidget.
+        """Initializes a [ProjectSelectionWidget](#jiratui.widgets.commons.base.ProjectSelectionWidget).
 
         Args:
             mode: The field mode (CREATE or UPDATE)
@@ -406,12 +408,12 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 class IssueTypeSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
     """A unified Select dropdown for choosing a Jira issue type, supporting both CREATE and UPDATE modes.
 
-    Features:
-    - Pre-populated options provided at initialization (unlike ProjectSelectionWidget)
+    **Features**:
+    - Pre-populated options provided at initialization (unlike [ProjectSelectionWidget](#jiratui.widgets.commons.base.ProjectSelectionWidget))
     - Type-to-search for quick issue type lookup
     - Mode-aware behavior with original value restoration in UPDATE mode
 
-    Initialization Pattern:
+    **Initialization Pattern**:
 
     ```python
     # CREATE mode with options
@@ -644,21 +646,21 @@ class LabelsAutoComplete(AutoComplete):
 class MultiUserPickerAutoComplete(AutoComplete):
     """AutoComplete for selecting multiple users.
 
-    Features:
+    **Features**:
     - Searches users by display name and email address
     - Handles comma-separated list of user names
     - Tracks account IDs separately from display names for API compatibility
     - Minimum query length: 2 characters (`MIN_QUERY_TERM_LENGTH`)
     - Supports custom search functions via the `user_search_function` parameter
 
-    Workflow:
+    **Workflow**:
 
-    - User types user name or email (≥2 chars)
+    - User types user's name or email (≥2 chars)
     - Widget calls the provided `user_search_function` asynchronously
     - Matching users are returned as suggestions with account IDs
     - User selects a user
     - Widget calls `target.add_user()` to store both name and account ID
-    - Display refreshes to show user name; account ID stored internally
+    - Display refreshes to show user's name; account ID stored internally
 
 
     ````{important}
@@ -807,7 +809,7 @@ class MultiUserPickerAutoComplete(AutoComplete):
 class MultiIssuePickerAutoComplete(AutoComplete):
     """AutoComplete for selecting multiple work items by key.
 
-    Features:
+    **Features**:
 
     - Searches issues by key and summary via Jira API issue picker
     - Handles comma-separated list of issue keys
@@ -815,7 +817,7 @@ class MultiIssuePickerAutoComplete(AutoComplete):
     - Minimum query length: 3 characters (`MIN_QUERY_TERM_LENGTH`)
     - Supports custom search functions via the `issue_search_function` parameter
 
-    Workflow:
+    **Workflow**:
 
     - User types issue key or summary (≥3 chars)
     - Widget calls the provided `issue_search_function` asynchronously
@@ -963,3 +965,128 @@ class MultiIssuePickerAutoComplete(AutoComplete):
         self.target.value = new_value
         self.target.cursor_position = len(new_value)
         self.target.update_issues_data(issue_key=highlighted_option_id)  # type:ignore[attr-defined]
+
+
+class WorkItemKeyAutoComplete(AutoComplete):
+    """Autocomplete for a single work item key that fetches suggestions from Jira as the user types.
+
+    **Features**:
+    - Searches work items for autocomplete item key suggestions
+    - Customizable minimum query length
+    - Customizable maximum display length
+    - Customizable search function.
+
+    **Workflow**:
+
+    - User types a partial work item string
+    - Widget searches for suggestions using the function `work_items_search_function` or the default implementation.
+    - Suggestions are cached and dropdown is displayed
+    - User selects a key
+    """
+
+    MIN_QUERY_TERM_LENGTH = 3
+    MAX_DISPLAY_LENGTH = 50
+
+    def __init__(
+        self,
+        target: Input,
+        api_controller: APIController,
+        work_items_search_function: Callable | None = None,
+        minimum_query_length: int | None = None,
+        maximum_display_length: int | None = None,
+    ):
+        """Initializes a [WorkItemKeyAutoComplete](#jiratui.widgets.commons.base.WorkItemKeyAutoComplete) widget.
+
+        Args:
+            target: the Input widget to which this autocomplete will be attached.
+            api_controller: [APIController](#jiratui.api_controller.controller.APIController) instance for fetching
+            suggestions.
+            work_items_search_function: an awaitable callable that returns a list of
+            [JiraIssue](#jiratui.models.JiraIssue). The function will receive a string-based query term.
+            minimum_query_length: the minimum length if a query to trigger the search. Default is 3.
+            maximum_display_length: the maximum number of characters to use for displaying the summary of every work
+            item in the suggestions list. Default is 30.
+        """
+
+        self._api_controller: APIController = api_controller
+        self._cached_suggestions: list[DropdownItem] = []
+        self._last_query = ''
+        self._minimum_query_length = minimum_query_length or self.MIN_QUERY_TERM_LENGTH
+        self._maximum_display_length = maximum_display_length or self.MAX_DISPLAY_LENGTH
+        self._work_items_search_function = work_items_search_function or self._search
+
+        # initialize with empty candidates - will be populated dynamically
+        super().__init__(
+            target=target,
+            candidates=self._get_work_items,  # type:ignore
+        )
+
+    async def _search(self, query: str) -> list[JiraIssue] | None:
+        """Default implementation for searching wok items based on a query term."""
+
+        if query:
+            jql_query = f'summary ~ "{query}" OR description ~ "{query}" OR workItemKey ~ "{query}"'
+            if self._use_advanced_full_text_search():
+                jql_query = f'text ~ "{query}" OR workItemKey ~ "{query}"'
+
+            response: APIControllerResponse = await self._api_controller.search_issues(
+                jql_query=jql_query, fields=['id', 'key', 'summary']
+            )
+
+            if response.success and response.result:
+                return response.result.issues
+        return None
+
+    @staticmethod
+    def _use_advanced_full_text_search() -> bool:
+        return CONFIGURATION.get().enable_advanced_full_text_search
+
+    def _get_work_items(self, target_state: TargetState) -> list[DropdownItem]:
+        """Synchronous wrapper that returns cached suggestions."""
+
+        # get the search string
+        search_string = self.get_search_string(target_state)
+
+        # if query changed, trigger async fetch
+        if search_string and search_string != self._last_query:
+            self._last_query = search_string
+            # schedule async fetch - don't await here since this must be sync
+            # see: https://textual.textualize.io/guide/workers/#work-decorator
+            self._search_work_items(search_string)
+        return self._cached_suggestions
+
+    @work(group='create_subtask', exclusive=True)
+    async def _search_work_items(self, query: str) -> None:
+        """Searches work items asynchronously.
+
+        See Also: https://textual.textualize.io/guide/workers/#work-decorator
+
+        Args:
+            query: the query term to use. This will be used for finding work items using text-based search.
+
+        Returns:
+            None
+        """
+
+        if not query or len(query) < self._minimum_query_length:
+            self._cached_suggestions = []
+            return None
+
+        self._cached_suggestions = []
+
+        work_items: list[JiraIssue] | None = await self._work_items_search_function(query)
+
+        if work_items is not None:
+            for work_item in work_items:
+                main = f'{work_item.key} | {work_item.summary[: self._maximum_display_length]}...'
+                self._cached_suggestions.append(DropdownItem(main=main, id=work_item.key))
+            # trigger dropdown re-evaluation to show the suggestions
+            self._handle_target_update()
+        return None
+
+    def apply_completion(self, value: str, state: TargetState) -> None:
+        """Apply the selected completion to the input."""
+
+        work_item_key = self.option_list.highlighted_option.id
+        self.target.value = work_item_key
+        self.target.cursor_position = len(work_item_key)

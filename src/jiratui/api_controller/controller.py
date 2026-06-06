@@ -780,12 +780,12 @@ class APIController:
             issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
             fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
             to retrieve a subset of fields. Allowed values:
-            - *all: Returns all fields.
-            - *navigable: Returns navigable fields.
+            - **all**: Returns all fields.
+            - **navigable**: Returns navigable fields.
             - Any issue field, prefixed with a minus to exclude.
             properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
             list. Allowed values:
-            - *all Returns all issue properties.
+            - **all**: Returns all issue properties.
             - Any issue property key, prefixed with a minus to exclude.
 
         Returns:

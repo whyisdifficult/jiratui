@@ -26,7 +26,8 @@ class JiraAPI:
     **Versions**
     - [Version 2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/) and
     [version 3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) of the API offer the same collection of
-    operations. However, version 3 provides support for the [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
+    operations. However, version 3 provides support for the
+    [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/) in:
         - body in comments, including where comments are used in issue, issue link, and transition resources.
         - comment in work-logs.
         - description and environment fields in issues.
@@ -317,17 +318,23 @@ class JiraAPI:
         Args:
             issue_id_or_key: the ID or case-sensitive key of the work item to retrieve.
             fields: a list of fields to return for the issue. This parameter accepts a comma-separated list. Use it
-            to retrieve a subset of fields. Allowed values:
-                *all Returns all fields.
-                *navigable Returns navigable fields.
+            to retrieve a subset of fields. See examples for allowed values.
             Any issue field, prefixed with a minus to exclude.
             properties: a list of issue properties to return for the issue. This parameter accepts a comma-separated
-            list. Allowed values:
-                *all Returns all issue properties.
-                Any issue property key, prefixed with a minus to exclude.
+            list. See examples for allowed values.
 
         Returns:
             A dictionary with the detail sof the issue.
+
+        Examples:
+        # Returns all issue properties
+        await get_issue('KEY-1', properties='all')
+        # Any issue property key, prefixed with a minus to exclude
+        await get_issue('KEY-1', properties='-summary')
+        # Returns all fields
+        await get_issue('KEY-1', fields='all')
+        # Returns navigable fields
+        await get_issue('KEY-1', fields='navigable')
         """
 
         params: dict[str, Any] = {'expand': 'editmeta'}

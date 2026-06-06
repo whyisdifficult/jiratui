@@ -45,10 +45,10 @@ from jiratui.widgets.search import (
     IssuesSearchResultsTable,
     SearchResultsContainer,
 )
-from jiratui.widgets.subtasks import IssueChildWorkItemsWidget
 from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
+from jiratui.widgets.work_item_subtasks.subtasks import IssueChildWorkItemsWidget, WorkItemSubtasks
 
 
 @dataclass
@@ -623,7 +623,7 @@ class MainScreen(Screen):
         If no project is found then the application will leave the dropdown empty.
 
         Returns:
-            Nothing.
+            None
         """
 
         project_keys: list[str] = []
@@ -1067,6 +1067,19 @@ class MainScreen(Screen):
             callback=self.create_work_item,
         )
 
+    @on(IssueChildWorkItemsWidget.CreateSubtask)
+    async def _create_work_item_subtask(
+        self, message: IssueChildWorkItemsWidget.CreateSubtask
+    ) -> None:
+        await self.app.push_screen(
+            AddWorkItemScreen(
+                project_key=message.project_key,
+                reporter_account_id=self.initial_assignee_account_id,
+                parent_work_item_key=message.parent_work_item_key,
+            ),
+            callback=self.create_work_item,
+        )
+
     async def create_work_item(self, data: dict) -> None:
         """Handles the event to create a work item after the user clicks on the "save" button in the create-work-item
         screen.
@@ -1075,7 +1088,7 @@ class MainScreen(Screen):
             data: a dictionary with the details of the fields and values to create the item.
 
         Returns:
-            Nothing.
+            None
         """
 
         if data:
@@ -1124,26 +1137,27 @@ class MainScreen(Screen):
                     title='Create Work Item',
                 )
 
-    async def retrieve_issue_subtasks(self, issue_key: str) -> None:
-        if issue_key:
-            self.issue_child_work_items_widget.issue_key = issue_key
-            response: APIControllerResponse = await self.api.search_issues(
-                jql_query=f'parent={issue_key}',
-                fields=['id', 'key', 'status', 'summary', 'issuetype', 'assignee'],
+    async def retrieve_issue_subtasks(self, work_item: JiraIssue) -> None:
+        work_item_subtasks = WorkItemSubtasks(
+            work_item_key=work_item.key, project_key=work_item.project.key
+        )
+        response: APIControllerResponse = await self.api.search_issues(
+            jql_query=f'parent={work_item.key}',
+            fields=['id', 'key', 'status', 'summary', 'issuetype', 'assignee'],
+        )
+        if response.success and response.result:
+            work_item_subtasks.issues = response.result.issues
+        elif not response.success:
+            self.logger.error(
+                'Unable to retrieve the sub tasks of the work item',
+                extra={'error': response.error, 'issue_key': work_item.key},
             )
-            if not response.success:
-                self.logger.error(
-                    'Unable to retrieve the sub tasks of the work item',
-                    extra={'error': response.error, 'issue_key': issue_key},
-                )
-                self.notify(
-                    'Unable to retrieve the sub tasks of the work item',
-                    severity='warning',
-                    title='Work Item Search',
-                )
-            else:
-                if response.result:
-                    self.issue_child_work_items_widget.issues = response.result.issues
+            self.notify(
+                'Unable to retrieve the sub tasks of the work item',
+                severity='warning',
+                title='Work Item Search',
+            )
+        self.issue_child_work_items_widget.issues = work_item_subtasks
 
     async def fetch_issue(self, selected_work_item_key: str, force_refresh: bool = False) -> None:
         """Retrieves the details of a work item selected by the user in the search results.
@@ -1227,7 +1241,7 @@ class MainScreen(Screen):
             self.issue_remote_links_widget.issue_key = work_item.key
 
         # step 8: populate subtasks tab
-        self.run_worker(self.retrieve_issue_subtasks(work_item.key))
+        self.run_worker(self.retrieve_issue_subtasks(work_item))
 
     async def request_text_search(self, value: str):
         value = value or ''
@@ -1343,7 +1357,6 @@ class MainScreen(Screen):
             self.issue_attachments_widget.attachments = None
             self.issue_remote_links_widget.issue_key = None
             self.issue_child_work_items_widget.issues = None
-            self.issue_child_work_items_widget.issue_key = None
             self.issue_info_container.issue = None
             self.issue_details_widget.issue = None
             self.current_loaded_work_item_key = None
