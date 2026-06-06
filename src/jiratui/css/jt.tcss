@@ -1328,6 +1328,7 @@ UsersAutoComplete {
         constrain: none inside;
         background: $primary-muted;     /* The background color of the dropdown */
         color: $text-primary;           /* The color of the text */
+        border-left: wide $success;     /* The color of the left border */
     }
 
     /* Customize the matching substring highlighting */
@@ -1351,6 +1352,7 @@ WorkItemKeyAutoComplete {
         constrain: none inside;
         background: $primary-muted;     /* The background color of the dropdown */
         color: $text-primary;           /* The color of the text */
+        border-left: wide $success;     /* The color of the left border */
     }
 
     /* Customize the matching substring highlighting */
