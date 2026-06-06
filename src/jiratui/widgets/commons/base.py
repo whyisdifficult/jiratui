@@ -62,6 +62,7 @@ from enum import Enum
 import logging
 from typing import Any, Callable
 
+from textual import work
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input, Select
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
@@ -1050,11 +1051,15 @@ class WorkItemKeyAutoComplete(AutoComplete):
         if search_string and search_string != self._last_query:
             self._last_query = search_string
             # schedule async fetch - don't await here since this must be sync
-            self.call_later(self._search_work_items, search_string)
+            # see: https://textual.textualize.io/guide/workers/#work-decorator
+            self._search_work_items(search_string)
         return self._cached_suggestions
 
+    @work(group='create_subtask', exclusive=True)
     async def _search_work_items(self, query: str) -> None:
         """Searches work items asynchronously.
+
+        See Also: https://textual.textualize.io/guide/workers/#work-decorator
 
         Args:
             query: the query term to use. This will be used for finding work items using text-based search.
