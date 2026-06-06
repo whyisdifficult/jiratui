@@ -116,13 +116,14 @@ async def test_work_item_key_autocomplete_search_work_items(
     jira_issues,
     app,
 ):
-    # GIVEN
-    widget = WorkItemKeyAutoComplete(Input(), jira_api_controller)
-    # WHEN
-    result = await widget._search_work_items(query)
-    # THEN
-    assert result is None
-    assert widget._cached_suggestions == []
+    async with app.run_test():
+        # GIVEN
+        widget = WorkItemKeyAutoComplete(Input(), jira_api_controller)
+        # WHEN
+        widget._search_work_items(query)
+        await app.workers.wait_for_complete()
+        # THEN
+        assert widget._cached_suggestions == []
 
 
 @patch.object(WorkItemKeyAutoComplete, '_search')
@@ -135,15 +136,16 @@ async def test_work_item_key_autocomplete_search_work_items_none_found(
 ):
     # GIVEN
     search_mock.return_value = None
-    widget = WorkItemKeyAutoComplete(
-        Input(),
-        jira_api_controller,
-    )
-    # WHEN
-    result = await widget._search_work_items('test')
-    # THEN
-    assert result is None
-    assert widget._cached_suggestions == []
+    async with app.run_test():
+        widget = WorkItemKeyAutoComplete(
+            Input(),
+            jira_api_controller,
+        )
+        # WHEN
+        widget._search_work_items('test')
+        await app.workers.wait_for_complete()
+        # THEN
+        assert widget._cached_suggestions == []
 
 
 @patch.object(WorkItemKeyAutoComplete, '_handle_target_update')
@@ -157,12 +159,13 @@ async def test_work_item_key_autocomplete_search_work_items_found(
 ):
     # GIVEN
     search_mock.return_value = jira_issues
-    widget = WorkItemKeyAutoComplete(
-        Input(),
-        jira_api_controller,
-    )
-    # WHEN
-    result = await widget._search_work_items('test')
-    # THEN
-    assert result is None
-    assert len(widget._cached_suggestions) == 2
+    async with app.run_test():
+        widget = WorkItemKeyAutoComplete(
+            Input(),
+            jira_api_controller,
+        )
+        # WHEN
+        widget._search_work_items('test')
+        await app.workers.wait_for_complete()
+        # THEN
+        assert len(widget._cached_suggestions) == 2
