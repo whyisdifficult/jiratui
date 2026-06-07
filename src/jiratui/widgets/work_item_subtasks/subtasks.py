@@ -11,7 +11,7 @@ from textual.widgets import Collapsible, Link, Rule, Static
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
 
 
 @dataclass
@@ -22,7 +22,15 @@ class WorkItemSubtasks:
 
 
 class ChildWorkItemCollapsible(Collapsible):
-    """A collapsible to show the work items that are children of another work item."""
+    """A collapsible to show the work items that are children of another work item.
+
+    This widget is responsible for:
+
+    - opening the modal screen [WorkItemReadOnlyDetailsScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemReadOnlyDetailsScreen)
+    to display the details of the work item selected.
+    - posting the message [LoadWorkItem](#jiratui.widgets.work_item_subtasks.subtasks.ChildWorkItemCollapsible.LoadWorkItem)
+    when the screen `WorkItemReadOnlyDetailsScreen` is dismissed with a work item key.
+    """
 
     BINDINGS = [
         Binding(
@@ -34,6 +42,10 @@ class ChildWorkItemCollapsible(Collapsible):
         ),
     ]
 
+    @dataclass
+    class LoadWorkItem(Message):
+        work_item_key: str
+
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
         super().__init__(*args, **kwargs)
@@ -44,7 +56,14 @@ class ChildWorkItemCollapsible(Collapsible):
         return self._work_item_key
 
     async def action_view_work_item(self) -> None:
-        await self.app.push_screen(WorkItemReadOnlyDetailsScreen(self.work_item_key))
+        await self.app.push_screen(
+            WorkItemReadOnlyDetailsScreen(self.work_item_key),
+            callback=self._load_work_item_after_viewing,
+        )
+
+    def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
+        if work_item_key:
+            self.post_message(self.LoadWorkItem(work_item_key))
 
 
 class IssueChildWorkItemsWidget(VerticalScroll):

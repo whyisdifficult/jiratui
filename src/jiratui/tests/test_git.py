@@ -6,13 +6,13 @@ from textual.widgets import Button
 
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.widgets.git_screen import GitScreen
-from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 
 
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_git_screen(
     search_projects_mock: AsyncMock,
@@ -50,10 +50,10 @@ async def test_open_git_screen(
         assert app.screen.create_branch_button.disabled is True
 
 
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_select_repo(
     search_projects_mock: AsyncMock,
@@ -96,10 +96,10 @@ async def test_git_screen_select_repo(
         assert app.screen.label_input.content == 'Target Repository: path/a/.git'
 
 
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_no_branch_disables_button(
     search_projects_mock: AsyncMock,
@@ -146,10 +146,10 @@ async def test_git_screen_no_branch_disables_button(
 
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_press_button_repo_not_found(
     search_projects_mock: AsyncMock,
@@ -201,10 +201,10 @@ async def test_git_screen_press_button_repo_not_found(
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_press_button_branch_exists(
     search_projects_mock: AsyncMock,
@@ -266,10 +266,10 @@ async def test_git_screen_press_button_branch_exists(
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_git_repository')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_press_button_branch_does_not_exists(
     search_projects_mock: AsyncMock,
@@ -322,10 +322,10 @@ async def test_git_screen_press_button_branch_does_not_exists(
 
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_get_git_repository')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_press_button_branch_creation_fails(
     search_projects_mock: AsyncMock,
@@ -378,10 +378,10 @@ async def test_git_screen_press_button_branch_creation_fails(
 @patch.object(GitScreen, '_create_branch')
 @patch.object(GitScreen, '_get_repo_branches')
 @patch.object(GitScreen, '_get_git_repository')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_git_screen_press_button_branch_creation_with_checkout(
     search_projects_mock: AsyncMock,

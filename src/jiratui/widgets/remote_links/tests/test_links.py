@@ -6,7 +6,7 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.models import IssueRemoteLink
 from jiratui.widgets.remote_links.add import AddRemoteLinkScreen
 from jiratui.widgets.remote_links.links import IssueRemoteLinkCollapsible, IssueRemoteLinksWidget
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 
 
 @pytest.fixture()

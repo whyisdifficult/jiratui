@@ -16,11 +16,21 @@ from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
 
 
 class RelatedIssueCollapsible(Collapsible):
-    """A collapsible to show a work item related to another item."""
+    """A collapsible to show a work item related to another item.
+
+    This widget is responsible for:
+    - opening a modal screen to view the details of the currently-selected work item.
+    - (optionally) posting a [LoadWorkItem](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LoadWorkItem)
+    message to load the work item being displayed after the quick view screen is dismissed.
+    - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen) to confirm deleting the currently selected
+    work item.
+    - posting a [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
+    message to refresh the list of related work items after deleting one.
+    """
 
     BINDINGS = [
         Binding(
@@ -41,7 +51,15 @@ class RelatedIssueCollapsible(Collapsible):
 
     @dataclass
     class LinkDeleted(Message):
+        """The message posted when the user deletes a link."""
+
         link_id: str
+
+    @dataclass
+    class LoadWorkItem(Message):
+        """The message posted when the user wants to search and load the work item being displayed."""
+
+        work_item_key: str
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
@@ -54,7 +72,14 @@ class RelatedIssueCollapsible(Collapsible):
 
     async def action_view_work_item(self) -> None:
         if self.work_item_key:
-            await self.app.push_screen(WorkItemReadOnlyDetailsScreen(self.work_item_key))
+            await self.app.push_screen(
+                WorkItemReadOnlyDetailsScreen(self.work_item_key),
+                callback=self._load_work_item_after_viewing,
+            )
+
+    def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
+        if work_item_key:
+            self.post_message(self.LoadWorkItem(work_item_key))
 
     async def action_unlink_work_item(self) -> None:
         await self.app.push_screen(
@@ -70,8 +95,8 @@ class RelatedIssueCollapsible(Collapsible):
         """Removes a link between two work items.
 
         After removing a link this method will post the
-        message `jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted` to update the
-        list of related issues in the parent widget.
+        message [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
+        to update the list of related issues in the parent widget.
 
         Returns:
             None
@@ -95,6 +120,13 @@ class RelatedIssueCollapsible(Collapsible):
 
 class RelatedIssuesWidget(VerticalScroll):
     """A container for displaying the work items related to a work item.
+
+    This widget is responsible for:
+    - opening a modal screen [AddWorkItemRelationshipScreen](#jiratui.widgets.screens.work_item_quick_view.AddWorkItemRelationshipScreen)
+    to allow the user linking 2 work items.
+    - making a request to the Jira API to link 2 work items.
+    - refreshing the list of issues related to the current issue after receiving the
+    message [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted).
 
     **See Also**:
     - [Use Case: Relate Work Items](#use-case-relate-work-items)

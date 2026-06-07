@@ -7,7 +7,7 @@ from textual.widgets import DataTable, Static, TabPane
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueStatus, IssueType, JiraIssue, JiraIssueSearchResponse, Project
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
 
 
 @patch.object(APIController, 'get_issue')

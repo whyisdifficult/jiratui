@@ -9,7 +9,7 @@ from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import WorkItemsSearchOrderBy
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.text_search import TextSearchScreen
 
 
@@ -48,10 +48,10 @@ def app() -> JiraApp:
     return app
 
 
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_fulltext_search_screen(
     search_projects_mock: AsyncMock,
@@ -71,10 +71,10 @@ async def test_open_fulltext_search_screen(
         assert isinstance(app.focused, Input)
 
 
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_fulltext_search_screen(
     search_projects_mock: AsyncMock,
@@ -95,11 +95,11 @@ async def test_close_fulltext_search_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.action_search')
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_fulltext_search_screen_with_value(
     search_projects_mock: AsyncMock,
@@ -127,11 +127,11 @@ async def test_close_fulltext_search_screen_with_value(
         action_search_mock.assert_called_once_with(search_term='test')
 
 
-@patch('jiratui.widgets.screens.MainScreen.action_search')
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_fulltext_search_screen_with_value_shorter_than_minimum_length(
     search_projects_mock: AsyncMock,
@@ -157,11 +157,11 @@ async def test_close_fulltext_search_screen_with_value_shorter_than_minimum_leng
         action_search_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.screens.MainScreen.action_search')
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_fulltext_search_screen_with_empty_value(
     search_projects_mock: AsyncMock,
@@ -186,11 +186,11 @@ async def test_close_fulltext_search_screen_with_empty_value(
         action_search_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.screens.MainScreen.action_search')
-@patch('jiratui.widgets.screens.MainScreen.search_issues')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_dismiss_fulltext_search_screen_with_value(
     search_projects_mock: AsyncMock,

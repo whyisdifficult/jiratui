@@ -10,7 +10,7 @@ from jiratui.widgets.comments.comments import (
     IssueCommentsWidget,
     WorkItemComments,
 )
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 
 
 @pytest.fixture()

@@ -14,7 +14,7 @@ from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
 from jiratui.widgets.config_info import ConfigFileScreen
 from jiratui.widgets.quit import QuitScreen
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.server_info import ServerInfoScreen
 
 

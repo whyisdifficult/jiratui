@@ -31,7 +31,7 @@ the application takes to search work items based on filters defined by the user.
 
 The following are the main components used by the application to support this use case:
 
-- [MainScreen](#jiratui.widgets.screens.MainScreen): Main orchestrator that handles search action and filter collection
+- [MainScreen](#jiratui.widgets.screen.MainScreen): Main orchestrator that handles search action and filter collection
 - [ProjectSelectionInput](#jiratui.widgets.filters.ProjectSelectionInput), [IssueTypeSelectionInput](#jiratui.widgets.filters.IssueTypeSelectionInput), [IssueStatusSelectionInput](#jiratui.widgets.filters.IssueStatusSelectionInput): Filter widgets
 - [JiraUserInput](#jiratui.widgets.commons.users.JiraUserInput): Assignee filter to filter item by assignee
 - [IssueSearchCreatedFromWidget](#jiratui.widgets.filters.IssueSearchCreatedFromWidget), [IssueSearchCreatedUntilWidget](#jiratui.widgets.filters.IssueSearchCreatedUntilWidget): Date range filters
@@ -107,7 +107,7 @@ the application takes to search work items based on a full-text term.
 
 The following are the main components used by the application to support this use case:
 
-- [MainScreen](#jiratui.widgets.screens.MainScreen): Main screen that handles the `/` key binding and manages the flow
+- [MainScreen](#jiratui.widgets.screen.MainScreen): Main screen that handles the `/` key binding and manages the flow
 - [TextSearchScreen](#jiratui.widgets.text_search.TextSearchScreen): Modal screen for full-text search input and results display
 - [APIController](#jiratui.api_controller.controller.APIController): API communication for executing the full-text search
 

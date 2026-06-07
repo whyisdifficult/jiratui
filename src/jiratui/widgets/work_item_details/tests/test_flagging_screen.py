@@ -5,17 +5,17 @@ import pytest
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraField, JiraIssue, JiraIssueSearchResponse
-from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 
 
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen(
     search_projects_mock: AsyncMock,
@@ -55,12 +55,12 @@ async def test_open_flag_screen(
         assert isinstance(app.screen, FlagWorkItemScreen)
 
 
-@patch('jiratui.widgets.screens.APIController.get_fields')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_fields')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_issue_has_no_metadata(
     search_projects_mock: AsyncMock,
@@ -103,13 +103,13 @@ async def test_open_flag_screen_issue_has_no_metadata(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.APIController.get_fields')
+@patch('jiratui.widgets.screen.APIController.get_fields')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_issue_supports_flagging_and_is_flagged(
     search_projects_mock: AsyncMock,
@@ -160,13 +160,13 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_flagged(
         assert 'Remove' in app.screen.root_container.border_title
 
 
-@patch('jiratui.widgets.screens.APIController.get_fields')
+@patch('jiratui.widgets.screen.APIController.get_fields')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_issue_supports_flagging_and_is_not_flagged(
     search_projects_mock: AsyncMock,
@@ -221,11 +221,11 @@ async def test_open_flag_screen_issue_supports_flagging_and_is_not_flagged(
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_toggle_work_item_flag')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_dismiss_without_updating_flag_status(
     search_projects_mock: AsyncMock,
@@ -276,11 +276,11 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status(
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_toggle_work_item_flag')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_cancel_button(
     search_projects_mock: AsyncMock,
@@ -332,13 +332,13 @@ async def test_open_flag_screen_dismiss_without_updating_flag_status_clicking_ca
 @patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
-@patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
+@patch('jiratui.widgets.screen.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_updating_flag_status_clicking_save_button1(
     search_projects_mock: AsyncMock,
@@ -398,13 +398,13 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button1(
 @patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=False))
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
-@patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
+@patch('jiratui.widgets.screen.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_updating_flag_status_clicking_save_button_without_note(
     search_projects_mock: AsyncMock,
@@ -463,13 +463,13 @@ async def test_open_flag_screen_updating_flag_status_clicking_save_button_withou
 @patch.object(IssueDetailsWidget, 'issue_is_flagged', PropertyMock(return_value=True))
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
-@patch('jiratui.widgets.screens.APIController.update_issue_flagged_status')
+@patch('jiratui.widgets.screen.APIController.update_issue_flagged_status')
 @patch.object(JiraIssue, 'get_custom_field_value')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_flag_screen_updating_flag_status_clicking_save_button_update_fails(
     search_projects_mock: AsyncMock,

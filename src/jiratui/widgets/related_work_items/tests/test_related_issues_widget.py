@@ -20,8 +20,8 @@ from jiratui.widgets.related_work_items.related_issues import (
     RelatedIssueCollapsible,
     RelatedIssuesWidget,
 )
-from jiratui.widgets.screens import MainScreen
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
 
 
 @patch.object(APIController, 'get_issue')

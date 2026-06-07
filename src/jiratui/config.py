@@ -251,6 +251,8 @@ class ApplicationConfiguration(BaseSettings):
     show_keybinding_hints: bool = False
     """If this is True the app will show the hints for the key bindings to use for switching between the tabs when the
     user selects a work item. The default tis False."""
+    view_work_item_after_creation: bool = False
+    """Set this to True to open a modal screen that displays the details of a work item right after it gets created."""
 
     model_config = SettingsConfigDict(
         extra='allow',

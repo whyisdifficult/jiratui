@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
 from jiratui.widgets.work_item_subtasks.subtasks import (
     ChildWorkItemCollapsible,
     IssueChildWorkItemsWidget,

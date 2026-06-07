@@ -15,14 +15,14 @@ from jiratui.widgets.commons.widgets import (
     TextInputWidget,
     URLWidget,
 )
-from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_multi_checkbox_custom_field_open_modal_screen(
     search_projects_mock: AsyncMock,
@@ -77,11 +77,11 @@ async def test_multi_checkbox_custom_field_open_modal_screen(
         ].get_value_for_update() == [{'id': '1'}]
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_multi_checkbox_custom_field_dismiss_modal_screen_without_changes(
     search_projects_mock: AsyncMock,
@@ -144,11 +144,11 @@ async def test_multi_checkbox_custom_field_dismiss_modal_screen_without_changes(
         ].get_value_for_update() == [{'id': '1'}]
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_multi_checkbox_custom_field_modal_screen_press_update_without_changes(
     search_projects_mock: AsyncMock,
@@ -229,11 +229,11 @@ async def test_multi_checkbox_custom_field_modal_screen_press_update_without_cha
         ]
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_url_with_value(
     search_projects_mock: AsyncMock,
@@ -286,11 +286,11 @@ async def test_custom_field_url_with_value(
         assert app.screen.focused.value == 'https://foo.bar'
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_url_without_value(
     search_projects_mock: AsyncMock,
@@ -344,11 +344,11 @@ async def test_custom_field_url_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_float_with_value(
     search_projects_mock: AsyncMock,
@@ -402,11 +402,11 @@ async def test_custom_field_float_with_value(
         assert app.screen.focused.value == '12.34'
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_float_without_value(
     search_projects_mock: AsyncMock,
@@ -461,11 +461,11 @@ async def test_custom_field_float_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_text_with_value(
     search_projects_mock: AsyncMock,
@@ -521,11 +521,11 @@ async def test_custom_field_text_with_value(
 
 
 @pytest.mark.parametrize('custom_field_value', [None, ''])
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_text_without_value(
     search_projects_mock: AsyncMock,
@@ -582,11 +582,11 @@ async def test_custom_field_text_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_datetime_with_value(
     search_projects_mock: AsyncMock,
@@ -643,11 +643,11 @@ async def test_custom_field_datetime_with_value(
 
 
 @pytest.mark.parametrize('custom_field_value', [None, ''])
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_datetime_without_value(
     search_projects_mock: AsyncMock,
@@ -705,11 +705,11 @@ async def test_custom_field_datetime_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_date_with_value(
     search_projects_mock: AsyncMock,
@@ -767,11 +767,11 @@ async def test_custom_field_date_with_value(
 
 
 @pytest.mark.parametrize('custom_field_value', [None, ''])
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_date_without_value(
     search_projects_mock: AsyncMock,
@@ -830,11 +830,11 @@ async def test_custom_field_date_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_selection_with_value(
     search_projects_mock: AsyncMock,
@@ -892,11 +892,11 @@ async def test_custom_field_selection_with_value(
         assert app.screen.focused.selection == '2'
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_selection_without_value(
     search_projects_mock: AsyncMock,
@@ -955,11 +955,11 @@ async def test_custom_field_selection_without_value(
         assert app.screen.focused.selection is None
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_labels_with_value(
     search_projects_mock: AsyncMock,
@@ -1019,11 +1019,11 @@ async def test_custom_field_labels_with_value(
 
 
 @pytest.mark.parametrize('custom_field_value', [None, []])
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_custom_field_labels_without_value(
     search_projects_mock: AsyncMock,
@@ -1084,11 +1084,11 @@ async def test_custom_field_labels_without_value(
         assert app.screen.focused.value == ''
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_components_field_open_modal_screen(
     search_projects_mock: AsyncMock,
@@ -1138,11 +1138,11 @@ async def test_components_field_open_modal_screen(
         await pilot.press('enter')
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_components_field_open_modal_screen_without_initial_value(
     search_projects_mock: AsyncMock,
@@ -1189,11 +1189,11 @@ async def test_components_field_open_modal_screen_without_initial_value(
         assert components_field.get_value_for_update() == []
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_components_field_dismiss_modal_screen_without_changes(
     search_projects_mock: AsyncMock,
@@ -1247,11 +1247,11 @@ async def test_components_field_dismiss_modal_screen_without_changes(
         assert components_field.get_value_for_update() == [{'id': '2'}, {'id': '1'}]
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_components_field_modal_screen_press_update_without_changes(
     search_projects_mock: AsyncMock,
@@ -1306,11 +1306,11 @@ async def test_components_field_modal_screen_press_update_without_changes(
         assert components_field.get_value_for_update() == [{'id': '2'}, {'id': '1'}]
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_components_field_modal_screen_press_update_with_changes(
     search_projects_mock: AsyncMock,

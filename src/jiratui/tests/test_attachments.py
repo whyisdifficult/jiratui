@@ -12,14 +12,14 @@ from jiratui.widgets.attachments.attachments import (
     FileAttachmentWidget,
     ViewAttachmentScreen,
 )
-from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_focus_attachments_datatable(
     search_projects_mock: AsyncMock,
@@ -61,11 +61,11 @@ async def test_focus_attachments_datatable(
         assert attachment_dt.has_focus
 
 
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_focus_attachments_datatable_highlight_file(
     search_projects_mock: AsyncMock,
@@ -108,12 +108,12 @@ async def test_focus_attachments_datatable_highlight_file(
         assert attachment_dt._selected_attachment_file_name == 'file-one.csv'
 
 
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_attachment_download_fails(
     search_projects_mock: AsyncMock,
@@ -165,12 +165,12 @@ async def test_attachment_download_fails(
         )
 
 
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_show_attachment(
     search_projects_mock: AsyncMock,
@@ -222,12 +222,12 @@ async def test_show_attachment(
         assert app.screen.center_widget.children[0].read_only is True
 
 
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_show_attachment_with_language(
     search_projects_mock: AsyncMock,
@@ -282,12 +282,12 @@ async def test_show_attachment_with_language(
         assert app.screen.center_widget.children[0].language == 'xml'
 
 
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_show_attachment_with_unsupported_type(
     search_projects_mock: AsyncMock,
@@ -340,12 +340,12 @@ async def test_show_attachment_with_unsupported_type(
 
 @patch.object(JiraApp, 'open_url')
 @patch('jiratui.widgets.attachments.attachments.build_external_url_for_attachment')
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_attachment_in_browser_without_url(
     search_projects_mock: AsyncMock,
@@ -399,12 +399,12 @@ async def test_open_attachment_in_browser_without_url(
 
 @patch.object(JiraApp, 'open_url')
 @patch('jiratui.widgets.attachments.attachments.build_external_url_for_attachment')
-@patch('jiratui.widgets.screens.APIController.get_attachment_content')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_attachment_in_browser(
     search_projects_mock: AsyncMock,
