@@ -810,7 +810,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     if pane_inner_widget and (value := pane_inner_widget.get_value_for_create()):
                         data[pane_inner_widget.jira_field_key] = value
 
-            self.notify('Creating the work item...', title='Create Work Item')
             self.dismiss(data)
 
     @on(Button.Pressed, '#add-work-item-button-quit')

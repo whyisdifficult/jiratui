@@ -54,8 +54,7 @@ class QuickViewDetails(DataTable):
                 self.post_message(self.LoadWorkItem(key))
 
 
-# TODO rename to WorkItemQuickViewScreen
-class WorkItemReadOnlyDetailsScreen(ModalScreen[str]):
+class WorkItemQuickViewScreen(ModalScreen[str]):
     """A modal screen that displays the details of a work item in read-only mode.
 
     This screen can be dismissed with an optional string. The string represents the key of a work item that we want to
@@ -197,14 +196,18 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen[str]):
                     (
                         Text('Created', justify='right'),
                         Text(
-                            datetime.datetime.strftime(issue.created, '%Y-%m-%d %H:%M'),
+                            datetime.datetime.strftime(issue.created, '%Y-%m-%d %H:%M')
+                            if issue.created
+                            else '',
                             justify='left',
                         ),
                     ),
                     (
                         Text('Last Update', justify='right'),
                         Text(
-                            datetime.datetime.strftime(issue.updated, '%Y-%m-%d %H:%M'),
+                            datetime.datetime.strftime(issue.updated, '%Y-%m-%d %H:%M')
+                            if issue.updated
+                            else '',
                             justify='left',
                         ),
                     ),

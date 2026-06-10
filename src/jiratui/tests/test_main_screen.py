@@ -11,6 +11,7 @@ from jiratui.config import ApplicationConfiguration
 from jiratui.models import (
     IssueStatus,
     IssueType,
+    JiraBaseIssue,
     JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
@@ -32,13 +33,20 @@ from jiratui.widgets.filters import (
     ProjectSelectionInput,
     WorkItemInputWidget,
 )
-from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
+from jiratui.widgets.related_work_items.related_issues import (
+    RelatedIssueCollapsible,
+    RelatedIssuesWidget,
+)
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
-from jiratui.widgets.work_item_subtasks.subtasks import IssueChildWorkItemsWidget
+from jiratui.widgets.work_item_subtasks.subtasks import (
+    ChildWorkItemCollapsible,
+    IssueChildWorkItemsWidget,
+)
 
 
 @pytest.fixture()
@@ -544,7 +552,6 @@ async def test_click_search_button_resets_widgets(
         search_issues_mock.assert_called_once()
         assert main_screen.issue_comments_widget.comments is None
         assert main_screen.related_issues_widget.issues is None
-        assert main_screen.related_issues_widget.issue_key is None
         assert main_screen.issue_remote_links_widget.issue_key is None
         assert main_screen.issue_attachments_widget.attachments is None
         assert main_screen.issue_attachments_widget.issue_key is None
@@ -775,3 +782,314 @@ async def test_create_work_item_subtask(
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, AddWorkItemScreen)
+
+
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_load_related_work_item_with_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_search_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        app.screen.issue_key_input.value = ''
+        app.screen.post_message(RelatedIssueCollapsible.LoadWorkItem('key-1'))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        assert app.screen.issue_key_input.value == 'key-1'
+        action_search_mock.assert_called_once()
+
+
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_load_related_work_item_without_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_search_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        app.screen.issue_key_input.value = ''
+        app.screen.post_message(RelatedIssueCollapsible.LoadWorkItem(''))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        assert app.screen.issue_key_input.value == ''
+        action_search_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_load_work_item_subtask_with_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_search_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        app.screen.issue_key_input.value = ''
+        app.screen.post_message(ChildWorkItemCollapsible.LoadWorkItem('key-1'))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        assert app.screen.issue_key_input.value == 'key-1'
+        action_search_mock.assert_called_once()
+
+
+@patch('jiratui.widgets.screen.MainScreen.action_search')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_load_work_item_subtask_without_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_search_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        app.screen.issue_key_input.value = ''
+        app.screen.post_message(ChildWorkItemCollapsible.LoadWorkItem(''))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        assert app.screen.issue_key_input.value == ''
+        action_search_mock.assert_not_called()
+
+
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_item_view_work_item_after_creation_enabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+
+
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_item_view_work_item_after_creation_disabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+
+
+@patch.object(MainScreen, '_load_work_item')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_dismiss_with_search(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        await pilot.press('ctrl+r')  # hit search to dismiss and search
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+        load_work_item_mock.assert_called_once_with('key-2')
+
+
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_priority')
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_type')
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_status')
+@patch.object(APIController, 'get_issue')
+@patch.object(MainScreen, '_load_work_item')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selection_issue_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    get_issue_mock: AsyncMock,
+    get_style_for_work_item_status_mock: Mock,
+    get_style_for_work_item_type_mock: Mock,
+    get_style_for_work_item_priority_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    get_style_for_work_item_status_mock.return_value = ''
+    get_style_for_work_item_type_mock.return_value = ''
+    get_style_for_work_item_priority_mock.return_value = ''
+    app.config.view_work_item_after_creation = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+        load_work_item_mock.assert_called_once_with('key-2')
+
+
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_priority')
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_type')
+@patch('jiratui.widgets.screens.work_item_quick_view.get_style_for_work_item_status')
+@patch.object(APIController, 'get_issue')
+@patch.object(MainScreen, '_load_work_item')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selection_parent_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    get_issue_mock: AsyncMock,
+    get_style_for_work_item_status_mock: Mock,
+    get_style_for_work_item_type_mock: Mock,
+    get_style_for_work_item_priority_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    get_style_for_work_item_status_mock.return_value = ''
+    get_style_for_work_item_type_mock.return_value = ''
+    get_style_for_work_item_priority_mock.return_value = ''
+    app.config.view_work_item_after_creation = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        await pilot.press('tab')
+        await pilot.press('down')
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+        load_work_item_mock.assert_called_once_with('P2')
+
+
+@patch.object(MainScreen, '_load_work_item')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_quick_view_screen_after_creating_work_dismiss_with_escape(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        await pilot.press('escape')  # dismiss with escape does not trigger search
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
+        load_work_item_mock.assert_not_called()

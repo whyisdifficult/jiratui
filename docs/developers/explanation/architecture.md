@@ -1162,9 +1162,6 @@ C4Component
         namespace jiratui.widgets.work_item_subtasks.subtasks {
             class ChildWorkItemCollapsible
             class IssueChildWorkItemsWidget
-        }
-
-        namespace IssueChildWorkItemsWidget.inner {
             class CreateSubtask
         }
 
@@ -1173,14 +1170,14 @@ C4Component
             class VerticalScroll
         }
         namespace jiratui.widgets.screens.work_item_quick_view {
-            class WorkItemReadOnlyDetailsScreen
+            class WorkItemQuickViewScreen
         }
 
         Collapsible <|-- ChildWorkItemCollapsible
         VerticalScroll <|-- IssueChildWorkItemsWidget
         IssueChildWorkItemsWidget o-- ChildWorkItemCollapsible
-        ChildWorkItemCollapsible --> WorkItemReadOnlyDetailsScreen: opens
-        IssueChildWorkItemsWidget o--> CreateSubtask
+        ChildWorkItemCollapsible --> WorkItemQuickViewScreen: opens
+        IssueChildWorkItemsWidget o-- CreateSubtask
 ```
 ````
 
@@ -1208,6 +1205,7 @@ C4Component
             class LinkDeleted {
                 +link_id: str
             }
+            class WorkItemRelatedItems
         }
 
         namespace textual {
@@ -1235,6 +1233,7 @@ C4Component
         AddWorkItemRelationshipScreen --> IssueLinkTypeSelector: uses
         RelatedIssueCollapsible --> LinkDeleted: posts
         RelatedIssuesWidget --> RelatedIssueCollapsible: contains
+        RelatedIssuesWidget --> WorkItemRelatedItems: contains
         RelatedIssuesWidget --> AddWorkItemRelationshipScreen: opens
         AddWorkItemRelationshipScreen o-- Button
         AddWorkItemRelationshipScreen o-- ItemGrid

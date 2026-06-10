@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.work_item_subtasks.subtasks import (
     ChildWorkItemCollapsible,
     IssueChildWorkItemsWidget,
@@ -64,4 +64,26 @@ async def test_view_subtask(app):
         await widget.action_view_work_item()
         await pilot.pause()
         # THEN
-        assert isinstance(app.screen, WorkItemReadOnlyDetailsScreen)
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+
+
+@pytest.mark.asyncio
+async def test_related_issues_widget_opens_quick_view_screen(mock_configuration, jira_issues, app):
+    # GIVEN
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues,
+        )
+        await pilot.press('8')
+        await pilot.press('tab')
+        await pilot.press('v')
+        # THEN
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+        assert app.screen._work_item_key == 'key-1'

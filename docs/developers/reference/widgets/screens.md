@@ -65,9 +65,9 @@
 ```{autodoc2-object} jiratui.widgets.work_item_details.flag_work_item.FlagWorkItemScreen
 ```
 
-## WorkItemReadOnlyDetailsScreen
+## WorkItemQuickViewScreen
 
-```{autodoc2-object} jiratui.widgets.screens.work_item_quick_view.WorkItemReadOnlyDetailsScreen
+```{autodoc2-object} jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen
 ```
 
 ## WorkItemWorkLogScreen

@@ -288,23 +288,22 @@ class WidgetBuilder:
     ) -> Widget:
         """Builds a SelectionWidget for single-select dropdown fields.
 
-        Creates a dropdown widget that allows users to select exactly one value from
-        a list of options. Options can be provided directly or extracted from the
-        field's allowed values in metadata. In CREATE mode, an optional default/initial
-        value can be set. In UPDATE mode, the widget displays the current value and
-        tracks changes.
+        Creates a dropdown widget that allows users to select exactly one value from a list of options. Options can be
+        provided directly or extracted from the field's allowed values in metadata. In CREATE mode, an optional
+        default/initial value can be set. In UPDATE mode, the widget displays the current value and tracks changes.
 
         Args:
-            mode: Either FieldMode.CREATE or FieldMode.UPDATE.
+            mode: Either [FieldMode.CREATE](#jiratui.widgets.commons.base.FieldMode.CREATE) or
+            [FieldMode.UPDATE](#jiratui.widgets.commons.base.FieldMode.UPDATE).
             metadata: Field metadata parsed from Jira's create/edit metadata. Used to extract allowed values if options
             are not explicitly provided.
-            options: List of (display_name, id) tuples representing dropdown choices. If None, allowed values are
+            options: List of `(display_name, id)` tuples representing dropdown choices. If `None`, allowed values are
             extracted from metadata.allowed_values. Each tuple's second element is the value sent to Jira. Defaults to
-            None.
+            `None`.
             initial_value: The default/initial selection in CREATE mode. If provided, this option will be pre-selected
-            when the widget is first displayed. Ignored in UPDATE mode. Defaults to None.
+            when the widget is first displayed. Ignored in UPDATE mode. Defaults to `None`.
             current_value: The current selected value in UPDATE mode (typically an ID). Ignored in CREATE mode. Defaults
-            to None.
+            to `None`.
 
         Returns:
             A configured SelectionWidget instance with type-to-search functionality.
@@ -684,15 +683,18 @@ def build_read_only_rich_text_widget(
     JiraTUI will display these fields as either a Markdown widget or a TextArea widget according to these rules:
 
     1. if the value is a `dict` and contains text we assume that the field stores text as ADF. In this case this method
-    will build an instance of `ADFTextAreaWidget`.
+    will build an instance of [ReadOnlyADFMarkdownTextAreaWidget](#jiratui.widgets.commons.adf.ReadOnlyADFMarkdownTextAreaWidget).
 
     2. if the value is a `str` and contains text we assume that the field stores the value as plain text. In this case
-    this method will build an instance of `TextAreaWidget`.
+    this method will build an instance of [ReadOnlyPlainTextTextAreaWidget](#jiratui.widgets.commons.widgets.ReadOnlyPlainTextTextAreaWidget).
 
     This function creates a read-only textarea widget suitable for displaying field values that contain formatted
     text. The widget type is automatically determined based on the content format: if the content is in Atlassian
-    Document Format (ADF) (JSON-like structure), a `ReadOnlyADFMarkdownTextAreaWidget` is created for rendering the rich
-    text as Markdown. Otherwise, a `ReadOnlyPlainTextTextAreaWidget` is created for plain text display.
+    Document Format (ADF) (JSON-like structure), a
+    [ReadOnlyADFMarkdownTextAreaWidget](#jiratui.widgets.commons.adf.ReadOnlyADFMarkdownTextAreaWidget) is created for
+    rendering the rich text as Markdown. Otherwise, a
+    [ReadOnlyPlainTextTextAreaWidget](#jiratui.widgets.commons.widgets.ReadOnlyPlainTextTextAreaWidget) is created for
+    plain text display.
 
     This method is typically used for displaying description, comment, or other rich-text fields in read-only mode
     without allowing user modification.
@@ -705,7 +707,7 @@ def build_read_only_rich_text_widget(
         content: the actual content of the issue's field. This can be an ADF dict or string.
 
     Returns:
-        An instance of `ADFTextAreaWidget` or `TextAreaWidget`.
+        An instance of `ReadOnlyADFMarkdownTextAreaWidget` or `ReadOnlyPlainTextTextAreaWidget`.
 
     Example:
     ```python

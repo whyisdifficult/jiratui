@@ -11,7 +11,7 @@ from textual.widgets import Collapsible, Link, Rule, Static
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
-from jiratui.widgets.screens.work_item_quick_view import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
 @dataclass
@@ -26,10 +26,14 @@ class ChildWorkItemCollapsible(Collapsible):
 
     This widget is responsible for:
 
-    - opening the modal screen [WorkItemReadOnlyDetailsScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemReadOnlyDetailsScreen)
+    - opening the modal screen [WorkItemQuickViewScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen)
     to display the details of the work item selected.
     - posting the message [LoadWorkItem](#jiratui.widgets.work_item_subtasks.subtasks.ChildWorkItemCollapsible.LoadWorkItem)
-    when the screen `WorkItemReadOnlyDetailsScreen` is dismissed with a work item key.
+    when the screen [WorkItemQuickViewScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen) is
+    dismissed with a work item key.
+
+    **See Also**:
+    - [Architecture](#architecture-work-item-subtasks-classes)
     """
 
     BINDINGS = [
@@ -57,7 +61,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
     async def action_view_work_item(self) -> None:
         await self.app.push_screen(
-            WorkItemReadOnlyDetailsScreen(self.work_item_key),
+            WorkItemQuickViewScreen(self.work_item_key),
             callback=self._load_work_item_after_viewing,
         )
 

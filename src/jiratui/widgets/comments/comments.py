@@ -212,14 +212,14 @@ class IssueCommentsWidget(VerticalScroll):
     def watch_comments(self, data: WorkItemComments | None) -> None:
         self.remove_children()
         self._work_item_key = data.work_item_key if data else None
-        if data and data.comments:
+        if data and (comments_list := data.comments):
             comment: IssueComment
             elements: list[CommentCollapsible] = []
-            data.comments.sort(
+            comments_list.sort(
                 key=lambda x: x.updated if x.updated else datetime.today().date(), reverse=True
             )
             widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
-            for comment in data.comments:
+            for comment in comments_list:
                 if comment.rich_text_value_is_empty(comment.body):  # type:ignore[arg-type]
                     widget = Static('There is no "Comment" set.', classes='tip')
                 else:
