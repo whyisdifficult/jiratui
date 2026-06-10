@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add config variable `show_keybinds_hints` to control whether to show keybinding hints in the tabs when the user
 selects a work item. the default is `False`, i.e. no hints are shown; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/252
 - Add a new autocomplete widget to search and set the key of a work item parent when creating new work items; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/265
-- After creating a new work item the main screen will now open a modal screen to show a quick view of the item just created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- After creating a new work item the main screen will now open a modal screen to show a quick view of the item just created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/266
 
 ### Minor Improvements
 
