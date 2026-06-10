@@ -252,7 +252,7 @@ C4Component
 
         %% MainScreen Class
         class MainScreen {
-            <<jiratui.widgets.screens>>
+            <<jiratui.widgets.screen>>
         }
 
         %% JiraUI Widgets
@@ -750,57 +750,18 @@ C4Component
         }
 
         %% Widget Implementations
-        class ProjectSelectionWidget {
-            +mode: FieldMode
-            +field_id: str
-            +jira_field_key: str
-            +original_value: str | None
-            +selection: str | None
-            +value_has_changed: bool
-            +projects: Reactive~dict | None~
+        class ProjectSelectionWidget {}
 
-            +__init__(mode, field_id, jira_field_key, ...) None
-            +watch_projects(projects) None
-            +get_value_for_update() str | None
-        }
-
-        class IssueTypeSelectionWidget {
-            +mode: FieldMode
-            +field_id: str
-            +jira_field_key: str
-            +original_value: str | None
-            +selection: str | None
-            +value_has_changed: bool
-
-            +__init__(mode, field_id, jira_field_key, options, ...) None
-            +get_value_for_update() str | None
-        }
+        class IssueTypeSelectionWidget {}
 
         %% AutoComplete Implementations
-        class LabelsAutoComplete {
-            +__init__(target, api_controller, required, title) None
-            +get_search_string(target_state) str
-            +should_show_dropdown(search_string) bool
-            +apply_completion(value, state) None
-        }
+        class LabelsAutoComplete {}
 
-        class MultiUserPickerAutoComplete {
-            +MIN_QUERY_TERM_LENGTH: int
+        class WorkItemKeyAutoComplete {}
 
-            +__init__(target, api_controller, required, title, user_search_function) None
-            +get_search_string(target_state) str
-            +should_show_dropdown(search_string) bool
-            +apply_completion(value, state) None
-        }
+        class MultiUserPickerAutoComplete {}
 
-        class MultiIssuePickerAutoComplete {
-            +MIN_QUERY_TERM_LENGTH: int
-
-            +__init__(target, api_controller, required, title, issue_search_function) None
-            +get_search_string(target_state) str
-            +should_show_dropdown(search_string) bool
-            +apply_completion(value, state) None
-        }
+        class MultiIssuePickerAutoComplete {}
 
         %% Inheritance relationships
         ProjectSelectionWidget --|> Select
@@ -812,6 +773,7 @@ C4Component
         IssueTypeSelectionWidget --|> BaseUpdateFieldWidget
 
         LabelsAutoComplete --|> AutoComplete
+        WorkItemKeyAutoComplete --|> AutoComplete
         MultiUserPickerAutoComplete --|> AutoComplete
         MultiIssuePickerAutoComplete --|> AutoComplete
 
@@ -822,8 +784,12 @@ C4Component
         LabelsAutoComplete --> APIController : uses
         LabelsAutoComplete --> Input : attached to
         LabelsAutoComplete --> DropdownItem : creates
-        LabelsAutoComplete --> JQLAutocompleteSuggestion : receives
         LabelsAutoComplete --> TargetState : receives
+
+        WorkItemKeyAutoComplete --> APIController : uses
+        WorkItemKeyAutoComplete --> Input : attached to
+        WorkItemKeyAutoComplete --> DropdownItem : creates
+        WorkItemKeyAutoComplete --> TargetState : receives
 
         MultiUserPickerAutoComplete --> APIController : uses
         MultiUserPickerAutoComplete --> Input : attached to
@@ -1193,23 +1159,25 @@ C4Component
             hideEmptyMembersBox: true
     ---
     classDiagram
-        namespace jiratui.widgets {
+        namespace jiratui.widgets.work_item_subtasks.subtasks {
             class ChildWorkItemCollapsible
             class IssueChildWorkItemsWidget
+            class CreateSubtask
         }
 
         namespace textual {
             class Collapsible
             class VerticalScroll
         }
-        namespace jiratui.widgets.create_work_item.screen {
-            class AddWorkItemScreen
+        namespace jiratui.widgets.screens.work_item_quick_view {
+            class WorkItemQuickViewScreen
         }
 
         Collapsible <|-- ChildWorkItemCollapsible
         VerticalScroll <|-- IssueChildWorkItemsWidget
         IssueChildWorkItemsWidget o-- ChildWorkItemCollapsible
-        IssueChildWorkItemsWidget --> AddWorkItemScreen: opens
+        ChildWorkItemCollapsible --> WorkItemQuickViewScreen: opens
+        IssueChildWorkItemsWidget o-- CreateSubtask
 ```
 ````
 
@@ -1237,6 +1205,7 @@ C4Component
             class LinkDeleted {
                 +link_id: str
             }
+            class WorkItemRelatedItems
         }
 
         namespace textual {
@@ -1264,6 +1233,7 @@ C4Component
         AddWorkItemRelationshipScreen --> IssueLinkTypeSelector: uses
         RelatedIssueCollapsible --> LinkDeleted: posts
         RelatedIssuesWidget --> RelatedIssueCollapsible: contains
+        RelatedIssuesWidget --> WorkItemRelatedItems: contains
         RelatedIssuesWidget --> AddWorkItemRelationshipScreen: opens
         AddWorkItemRelationshipScreen o-- Button
         AddWorkItemRelationshipScreen o-- ItemGrid

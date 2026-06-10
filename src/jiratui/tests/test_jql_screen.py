@@ -4,7 +4,7 @@ import pytest
 from textual.widgets import TextArea
 
 from jiratui.widgets.jql import JQLEditorScreen, PreDefinedJQLExpressionsWidget
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 
 
 @patch.object(JQLEditorScreen, '_pre_defined_jql_expressions', PropertyMock(return_value=None))

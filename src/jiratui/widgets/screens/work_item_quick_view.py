@@ -2,11 +2,13 @@ import datetime
 from typing import cast
 
 from rich.text import Text
-from textual import log
+from textual import log, on
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import VerticalScroll
+from textual.message import Message
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Rule, Static, TabbedContent, TabPane
+from textual.widgets import DataTable, Footer, Rule, Static, TabbedContent, TabPane
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorkItemFields
@@ -15,6 +17,7 @@ from jiratui.utils.styling import (
     get_style_for_work_item_status,
     get_style_for_work_item_type,
 )
+from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
@@ -24,10 +27,88 @@ from jiratui.widgets.commons.factory_utils import (
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 
 
-class WorkItemReadOnlyDetailsScreen(ModalScreen):
-    """A modal screen that displays the details of a work item in read-only mode."""
+class QuickViewDetails(DataTable):
+    """A [DataTable](textual.widgets.DataTable) that displays the details of a work item being displayed on the quick
+    view screen.
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close')]
+    This table is responsible for:
+    - posting the message [LoadWorkItem](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.LoadWorkItem)
+    when the user selects a data row that contains a work item key; e.g. the key or parent key rows.
+    """
+
+    class LoadWorkItem(Message):
+        def __init__(self, work_item_key: str):
+            super().__init__()
+            self.work_item_key = work_item_key
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Posts the message [LoadWorkItem](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.LoadWorkItem)
+        to ask the caller to search and load the work item displayed in the row.
+
+        Args:
+            event: the event that triggered this.
+        """
+
+        if event.row_key and event.row_key.value:
+            if key := event.row_key.value.split('#')[-1]:
+                self.post_message(self.LoadWorkItem(key))
+
+
+class WorkItemQuickViewScreen(ModalScreen[str]):
+    """A modal screen that displays the details of a work item in read-only mode.
+
+    This screen can be dismissed with an optional string. The string represents the key of a work item that we want to
+    fetch and display in the main screen. By default, the string is the key of the work item being displayed by this
+    screen. This allows users to quickly jump to the work item being displayed.
+
+    In future versions users may be able to dismiss this screen with the key of the parent of the work item being
+    displayed; assuming the work item has a parent.
+
+    The screen also supports the following features:
+
+    - Opening the work item in the browser.
+    - Copying to the clipboard the work item's key.
+    - Copying to the clipboard the work item's URL.
+
+    **See Also**
+    - [Architecture](#architecture-work-item-subtasks-classes)
+    """
+
+    BINDINGS = [
+        ('escape', 'app.pop_screen', 'Close'),
+        Binding(
+            key='ctrl+o',
+            action='open_issue_in_browser',
+            description='Browse',
+            show=True,
+            key_display='^o',
+            tooltip='Open in browser',
+        ),
+        Binding(
+            key='ctrl+k',
+            action='copy_issue_key',
+            description='Copy Key',
+            show=True,
+            key_display='^k',
+            tooltip='Copy key',
+        ),
+        Binding(
+            key='ctrl+j',
+            action='copy_issue_url',
+            description='Copy URL',
+            show=True,
+            key_display='^j',
+            tooltip='Copy URL',
+        ),
+        Binding(
+            key='ctrl+r',
+            action='search_work_item',
+            description='Search Work Item',
+            show=True,
+            key_display='^r',
+            tooltip='Search and Fetch Work Item',
+        ),
+    ]
     TITLE = 'Work Item Details'
 
     def __init__(self, work_item_key: str):
@@ -36,14 +117,15 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
 
     def compose(self) -> ComposeResult:
         vertical = VerticalScroll()
-        vertical.border_title = self.TITLE
+        vertical.border_title = f'{self.TITLE} - {self._work_item_key}'
         with vertical:
-            yield DataTable(
+            yield QuickViewDetails(
                 cursor_type='row', show_header=False, id='work-item-readonly-details-dt'
             )
             yield Rule()
             with TabbedContent(id='read-only-work-item-tabs'):
                 yield TabPane('Description', id='tab-description')
+        yield Footer(show_command_palette=False, compact=True)
 
     @property
     def tab_pane_description(self) -> TabPane:
@@ -70,18 +152,19 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
             color_style_priority = get_style_for_work_item_priority(issue.priority_name)
             color_style_status = get_style_for_work_item_status(issue.status.name)
             color_style_type = get_style_for_work_item_type(issue.issue_type.name)
-            table = self.query_one(DataTable)
+
+            table = self.query_one(QuickViewDetails)
             table.add_columns(*['Property', 'Value'])
+            table.add_row(
+                *[Text('Key', justify='right'), Text(issue.key, justify='left')],
+                key=f'key#{issue.key}',
+            )
+            table.add_row(
+                *[Text('Parent', justify='right'), Text(issue.parent_key or '-', justify='left')],
+                key=f'key#{issue.parent_key}' if issue.parent_key else None,
+            )
             table.add_rows(
                 [
-                    (
-                        Text('Key', justify='right'),
-                        Text(issue.key, justify='left'),
-                    ),
-                    (
-                        Text('Parent', justify='right'),
-                        Text(issue.parent_key or '-', justify='left'),
-                    ),
                     (
                         Text('Summary', justify='right'),
                         Text(issue.cleaned_summary(), justify='left'),
@@ -113,14 +196,18 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                     (
                         Text('Created', justify='right'),
                         Text(
-                            datetime.datetime.strftime(issue.created, '%Y-%m-%d %H:%M'),
+                            datetime.datetime.strftime(issue.created, '%Y-%m-%d %H:%M')
+                            if issue.created
+                            else '',
                             justify='left',
                         ),
                     ),
                     (
                         Text('Last Update', justify='right'),
                         Text(
-                            datetime.datetime.strftime(issue.updated, '%Y-%m-%d %H:%M'),
+                            datetime.datetime.strftime(issue.updated, '%Y-%m-%d %H:%M')
+                            if issue.updated
+                            else '',
                             justify='left',
                         ),
                     ),
@@ -209,3 +296,34 @@ class WorkItemReadOnlyDetailsScreen(ModalScreen):
                                 classes='summary-description-container',
                             )
                         )
+
+    def action_open_issue_in_browser(self) -> None:
+        """Opens the currently-selected item in the default browser."""
+        if self._work_item_key:
+            self.notify('Opening Work Item in the browser...')
+            self.app.open_url(build_external_url_for_issue(self._work_item_key))
+
+    def action_copy_issue_key(self) -> None:
+        """Copy to the clipboard the key of the item."""
+        if self._work_item_key:
+            self.app.copy_to_clipboard(self._work_item_key)
+            self.notify('Work item Key copied!')
+
+    def action_copy_issue_url(self) -> None:
+        """Copy to the clipboard the URL of the item."""
+        if self._work_item_key:
+            if url := build_external_url_for_issue(self._work_item_key):
+                self.app.copy_to_clipboard(url)
+                self.notify('Work item URL copied!')
+
+    def action_search_work_item(self) -> None:
+        """Dismisses the screen with the key of the work item being displayed."""
+        if self._work_item_key:
+            self.dismiss(self._work_item_key)
+        else:
+            self.dismiss()
+
+    @on(QuickViewDetails.LoadWorkItem)
+    def _dismiss_with_work_item_key(self, message: QuickViewDetails.LoadWorkItem) -> None:
+        self.dismiss(message.work_item_key)
+        message.stop()  # no need to propagate the message

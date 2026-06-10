@@ -10,7 +10,7 @@ from jiratui.widgets.attachments.attachments import (
     IssueAttachmentsWidget,
     WorkItemAttachments,
 )
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 
 
 @patch.object(AddAttachmentScreen, '_get_initial_directory_for_upload')

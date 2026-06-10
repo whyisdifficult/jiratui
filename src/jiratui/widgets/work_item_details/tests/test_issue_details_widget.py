@@ -31,7 +31,7 @@ from jiratui.widgets.commons.widgets import (
     NumericInputWidget,
     SingleUserPickerWidget,
 )
-from jiratui.widgets.screens import WorkItemSearchResult
+from jiratui.widgets.screen import WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.fields import (
     IssueDetailsPrioritySelection,
@@ -202,10 +202,10 @@ def jira_issue() -> JiraIssue:
 
 @patch.object(APIController, 'search_users_assignable_to_issue')
 @patch.object(APIController, 'get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_search_users_by_issue_key(
     search_projects_mock: AsyncMock,
@@ -264,10 +264,10 @@ async def test_search_users_by_issue_key(
 
 @patch.object(APIController, 'search_users_assignable_to_issue')
 @patch.object(APIController, 'get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_select_and_display_work_item(
     search_projects_mock: AsyncMock,

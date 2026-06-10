@@ -9,7 +9,7 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, JiraWorklog, PaginatedJiraWorklog
 from jiratui.widgets.filters import ProjectSelectionInput
-from jiratui.widgets.screens import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.work_log import (
     LogDateTimeInput,
@@ -459,12 +459,12 @@ async def test_adding_worklog_user_clicks_cancel(
 
 
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
-@patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.add_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_adding_worklog_with_success(
     search_projects_mock: AsyncMock,
@@ -534,12 +534,12 @@ async def test_adding_worklog_with_success(
 
 
 @patch.object(IssueDetailsWidget, '_refresh_work_item_details')
-@patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.add_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_adding_worklog_with_error_adding_new_worklog(
     search_projects_mock: AsyncMock,
@@ -608,12 +608,12 @@ async def test_adding_worklog_with_error_adding_new_worklog(
         refresh_work_item_details_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.screens.APIController.add_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.add_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_adding_worklog_when_users_clicks_cancel(
     search_projects_mock: AsyncMock,
@@ -668,12 +668,12 @@ async def test_adding_worklog_when_users_clicks_cancel(
 
 
 @patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
-@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_modal_to_view_work_logs(
     search_projects_mock: AsyncMock,
@@ -723,14 +723,14 @@ async def test_open_modal_to_view_work_logs(
         assert screen.root_container.border_title == 'Worklog - key-2'
 
 
-@patch('jiratui.widgets.screens.APIController.remove_worklog')
+@patch('jiratui.widgets.screen.APIController.remove_worklog')
 @patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
-@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_delete_worklog(
     search_projects_mock: AsyncMock,
@@ -789,14 +789,14 @@ async def test_delete_worklog(
 
 
 @patch.object(IssueDetailsWidget, '_handle_worklog_screen_dismissal')
-@patch('jiratui.widgets.screens.APIController.remove_worklog')
+@patch('jiratui.widgets.screen.APIController.remove_worklog')
 @patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
-@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_delete_worklog_and_close_worklog_screen(
     search_projects_mock: AsyncMock,
@@ -854,14 +854,14 @@ async def test_delete_worklog_and_close_worklog_screen(
 
 
 @patch.object(IssueDetailsWidget, '_handle_worklog_screen_dismissal')
-@patch('jiratui.widgets.screens.APIController.remove_worklog')
+@patch('jiratui.widgets.screen.APIController.remove_worklog')
 @patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
-@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_show_and_close_worklog_screen_without_deleting(
     search_projects_mock: AsyncMock,
@@ -916,12 +916,12 @@ async def test_show_and_close_worklog_screen_without_deleting(
 
 @patch.object(JiraApp, 'open_url')
 @patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
-@patch('jiratui.widgets.screens.APIController.get_work_item_worklog')
-@patch('jiratui.widgets.screens.APIController.get_issue')
-@patch('jiratui.widgets.screens.MainScreen._search_work_items')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
+@patch('jiratui.widgets.screen.APIController.get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_worklog_in_browser(
     search_projects_mock: AsyncMock,

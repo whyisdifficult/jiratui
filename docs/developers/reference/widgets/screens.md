@@ -2,7 +2,7 @@
 
 ## MainScreen
 
-```{autodoc2-object} jiratui.widgets.screens.MainScreen
+```{autodoc2-object} jiratui.widgets.screen.MainScreen
 ```
 
 ## ServerInfoScreen
@@ -65,9 +65,9 @@
 ```{autodoc2-object} jiratui.widgets.work_item_details.flag_work_item.FlagWorkItemScreen
 ```
 
-## WorkItemReadOnlyDetailsScreen
+## WorkItemQuickViewScreen
 
-```{autodoc2-object} jiratui.widgets.work_item_details.read_only_details.WorkItemReadOnlyDetailsScreen
+```{autodoc2-object} jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen
 ```
 
 ## WorkItemWorkLogScreen

@@ -7,7 +7,7 @@ from textual.widgets import DataTable, Static, TabPane
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueStatus, IssueType, JiraIssue, JiraIssueSearchResponse, Project
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
 @patch.object(APIController, 'get_issue')
@@ -24,7 +24,7 @@ async def test_read_only_details_without_description(
         result=JiraIssueSearchResponse(issues=[work_item])
     )
     async with app.run_test():
-        screen = WorkItemReadOnlyDetailsScreen('WI-1')
+        screen = WorkItemQuickViewScreen('WI-1')
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -59,7 +59,7 @@ async def test_read_only_details_with_description(
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
     async with app.run_test():
-        screen = WorkItemReadOnlyDetailsScreen('WI-1')
+        screen = WorkItemQuickViewScreen('WI-1')
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -86,7 +86,7 @@ async def test_read_only_details_without_description_without_edit_metadata(
         result=JiraIssueSearchResponse(issues=[work_item])
     )
     async with app.run_test():
-        screen = WorkItemReadOnlyDetailsScreen('WI-1')
+        screen = WorkItemQuickViewScreen('WI-1')
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -144,7 +144,7 @@ async def test_read_only_details_without_description_with_edit_metadata(
         result=JiraIssueSearchResponse(issues=[work_item])
     )
     async with app.run_test():
-        screen = WorkItemReadOnlyDetailsScreen('WI-1')
+        screen = WorkItemQuickViewScreen('WI-1')
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -195,7 +195,7 @@ async def test_read_only_details_without_description_with_edit_metadata_without_
         result=JiraIssueSearchResponse(issues=[work_item])
     )
     async with app.run_test():
-        screen = WorkItemReadOnlyDetailsScreen('WI-1')
+        screen = WorkItemQuickViewScreen('WI-1')
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()

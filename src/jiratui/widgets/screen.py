@@ -8,7 +8,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Select, TabbedContent, TabPane
+from textual.widgets import Button, Footer, Header, LoadingIndicator, Select, TabbedContent, TabPane
 from textual.worker import Worker
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -38,8 +38,13 @@ from jiratui.widgets.filters import (
     WorkItemInputWidget,
 )
 from jiratui.widgets.git_screen import GitScreen
-from jiratui.widgets.related_work_items.related_issues import RelatedIssuesWidget
+from jiratui.widgets.related_work_items.related_issues import (
+    RelatedIssueCollapsible,
+    RelatedIssuesWidget,
+    WorkItemRelatedItems,
+)
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import (
     DataTableSearchInput,
     IssuesSearchResultsTable,
@@ -48,7 +53,11 @@ from jiratui.widgets.search import (
 from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
-from jiratui.widgets.work_item_subtasks.subtasks import IssueChildWorkItemsWidget, WorkItemSubtasks
+from jiratui.widgets.work_item_subtasks.subtasks import (
+    ChildWorkItemCollapsible,
+    IssueChildWorkItemsWidget,
+    WorkItemSubtasks,
+)
 
 
 @dataclass
@@ -389,6 +398,10 @@ class MainScreen(Screen):
     def issue_date_until_input(self) -> IssueSearchCreatedUntilWidget:
         return self.query_one('#input_date_until', expect_type=IssueSearchCreatedUntilWidget)
 
+    @property
+    def loading_container(self) -> LoadingIndicator:
+        return self.query_one('#main-screen-loading-container', expect_type=LoadingIndicator)
+
     def compose(self) -> ComposeResult:
         """Composes the widgets of the application's main screen.
 
@@ -400,6 +413,10 @@ class MainScreen(Screen):
         should_show_header = True
         if self.config.tui_custom_title is not None and self.config.tui_custom_title == '':
             should_show_header = False
+
+        # a loading indicator that will be displayed when the screen is handling a create-work-item event
+        loading_container = LoadingIndicator(id='main-screen-loading-container')
+        loading_container.display = False
 
         if should_show_header:
             yield Header(id='app-header', icon='*')
@@ -431,6 +448,7 @@ class MainScreen(Screen):
                     flat=True,
                     compact=True,
                 )
+            yield loading_container
             with Horizontal():
                 with SearchResultsContainer(
                     id='search_results_container',
@@ -997,12 +1015,13 @@ class MainScreen(Screen):
         # clear the comments
         self.issue_comments_widget.comments = None
         # clear related issues
-        self.related_issues_widget.issue_key = None
         self.related_issues_widget.issues = None
         # clear the web links
         self.issue_remote_links_widget.issue_key = None
         # clear the attachments
         self.issue_attachments_widget.attachments = None
+        # clear the subtasks
+        self.issue_child_work_items_widget.issues = None
         # reset the current page
         self.search_results_table.page = 1
         # clear the token-based pagination control
@@ -1092,6 +1111,8 @@ class MainScreen(Screen):
         """
 
         if data:
+            self.loading_container.display = True
+
             # split data into base fields and dynamic fields (custom fields, components, etc.)
             # Base fields are handled explicitly by the controller
             base_fields = {
@@ -1110,32 +1131,31 @@ class MainScreen(Screen):
             base_data = {k: v for k, v in data.items() if k in base_fields}
             dynamic_fields = {k: v for k, v in data.items() if k not in base_fields}
 
-            self.logger.info(
-                'Creating work item with split fields',
-                extra={
-                    'base_data': base_data,
-                    'dynamic_fields': dynamic_fields,
-                    'all_data_keys': list(data.keys()),
-                    'dynamic_field_types': {k: type(v).__name__ for k, v in dynamic_fields.items()},
-                },
-            )
-
+            # request the API to create the work item
             response: APIControllerResponse = await self.api.create_work_item(
                 base_data, **dynamic_fields
             )
+            self.loading_container.display = False
 
             if response.success and response.result:
                 self.notify(
                     f'Work item {response.result.key} created successfully',
                     title='Create Work Item',
                 )
+                if self.config.view_work_item_after_creation:
+                    self.call_next(self._open_quick_view_screen, response.result.key)
             else:
-                self.logger.error('Failed to create the work item', extra={'error': response.error})
                 self.notify(
                     f'Failed to create the work item: {response.error}',
                     severity='error',
                     title='Create Work Item',
                 )
+
+    async def _open_quick_view_screen(self, work_item_key: str) -> None:
+        await self.app.push_screen(
+            WorkItemQuickViewScreen(work_item_key),
+            self._load_work_item,
+        )
 
     async def retrieve_issue_subtasks(self, work_item: JiraIssue) -> None:
         work_item_subtasks = WorkItemSubtasks(
@@ -1159,7 +1179,7 @@ class MainScreen(Screen):
             )
         self.issue_child_work_items_widget.issues = work_item_subtasks
 
-    async def fetch_issue(self, selected_work_item_key: str, force_refresh: bool = False) -> None:
+    async def fetch_issue(self, selected_work_item_key: str) -> None:
         """Retrieves the details of a work item selected by the user in the search results.
 
         This is triggered from the datatable that holds the search results:
@@ -1175,10 +1195,6 @@ class MainScreen(Screen):
 
         Args:
             selected_work_item_key: the key of the work item selected by the user from the search results datatable.
-            force_refresh: if the currently selected work item needs to be reloaded and this is `True` then the screen
-            fetches the detail sof the work item; otherwise it does not refresh the item. This is useful to avoid
-            reloading the same issue being displayed, i.e. the one currently selected but, it helps to force the
-            reload if the item's details have been updated.
 
         Returns:
             None
@@ -1190,10 +1206,6 @@ class MainScreen(Screen):
                 title='Find Work Item',
                 severity='error',
             )
-            return
-
-        # skip if the same work item is already loaded; but reload if we force it
-        if self.current_loaded_work_item_key == selected_work_item_key and not force_refresh:
             return
 
         # show loading indicator
@@ -1223,8 +1235,9 @@ class MainScreen(Screen):
         self.issue_details_widget.issue = work_item
 
         # step 4: populate the related-issues tab
-        self.related_issues_widget.issue_key = work_item.key
-        self.related_issues_widget.issues = work_item.related_issues
+        self.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=work_item.key, related_items=work_item.related_issues
+        )
 
         # step 5: populate comments tab
         self.issue_comments_widget.comments = WorkItemComments(
@@ -1334,7 +1347,9 @@ class MainScreen(Screen):
         self.issue_info_container.focus()
 
     @on(IssuesSearchResultsTable.WorkItemDeleted)
-    def clear_work_item_data(self, message: IssuesSearchResultsTable.WorkItemDeleted) -> None:
+    def _clear_work_item_data_after_deletion(
+        self, message: IssuesSearchResultsTable.WorkItemDeleted
+    ) -> None:
         """Clears the data of a selected item when the item is deleted.
 
         When a work item is deleted and the item is the one currently being displayed in the information tabs on the
@@ -1352,7 +1367,6 @@ class MainScreen(Screen):
         if self.current_loaded_work_item_key == message.work_item_key:
             # clean up the forms and tabs
             self.related_issues_widget.issues = None
-            self.related_issues_widget.issue_key = None
             self.issue_comments_widget.comments = None
             self.issue_attachments_widget.attachments = None
             self.issue_remote_links_widget.issue_key = None
@@ -1361,8 +1375,13 @@ class MainScreen(Screen):
             self.issue_details_widget.issue = None
             self.current_loaded_work_item_key = None
 
+        if self.issue_key_input.value == message.work_item_key:
+            self.issue_key_input.value = ''
+
     @on(WorkItemInfoContainer.WorkItemUpdated)
-    def _refresh_work_item(self, message: WorkItemInfoContainer.WorkItemUpdated) -> None:
+    def _refresh_work_item_after_update(
+        self, message: WorkItemInfoContainer.WorkItemUpdated
+    ) -> None:
         """Fetches the work item's details after some of its details have been updated in the Info tab
 
         Args:
@@ -1373,4 +1392,26 @@ class MainScreen(Screen):
             None
         """
 
-        self.run_worker(self.fetch_issue(message.work_item_key, True), exclusive=True)
+        self.run_worker(self.fetch_issue(message.work_item_key), exclusive=True)
+
+    def _load_work_item(self, work_item_key: str | None = None) -> None:
+        """Fetches a work item being displayed in the quick view screen.
+
+        Args:
+            work_item_key: the key of the item to search and display.
+
+        Returns:
+            None
+        """
+
+        if work_item_key and work_item_key.strip():
+            self.issue_key_input.value = work_item_key
+            self.run_worker(self.action_search())
+
+    @on(RelatedIssueCollapsible.LoadWorkItem)
+    def _load_related_work_item(self, message: RelatedIssueCollapsible.LoadWorkItem) -> None:
+        self._load_work_item(message.work_item_key)
+
+    @on(ChildWorkItemCollapsible.LoadWorkItem)
+    def _load_work_item_subtask(self, message: ChildWorkItemCollapsible.LoadWorkItem) -> None:
+        self._load_work_item(message.work_item_key)

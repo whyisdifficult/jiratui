@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from textual.widgets import Select
@@ -19,9 +19,18 @@ from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
 from jiratui.widgets.related_work_items.related_issues import (
     RelatedIssueCollapsible,
     RelatedIssuesWidget,
+    WorkItemRelatedItems,
 )
-from jiratui.widgets.screens import MainScreen
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
+
+
+@pytest.fixture()
+def mock_configuration():
+    with patch('jiratui.utils.urls.CONFIGURATION') as mock_config_var:
+        mock_config = MagicMock()
+        mock_config_var.get.return_value = mock_config
+        yield mock_config
 
 
 @patch.object(APIController, 'get_issue')
@@ -41,7 +50,9 @@ async def test_link_work_items_link_creation_success_false(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.link_work_items(data)
         # THEN
@@ -72,11 +83,13 @@ async def test_link_work_items_no_related_issues_found(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.link_work_items(data)
         # THEN
-        assert widget.issues is None
+        assert widget.issues == WorkItemRelatedItems(work_item_key='WI-1')
         get_issue_mock.assert_called_once_with('WI-1', fields=['issuelinks'])
         link_work_items_mock.assert_called_once_with(
             left_issue_key='WI-1',
@@ -104,11 +117,13 @@ async def test_link_work_items_no_related_issues_found_none(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.link_work_items(data)
         # THEN
-        assert widget.issues is None
+        assert widget.issues == WorkItemRelatedItems(work_item_key='WI-1')
         get_issue_mock.assert_called_once_with('WI-1', fields=['issuelinks'])
         link_work_items_mock.assert_called_once_with(
             left_issue_key='WI-1',
@@ -136,11 +151,13 @@ async def test_link_work_items_no_related_issues_found_empty_list(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.link_work_items(data)
         # THEN
-        assert widget.issues is None
+        assert widget.issues == WorkItemRelatedItems(work_item_key='WI-1')
         get_issue_mock.assert_called_once_with('WI-1', fields=['issuelinks'])
         link_work_items_mock.assert_called_once_with(
             left_issue_key='WI-1',
@@ -204,26 +221,31 @@ async def test_link_work_items(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.link_work_items(data)
         # THEN
-        assert widget.issues == [
-            RelatedJiraIssue(
-                id='1',
-                key='key-1',
-                summary='abcd',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-            ),
-            RelatedJiraIssue(
-                id='2',
-                key='key-2',
-                summary='qwerty',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-            ),
-        ]
+        assert widget.issues == WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='1',
+                    key='key-1',
+                    summary='abcd',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                ),
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                ),
+            ],
+        )
         get_issue_mock.assert_called_once_with('WI-1', fields=['issuelinks'])
         link_work_items_mock.assert_called_once_with(
             left_issue_key='WI-1',
@@ -245,43 +267,48 @@ async def test_related_issues_widget_set_issues(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
         # WHEN
-        widget.issues = [
-            RelatedJiraIssue(
-                id='1',
-                key='key-1',
-                summary='abcd',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-            ),
-            RelatedJiraIssue(
-                id='2',
-                key='key-2',
-                summary='qwerty',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-                priority=IssuePriority(id='1', name='Medium'),
-            ),
-        ]
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='1',
+                    key='key-1',
+                    summary='abcd',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                ),
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                ),
+            ],
+        )
         # THEN
-        assert widget.issues == [
-            RelatedJiraIssue(
-                id='1',
-                key='key-1',
-                summary='abcd',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-            ),
-            RelatedJiraIssue(
-                id='2',
-                key='key-2',
-                summary='qwerty',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-                priority=IssuePriority(id='1', name='Medium'),
-            ),
-        ]
+        assert widget.issues == WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='1',
+                    key='key-1',
+                    summary='abcd',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                ),
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                ),
+            ],
+        )
         assert len(list(widget.query_children(RelatedIssueCollapsible))) == 2
 
 
@@ -292,7 +319,9 @@ async def test_action_link_work_item_with_issue_key_set(app):
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+        )
         # WHEN
         await widget.action_link_work_item()
         # THEN
@@ -306,7 +335,7 @@ async def test_action_link_work_item_without_issue_key_set(app):
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = None
+        widget.issues = WorkItemRelatedItems(work_item_key='')
         # WHEN
         await widget.action_link_work_item()
         # THEN
@@ -338,7 +367,7 @@ async def test_action_view_work_item_opens_modal_screen_to_view(app):
         # WHEN
         await widget.action_view_work_item()
         # THEN
-        assert isinstance(app.screen, WorkItemReadOnlyDetailsScreen)
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
 
 
 @patch.object(APIController, 'delete_issue_link')
@@ -381,37 +410,42 @@ async def test_refresh_issues_after_delete(
         widget = RelatedIssuesWidget()
         await app.screen.mount(widget)
         await app.workers.wait_for_complete()
-        widget.issue_key = 'WI-1'
-        widget.issues = [
-            RelatedJiraIssue(
-                id='1',
-                key='key-1',
-                summary='abcd',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-            ),
-            RelatedJiraIssue(
-                id='2',
-                key='key-2',
-                summary='qwerty',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-                priority=IssuePriority(id='1', name='Medium'),
-            ),
-        ]
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='1',
+                    key='key-1',
+                    summary='abcd',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                ),
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                ),
+            ],
+        )
         # WHEN
         widget._refresh_issues_after_delete(RelatedIssueCollapsible.LinkDeleted(link_id='1'))
         # THEN
-        assert widget.issues == [
-            RelatedJiraIssue(
-                id='2',
-                key='key-2',
-                summary='qwerty',
-                status=IssueStatus(name='Done', id='1'),
-                issue_type=IssueType(id='1', name='Task'),
-                priority=IssuePriority(id='1', name='Medium'),
-            )
-        ]
+        assert widget.issues == WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
 
 
 @patch.object(APIController, 'issue_link_types')
@@ -569,3 +603,61 @@ async def test_add_work_item_relationship_screen_save(
             'link_type': 'inward',
             'link_type_id': '1',
         }
+
+
+@pytest.mark.asyncio
+async def test_related_issues_widget_opens_quick_view_screen(mock_configuration, app):
+    # GIVEN
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
+        await pilot.press('5')
+        await pilot.press('tab')
+        await pilot.press('v')
+        # THEN
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+
+
+@pytest.mark.asyncio
+async def test_related_issues_widget_unlok_opens_confirmation_screen(mock_configuration, app):
+    # GIVEN
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
+        await pilot.press('5')
+        await pilot.press('tab')
+        await pilot.press('d')
+        # THEN
+        assert isinstance(app.screen, ConfirmationScreen)

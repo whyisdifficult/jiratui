@@ -16,11 +16,32 @@ from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
-from jiratui.widgets.work_item_details.read_only_details import WorkItemReadOnlyDetailsScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
+
+
+@dataclass
+class WorkItemRelatedItems:
+    work_item_key: str
+    related_items: list[RelatedJiraIssue] | None = None
 
 
 class RelatedIssueCollapsible(Collapsible):
-    """A collapsible to show a work item related to another item."""
+    """A collapsible to show a work item related to another item.
+
+    This widget is responsible for:
+
+    - opening a modal screen to view the details of the currently-selected work item.
+    - (optionally) posting a [LoadWorkItem](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LoadWorkItem)
+    message to load the work item being displayed after the quick view screen is dismissed.
+    - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen) to confirm deleting the currently selected
+    work item.
+    - posting a [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
+    message to refresh the list of related work items after deleting one.
+
+    **See Also**:
+    - [Use Case: Relate Work Items](#use-case-relate-work-items)
+    - [Architecture](#architecture-related-work-items-classes)
+    """
 
     BINDINGS = [
         Binding(
@@ -41,7 +62,15 @@ class RelatedIssueCollapsible(Collapsible):
 
     @dataclass
     class LinkDeleted(Message):
+        """The message posted when the user deletes a link."""
+
         link_id: str
+
+    @dataclass
+    class LoadWorkItem(Message):
+        """The message posted when the user wants to search and load the work item being displayed."""
+
+        work_item_key: str
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
@@ -54,7 +83,14 @@ class RelatedIssueCollapsible(Collapsible):
 
     async def action_view_work_item(self) -> None:
         if self.work_item_key:
-            await self.app.push_screen(WorkItemReadOnlyDetailsScreen(self.work_item_key))
+            await self.app.push_screen(
+                WorkItemQuickViewScreen(self.work_item_key),
+                callback=self._load_work_item_after_viewing,
+            )
+
+    def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
+        if work_item_key:
+            self.post_message(self.LoadWorkItem(work_item_key))
 
     async def action_unlink_work_item(self) -> None:
         await self.app.push_screen(
@@ -70,8 +106,8 @@ class RelatedIssueCollapsible(Collapsible):
         """Removes a link between two work items.
 
         After removing a link this method will post the
-        message `jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted` to update the
-        list of related issues in the parent widget.
+        message [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
+        to update the list of related issues in the parent widget.
 
         Returns:
             None
@@ -96,6 +132,13 @@ class RelatedIssueCollapsible(Collapsible):
 class RelatedIssuesWidget(VerticalScroll):
     """A container for displaying the work items related to a work item.
 
+    This widget is responsible for:
+    - opening a modal screen [AddWorkItemRelationshipScreen](#jiratui.widgets.related_work_items.add.AddWorkItemRelationshipScreen)
+    to allow the user linking 2 work items.
+    - making a request to the Jira API to link 2 work items.
+    - refreshing the list of issues related to the current issue after receiving the
+    message [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted).
+
     **See Also**:
     - [Use Case: Relate Work Items](#use-case-relate-work-items)
     - [Architecture](#architecture-related-work-items-classes)
@@ -111,7 +154,7 @@ class RelatedIssuesWidget(VerticalScroll):
         )
     ]
 
-    issues: Reactive[list[RelatedJiraIssue] | None] = reactive(None)
+    issues: Reactive[WorkItemRelatedItems | None] = reactive(None)
     NOTIFICATIONS_DEFAULT_TITLE = 'Related Work Items'
 
     def __init__(self):
@@ -122,14 +165,6 @@ class RelatedIssuesWidget(VerticalScroll):
     def help_anchor(self) -> str:
         return '#related-work-items'
 
-    @property
-    def issue_key(self) -> str | None:
-        return self._issue_key
-
-    @issue_key.setter
-    def issue_key(self, value: str | None) -> None:
-        self._issue_key = value
-
     def add_relationship(self, data: dict | None = None) -> None:
         if data:
             self.run_worker(self.link_work_items(data))
@@ -137,9 +172,9 @@ class RelatedIssuesWidget(VerticalScroll):
     async def action_link_work_item(self) -> None:
         """Opens a screen to adda link between two work items."""
 
-        if self.issue_key:
+        if self._issue_key:
             await self.app.push_screen(
-                AddWorkItemRelationshipScreen(self.issue_key), callback=self.add_relationship
+                AddWorkItemRelationshipScreen(self._issue_key), callback=self.add_relationship
             )
         else:
             self.notify(
@@ -150,7 +185,7 @@ class RelatedIssuesWidget(VerticalScroll):
     async def link_work_items(self, data: dict) -> None:
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await application.api.link_work_items(
-            left_issue_key=self.issue_key,
+            left_issue_key=self._issue_key,
             right_issue_key=data.get('right_issue_key'),
             link_type=data.get('link_type'),
             link_type_id=data.get('link_type_id'),
@@ -164,16 +199,20 @@ class RelatedIssuesWidget(VerticalScroll):
         else:
             self.notify('Work items linked successfully', title=self.NOTIFICATIONS_DEFAULT_TITLE)
             # fetch the issue but only the issue-links field
-            response = await application.api.get_issue(self.issue_key, fields=['issuelinks'])
+            response = await application.api.get_issue(self._issue_key, fields=['issuelinks'])
             if response.success and response.result and response.result.issues:
                 work_item: JiraIssue = response.result.issues[0]
-                self.issues = work_item.related_issues or []
+                self.issues = WorkItemRelatedItems(
+                    work_item_key=self._issue_key,
+                    related_items=work_item.related_issues or [],
+                )
 
-    def watch_issues(self, items: list[RelatedJiraIssue] | None) -> None:
+    def watch_issues(self, data: WorkItemRelatedItems | None) -> None:
         """Updates the list of work items related to the currently-selected item.
 
         Args:
-            items: the list of items related to the current work item.
+            data: an instance of [WorkItemRelatedItems](#) with the work items related to the currently-selected work
+            item.
 
         Returns:
             None
@@ -181,12 +220,15 @@ class RelatedIssuesWidget(VerticalScroll):
 
         self.remove_children()
 
-        if not items:
+        if data is None:
             return
+
+        self._issue_key = data.work_item_key
 
         rows: list[RelatedIssueCollapsible] = []
         issue: RelatedJiraIssue
-        for issue in items:
+
+        for issue in data.related_items or []:
             children: list[Widget] = [Static(Text(issue.cleaned_summary()))]
 
             if browsable_url := build_external_url_for_issue(issue.key):
@@ -213,4 +255,11 @@ class RelatedIssuesWidget(VerticalScroll):
 
     @on(RelatedIssueCollapsible.LinkDeleted)
     def _refresh_issues_after_delete(self, event: RelatedIssueCollapsible.LinkDeleted) -> None:
-        self.issues = [issue for issue in self.issues or [] if issue.id != event.link_id]
+        related_items: list[RelatedJiraIssue] = []
+        if self.issues is not None:
+            for item in self.issues.related_items or []:
+                if item.id != event.link_id:
+                    related_items.append(item)
+            self.issues = WorkItemRelatedItems(
+                work_item_key=self._issue_key, related_items=related_items
+            )

@@ -403,12 +403,12 @@ ConfirmDeleteItemScreen > Vertical {
 
 /* Work Item (read-only) Details Screen */
 
-WorkItemReadOnlyDetailsScreen {
+WorkItemQuickViewScreen {
     align: center middle;
     background: $background 80%;
 }
 
-WorkItemReadOnlyDetailsScreen > VerticalScroll {
+WorkItemQuickViewScreen > VerticalScroll {
     width: 80%;
     height: 85%;
     border: round $foreground;
@@ -1057,6 +1057,16 @@ EditTextContentScreen > Vertical {
     height: 100%;
     width: 100%;
     display: none;
+}
+
+#main-screen-loading-container {
+    align: center middle;
+    height: 8%;
+    width: 100%;
+    display: none;
+    border: solid $secondary-lighten-3;
+    padding: 0;
+    background: transparent;
 }
 
 .summary-description-container {

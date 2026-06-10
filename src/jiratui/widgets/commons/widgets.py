@@ -1574,7 +1574,7 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
         """
 
         # initialize TextArea widget
-        super().__init__(text=original_value, id=field_id, compact=True, read_only=True)
+        super().__init__(text=original_value or '', id=field_id, compact=True, read_only=True)
 
         self.field_id = field_id
         self._jira_field_key = jira_field_key

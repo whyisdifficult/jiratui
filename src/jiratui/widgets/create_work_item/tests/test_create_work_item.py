@@ -246,9 +246,9 @@ def create_metadata_without_editable_reporter() -> dict:
 @patch.object(APIController, 'get_user')
 @patch.object(APIController, 'get_issue_types_for_project')
 @patch.object(APIController, 'search_projects')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_create_work_item_open_modal_screen(
     fetch_projects_mock: AsyncMock,
@@ -280,9 +280,9 @@ async def test_create_work_item_open_modal_screen(
 @patch.object(APIController, 'search_users')
 @patch.object(APIController, 'get_issue_types_for_project')
 @patch.object(APIController, 'search_projects')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_create_work_item_open_modal_screen_search_assignee_and_reporter(
     fetch_projects_mock: AsyncMock,
@@ -343,9 +343,9 @@ async def test_create_work_item_open_modal_screen_search_assignee_and_reporter(
 @patch.object(APIController, 'search_users')
 @patch.object(APIController, 'get_issue_types_for_project')
 @patch.object(APIController, 'search_projects')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_create_work_item_open_modal_screen_search_reporter_only(
     fetch_projects_mock: AsyncMock,
@@ -398,9 +398,9 @@ async def test_create_work_item_open_modal_screen_search_reporter_only(
 @patch.object(APIController, 'get_user')
 @patch.object(APIController, 'get_issue_types_for_project')
 @patch.object(APIController, 'search_projects')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_create_work_item_open_modal_screen_with_reporter_account_id(
     fetch_projects_mock: AsyncMock,

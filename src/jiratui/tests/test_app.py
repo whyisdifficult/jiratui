@@ -10,7 +10,7 @@ from jiratui.models import JiraServerInfo, WorkItemsSearchOrderBy
 from jiratui.widgets.config_info import ConfigFileScreen
 from jiratui.widgets.help import HelpScreen
 from jiratui.widgets.quit import QuitScreen
-from jiratui.widgets.screens import MainScreen
+from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.server_info import ServerInfoScreen
 
 
@@ -39,6 +39,7 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         show_keybinding_hints=False,
+        view_work_item_after_creation=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -71,6 +72,7 @@ def app_with_input_and_config_theme() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         show_keybinding_hints=False,
+        view_work_item_after_creation=False,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -103,6 +105,7 @@ def app_with_input_theme() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         show_keybinding_hints=False,
+        view_work_item_after_creation=False,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -135,6 +138,7 @@ def app_without_config_theme() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         show_keybinding_hints=False,
+        view_work_item_after_creation=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -167,6 +171,7 @@ def app() -> JiraApp:
         search_results_default_order=WorkItemsSearchOrderBy.CREATED_DESC,
         search_on_startup=False,
         show_keybinding_hints=False,
+        view_work_item_after_creation=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -174,9 +179,9 @@ def app() -> JiraApp:
     return app
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title(
     search_projects_mock: AsyncMock,
@@ -190,9 +195,9 @@ async def test_application_title(
         assert pilot.app.title == 'JiraTUI'
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_with_custom_title(
     search_projects_mock: AsyncMock,
@@ -206,10 +211,10 @@ async def test_application_title_with_custom_title(
         assert pilot.app.title == 'Hello World!'
 
 
-@patch('jiratui.widgets.screens.APIController.server_info')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.server_info')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_without_custom_title_with_server_info(
     search_projects_mock: AsyncMock,
@@ -240,10 +245,10 @@ async def test_application_title_without_custom_title_with_server_info(
         assert pilot.app.title == 'JiraTUI - my title'
 
 
-@patch('jiratui.widgets.screens.APIController.server_info')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.APIController.server_info')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_title_with_custom_title_with_server_info(
     search_projects_mock: AsyncMock,
@@ -275,9 +280,9 @@ async def test_application_title_with_custom_title_with_server_info(
 
 
 @patch.object(ServerInfoScreen, '_get_server_info')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_server_info_screen(
     search_projects_mock: AsyncMock,
@@ -308,9 +313,9 @@ async def test_open_server_info_screen(
 
 
 @patch.object(ServerInfoScreen, '_get_server_info')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_server_info_screen(
     search_projects_mock: AsyncMock,
@@ -343,9 +348,9 @@ async def test_close_server_info_screen(
 
 
 @patch.object(ConfigFileScreen, '_get_data')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_config_screen(
     search_projects_mock: AsyncMock,
@@ -365,9 +370,9 @@ async def test_open_config_screen(
 
 
 @patch.object(ConfigFileScreen, '_get_data')
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_config_screen(
     search_projects_mock: AsyncMock,
@@ -388,9 +393,9 @@ async def test_close_config_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_open_help_screen(
     search_projects_mock: AsyncMock,
@@ -403,9 +408,9 @@ async def test_open_help_screen(
         assert isinstance(app.screen, HelpScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_close_help_screen(
     search_projects_mock: AsyncMock,
@@ -420,9 +425,9 @@ async def test_close_help_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_quits_without_confirmation(
     search_projects_mock: AsyncMock,
@@ -436,9 +441,9 @@ async def test_application_quits_without_confirmation(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_quits_with_confirmation_no_exit(
     search_projects_mock: AsyncMock,
@@ -457,9 +462,9 @@ async def test_application_quits_with_confirmation_no_exit(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_theme_from_config(
     search_projects_mock: AsyncMock,
@@ -471,9 +476,9 @@ async def test_application_theme_from_config(
         assert pilot.app.theme == 'dracula'
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_with_default_theme(
     search_projects_mock: AsyncMock,
@@ -485,9 +490,9 @@ async def test_application_with_default_theme(
         assert pilot.app.theme == 'textual-dark'
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_with_input_theme(
     search_projects_mock: AsyncMock,
@@ -499,9 +504,9 @@ async def test_application_with_input_theme(
         assert pilot.app.theme == 'monokai'
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_with_input_and_config_theme(
     search_projects_mock: AsyncMock,
@@ -513,9 +518,9 @@ async def test_application_with_input_and_config_theme(
         assert pilot.app.theme == 'monokai'
 
 
-@patch('jiratui.widgets.screens.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screens.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screens.MainScreen.fetch_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_application_with_unrecognized_config_theme(
     search_projects_mock: AsyncMock,
