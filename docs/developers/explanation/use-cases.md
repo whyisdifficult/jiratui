@@ -1416,3 +1416,186 @@ the application takes to log work for a selected work item.
         deactivate IssueDetailsWidget
 ```
 ````
+
+(use-case-recent-history)=
+## Recent History
+
+### View Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to see the list of recently-viewed/updated/created work items.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>MainScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User-->>HistoryScreen: interacts with the screen commands
+        HistoryScreen-->>User: commands responses
+        User->>HistoryScreen: press 'escape'
+        HistoryScreen->>HistoryScreen: dismiss and close
+```
+````
+
+### Delete Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to delete the recent history.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>HistoryScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User->>HistoryScreen: press 'd'
+        HistoryScreen->>HistoryManager: empty history
+        HistoryScreen->>HistoryScreen: refresh table
+```
+````
+
+### Copy Item Key from Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to copy the key of an item in the recent history.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>HistoryScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User->>HistoryWorkItemsTable: selects item A
+        User->>HistoryWorkItemsTable: press '^k'
+        HistoryWorkItemsTable->>HistoryWorkItemsTable: copy key to clippboard
+```
+````
+
+### Copy Item URL from Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to copy the URL of an item in the recent history.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>HistoryScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User->>HistoryWorkItemsTable: selects item A
+        User->>HistoryWorkItemsTable: press '^j'
+        HistoryWorkItemsTable->>HistoryWorkItemsTable: copy URL to clippboard
+```
+````
+
+### Open with Browser an Item from Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to open the URL of an item in the recent history in the browser.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>HistoryScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User->>HistoryWorkItemsTable: selects item A
+        User->>HistoryWorkItemsTable: press '^o'
+        HistoryWorkItemsTable->>HistoryWorkItemsTable: open URL
+```
+````
+
+### Search Item from Recent History
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes when the user wants to search/fetch an item from the recent history.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant MainScreen as Main Screen
+        participant HistoryScreen
+        participant HistoryManager
+        participant HistoryWorkItemsTable
+
+        User->>MainScreen: Presses 'alt+h' key
+        MainScreen->>HistoryScreen: open recent history screen
+        HistoryScreen->>HistoryManager: get the history entries
+        HistoryManager->>HistoryScreen: entries
+        HistoryScreen->>HistoryWorkItemsTable: build and populate table
+        User->>HistoryWorkItemsTable: selects item A with key 'key-1'
+        User->>HistoryWorkItemsTable: press 'enter'
+        HistoryWorkItemsTable->>HistoryScreen: post_message('key-1')
+        HistoryScreen->>HistoryScreen: dismiss('key-1')
+        HistoryScreen->>MainScreen: pass control back to the main screen
+        MainScreen->>MainScreen: set the value of the work item filter to 'key-1'
+        MainScreen->>MainScreen: action_search()
+        MainScreen->>User: show search result
+```
+````

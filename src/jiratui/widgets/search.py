@@ -186,7 +186,7 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='d',
             action='delete_work_item',
-            description='Delete Issue',
+            description='Delete',
             show=True,
             key_display='d',
             tooltip='Delete the work item currently highlighted.',

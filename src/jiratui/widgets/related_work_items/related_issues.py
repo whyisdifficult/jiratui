@@ -33,8 +33,8 @@ class RelatedIssueCollapsible(Collapsible):
     - opening a modal screen to view the details of the currently-selected work item.
     - (optionally) posting a [LoadWorkItem](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LoadWorkItem)
     message to load the work item being displayed after the quick view screen is dismissed.
-    - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen) to confirm deleting the currently selected
-    work item.
+    - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen.ConfirmationScreen) to confirm deleting the
+    currently selected work item.
     - posting a [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
     message to refresh the list of related work items after deleting one.
 

@@ -108,3 +108,7 @@
 
 ```{autodoc2-object} jiratui.widgets.attachments.add.AddAttachmentScreen
 ```
+
+## HistoryScreen
+```{autodoc2-object} jiratui.widgets.screens.history.HistoryScreen
+```

@@ -25,13 +25,11 @@ async def test_action_open_issue_in_browser(get_issue_mock: AsyncMock, mock_conf
     async with app.run_test() as pilot:
         # WHEN
         screen = WorkItemQuickViewScreen('WI-1')
-        # screen.dismiss = Mock()
         app.open_url = Mock()
         await app.push_screen(screen)
         await pilot.pause()
         screen.action_open_issue_in_browser()
         # THEN
-        # assert screen.dismiss.call_args[0][0] == ''
         app.open_url.assert_called_once_with('http://foo.bar/browse/WI-1')
         get_issue_mock.assert_called_once()
 

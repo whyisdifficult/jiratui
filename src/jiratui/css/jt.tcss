@@ -420,6 +420,25 @@ WorkItemQuickViewScreen > VerticalScroll {
     background: transparent;
 }
 
+/* Recent History Screen */
+
+HistoryScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+HistoryScreen > VerticalScroll {
+    width: 60%;
+    height: 70%;
+    border: round $foreground;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+}
+
+.recent-history-table {
+    background: transparent;
+}
+
 /* New Comment Screen */
 
 AddCommentScreen {
@@ -756,10 +775,6 @@ AddWorkItemScreen > Vertical {
 
 #create-additional-fields {
     scrollbar-size-vertical: 1;
-}
-
-.create-work-item-tip {
-    color: $text-muted;
 }
 
 /* ---------------------------------------- Create Work Item Screen - END ---------------------------------------- */
@@ -1394,4 +1409,8 @@ MultiSelectWidget {
     &:focus {
         border: round $accent-lighten-3;
     }
+}
+
+.message-tip {
+    color: $text-muted;
 }

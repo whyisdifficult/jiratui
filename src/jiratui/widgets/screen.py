@@ -21,6 +21,7 @@ from jiratui.models import (
     JiraUser,
     WorkItemsSearchOrderBy,
 )
+from jiratui.utils.history import HistoryEntry, HistoryManager
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
 from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
@@ -44,6 +45,7 @@ from jiratui.widgets.related_work_items.related_issues import (
     WorkItemRelatedItems,
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.screens.history import HistoryScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import (
     DataTableSearchInput,
@@ -245,6 +247,14 @@ class MainScreen(Screen):
             key_display='^g',
             tooltip='Creates a Git branch with the key of the work item',
         ),
+        Binding(
+            key='alt+h',
+            action='show_recent_history',
+            description='History',
+            show=True,
+            key_display='alt+h',
+            tooltip='Show recently viewed items',
+        ),
     ]
 
     def __init__(
@@ -309,6 +319,7 @@ class MainScreen(Screen):
                 'issue_remote_links': 'Links (7)',
                 'issue_subtasks': 'Subtasks (8)',
             }
+        self.__recent_history_manager = HistoryManager()
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -1003,6 +1014,12 @@ class MainScreen(Screen):
     async def handle_run_button(self) -> None:
         self.run_worker(self.action_search())
 
+    def action_show_recent_history(self) -> None:
+        self.app.push_screen(
+            HistoryScreen(self.__recent_history_manager),
+            callback=self._close_recent_history_screen,
+        )
+
     async def action_search(self, search_term: str | None = None) -> None:
         """Handles the event  when the user presses the "search" button or "ctrl+r"."""
 
@@ -1144,6 +1161,9 @@ class MainScreen(Screen):
                 )
                 if self.config.view_work_item_after_creation:
                     self.call_next(self._open_quick_view_screen, response.result.key)
+                if self.config.enable_recent_history:
+                    # add the work item to the recent history
+                    self._add_item_to_recent_history(response.result.key, '', '', '')
             else:
                 self.notify(
                     f'Failed to create the work item: {response.error}',
@@ -1255,6 +1275,15 @@ class MainScreen(Screen):
 
         # step 8: populate subtasks tab
         self.run_worker(self.retrieve_issue_subtasks(work_item))
+
+        if self.config.enable_recent_history:
+            # add the work item to the recent history
+            self._add_item_to_recent_history(
+                key=work_item.key,
+                item_type=work_item.issue_type.name if work_item.issue_type else '',
+                status=work_item.status.name if work_item.status else '',
+                summary=work_item.summary,
+            )
 
     async def request_text_search(self, value: str):
         value = value or ''
@@ -1395,7 +1424,7 @@ class MainScreen(Screen):
         self.run_worker(self.fetch_issue(message.work_item_key), exclusive=True)
 
     def _load_work_item(self, work_item_key: str | None = None) -> None:
-        """Fetches a work item being displayed in the quick view screen.
+        """Searches a work item.
 
         Args:
             work_item_key: the key of the item to search and display.
@@ -1410,8 +1439,40 @@ class MainScreen(Screen):
 
     @on(RelatedIssueCollapsible.LoadWorkItem)
     def _load_related_work_item(self, message: RelatedIssueCollapsible.LoadWorkItem) -> None:
+        # when the modal screen that shows a quick view of a related work item is dismissed with a work item's key then
+        # it means that the user has requested to search for the work item with that key
         self._load_work_item(message.work_item_key)
 
     @on(ChildWorkItemCollapsible.LoadWorkItem)
     def _load_work_item_subtask(self, message: ChildWorkItemCollapsible.LoadWorkItem) -> None:
+        # when the modal screen that shows a quick view of a subtask is dismissed with a work item's key then it means
+        # that the user has requested to search for the work item with that key
         self._load_work_item(message.work_item_key)
+
+    def _close_recent_history_screen(self, work_item_key: str | None = None) -> None:
+        # when the modal screen that shows the recent history is dismissed with a work item's key then it means that
+        # the user has requested to search for the work item with that key
+        self._load_work_item(work_item_key)
+
+    def _add_item_to_recent_history(
+        self, key: str, item_type: str, status: str, summary: str
+    ) -> None:
+        self.__recent_history_manager.add_work_item(
+            HistoryEntry(
+                key=key,
+                item_type=item_type,
+                status=status,
+                summary=summary,
+            )
+        )
+
+    @on(IssueDetailsWidget.UpdateRecentHistory)
+    def _update_recent_history(self, message: IssueDetailsWidget.UpdateRecentHistory) -> None:
+        if self.config.enable_recent_history:
+            self._add_item_to_recent_history(
+                message.work_item_key,
+                message.item_type,
+                message.status,
+                message.summary,
+            )
+        message.stop()

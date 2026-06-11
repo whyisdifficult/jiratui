@@ -253,6 +253,9 @@ class ApplicationConfiguration(BaseSettings):
     user selects a work item. The default tis False."""
     view_work_item_after_creation: bool = False
     """Set this to True to open a modal screen that displays the details of a work item right after it gets created."""
+    enable_recent_history: bool = False
+    """When this is True the user can viw the recent history of items that have been viewed, created and updated. The
+    default is False."""
 
     model_config = SettingsConfigDict(
         extra='allow',

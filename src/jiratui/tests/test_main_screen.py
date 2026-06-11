@@ -88,6 +88,7 @@ def app() -> JiraApp:
         search_results_per_page=10,
         search_on_startup=False,
         show_keybinding_hints=False,
+        enable_recent_history=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -907,6 +908,64 @@ async def test_show_quick_view_screen_after_creating_work_item_view_work_item_af
         create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
 
 
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_with_recent_history_enabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = True
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        # THEN
+        add_item_to_recent_history_mock.assert_called_once_with('key-2', '', '', '')
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_with_recent_history_disabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        # THEN
+        add_item_to_recent_history_mock.assert_not_called()
+
+
 @patch.object(APIController, 'create_work_item')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1093,3 +1152,125 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_escape(
         assert isinstance(app.screen, MainScreen)
         create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
         load_work_item_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_issue_with_recent_history_enabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    app.config.show_issue_web_links = False
+    app.config.enable_updating_additional_fields = False
+    app.config.enable_recent_history = True
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    async with app.run_test():
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.fetch_issue('key-2')
+        await app.workers.wait_for_complete()
+        # THEN
+        add_item_to_recent_history_mock.assert_called_once_with(
+            key='key-2', item_type='Bug', status='Done', summary='qwerty'
+        )
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_fetch_issue_with_recent_history_disabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    app.config.show_issue_web_links = False
+    app.config.enable_updating_additional_fields = False
+    app.config.enable_recent_history = False
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    async with app.run_test():
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.screen.fetch_issue('key-2')
+        await app.workers.wait_for_complete()
+        # THEN
+        add_item_to_recent_history_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_process_message_update_recent_history_with_recent_history_enabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    # get_issue_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.enable_recent_history = True
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.workers.wait_for_complete()
+        app.screen.post_message(
+            IssueDetailsWidget.UpdateRecentHistory(
+                work_item_key='key-2', item_type='Bug', status='Done', summary='qwerty'
+            )
+        )
+        await pilot.pause()
+        # THEN
+        add_item_to_recent_history_mock.assert_called_once_with('key-2', 'Bug', 'Done', 'qwerty')
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_process_message_update_recent_history_with_recent_history_disabled(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    # get_issue_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.enable_recent_history = False
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.workers.wait_for_complete()
+        app.screen.post_message(
+            IssueDetailsWidget.UpdateRecentHistory(
+                work_item_key='key-2', item_type='Bug', status='Done', summary='qwerty'
+            )
+        )
+        await pilot.pause()
+        # THEN
+        add_item_to_recent_history_mock.assert_not_called()

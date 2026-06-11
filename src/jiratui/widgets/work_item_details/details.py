@@ -53,12 +53,14 @@ Dependencies:
     - jiratui.widgets.work_item_details.flag_work_item: Work item flagging
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import ProgressBar
 
@@ -193,6 +195,13 @@ class IssueDetailsWidget(Vertical):
             show=True,
         ),
     ]
+
+    @dataclass
+    class UpdateRecentHistory(Message):
+        work_item_key: str
+        item_type: str | None = None
+        status: str | None = None
+        summary: str | None = None
 
     def __init__(self):
         super().__init__(id='issue_details')
@@ -827,6 +836,14 @@ class IssueDetailsWidget(Vertical):
         if issue_was_updated:
             # fetch the issue again to retrieve the latest changes and update the form
             await self._refresh_work_item_details()
+            self.post_message(
+                self.UpdateRecentHistory(
+                    self.issue.key,
+                    self.issue.issue_type.name if self.issue.issue_type else '',
+                    self.issue.status.name if self.issue.status else '',
+                    self.issue.summary,
+                )
+            )
 
     @staticmethod
     def _extract_editable_and_required_fields(work_item: JiraIssue) -> dict:
