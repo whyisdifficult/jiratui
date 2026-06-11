@@ -180,6 +180,7 @@ def app() -> JiraApp:
         create_additional_fields_ignore_ids=None,
         styling=None,
         show_keybinding_hints=False,
+        enable_recent_history=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
