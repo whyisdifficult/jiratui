@@ -219,7 +219,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+n',
             action='create_work_item',
-            description='New Issue',
+            description='\uea7f',
             show=True,
             key_display='^n',
         ),
