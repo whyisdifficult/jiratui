@@ -105,7 +105,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+r',
             action='search',
-            description='Search',
+            description='\U0001f50e',
             tooltip='Search items by search criteria',
         ),
         Binding(

@@ -1074,6 +1074,13 @@ EditTextContentScreen > Vertical {
     display: none;
 }
 
+#work-item-details-loading-container {
+    align: center middle;
+    height: 100%;
+    width: 100%;
+    display: none;
+}
+
 #main-screen-loading-container {
     align: center middle;
     height: 8%;
