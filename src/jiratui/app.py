@@ -26,7 +26,7 @@ class JiraApp(App):
 
     TITLE = 'JiraTUI'
     BINDINGS = [
-        Binding(key='f1,ctrl+question_mark,ctrl+shift+slash', action='help', description='Help'),
+        Binding(key='f1,ctrl+question_mark,ctrl+shift+slash', action='help', description='?'),
         Binding(
             key='f2',
             action='server_info',
@@ -42,7 +42,7 @@ class JiraApp(App):
         Binding(
             key='ctrl+q',
             action='quit',
-            description='Quit',
+            description='\U000023fb',
             key_display='^q',
             tooltip='Quit',
             show=True,

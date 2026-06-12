@@ -162,7 +162,7 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='alt+left',
             action='previous_issues_page',
-            description='Previous',
+            description='\uf060',
             show=True,
             key_display='alt+left',
             tooltip='Previous page',
@@ -170,7 +170,7 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='alt+right',
             action='next_issues_page',
-            description='Next',
+            description='\uf061',
             show=True,
             key_display='alt+right',
             tooltip='Next page',
@@ -186,7 +186,7 @@ class IssuesSearchResultsTable(DataTable):
         Binding(
             key='d',
             action='delete_work_item',
-            description='Delete Issue',
+            description='\uf014',
             show=True,
             key_display='d',
             tooltip='Delete the work item currently highlighted.',

@@ -41,6 +41,7 @@ def app() -> JiraApp:
         full_text_search_minimum_term_length=3,
         search_on_startup=False,
         show_keybinding_hints=False,
+        enable_recent_history=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

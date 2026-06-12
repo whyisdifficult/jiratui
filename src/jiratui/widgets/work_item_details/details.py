@@ -53,14 +53,16 @@ Dependencies:
     - jiratui.widgets.work_item_details.flag_work_item: Work item flagging
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, cast
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
+from textual.containers import Center, HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
+from textual.message import Message
 from textual.reactive import Reactive, reactive
-from textual.widgets import ProgressBar
+from textual.widgets import LoadingIndicator, ProgressBar
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -189,10 +191,17 @@ class IssueDetailsWidget(Vertical):
         Binding(
             key='ctrl+f',
             action='flag_work_item',
-            description='Flag It',
+            description='Flag',
             show=True,
         ),
     ]
+
+    @dataclass
+    class UpdateRecentHistory(Message):
+        work_item_key: str
+        item_type: str | None = None
+        status: str | None = None
+        summary: str | None = None
 
     def __init__(self):
         super().__init__(id='issue_details')
@@ -293,7 +302,30 @@ class IssueDetailsWidget(Vertical):
     def dynamic_fields_widgets_container(self) -> DynamicFieldsWidgets:
         return self.query_one(DynamicFieldsWidgets)
 
+    @property
+    def loading_container(self) -> Center:
+        return self.query_one('#work-item-details-loading-container', expect_type=Center)
+
+    @property
+    def content_container(self) -> VerticalScroll:
+        return self.query_one('#issue-details-form', expect_type=VerticalScroll)
+
+    def show_loading(self) -> None:
+        """Shows the loading indicator and hides content."""
+        self.loading_container.display = True
+        self.content_container.display = False
+        self.work_item_flag_widget.display = False
+
+    def hide_loading(self) -> None:
+        """Hides the loading indicator and shows content."""
+        self.loading_container.display = False
+        self.content_container.display = True
+        self.work_item_flag_widget.display = True
+
     def compose(self) -> ComposeResult:
+        with Center(id='work-item-details-loading-container') as loading_container:
+            loading_container.display = False
+            yield LoadingIndicator()
         with Right():
             yield WorkItemFlagField()  # row 0
         with VerticalScroll(id='issue-details-form'):
@@ -780,6 +812,7 @@ class IssueDetailsWidget(Vertical):
             self.notify('Nothing to update.', title='Update Work Item')
             return
 
+        self.show_loading()
         # attempt to update the issue
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
         if payload:
@@ -827,6 +860,15 @@ class IssueDetailsWidget(Vertical):
         if issue_was_updated:
             # fetch the issue again to retrieve the latest changes and update the form
             await self._refresh_work_item_details()
+            self.post_message(
+                self.UpdateRecentHistory(
+                    self.issue.key,
+                    self.issue.issue_type.name if self.issue.issue_type else '',
+                    self.issue.status.name if self.issue.status else '',
+                    self.issue.summary,
+                )
+            )
+        self.hide_loading()
 
     @staticmethod
     def _extract_editable_and_required_fields(work_item: JiraIssue) -> dict:
