@@ -250,7 +250,7 @@ class MainScreen(Screen):
         Binding(
             key='alt+h',
             action='show_recent_history',
-            description='History',
+            description='Recent',
             show=True,
             key_display='alt+h',
             tooltip='Show recently viewed items',
