@@ -83,7 +83,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
         if CONFIGURATION.get().enable_goto and self.work_item_key:
             self.app.push_screen(
-                GotToScreen(self.work_item_key, self.app.api),
+                GotToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.work_item_key:

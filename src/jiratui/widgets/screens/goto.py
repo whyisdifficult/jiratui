@@ -208,7 +208,7 @@ class GotToScreen(ModalScreen[str]):
             )
 
             # fetch the details of the subtasks
-            self.run_worker(self._get_subtasks, name='get_subtasks')
+            self.run_worker(self._get_subtasks(), name='get_subtasks')
 
             # fetch the details of the parent; if any
             if work_item.parent_key:

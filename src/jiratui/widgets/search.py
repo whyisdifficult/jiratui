@@ -441,7 +441,7 @@ class IssuesSearchResultsTable(DataTable):
 
         if CONFIGURATION.get().enable_goto and self.current_work_item_key:
             self.app.push_screen(
-                GotToScreen(self.current_work_item_key, self.app.api),
+                GotToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.current_work_item_key:

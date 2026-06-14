@@ -14,6 +14,7 @@ selects a work item. the default is `False`, i.e. no hints are shown; by [@whyis
 - Add a new autocomplete widget to search and set the key of a work item parent when creating new work items; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/265
 - After creating a new work item the main screen will now open a modal screen to show a quick view of the item just created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/266
 - Add a new modal screen to view a recent history of work items viewed/updated/created. This can be controlled via the `config.enable_recent_history` variable. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/267
+- Add a new modal screen to quickly Go-To related items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/268
 
 ### Minor Improvements
 
