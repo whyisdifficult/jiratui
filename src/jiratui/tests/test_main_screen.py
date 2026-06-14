@@ -33,8 +33,8 @@ from jiratui.widgets.filters import (
     ProjectSelectionInput,
     WorkItemInputWidget,
 )
+from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.related_issues import (
-    RelatedIssueCollapsible,
     RelatedIssuesWidget,
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
@@ -44,7 +44,6 @@ from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContai
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_subtasks.subtasks import (
-    ChildWorkItemCollapsible,
     IssueChildWorkItemsWidget,
 )
 
@@ -89,6 +88,7 @@ def app() -> JiraApp:
         search_on_startup=False,
         show_keybinding_hints=False,
         enable_recent_history=False,
+        enable_goto=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -801,7 +801,7 @@ async def test_load_related_work_item_with_key(
         cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         app.screen.issue_key_input.value = ''
-        app.screen.post_message(RelatedIssueCollapsible.LoadWorkItem('key-1'))
+        app.screen.post_message(SearchWorkItem('key-1'))
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, MainScreen)
@@ -825,7 +825,7 @@ async def test_load_related_work_item_without_key(
         cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         app.screen.issue_key_input.value = ''
-        app.screen.post_message(RelatedIssueCollapsible.LoadWorkItem(''))
+        app.screen.post_message(SearchWorkItem(''))
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, MainScreen)
@@ -833,52 +833,58 @@ async def test_load_related_work_item_without_key(
         action_search_mock.assert_not_called()
 
 
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screen.MainScreen.action_search')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_load_work_item_subtask_with_key(
+async def test_handle_search_work_item_message_with_key_search_and_fetch(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_search_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
     app,
 ):
     async with app.run_test() as pilot:
         cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         app.screen.issue_key_input.value = ''
-        app.screen.post_message(ChildWorkItemCollapsible.LoadWorkItem('key-1'))
+        app.screen.post_message(SearchWorkItem('key-1'))
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, MainScreen)
         assert app.screen.issue_key_input.value == 'key-1'
         action_search_mock.assert_called_once()
+        fetch_issue_mock.assert_called_once_with('key-1')
 
 
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screen.MainScreen.action_search')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_load_work_item_subtask_without_key(
+async def test_handle_search_work_item_message_without_key_no_search_no_fetching(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_search_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
     app,
 ):
     async with app.run_test() as pilot:
         cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
         app.screen.issue_key_input.value = ''
-        app.screen.post_message(ChildWorkItemCollapsible.LoadWorkItem(''))
+        app.screen.post_message(SearchWorkItem(''))
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, MainScreen)
         assert app.screen.issue_key_input.value == ''
         action_search_mock.assert_not_called()
+        fetch_issue_mock.assert_not_called()
 
 
 @patch.object(APIController, 'create_work_item')
@@ -1274,3 +1280,53 @@ async def test_process_message_update_recent_history_with_recent_history_disable
         await pilot.pause()
         # THEN
         add_item_to_recent_history_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen._load_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_handle_search_work_item_message(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    # get_issue_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.enable_recent_history = True
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.workers.wait_for_complete()
+        app.screen.post_message(SearchWorkItem('key-2'))
+        await pilot.pause()
+        # THEN
+        load_work_item_mock.assert_called_once_with('key-2')
+
+
+@patch('jiratui.widgets.screen.MainScreen._load_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_handle_search_work_item_message_without_work_item_key(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    # get_issue_mock: AsyncMock,
+    load_work_item_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.enable_recent_history = True
+    async with app.run_test() as pilot:
+        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await app.workers.wait_for_complete()
+        app.screen.post_message(SearchWorkItem(''))
+        await pilot.pause()
+        # THEN
+        load_work_item_mock.assert_not_called()

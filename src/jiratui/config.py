@@ -256,6 +256,9 @@ class ApplicationConfiguration(BaseSettings):
     enable_recent_history: bool = False
     """When this is True the user can viw the recent history of items that have been viewed, created and updated. The
     default is False."""
+    enable_goto: bool = False
+    """Enables/Disable the feature that allows users to open a modal screen to go to (aka. search and fetch) items
+    related to the currently-selected item."""
 
     model_config = SettingsConfigDict(
         extra='allow',

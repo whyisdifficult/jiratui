@@ -188,7 +188,7 @@ async def test_dismiss_upon_receiving_load_work_item_message(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         await pilot.pause()
-        screen.post_message(QuickViewDetails.LoadWorkItem('WI-2'))
+        screen.post_message(QuickViewDetails.WorkItemSelected('WI-2'))
         await pilot.pause()
         # THEN
         get_issue_mock.assert_called_once()

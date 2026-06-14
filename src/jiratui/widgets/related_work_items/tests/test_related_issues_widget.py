@@ -22,6 +22,7 @@ from jiratui.widgets.related_work_items.related_issues import (
     WorkItemRelatedItems,
 )
 from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -635,7 +636,7 @@ async def test_related_issues_widget_opens_quick_view_screen(mock_configuration,
 
 
 @pytest.mark.asyncio
-async def test_related_issues_widget_unlok_opens_confirmation_screen(mock_configuration, app):
+async def test_related_issues_widget_unlink_opens_confirmation_screen(mock_configuration, app):
     # GIVEN
     mock_configuration.jira_base_url = 'http://foo.bar'
     async with app.run_test() as pilot:
@@ -661,3 +662,107 @@ async def test_related_issues_widget_unlok_opens_confirmation_screen(mock_config
         await pilot.press('d')
         # THEN
         assert isinstance(app.screen, ConfirmationScreen)
+
+
+@pytest.mark.asyncio
+async def test_open_goto_screen_with_goto_enabled(mock_configuration, app):
+    # GIVEN
+    app.config.enable_goto = True
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
+        await pilot.press('5')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        # THEN
+        assert isinstance(app.screen, GotToScreen)
+
+
+@pytest.mark.asyncio
+async def test_open_goto_screen_with_goto_disabled(mock_configuration, app):
+    # GIVEN
+    app.config.enable_goto = False
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemRelatedItems(
+            work_item_key='WI-1',
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
+        await pilot.press('5')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(RelatedIssueCollapsible, '_close_goto_screen')
+@pytest.mark.asyncio
+async def test_dismiss_goto_screen_with_key(
+    close_goto_screen_mock: Mock,
+    get_issue_mock: AsyncMock,
+    mock_configuration,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[0]])
+    )
+    app.config.enable_goto = True
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[0].key,
+            related_items=[
+                RelatedJiraIssue(
+                    id='2',
+                    key='key-2',
+                    summary='qwerty',
+                    status=IssueStatus(name='Done', id='1'),
+                    issue_type=IssueType(id='1', name='Task'),
+                    priority=IssuePriority(id='1', name='Medium'),
+                )
+            ],
+        )
+        await pilot.press('5')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        close_goto_screen_mock.assert_called_once_with('key-1')

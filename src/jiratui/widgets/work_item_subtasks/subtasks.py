@@ -8,9 +8,12 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Rule, Static
 
+from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.urls import build_external_url_for_issue
+from jiratui.widgets.messages import SearchWorkItem
+from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -28,7 +31,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
     - opening the modal screen [WorkItemQuickViewScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen)
     to display the details of the work item selected.
-    - posting the message [LoadWorkItem](#jiratui.widgets.work_item_subtasks.subtasks.ChildWorkItemCollapsible.LoadWorkItem)
+    - posting the message [SearchWorkItem](#jiratui.widgets.messages.SearchWorkItem)
     when the screen [WorkItemQuickViewScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen) is
     dismissed with a work item key.
 
@@ -40,15 +43,19 @@ class ChildWorkItemCollapsible(Collapsible):
         Binding(
             key='v',
             action='view_work_item',
-            description='View Work Item',
+            description='Quick View',
             show=True,
             key_display='v',
         ),
+        Binding(
+            key='f6',
+            action='open_go_to_screen',
+            description='Related',
+            show=True,
+            key_display='f6',
+            tooltip='View related work items',
+        ),
     ]
-
-    @dataclass
-    class LoadWorkItem(Message):
-        work_item_key: str
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
@@ -65,9 +72,33 @@ class ChildWorkItemCollapsible(Collapsible):
             callback=self._load_work_item_after_viewing,
         )
 
+    async def action_open_go_to_screen(self) -> None:
+        """Opens a modal screen to show the work items related to the work item selected by the user.
+
+        The screen will be opened only if `config.enable_goto == True` and there is a work item selected.
+
+        Returns:
+            None
+        """
+
+        if CONFIGURATION.get().enable_goto and self.work_item_key:
+            self.app.push_screen(
+                GotToScreen(self.work_item_key, self.app.api),
+                callback=self._close_goto_screen,
+            )
+        elif not self.work_item_key:
+            self.notify('Select/Highlight an item to view its related items')
+        else:
+            self.notify('This feature is disabled. Check config.enable_goto', severity='warning')
+
+    def _close_goto_screen(self, work_item_key: str) -> None:
+        # sends a message to request the handler, the Main Screen, to search for the work item with the given key
+        if work_item_key:
+            self.post_message(SearchWorkItem(work_item_key))
+
     def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
         if work_item_key:
-            self.post_message(self.LoadWorkItem(work_item_key))
+            self.post_message(SearchWorkItem(work_item_key))
 
 
 class IssueChildWorkItemsWidget(VerticalScroll):
@@ -88,7 +119,7 @@ class IssueChildWorkItemsWidget(VerticalScroll):
         Binding(
             key='ctrl+n',
             action='create_work_item_subtask',
-            description='New Work Item',
+            description='New Subtask',
             show=True,
             key_display='^n',
         ),

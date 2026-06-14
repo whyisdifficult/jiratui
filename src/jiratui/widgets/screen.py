@@ -39,8 +39,8 @@ from jiratui.widgets.filters import (
     WorkItemInputWidget,
 )
 from jiratui.widgets.git_screen import GitScreen
+from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.related_issues import (
-    RelatedIssueCollapsible,
     RelatedIssuesWidget,
     WorkItemRelatedItems,
 )
@@ -56,7 +56,6 @@ from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_subtasks.subtasks import (
-    ChildWorkItemCollapsible,
     IssueChildWorkItemsWidget,
     WorkItemSubtasks,
 )
@@ -219,7 +218,7 @@ class MainScreen(Screen):
         Binding(
             key='ctrl+n',
             action='create_work_item',
-            description='\uea7f',
+            description='New Item',
             show=True,
             key_display='^n',
         ),
@@ -248,11 +247,11 @@ class MainScreen(Screen):
             tooltip='Creates a Git branch with the key of the work item',
         ),
         Binding(
-            key='alt+h',
+            key='f7',
             action='show_recent_history',
             description='Recent',
             show=True,
-            key_display='alt+h',
+            key_display='f7',
             tooltip='Show recently viewed items',
         ),
     ]
@@ -1172,6 +1171,7 @@ class MainScreen(Screen):
                 )
 
     async def _open_quick_view_screen(self, work_item_key: str) -> None:
+        # opens a modal screen to view the details of a recently-created work item
         await self.app.push_screen(
             WorkItemQuickViewScreen(work_item_key),
             self._load_work_item,
@@ -1435,19 +1435,8 @@ class MainScreen(Screen):
 
         if work_item_key and work_item_key.strip():
             self.issue_key_input.value = work_item_key
-            self.run_worker(self.action_search())
-
-    @on(RelatedIssueCollapsible.LoadWorkItem)
-    def _load_related_work_item(self, message: RelatedIssueCollapsible.LoadWorkItem) -> None:
-        # when the modal screen that shows a quick view of a related work item is dismissed with a work item's key then
-        # it means that the user has requested to search for the work item with that key
-        self._load_work_item(message.work_item_key)
-
-    @on(ChildWorkItemCollapsible.LoadWorkItem)
-    def _load_work_item_subtask(self, message: ChildWorkItemCollapsible.LoadWorkItem) -> None:
-        # when the modal screen that shows a quick view of a subtask is dismissed with a work item's key then it means
-        # that the user has requested to search for the work item with that key
-        self._load_work_item(message.work_item_key)
+            self.run_worker(self.action_search(), exclusive=True)
+            self.call_next(self.fetch_issue, work_item_key)
 
     def _close_recent_history_screen(self, work_item_key: str | None = None) -> None:
         # when the modal screen that shows the recent history is dismissed with a work item's key then it means that
@@ -1476,3 +1465,9 @@ class MainScreen(Screen):
                 message.summary,
             )
         message.stop()
+
+    @on(SearchWorkItem)
+    def _on_search_work_item(self, message: SearchWorkItem) -> None:
+        # this handles the message sent by another widget requesting to search a work item by its key
+        if message.work_item_key:
+            self._load_work_item(message.work_item_key)
