@@ -32,18 +32,19 @@ class QuickViewDetails(DataTable):
     view screen.
 
     This table is responsible for:
-    - posting the message [LoadWorkItem](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.LoadWorkItem)
+    - posting the message [WorkItemSelected](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.WorkItemSelected)
     when the user selects a data row that contains a work item key; e.g. the key or parent key rows.
     """
 
-    class LoadWorkItem(Message):
+    class WorkItemSelected(Message):
         def __init__(self, work_item_key: str):
             super().__init__()
             self.work_item_key = work_item_key
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        """Posts the message [LoadWorkItem](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.LoadWorkItem)
-        to ask the caller to search and load the work item displayed in the row.
+        """Posts the message
+        [WorkItemSelected](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.WorkItemSelected) to ask the
+        caller to search and load the work item displayed in the row.
 
         Args:
             event: the event that triggered this.
@@ -51,7 +52,7 @@ class QuickViewDetails(DataTable):
 
         if event.row_key and event.row_key.value:
             if key := event.row_key.value.split('#')[-1]:
-                self.post_message(self.LoadWorkItem(key))
+                self.post_message(self.WorkItemSelected(key))
 
 
 class WorkItemQuickViewScreen(ModalScreen[str]):
@@ -323,7 +324,7 @@ class WorkItemQuickViewScreen(ModalScreen[str]):
         else:
             self.dismiss()
 
-    @on(QuickViewDetails.LoadWorkItem)
-    def _dismiss_with_work_item_key(self, message: QuickViewDetails.LoadWorkItem) -> None:
-        self.dismiss(message.work_item_key)
+    @on(QuickViewDetails.WorkItemSelected)
+    def _dismiss_with_work_item_key(self, message: QuickViewDetails.WorkItemSelected) -> None:
         message.stop()  # no need to propagate the message
+        self.dismiss(message.work_item_key)

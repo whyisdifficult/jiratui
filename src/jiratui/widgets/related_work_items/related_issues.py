@@ -11,11 +11,14 @@ from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, RelatedJiraIssue
 from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
+from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -31,8 +34,8 @@ class RelatedIssueCollapsible(Collapsible):
     This widget is responsible for:
 
     - opening a modal screen to view the details of the currently-selected work item.
-    - (optionally) posting a [LoadWorkItem](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LoadWorkItem)
-    message to load the work item being displayed after the quick view screen is dismissed.
+    - (optionally) posting a [SearchWorkItem](#jiratui.widgets.messages.SearchWorkItem) message to load the work item
+    being displayed after the quick view screen is dismissed.
     - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen.ConfirmationScreen) to confirm deleting the
     currently selected work item.
     - posting a [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
@@ -40,6 +43,7 @@ class RelatedIssueCollapsible(Collapsible):
 
     **See Also**:
     - [Use Case: Relate Work Items](#use-case-relate-work-items)
+    - [Use Case: Open Go-To Screen](#use-case-related-tasks-goto-screen)
     - [Architecture](#architecture-related-work-items-classes)
     """
 
@@ -47,15 +51,23 @@ class RelatedIssueCollapsible(Collapsible):
         Binding(
             key='v',
             action='view_work_item',
-            description='View Work Item',
+            description='Quick View',
             show=True,
             key_display='v',
         ),
         Binding(
             key='d',
             action='unlink_work_item',
-            description='Unlink Work Item',
+            description='Unlink',
             key_display='d',
+        ),
+        Binding(
+            key='f6',
+            action='open_go_to_screen',
+            description='Related',
+            show=True,
+            key_display='f6',
+            tooltip='View related work items',
         ),
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Related Work Items'
@@ -65,12 +77,6 @@ class RelatedIssueCollapsible(Collapsible):
         """The message posted when the user deletes a link."""
 
         link_id: str
-
-    @dataclass
-    class LoadWorkItem(Message):
-        """The message posted when the user wants to search and load the work item being displayed."""
-
-        work_item_key: str
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
@@ -90,7 +96,7 @@ class RelatedIssueCollapsible(Collapsible):
 
     def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
         if work_item_key:
-            self.post_message(self.LoadWorkItem(work_item_key))
+            self.post_message(SearchWorkItem(work_item_key))
 
     async def action_unlink_work_item(self) -> None:
         await self.app.push_screen(
@@ -127,6 +133,30 @@ class RelatedIssueCollapsible(Collapsible):
                 title=self.NOTIFICATIONS_DEFAULT_TITLE,
             )
             self.post_message(self.LinkDeleted(self._link_id))
+
+    async def action_open_go_to_screen(self) -> None:
+        """Opens a modal screen to show the work items related to the work item selected by the user.
+
+        The screen will be opened only if `config.enable_goto == True` and there is a work item selected.
+
+        Returns:
+            None
+        """
+
+        if CONFIGURATION.get().enable_goto and self.work_item_key:
+            self.app.push_screen(
+                GotToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
+                callback=self._close_goto_screen,
+            )
+        elif not self.work_item_key:
+            self.notify('Select/Highlight an item to view its related items')
+        else:
+            self.notify('This feature is disabled. Check config.enable_goto', severity='warning')
+
+    def _close_goto_screen(self, work_item_key: str) -> None:
+        # sends a message to request the handler, the Main Screen, to search for the work item with the given key
+        if work_item_key:
+            self.post_message(SearchWorkItem(work_item_key))
 
 
 class RelatedIssuesWidget(VerticalScroll):

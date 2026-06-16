@@ -13,11 +13,6 @@
 ```{autodoc2-object} jiratui.models.Project
 ```
 
-## JiraIssueField
-
-```{autodoc2-object} jiratui.models.JiraIssueField
-```
-
 ## IssueStatus
 
 ```{autodoc2-object} jiratui.models.IssueStatus

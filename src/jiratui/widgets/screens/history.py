@@ -16,7 +16,7 @@ class HistoryWorkItemsTable(DataTable):
     """A [DataTable](textual.widgets.DataTable) that displays the entries in the recent history.
 
     This table is responsible for:
-    - posting the message [LoadWorkItem](#jiratui.widgets.screens.history.HistoryWorkItemsTable.LoadWorkItem)
+    - posting the message [WorkItemSelected](#jiratui.widgets.screens.history.HistoryWorkItemsTable.WorkItemSelected)
     when the user selects a data row that contains a work item key.
     - copying into the clipboard the key of a selected item.
     - copying into the clipboard the url of a selected item.
@@ -59,11 +59,11 @@ class HistoryWorkItemsTable(DataTable):
         self.__current_work_item_key: str | None = None
 
     @dataclass
-    class LoadWorkItem(Message):
+    class WorkItemSelected(Message):
         work_item_key: str
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        """Posts the message [LoadWorkItem](#jjiratui.widgets.screens.history.HistoryWorkItemsTable.LoadWorkItem)
+        """Posts the message [WorkItemSelected](#jjiratui.widgets.screens.history.HistoryWorkItemsTable.WorkItemSelected)
         to ask the caller to search the work item displayed in the row.
 
         Args:
@@ -72,7 +72,7 @@ class HistoryWorkItemsTable(DataTable):
 
         if event.row_key and event.row_key.value:
             if key := event.row_key.value.split(':')[-1]:
-                self.post_message(self.LoadWorkItem(key))
+                self.post_message(self.WorkItemSelected(key))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Stores the key of the currently-highlighted item."""
@@ -147,10 +147,10 @@ class HistoryScreen(ModalScreen[str]):
         table.add_columns(*['Key', 'Type', 'Status', 'Summary'])
         self._fill_in_table(table)
 
-    @on(HistoryWorkItemsTable.LoadWorkItem)
-    def _dismiss_with_work_item_key(self, message: HistoryWorkItemsTable.LoadWorkItem) -> None:
-        self.dismiss(message.work_item_key)
+    @on(HistoryWorkItemsTable.WorkItemSelected)
+    def _dismiss_with_work_item_key(self, message: HistoryWorkItemsTable.WorkItemSelected) -> None:
         message.stop()  # no need to propagate the message
+        self.dismiss(message.work_item_key)
 
     def action_empty_recent_history(self) -> None:
         self.__history_manager.empty()

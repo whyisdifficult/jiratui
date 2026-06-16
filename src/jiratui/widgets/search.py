@@ -18,6 +18,8 @@ from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.urls import build_external_url_for_issue
+from jiratui.widgets.messages import SearchWorkItem
+from jiratui.widgets.screens.goto import GotToScreen
 
 
 class ConfirmDeleteItemScreen(ModalScreen[bool]):
@@ -139,14 +141,19 @@ class IssuesSearchResultsTable(DataTable):
     This widget provides a reactive attribute, `search_results`, that contains the issues that the table will
     display.
 
-    The widget can post a message of type `IssuesSearchResultsTable.WorkItemDeleted` when the user deletes an item from
-    the table.
+    The widget can post a message of type [IssuesSearchResultsTable.WorkItemDeleted](#jiratui.widgets.search.IssuesSearchResultsTable.WorkItemDeleted)
+    when the user deletes an item from the table.
 
     ```{important}
     Deleting an item will delete the item from Jira. After a successful deletion the datatable will remove the row
     related to the item that was deleted. In addition, the widget will send the message
-    `IssuesSearchResultsTable.WorkItemDeleted` to notify other widgets so they can update the relevant widgets.
+    [IssuesSearchResultsTable.WorkItemDeleted](#jiratui.widgets.search.IssuesSearchResultsTable.WorkItemDeleted) to
+    notify other widgets so they can update the relevant widgets.
     ```
+
+    **See Also**:
+    - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
+    - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
     """
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)
@@ -189,7 +196,15 @@ class IssuesSearchResultsTable(DataTable):
             description='\uf014',
             show=True,
             key_display='d',
-            tooltip='Delete the work item currently highlighted.',
+            tooltip='Delete the work item currently highlighted',
+        ),
+        Binding(
+            key='f6',
+            action='open_go_to_screen',
+            description='Related',
+            show=True,
+            key_display='f6',
+            tooltip='View related work items',
         ),
     ]
 
@@ -417,6 +432,31 @@ class IssuesSearchResultsTable(DataTable):
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         await screen.search_issues(next_page_token, page=self.page)
         self.refresh_bindings()
+
+    def action_open_go_to_screen(self) -> None:
+        """Opens a modal screen to show the work items related to the work item selected by the user in the search
+        results table.
+
+        The screen will be opened only if `config.enable_goto == True` and there is a work item selected.
+
+        Returns:
+            None
+        """
+
+        if CONFIGURATION.get().enable_goto and self.current_work_item_key:
+            self.app.push_screen(
+                GotToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
+                callback=self._close_goto_screen,
+            )
+        elif not self.current_work_item_key:
+            self.notify('Select/Highlight an item to view its related items')
+        else:
+            self.notify('This feature is disabled. Check config.enable_goto', severity='warning')
+
+    def _close_goto_screen(self, work_item_key: str) -> None:
+        # sends a message to request the handler, the Main Screen, to search for the work item with the given key
+        if work_item_key:
+            self.post_message(SearchWorkItem(work_item_key))
 
 
 class SearchResultsContainer(Container):

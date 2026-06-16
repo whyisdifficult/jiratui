@@ -41,8 +41,9 @@ class CommentCollapsible(Collapsible):
         Binding(
             key='d',
             action='delete_comment',
-            description='Delete Comment',
+            description='\uf014',
             key_display='d',
+            tooltip='Delete comment',
         ),
     ]
 
@@ -105,6 +106,7 @@ class IssueCommentsWidget(VerticalScroll):
             action='add_comment',
             description='New Comment',
             key_display='n',
+            tooltip='Add new comment',
         )
     ]
 

@@ -437,6 +437,27 @@ HistoryScreen > VerticalScroll {
 
 .recent-history-table {
     background: transparent;
+    border: round $primary-lighten-3;
+}
+
+/* Go-To Screen */
+
+GotToScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+GotToScreen > VerticalScroll {
+    width: 60%;
+    height: 70%;
+    border: round $foreground;
+    padding: 0 1;
+    scrollbar-size-vertical: 1;
+}
+
+.go-to-items-table {
+    background: transparent;
+    border: round $primary-lighten-3;
 }
 
 /* New Comment Screen */

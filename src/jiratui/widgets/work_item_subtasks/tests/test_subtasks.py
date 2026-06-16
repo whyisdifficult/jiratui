@@ -1,7 +1,11 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.models import JiraIssue, JiraIssueSearchResponse
+from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.work_item_subtasks.subtasks import (
     ChildWorkItemCollapsible,
@@ -87,3 +91,87 @@ async def test_related_issues_widget_opens_quick_view_screen(mock_configuration,
         # THEN
         assert isinstance(app.screen, WorkItemQuickViewScreen)
         assert app.screen._work_item_key == 'key-1'
+
+
+@pytest.mark.asyncio
+async def test_open_goto_screen_with_goto_enabled(
+    mock_configuration, jira_issues: list[JiraIssue], app
+):
+    # GIVEN
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    app.config.enable_goto = True
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues,
+        )
+        await pilot.press('8')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        # THEN
+        assert isinstance(app.screen, GotToScreen)
+
+
+@pytest.mark.asyncio
+async def test_open_goto_screen_with_goto_disabled(
+    mock_configuration, jira_issues: list[JiraIssue], app
+):
+    # GIVEN
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    app.config.enable_goto = False
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues,
+        )
+        await pilot.press('8')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(ChildWorkItemCollapsible, '_close_goto_screen')
+@pytest.mark.asyncio
+async def test_dismiss_goto_screen_with_key(
+    close_goto_screen_mock: Mock,
+    get_issue_mock: AsyncMock,
+    mock_configuration,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[0]])
+    )
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    app.config.enable_goto = True
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        widget.issues = WorkItemSubtasks(
+            work_item_key=jira_issues[0].key,
+            project_key='P1',
+            issues=[jira_issues[1]],
+        )
+        await pilot.press('8')
+        await pilot.press('tab')
+        await pilot.press('f6')
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        close_goto_screen_mock.assert_called_once_with('key-1')
