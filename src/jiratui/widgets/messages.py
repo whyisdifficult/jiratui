@@ -1,3 +1,11 @@
+"""This module contains custom Textual's Message classes.
+
+```{Important}
+Only place in this module Messages that can be sent by different widgets. If a message is only sent by a single widget
+then consider defining the message class as an inner class of the widget.
+```
+"""
+
 from textual.message import Message
 
 

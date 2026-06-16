@@ -43,6 +43,7 @@ class RelatedIssueCollapsible(Collapsible):
 
     **See Also**:
     - [Use Case: Relate Work Items](#use-case-relate-work-items)
+    - [Use Case: Open Go-To Screen](#use-case-related-tasks-goto-screen)
     - [Architecture](#architecture-related-work-items-classes)
     """
 

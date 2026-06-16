@@ -1599,3 +1599,292 @@ the application takes when the user wants to search/fetch an item from the recen
         MainScreen->>User: show search result
 ```
 ````
+
+(use-case-goto-screen)=
+## Access Related Work Items Using the Go-To Screen
+
+The use case describe the interaction of the user with the application while using the Go-To feature. The feature allows
+users to easily jump to items related to a pre-selected work item. When enabled, this feature can be accessed by
+pressing the corresponding key from 3 different locations:
+
+- the search results table.
+- the list of related tasks as seen in the "Related" tab.
+- the list of subtasks as seen in the "Subtasks" tab.
+
+(use-case-search-results-goto-screen)=
+### Open Go-To Screen from Search Results
+
+Use case describing the interaction between the user and the application when the user wants to open the Go-To screen
+after selecting an item from the search results table.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant IssuesSearchResultsTable
+        participant GoToScreen
+        participant APIController
+        participant API
+
+        Note right of User: main screen is showing<br> a list of work items<br> in the search results
+        User->>IssuesSearchResultsTable: selects work item A from the table
+        User->>IssuesSearchResultsTable: Presses 'f6' key
+        IssuesSearchResultsTable->>GoToScreen: open Go-To screen
+        activate GoToScreen
+        GoToScreen->>APIController: get issue A
+        activate APIController
+        APIController->>API: get issue A
+        deactivate APIController
+        activate API
+        API->>APIController: issue A details
+        activate APIController
+        deactivate API
+        APIController->>GoToScreen: issue A details
+        deactivate APIController
+        GoToScreen->>APIController: get parent of A
+        activate APIController
+        APIController->>API: get parent of A
+        deactivate APIController
+        activate API
+        API->>APIController: parent of A
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: parent of A
+        deactivate APIController
+        GoToScreen->>APIController: get subtasks of item A
+        activate APIController
+        APIController->>API: get subtasks of item A
+        deactivate APIController
+        activate API
+        API->>APIController: subtasks
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: subtasks
+        deactivate APIController
+        GoToScreen->>GoToScreen: populate data tables
+        deactivate GoToScreen
+```
+````
+
+(use-case-subtasks-goto-screen)=
+### Open Go-To Screen from Subtasks Tab
+
+Use case describing the interaction between the user and the application when the user wants to open the Go-To screen
+after selecting an item in the Subtasks tab.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant ChildWorkItemCollapsible
+        participant GoToScreen
+        participant APIController
+        participant API
+
+        Note right of User: main screen is showing<br> a list of work items<br> in the "Subtasks" tab
+        User->>ChildWorkItemCollapsible: selects work item A from the table
+        User->>ChildWorkItemCollapsible: Presses 'f6' key
+        ChildWorkItemCollapsible->>GoToScreen: open Go-To screen
+        activate GoToScreen
+        GoToScreen->>APIController: get issue A
+        activate APIController
+        APIController->>API: get issue A
+        deactivate APIController
+        activate API
+        API->>APIController: issue A details
+        activate APIController
+        deactivate API
+        APIController->>GoToScreen: issue A details
+        deactivate APIController
+
+        GoToScreen->>APIController: get parent of A
+        activate APIController
+        APIController->>API: get parent of A
+        deactivate APIController
+        activate API
+        API->>APIController: parent of A
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: parent of A
+        deactivate APIController
+
+        GoToScreen->>APIController: get subtasks of item A
+        activate APIController
+        APIController->>API: get subtasks of item A
+        deactivate APIController
+        activate API
+        API->>APIController: subtasks
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: subtasks
+        deactivate APIController
+        GoToScreen->>GoToScreen: populate data tables
+        deactivate GoToScreen
+```
+````
+
+(use-case-related-tasks-goto-screen)=
+### Open Go-To Screen from Related Tasks Tab
+
+Use case describing the interaction between the user and the application when the user wants to open the Go-To screen
+after selecting an item in the Related tab.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant RelatedIssueCollapsible
+        participant GoToScreen
+        participant APIController
+        participant API
+
+        Note right of User: main screen is showing<br> a list of work items<br> in the "Related" tab
+        User->>RelatedIssueCollapsible: selects work item A from the table
+        User->>RelatedIssueCollapsible: Presses 'f6' key
+        RelatedIssueCollapsible->>GoToScreen: open Go-To screen
+        activate GoToScreen
+        GoToScreen->>APIController: get issue A
+        activate APIController
+        APIController->>API: get issue A
+        deactivate APIController
+        activate API
+        API->>APIController: issue A details
+        activate APIController
+        deactivate API
+        APIController->>GoToScreen: issue A details
+        deactivate APIController
+        GoToScreen->>APIController: get parent of A
+        activate APIController
+        APIController->>API: get parent of A
+        deactivate APIController
+        activate API
+        API->>APIController: parent of A
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: parent of A
+        deactivate APIController
+        GoToScreen->>APIController: get subtasks of item A
+        activate APIController
+        APIController->>API: get subtasks of item A
+        deactivate APIController
+        activate API
+        API->>APIController: subtasks
+        deactivate API
+        activate APIController
+        APIController->>GoToScreen: subtasks
+        deactivate APIController
+        GoToScreen->>GoToScreen: populate data tables
+        deactivate GoToScreen
+```
+````
+
+(use-case-search-and-fetch-item-goto-screen)=
+### Search and Fetch Item Selected in the Go-To Screen
+
+Use case describing the interaction between the user and the application when the user opens the Go-To screen and
+selects a work item in any of the tables on the screen.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant GoToScreen
+        participant IssuesSearchResultsTable
+        participant MainScreen
+
+        User->>IssuesSearchResultsTable: selects item with key 1
+        IssuesSearchResultsTable->>GoToScreen: open screen
+        GoToScreen->>GoToItemsTable: fills in table
+        User->>GoToItemsTable: selects item witk key A from any of the tables
+        activate GoToItemsTable
+        User->>GoToItemsTable: press 'enter'
+        GoToItemsTable->>GoToScreen: post_message(WorkItemSelected('A'))
+        activate GoToScreen
+        deactivate GoToItemsTable
+        GoToScreen->>GoToScreen: dismiss('A')
+        deactivate GoToScreen
+        GoToScreen->>IssuesSearchResultsTable: dismissed with key A
+        activate IssuesSearchResultsTable
+        IssuesSearchResultsTable->>MainScreen: search and fetch item with key A
+        deactivate IssuesSearchResultsTable
+```
+````
+
+### Copy the Key of an Item from the Go-To Screen
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant GoToScreen
+        participant Application
+        participant GoToItemsTable
+        User->>GoToItemsTable: highlight item with key 1 from the table
+        GoToItemsTable->>GoToItemsTable: register the highlight
+        User->>GoToItemsTable: press '^k'
+        GoToItemsTable->>Application: copy key to the clippboard
+        GoToItemsTable->>GoToScreen: display message "Key copied!"
+```
+````
+
+### Copy the URL of an Item from the Go-To Screen
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant GoToScreen
+        participant Application
+        participant GoToItemsTable
+        User->>GoToItemsTable: highlight item with key 1 from the table
+        GoToItemsTable->>GoToItemsTable: register the highlight
+        User->>GoToItemsTable: press '^j'
+        GoToItemsTable->>Application: copy URL to the clippboard
+        GoToItemsTable->>GoToScreen: display message "URL copied!"
+```
+````
+
+### Open in Browser an Item from the Go-To Screen
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant GoToScreen
+        participant Application
+        participant GoToItemsTable
+        User->>GoToItemsTable: highlight item with key 1 from the table
+        GoToItemsTable->>GoToItemsTable: register the highlight
+        User->>GoToItemsTable: press '^o'
+        GoToItemsTable->>Application: open_url(url)
+        GoToItemsTable->>GoToScreen: display message "Opening URL"
+```
+````

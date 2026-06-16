@@ -150,6 +150,10 @@ class IssuesSearchResultsTable(DataTable):
     [IssuesSearchResultsTable.WorkItemDeleted](#jiratui.widgets.search.IssuesSearchResultsTable.WorkItemDeleted) to
     notify other widgets so they can update the relevant widgets.
     ```
+
+    **See Also**:
+    - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
+    - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
     """
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)

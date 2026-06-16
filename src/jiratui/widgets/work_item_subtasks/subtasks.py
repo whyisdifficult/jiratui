@@ -37,6 +37,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
     **See Also**:
     - [Architecture](#architecture-work-item-subtasks-classes)
+    - [Use Case: Open Go-To Screen](#use-case-subtasks-goto-screen)
     """
 
     BINDINGS = [

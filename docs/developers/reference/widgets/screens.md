@@ -112,3 +112,7 @@
 ## HistoryScreen
 ```{autodoc2-object} jiratui.widgets.screens.history.HistoryScreen
 ```
+
+## GotToScreen
+```{autodoc2-object} jiratui.widgets.screens.goto.GotToScreen
+```

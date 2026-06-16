@@ -94,6 +94,8 @@ class CustomFieldTypes(enum.Enum):
 
 @dataclass
 class BaseModel:
+    """A base model that provides serialization and deserialization of methods."""
+
     def as_dict(self) -> dict:
         """Dumps dataclass into dictionary.
 
@@ -113,6 +115,8 @@ class BaseModel:
 
 @dataclass
 class Project(BaseModel):
+    """A Jira project."""
+
     id: str
     name: str
     key: str
@@ -130,6 +134,8 @@ class JiraIssueField(BaseModel):
 
 @dataclass
 class IssueStatus(BaseModel):
+    """The status of a work item."""
+
     id: str
     name: str
     description: str | None = None
@@ -137,15 +143,20 @@ class IssueStatus(BaseModel):
 
 @dataclass
 class IssueType(BaseModel):
+    """The type of work item."""
+
     id: str
     name: str
     hierarchy_level: int | None = None
     """Hierarchy level of the issue type."""
     scope_project: Project | None = None
+    """The [Project](#jiratui.models.Project) that serves as scope of this type of work items."""
 
 
 @dataclass
 class JiraUser(BaseModel):
+    """A user who can log in to Jira."""
+
     account_id: str
     active: bool
     display_name: str
@@ -166,17 +177,23 @@ class JiraUser(BaseModel):
 
 @dataclass
 class IssuePriority(BaseModel):
+    """The priority of work item."""
+
     id: str
     name: str
 
 
 @dataclass
 class IssueComment(BaseModel):
+    """A comment associated to a work item."""
+
     id: str
     author: JiraUser
+    """The [JiraUser](#jiratui.models.JiraUser) author of the comment."""
     created: datetime | None = None
     updated: datetime | None = None
     update_author: JiraUser | None = None
+    """The [JiraUser](#jiratui.models.JiraUser) that last updated the comment."""
     body: dict | str | None = None
 
     def short_metadata(self) -> str:
@@ -219,14 +236,19 @@ class IssueComment(BaseModel):
 
 @dataclass
 class RelatedJiraIssue(BaseModel):
+    """A work item that is related to another one via a link."""
+
     id: str
     key: str
     summary: str
     status: IssueStatus
+    """The [IssueStatus](#jiratui.models.IssueStatus) of the work item."""
     issue_type: IssueType
+    """The [IssueType](#jiratui.models.IssueType) of the work item."""
     link_type: str = ''
     relation_type: str = ''  # outward/inward
     priority: IssuePriority | None = None
+    """The [IssuePriority](#jiratui.models.IssuePriority) of the work item."""
 
     def short_title(self) -> str:
         return f'{self.key} - {self.summary}'
@@ -264,6 +286,7 @@ class Attachment(BaseModel):
     size: int
     created: datetime | None = None
     author: JiraUser | None = None
+    """The [JiraUser](#jiratui.models.JiraUser) author of this attachment."""
 
     @property
     def created_date(self) -> str:
@@ -294,6 +317,8 @@ class Attachment(BaseModel):
 
 @dataclass
 class JiraSprint(BaseModel):
+    """The sprint of a work item."""
+
     id: str
     name: str
     active: bool
@@ -325,24 +350,34 @@ class JiraIssueComponent(BaseModel):
 class JiraIssue(JiraBaseIssue):
     summary: str
     status: IssueStatus
+    """The [IssueStatus](#jiratui.models.IssueStatus) of the work item."""
     project: Project | None = None
+    """The [Project](#jiratui.models.Project) of the work item."""
     created: datetime | None = None
     updated: datetime | None = None
     due_date: date | None = None
     reporter: JiraUser | None = None
+    """The [JiraUser](#jiratui.models.JiraUser) that reported the work item."""
     issue_type: IssueType | None = None
+    """The [IssueType](#jiratui.models.IssueType) of the work item."""
     resolution_date: datetime | None = None
     resolution: str | None = None
     description: dict | str | None = None
     priority: IssuePriority | None = None
+    """The [IssuePriority](#jiratui.models.IssuePriority) of the work item."""
     assignee: JiraUser | None = None
+    """The [JiraUser](#jiratui.models.JiraUser) that is assigned to the work item."""
     comments: list[IssueComment] | None = None
+    """The list of [IssueComment](#jiratui.models.IssueComment) of the work item."""
     related_issues: list[RelatedJiraIssue] | None = None
+    """The list of [RelatedJiraIssue](#jiratui.models.RelatedJiraIssue) of the work item."""
     parent_issue_key: str | None = None
     time_tracking: TimeTracking | None = None
     labels: list[str] | None = None
     attachments: list[Attachment] | None = None
+    """The list of files [Attachment](#jiratui.models.Attachment) of the work item."""
     sprint: JiraSprint | None = None
+    """The [JiraSprint](#jiratui.models.JiraSprint) of the work item."""
     edit_meta: dict | None = None
     """a dictionary with the issue's edit metadata"""
     custom_fields: dict[str, Any] | None = None
@@ -353,6 +388,7 @@ class JiraIssue(JiraBaseIssue):
     above. These fields have a key without the prefix `custom_` and, are rendered dynamically in the UI's update
     form."""
     components: list[JiraIssueComponent] | None = None
+    """The list of [JiraIssueComponent](#jiratui.models.JiraIssueComponent) of the work item."""
     environment: str | None = None
 
     def short_title(self) -> str:
@@ -570,6 +606,8 @@ class JiraTimeTrackingConfiguration(BaseModel):
 
 @dataclass
 class JiraGlobalSettings(BaseModel):
+    """The global settings of the Jira server the application connects to."""
+
     attachments_enabled: bool
     issue_linking_enabled: bool
     subtasks_enabled: bool
@@ -603,6 +641,8 @@ class JiraGlobalSettings(BaseModel):
 
 @dataclass
 class JiraServerInfo(BaseModel):
+    """Information of the Jira server the application connects to."""
+
     base_url: str
     version: str
     build_number: int
@@ -658,18 +698,23 @@ class JiraServerInfo(BaseModel):
 
 @dataclass
 class JiraUserGroup(BaseModel):
+    """A Jira group of users."""
+
     id: str
     name: str
 
 
 @dataclass
 class JiraMyselfInfo(BaseModel):
+    """Information of the user connected to the Jira server used by the application."""
+
     account_type: str
     account_id: str
     active: bool
     display_name: str
     email: str | None = None
     groups: list[JiraUserGroup] | None = None
+    """A list of [JiraUserGroup](#jiratui.models.JiraUserGroup) describing the user groups a user belongs to."""
     username: str | None = (
         None  # Jira DC does not support accountId; instead it uses the username to identify users
     )
@@ -725,6 +770,8 @@ class IssueTransition(BaseModel):
 
 @dataclass
 class LinkIssueType(BaseModel):
+    """A type of link that relates 2 work items."""
+
     id: str
     name: str
     outward: str
@@ -835,7 +882,8 @@ class PaginatedJiraWorklog(BaseModel):
 class JiraField(BaseModel):
     """Represents a Jira field as returned by the endpoint that retrieves fields.
 
-    **Also See**: [api-rest-api-3-field-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get)
+    **See Also**:
+    - [api-rest-api-3-field-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get)
     """
 
     id: str

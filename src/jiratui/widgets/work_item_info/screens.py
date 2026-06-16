@@ -80,4 +80,5 @@ class DisplayTextContentScreen(ModalScreen):
         self.title = title
 
     def compose(self) -> ComposeResult:
+        # see https://github.com/Textualize/textual/issues/3817
         yield MarkdownViewer(self.__content)

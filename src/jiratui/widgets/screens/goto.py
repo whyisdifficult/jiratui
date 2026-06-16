@@ -23,6 +23,9 @@ class GoToItemsTable(DataTable):
     - Copying into the clipboard the URL of a selected work item.
     - Copying into the clipboard the Key of a selected work item.
     - Opening in the browser a work item selected by the user.
+
+    **See Also**:
+    - [Use Cases](#use-case-goto-screen)
     """
 
     BINDINGS = [
@@ -106,11 +109,15 @@ class GotToScreen(ModalScreen[str]):
     The screen is responsible for:
 
     - Fetching the details of the given work item.
+    - Fetching the details of the given work item's parent (if any).
     - Fetching the details of the items related to the given work item.
     - Fetching the details of the subtasks of the given work item.
-    - Populating data tables with basic detail sof all related items.
+    - Populating data tables with basic details of all related items.
     - Handling the message [GoToItemsTable.WorkItemSelected](#jiratui.widgets.screens.goto.GoToItemsTable.WorkItemSelected)
     to request the main screen to search a work item based on its key.
+
+    **See Also**:
+    - [Use Case](#use-case-goto-screen)
     """
 
     BINDINGS = [
