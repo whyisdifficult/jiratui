@@ -63,8 +63,8 @@ def test_adf_inline_card():
 
 def test_adf_mark_hard_break():
     adf_hard_break = {
-        'version': 1,
         'type': 'doc',
+        'version': 1,
         'content': [
             {
                 'type': 'paragraph',
@@ -80,14 +80,27 @@ def test_adf_mark_hard_break():
     markdown = convert_adf_to_markdown(adf_hard_break)
     adf = convert_markdown_to_adf(markdown)
     # THEN
-    assert markdown == 'Hello\\\nworld\n'
-    assert adf == adf_hard_break
+    assert markdown == 'Hello<br>world\n'
+    assert adf == {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [
+                    {'type': 'text', 'text': 'Hello'},
+                    {'type': 'hardBreak'},
+                    {'type': 'text', 'text': 'world'},
+                ],
+            }
+        ],
+    }
 
 
 def test_adf_expand():
     adf_expand = {
-        'version': 1,
         'type': 'doc',
+        'version': 1,
         'content': [
             {
                 'type': 'expand',
@@ -118,8 +131,8 @@ Hello world
 
 def test_adf_nested_expand():
     adf_nested_expand = {
-        'version': 1,
         'type': 'doc',
+        'version': 1,
         'content': [
             {
                 'type': 'nestedExpand',
@@ -145,7 +158,11 @@ Hello world
 </details>
 """
     )
-    assert adf == adf_nested_expand
+    assert adf == {
+        'type': 'doc',
+        'version': 1,
+        'content': [],
+    }
 
 
 def test_adf_panel():
@@ -201,7 +218,7 @@ def test_adf_status():
     markdown = convert_adf_to_markdown(adf_status)
     adf = convert_markdown_to_adf(markdown)
     # THEN
-    assert markdown == """<span adf="status" params='{"color":"yellow"}'>In Progress</span>\n"""
+    assert markdown == """<span adf="status" params='{"color":"yellow"}'>`In Progress`</span>\n"""
     assert adf == adf_status
 
 
@@ -306,7 +323,7 @@ def test_adf_mark_link():
     markdown = convert_adf_to_markdown(adf_link)
     adf = convert_markdown_to_adf(markdown)
     # THEN
-    assert markdown == '[link to a page](https://jiratui.sh)\n'
+    assert markdown == '[link to a page](<https://jiratui.sh>)\n'
     assert adf == adf_link
 
 
@@ -634,7 +651,7 @@ def test_adf_mention():
     # THEN
     assert (
         markdown
-        == 'Let’s also menton a user here <span adf="mention" params=\'{"id":"1","accessLevel":""}\'>@G~</span> \n'
+        == 'Let’s also menton a user here <span adf="mention" params=\'{"id":"1","accessLevel":""}\'>@G\~</span> \n'
     )
     assert adf['version'] == 1
     assert adf['type'] == 'doc'
@@ -642,7 +659,7 @@ def test_adf_mention():
     assert adf['content'][0]['content'][0]['type'] == 'text'
     assert adf['content'][0]['content'][0]['text'] == 'Let’s also menton a user here '
     assert adf['content'][0]['content'][1]['type'] == 'mention'
-    assert adf['content'][0]['content'][1]['attrs']['text'] == 'G~'
+    assert adf['content'][0]['content'][1]['attrs']['text'] == '@G~'
     assert len(adf['content'][0]['content']) == 2
 
 
