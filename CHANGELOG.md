@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.9.0] 2026-06-18
 
 ### Added
 
@@ -20,6 +20,11 @@ selects a work item. the default is `False`, i.e. no hints are shown; by [@whyis
 
 - Update dev, docs and lint dependencies; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/253
 - Update github actions; by [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/254
+- Updated `click` to version `8.4.1`. By [@whyisdifficult](https://github.com/whyisdifficult)
+- Updated `textual-image` to version `0.13.2`. By [@whyisdifficult](https://github.com/whyisdifficult)
+- Updated `marklas` to version `0.8.0`. By [@whyisdifficult](https://github.com/whyisdifficult)
+- Updated `pytest` to version `0.9.1`. By [@whyisdifficult](https://github.com/whyisdifficult)
+- Updated `pytest-asyncio` to version `1.4.0`. By [@whyisdifficult](https://github.com/whyisdifficult)
 
 ### Documentation
 
