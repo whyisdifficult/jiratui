@@ -1,5 +1,8 @@
 # Contributing Guidelines
 
+The official documentation for developers lives at
+[Getting Started with JiraTUI Development](https://jiratui.readthedocs.io/en/latest/developers/getting-started/index.html)
+
 ## 1. **Introduction**
 
 Thank you for considering contributing to our project! We welcome contributions from everyone. By participating in this
