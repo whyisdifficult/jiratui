@@ -35,6 +35,6 @@ jobs:
         run: uv build
 
       - name: Upload package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.14.0
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./dist/

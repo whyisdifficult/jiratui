@@ -35,7 +35,7 @@ jobs:
         run: uv build
 
       - name: Upload package to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.14.0
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ./dist/
           repository-url: https://test.pypi.org/project/jiratui/
