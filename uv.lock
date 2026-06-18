@@ -771,7 +771,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.4.1,<9.0.0" },
     { name = "gitpython", specifier = ">=3.1.47,<3.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "marklas", specifier = ">=0.8.0" },
+    { name = "marklas", specifier = "==0.8.0" },
     { name = "puremagic", specifier = ">=2.2.0,<3.0.0" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.14.0,<3.0.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },

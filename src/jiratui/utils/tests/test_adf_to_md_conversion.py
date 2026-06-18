@@ -129,6 +129,19 @@ Hello world
     assert adf == adf_expand
 
 
+def test_adf_expand_md_to_adf_without_newlines():
+    # GIVEN
+    markdown = """<details adf="expand">
+<summary>Hello world</summary>
+Hello world
+</details>
+    """
+    # WHEN
+    adf = convert_markdown_to_adf(markdown)
+    # THEN
+    assert adf == {'type': 'doc', 'version': 1, 'content': []}
+
+
 def test_adf_nested_expand():
     adf_nested_expand = {
         'type': 'doc',
