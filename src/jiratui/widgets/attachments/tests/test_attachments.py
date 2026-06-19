@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
@@ -28,6 +28,7 @@ async def test_add_attachment_cancel_without_attaching_file(
         # WHEN
         await pilot.press('tab')
         await pilot.press('tab')
+        await pilot.press('tab')
         await pilot.press('enter')
         # THEN
         assert screen.save_button.disabled is True
@@ -48,9 +49,109 @@ async def test_add_attachment_save_with_filename(get_initial_directory_for_uploa
         await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')
+        await pilot.press('tab')
         await pilot.press('enter')
         assert screen.save_button.disabled is False
         assert screen.dismiss.call_args[0][0].strip() == 'a'
+
+
+@patch.object(AddAttachmentScreen, '_get_initial_directory_for_upload')
+@pytest.mark.asyncio
+async def test_change_checkbox_value_to_true(get_initial_directory_for_upload_mock: Mock, app):
+    # GIVEN
+    app.session.recently_used_attachment_path = 'some-dir'
+    get_initial_directory_for_upload_mock.return_value = ''
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('space')
+        # THEN
+        get_initial_directory_for_upload_mock.assert_has_calls([call(), call(use_latest_path=True)])
+
+
+@patch.object(AddAttachmentScreen, '_get_initial_directory_for_upload')
+@pytest.mark.asyncio
+async def test_change_checkbox_value_to_false(get_initial_directory_for_upload_mock: Mock, app):
+    # GIVEN
+    app.session.recently_used_attachment_path = 'some-dir'
+    get_initial_directory_for_upload_mock.return_value = ''
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('space')
+        await pilot.press('space')
+        # THEN
+        get_initial_directory_for_upload_mock.assert_has_calls(
+            [call(), call(use_latest_path=True), call(use_latest_path=False)]
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_initial_directory_for_upload_returns_default(app):
+    # GIVEN
+    app.session.recently_used_attachment_path = 'some-dir'
+    app.config.attachments_source_directory = ''
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._get_initial_directory_for_upload()
+        # THEN
+        assert result == '/'
+
+
+@pytest.mark.asyncio
+async def test_get_initial_directory_for_upload_returns_attachments_source_directory(app):
+    # GIVEN
+    app.session.recently_used_attachment_path = 'some-dir'
+    app.config.attachments_source_directory = 'root-dir'
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._get_initial_directory_for_upload()
+        # THEN
+        assert result == 'root-dir'
+
+
+@pytest.mark.asyncio
+async def test_get_initial_directory_for_upload_returns_latest_path(app):
+    # GIVEN
+    app.session.recently_used_attachment_path = 'some-dir'
+    app.config.attachments_source_directory = ''
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._get_initial_directory_for_upload(True)
+        # THEN
+        assert result == 'some-dir'
+
+
+@pytest.mark.asyncio
+async def test_get_initial_directory_for_upload_without_using_latest_returns_default(app):
+    # GIVEN
+    app.session.recently_used_attachment_path = ''
+    app.config.attachments_source_directory = ''
+    async with app.run_test() as pilot:
+        screen = AddAttachmentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = screen._get_initial_directory_for_upload(True)
+        # THEN
+        assert result == '/'
 
 
 @pytest.mark.parametrize('attachments', [None, WorkItemAttachments(None, None)])

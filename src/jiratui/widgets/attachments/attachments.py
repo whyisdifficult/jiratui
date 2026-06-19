@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from io import BytesIO
 import json
+import os
 from typing import cast
 
 from textual import on
@@ -36,7 +37,14 @@ class WorkItemAttachments:
 
 
 class AttachmentsDataTable(DataTable):
-    """A data table to list the files attached to a work item."""
+    """A [DataTable](#textual.widgets.DataTable) to list the files attached to a work item.
+
+    The table is responsible for:
+    - Opening the file in the browser when the user presses `^o`.
+    - Opening a confirmation screen user presses `d` to delete an attachment and, posting the message
+    [AttachmentsDataTable.Deleted](#jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted) to request a
+    handler to delete the attachment.
+    """
 
     BINDINGS = [
         Binding(
@@ -158,6 +166,7 @@ class AttachmentsDataTable(DataTable):
 
         if result:
             self.post_message(self.Deleted(self._work_item_key, self._selected_attachment_id))
+            self.notify('Deleting attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
 
 
 class IssueAttachmentsWidget(VerticalScroll):
@@ -304,13 +313,8 @@ class IssueAttachmentsWidget(VerticalScroll):
             self.notify('Uploading attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
             screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
             response: APIControllerResponse = screen.api.add_attachment(self.issue_key, file_name)
-            if not response.success:
-                self.notify(
-                    f'Failed to attach the file: {response.error}',
-                    title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                    severity='error',
-                )
-            else:
+            self._update_recently_used_path(file_name)
+            if response.success:
                 # update the list of attachments being displayed in the table
                 # avoid fetching the list from the API to avoid making a request; simple append the new attachment
                 current_attachments = self.attachments.attachments if self.attachments else []
@@ -319,6 +323,14 @@ class IssueAttachmentsWidget(VerticalScroll):
                     work_item_key=self.issue_key,
                     attachments=current_attachments + new_attachments,
                 )
+            else:
+                self.notify(
+                    f'{response.error}', title=self.NOTIFICATIONS_DEFAULT_TITLE, severity='error'
+                )
+
+    def _update_recently_used_path(self, filename: str) -> None:
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        application.session.recently_used_attachment_path = os.path.dirname(filename)
 
     def watch_attachments(self, data: WorkItemAttachments | None) -> None:
         """Updates the table that displays the attached files with new attachments."""
@@ -344,7 +356,12 @@ class IssueAttachmentsWidget(VerticalScroll):
 
 
 class ViewAttachmentScreen(ModalScreen):
-    """A modal screen to display files attached to a work item."""
+    """A modal screen to display files attached to a work item.
+
+    The screen is responsible for:
+    - Requesting the Jira API to download a file using the attachment's id.
+    - Building a widget to display the contents of the file depending on the type of file.
+    """
 
     BINDINGS = [('escape', 'app.pop_screen', 'Close Image')]
     TITLE = 'Image'

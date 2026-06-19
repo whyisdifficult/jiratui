@@ -3,13 +3,21 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, ItemGrid, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, DirectoryTree, Input, Rule, Static
+from textual.widgets import Button, Checkbox, DirectoryTree, Input, Rule, Static
 
 from jiratui.config import CONFIGURATION
 
 
 class AddAttachmentScreen(Screen[str]):
     """The screen to select files to attach and attach them to a work item.
+
+    The screen is responsible for:
+    - showing a directory tree to let the user select the file to upload.
+    - handling the `Checkbox.Changed` event and refreshing the directory tree when the user selects to use the
+    last-used directory.
+
+    The screen uses the application's session object [ContextualSession](#jiratui.utils.session.ContextualSession) to
+    extract/store the recently-used directory.
 
     **See Also**:
     - [Attach File Screen Design](#components-attach-file-screen)
@@ -56,7 +64,19 @@ class AddAttachmentScreen(Screen[str]):
     def handle_cancel(self) -> None:
         self.dismiss('')
 
-    def _get_initial_directory_for_upload(self) -> str:
+    @property
+    def directory_tree(self) -> DirectoryTree:
+        return self.query_one('#attachment-directory-tree', expect_type=DirectoryTree)
+
+    @property
+    def right_hand_side_vertical_widget(self) -> Vertical:
+        return self.query_one('#right-hand-side-panel', expect_type=Vertical)
+
+    def _get_initial_directory_for_upload(self, use_latest_path: bool = False) -> str:
+        if use_latest_path and (
+            recently_used_attachment_path := self.app.session.get('recently_used_attachment_path')  # type:ignore[attr-defined]
+        ):
+            return recently_used_attachment_path
         if attachments_source_directory := CONFIGURATION.get().attachments_source_directory:
             if cleaned := attachments_source_directory.strip():
                 return cleaned
@@ -77,8 +97,9 @@ class AddAttachmentScreen(Screen[str]):
                 yield DirectoryTree(
                     self._get_initial_directory_for_upload(), id='attachment-directory-tree'
                 )
-                with Vertical():
+                with Vertical(id='right-hand-side-panel'):
                     yield FileNameInputWidget()
+                    yield Checkbox('Use last directory', classes='input-checkbox')
                     with ItemGrid(classes='add-attachment-grid-buttons'):
                         yield Button(
                             'Save',
@@ -87,6 +108,19 @@ class AddAttachmentScreen(Screen[str]):
                             disabled=True,
                         )
                         yield Button('Cancel', variant='error', id='add-attachment-button-quit')
+
+    @on(Checkbox.Changed)
+    async def _change_directory(self, event: Checkbox.Changed) -> None:
+        # change the filesystem view to the last-used directory (if any is set)
+        # for the lack of a better way (see https://github.com/Textualize/textual/issues/2056) we remove the directory
+        # tree widget and re-create it with the new root directory
+        if self.app.session.get('recently_used_attachment_path'):  # type:ignore[attr-defined]
+            directory = self._get_initial_directory_for_upload(use_latest_path=event.value)
+            await self.directory_tree.remove()
+            await self.mount(
+                DirectoryTree(directory, id='attachment-directory-tree'),
+                before=self.right_hand_side_vertical_widget,
+            )
 
 
 class FileNameInputWidget(Input):

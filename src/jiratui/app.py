@@ -12,6 +12,7 @@ from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
+from jiratui.utils.session import ApplicationSession
 from jiratui.widgets.config_info import ConfigFileScreen
 from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screen import MainScreen
@@ -76,6 +77,10 @@ class JiraApp(App):
         super().__init__()
         self.config = settings
         CONFIGURATION.set(settings)
+
+        # set the session object
+        self.__session = ApplicationSession()
+
         self.api = APIController()  # required so screens can have access to the API
 
         self.initial_project_key: str | None = None
@@ -118,6 +123,10 @@ class JiraApp(App):
         else:
             self.theme = self.DEFAULT_THEME
 
+    @property
+    def session(self) -> ApplicationSession:
+        return self.__session
+
     async def on_mount(self) -> None:
         self._set_application_title()
 
@@ -131,6 +140,9 @@ class JiraApp(App):
                 self.focus_item_on_startup,
             )
         )
+
+    def on_unmount(self) -> None:
+        self.__session.clear()
 
     async def action_help(self) -> None:
         from jiratui.widgets.help import HelpScreen

@@ -281,11 +281,11 @@ CustomTitle > Rule.-horizontal {
     padding: 0 1;
 }
 
-ActiveSprintCheckbox {
+.input-checkbox {
     box_sizing: content-box;
     height: 1;
     border: round $primary-lighten-3;
-    width: 100%;
+    width: auto;
     margin: 0 0;
     padding: 0 0;
     background: $background;
