@@ -58,3 +58,10 @@ widgets/work-item-web-links.md
 widgets/work-item-comments.md
 widgets/work-item-attachments.md
 ```
+
+## Session Management
+
+```{toctree}
+:maxdepth: 1
+session.md
+```

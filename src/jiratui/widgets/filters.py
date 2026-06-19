@@ -173,7 +173,7 @@ class OrderByWidget(Select):
 
 
 class ActiveSprintCheckbox(Checkbox):
-    """A check box to search work items in the active sprint."""
+    """A checkbox to search work items in the active sprint."""
 
     HELP = 'See Search by Active Sprint section in the help'
 
@@ -184,6 +184,7 @@ class ActiveSprintCheckbox(Checkbox):
             value=value,
         )
         self.border_subtitle = '(v)'
+        self.add_class('input-checkbox')
 
     @property
     def help_anchor(self) -> str:
