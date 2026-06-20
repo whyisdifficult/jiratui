@@ -124,7 +124,7 @@ class AddAttachmentScreen(Screen[str]):
 
     def on_mount(self) -> None:
         if cb := self.query_one_optional(Checkbox):
-            cb.value = True if self.app.session.get('recently_used_attachment_path') else False
+            cb.value = True if self.app.session.get('recently_used_attachment_path') else False  # type:ignore[attr-defined]
 
 
 class FileNameInputWidget(Input):
