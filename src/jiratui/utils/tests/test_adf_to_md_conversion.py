@@ -648,7 +648,7 @@ def test_adf_mention():
             {
                 'type': 'paragraph',
                 'content': [
-                    {'type': 'text', 'text': 'Let’s also menton a user here '},
+                    {'type': 'text', 'text': 'Let’s also mention a user here '},
                     {
                         'type': 'mention',
                         'attrs': {'id': '1', 'text': '@G~', 'accessLevel': '', 'localId': '46'},
@@ -664,13 +664,13 @@ def test_adf_mention():
     # THEN
     assert (
         markdown
-        == 'Let’s also menton a user here <span adf="mention" params=\'{"id":"1","accessLevel":""}\'>@G\~</span> \n'
+        == 'Let’s also mention a user here <span adf="mention" params=\'{"id":"1","accessLevel":""}\'>@G\\~</span> \n'
     )
     assert adf['version'] == 1
     assert adf['type'] == 'doc'
     assert adf['content'][0]['type'] == 'paragraph'
     assert adf['content'][0]['content'][0]['type'] == 'text'
-    assert adf['content'][0]['content'][0]['text'] == 'Let’s also menton a user here '
+    assert adf['content'][0]['content'][0]['text'] == 'Let’s also mention a user here '
     assert adf['content'][0]['content'][1]['type'] == 'mention'
     assert adf['content'][0]['content'][1]['attrs']['text'] == '@G~'
     assert len(adf['content'][0]['content']) == 2

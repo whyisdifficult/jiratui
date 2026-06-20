@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for sessions using `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Add support for remembering the last-used directory when uploading files. This uses `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add support for sessions using `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
+- Add support for remembering the last-used directory when uploading files. This uses `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
+
+### Minor Improvements
+
+- Move the checkbox for selecting the last use directory for uploading files to the top of the screen so it can
+(un)checked first. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
+- Set `config.enable_recent_history=True` as default. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
+- Set `config.enable_goto=True` as default. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
 
 ## [1.9.1] 2026-06-18
 
