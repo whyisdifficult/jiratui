@@ -29,7 +29,7 @@ class AddAttachmentScreen(Screen[str]):
     TITLE = 'Attach File'
     DEFAULT_ATTACHMENTS_SOURCE_DIRECTORY = '/'
     """The default source directory for searching files to attach. This can be overridden by the config variable
-    attachments_source_directory"""
+    `attachments_source_directory`."""
 
     def __init__(self, work_item_key: str | None = None):
         super().__init__()
@@ -93,13 +93,13 @@ class AddAttachmentScreen(Screen[str]):
                 )
             )
             yield Rule()
+            yield Checkbox('Use last directory', classes='input-checkbox')
             with Horizontal():
                 yield DirectoryTree(
                     self._get_initial_directory_for_upload(), id='attachment-directory-tree'
                 )
                 with Vertical(id='right-hand-side-panel'):
                     yield FileNameInputWidget()
-                    yield Checkbox('Use last directory', classes='input-checkbox')
                     with ItemGrid(classes='add-attachment-grid-buttons'):
                         yield Button(
                             'Save',
@@ -121,6 +121,10 @@ class AddAttachmentScreen(Screen[str]):
                 DirectoryTree(directory, id='attachment-directory-tree'),
                 before=self.right_hand_side_vertical_widget,
             )
+
+    def on_mount(self) -> None:
+        if cb := self.query_one_optional(Checkbox):
+            cb.value = True if self.app.session.get('recently_used_attachment_path') else False
 
 
 class FileNameInputWidget(Input):

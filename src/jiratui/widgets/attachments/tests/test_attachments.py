@@ -47,8 +47,8 @@ async def test_add_attachment_save_with_filename(get_initial_directory_for_uploa
         await pilot.pause()
         # WHEN
         await pilot.press('tab')
-        await pilot.press('a')
         await pilot.press('tab')
+        await pilot.press('a')
         await pilot.press('tab')
         await pilot.press('enter')
         assert screen.save_button.disabled is False
@@ -84,8 +84,6 @@ async def test_change_checkbox_value_to_false(get_initial_directory_for_upload_m
         await app.push_screen(screen)
         await pilot.pause()
         # WHEN
-        await pilot.press('tab')
-        await pilot.press('tab')
         await pilot.press('space')
         await pilot.press('space')
         # THEN
@@ -218,13 +216,16 @@ async def test_sets_attachments_with_empty_list(app):
 async def test_open_screen_to_add_attachment(get_initial_directory_for_upload_mock: Mock, app):
     # GIVEN
     get_initial_directory_for_upload_mock.return_value = ''
-    async with app.run_test():
+    async with app.run_test() as pilot:
         widget = IssueAttachmentsWidget()
         await app.screen.mount(widget)
         widget.attachments = WorkItemAttachments(
             work_item_key='WI-1',
             attachments=None,
         )
+        assert widget.issue_key == 'WI-1'
+        pilot.pause()
+        await app.workers.wait_for_complete()
         # WHEN
         widget.action_add_attachment()
         # THEN
