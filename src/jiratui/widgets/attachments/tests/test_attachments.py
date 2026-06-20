@@ -224,7 +224,7 @@ async def test_open_screen_to_add_attachment(get_initial_directory_for_upload_mo
             attachments=None,
         )
         assert widget.issue_key == 'WI-1'
-        pilot.pause()
+        await pilot.pause()
         await app.workers.wait_for_complete()
         # WHEN
         widget.action_add_attachment()
