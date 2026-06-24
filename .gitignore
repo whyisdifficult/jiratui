@@ -214,3 +214,4 @@ __marimo__/
 
 # Posting collections
 .posting/
+config.yaml
