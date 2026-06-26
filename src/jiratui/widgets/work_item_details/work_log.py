@@ -390,7 +390,11 @@ class WorkItemWorkLogScreen(Screen[dict]):
             work_item_key=self._work_item_key,
             worklog_time_spent=worklog.time_spent,
             worklog_date_started=worklog.get_date_started(),
-            worklog_time_remaining=self._work_item_time_tracking.remaining_estimate,
+            worklog_time_remaining=(
+                self._work_item_time_tracking.remaining_estimate
+                if self._work_item_time_tracking
+                else None
+            ),
             worklog_description=worklog.get_comment(),
         )
 
@@ -402,7 +406,11 @@ class WorkItemWorkLogScreen(Screen[dict]):
             self.app.push_screen(
                 LogWorkScreen(
                     self._work_item_key,
-                    current_remaining_estimate=self._work_item_time_tracking.remaining_estimate,
+                    current_remaining_estimate=(
+                        self._work_item_time_tracking.remaining_estimate
+                        if self._work_item_time_tracking
+                        else None
+                    ),
                 ),
                 callback=self._log_work,
             )
@@ -466,7 +474,11 @@ class WorkItemWorkLogScreen(Screen[dict]):
             time_spent=data.time_spent,
             time_remaining=data.time_remaining,
             comment=data.description,
-            current_remaining_estimate=self._work_item_time_tracking.remaining_estimate,
+            current_remaining_estimate=(
+                self._work_item_time_tracking.remaining_estimate
+                if self._work_item_time_tracking
+                else None
+            ),
         )
         if response.success:
             self.notify(f'Logged time to task {self._work_item_key}')
@@ -508,7 +520,11 @@ class WorkItemWorkLogScreen(Screen[dict]):
             time_spent=data.time_spent,
             time_remaining=data.time_remaining,
             comment=data.description,
-            remaining_estimate=self._work_item_time_tracking.remaining_estimate,
+            remaining_estimate=(
+                self._work_item_time_tracking.remaining_estimate
+                if self._work_item_time_tracking
+                else None
+            ),
         )
 
         if response.success:
