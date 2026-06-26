@@ -139,7 +139,29 @@ Hello world
     # WHEN
     adf = convert_markdown_to_adf(markdown)
     # THEN
-    assert adf == {'type': 'doc', 'version': 1, 'content': []}
+    assert adf == {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'expand',
+                'content': [
+                    {
+                        'type': 'paragraph',
+                        'content': [
+                            {
+                                'type': 'text',
+                                'text': 'Hello world',
+                            },
+                        ],
+                    },
+                ],
+                'attrs': {
+                    'title': 'Hello world',
+                },
+            },
+        ],
+    }
 
 
 def test_adf_nested_expand():

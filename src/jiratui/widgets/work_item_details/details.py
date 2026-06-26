@@ -25,7 +25,7 @@ Key Features:
     - Keyboard shortcuts for quick access (Ctrl+S to save, Ctrl+L for worklog, etc.)
     - Asynchronous API communication with Jira for updating work items
     - Support for work item flagging with optional notes
-    - Work log viewing and creation workflows
+    - Work log viewing
     - Time tracking display and management
     - Priority, status, and parent issue transitions
 
@@ -54,7 +54,7 @@ Dependencies:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, cast
 
 from textual.app import ComposeResult
@@ -105,7 +105,6 @@ from jiratui.widgets.work_item_details.fields import (
 )
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
 from jiratui.widgets.work_item_details.work_log import (
-    LogWorkScreen,
     WorkItemWorkLogScreen,
 )
 
@@ -177,22 +176,14 @@ class IssueDetailsWidget(Vertical):
             show=False,
         ),
         Binding(
-            key='ctrl+l',
+            key='ctrl+l, ctrl+t',
             action='view_worklog',
             description='Worklog',
             show=True,
+            key_display='^l',
         ),
         Binding(
-            key='ctrl+t',
-            action='log_work',
-            description='Log Work',
-            show=True,
-        ),
-        Binding(
-            key='ctrl+f',
-            action='flag_work_item',
-            description='Flag',
-            show=True,
+            key='ctrl+f', action='flag_work_item', description='Flag', show=True, key_display='^f'
         ),
     ]
 
@@ -281,10 +272,6 @@ class IssueDetailsWidget(Vertical):
     @property
     def issue_due_date_field(self) -> WorkItemDetailsDueDate:
         return self.query_one(WorkItemDetailsDueDate)
-
-    @property
-    def time_tracking_widget(self) -> TimeTrackingWidget:
-        return self.query_one(TimeTrackingWidget)
 
     @property
     def issue_resolution_date_field(self) -> ReadOnlyTextField:
@@ -483,32 +470,9 @@ class IssueDetailsWidget(Vertical):
         Returns:
             `None`.
         """
+
         if self.issue:
-            self.app.push_screen(
-                WorkItemWorkLogScreen(self.issue.key), self._handle_worklog_screen_dismissal
-            )
-
-    def action_log_work(self) -> None:
-        """Opens a pop-up modal to allow the user to log work for the current work item.
-
-        Returns:
-            None
-        """
-        if self.issue:
-            current_remaining_estimate = None
-            if self.issue.time_tracking:
-                current_remaining_estimate = self.issue.time_tracking.remaining_estimate
-            self.app.push_screen(
-                LogWorkScreen(self.issue.key, current_remaining_estimate),
-                self._request_adding_worklog,
-            )
-
-    def _handle_worklog_screen_dismissal(self, response: dict | None = None) -> None:
-        # when the screen that shows work logs for a work item is dismissed, check the result and if
-        # required fetch the details of the work item to refresh the details form and reflect the changes in time
-        # tracking information
-        if response.get('work_logs_deleted'):
-            self.run_worker(self._refresh_work_item_details)
+            self.app.push_screen(WorkItemWorkLogScreen(self.issue.key, self.issue.time_tracking))
 
     async def _refresh_work_item_details(self) -> None:
         """Fetches the details of the work item to retrieve the latest changes and update the details form.
@@ -520,88 +484,6 @@ class IssueDetailsWidget(Vertical):
         issue_details_response = await application.api.get_issue(issue_id_or_key=self.issue.key)
         if issue_details_response.success and issue_details_response.result:
             self.issue = issue_details_response.result.issues[0]
-
-    def _request_adding_worklog(self, data: dict) -> None:
-        """Requests a worker to attempt to log work for the currently-selected item.
-
-        Args:
-            data: the data returned by the modal screen after the user clicks the "save" button.
-
-        Returns:
-            None
-        """
-
-        if data:
-            self.run_worker(
-                self._add_worklog(
-                    work_item_key=data.get('key'),
-                    time_spent=data.get('time_spent'),
-                    time_remaining=data.get('time_remaining'),
-                    description=data.get('description'),
-                    started=data.get('started'),
-                    current_remaining_estimate=data.get('current_remaining_estimate'),
-                )
-            )
-
-    async def _add_worklog(
-        self,
-        work_item_key: str,
-        time_spent: str,
-        started: str,
-        time_remaining: str | None = None,
-        description: str | None = None,
-        current_remaining_estimate: str | None = None,
-    ) -> None:
-        """Logs work for a work item.
-
-        Args:
-            work_item_key: the key of the work item whose work log we are updating.
-            time_spent: the time spent on the task. E.g. 1w 1d
-            time_remaining: the time remaining in the task. E.g. 1w 1d
-            description: an optional description of the work done in the task.
-            started: the date/time on which the work was started.
-            current_remaining_estimate: the current remaining estimate of the task.
-
-        Return:
-            None
-        """
-
-        if not work_item_key:
-            self.notify('Select a work item before logging work.', title='Worklog')
-        if not time_spent:
-            # this should not happen but if for some reason it does then make sure to let the user know that we can't
-            # add the worklog
-            self.notify(
-                'You need to provide the time spent on the task to log work', title='Worklog'
-            )
-        else:
-            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-            started_datetime: datetime | None = None
-            if started:
-                naive_dt = datetime.fromisoformat(started)
-                # assume the date/time value is in local time and convert to UTC
-                started_datetime = naive_dt.replace(
-                    tzinfo=None
-                ).astimezone()  # make it aware of local TZ as defined by the OS
-                started_datetime = started_datetime.astimezone(timezone.utc)
-            response: APIControllerResponse = await application.api.add_work_item_worklog(
-                issue_key_or_id=work_item_key,
-                started=started_datetime,
-                time_spent=time_spent,
-                time_remaining=time_remaining,
-                comment=description,
-                current_remaining_estimate=current_remaining_estimate,
-            )
-            if response.success:
-                self.notify('Work logged successfully', title='Worklog')
-                # refresh the details of the work item to reflect the changes in time tracking information
-                await self._refresh_work_item_details()
-            else:
-                self.notify(
-                    f'Failed to log work for the item: {response.error}',
-                    severity='error',
-                    title='Worklog',
-                )
 
     def _update_priority_selection(
         self, priorities: list[tuple[str, str]], priority_id: str

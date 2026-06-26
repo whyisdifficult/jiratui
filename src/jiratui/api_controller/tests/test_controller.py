@@ -3876,6 +3876,150 @@ async def test_add_work_item_worklog_with_api_error(
 
 
 @pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_work_log')
+async def test_update_work_item_worklog_entry(
+    update_work_log_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    update_work_log_mock.return_value = {
+        'author': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': True,
+            'displayName': 'bart simpson',
+            'emailAddress': 'bart@simpson.com',
+            'key': 'bart',
+            'name': 'bart',
+        },
+        'created': '2021-01-17T12:34:00.000+0000',
+        'id': '2',
+        'issueId': '1',
+        'started': '2021-01-16T12:34:00.000+0000',
+        'timeSpent': '1h',
+        'timeSpentSeconds': 3600,
+        'updateAuthor': {
+            'accountId': '5b10a2844c20165700ede21g',
+            'active': True,
+            'displayName': 'bart simpson',
+            'emailAddress': 'bart@simpson.com',
+            'key': 'bart',
+            'name': 'bart',
+        },
+        'updated': '2021-01-17T12:34:00.000+0000',
+    }
+    # WHEN
+    response = await jira_api_controller.update_worklog(
+        '1',
+        '2',
+        datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        '1h',
+        '2h',
+        'some comment',
+        '3h',
+    )
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == JiraWorklog(
+        id='2',
+        issue_id='1',
+        started=datetime(2021, 1, 16, 12, 34, 0, tzinfo=timezone.utc),
+        updated=datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        time_spent='1h',
+        time_spent_seconds=3600,
+        author=JiraUser(
+            account_id='5b10a2844c20165700ede21g',
+            display_name='bart simpson',
+            active=True,
+            email='bart@simpson.com',
+            username=None,
+        ),
+        update_author=JiraUser(
+            account_id='5b10a2844c20165700ede21g',
+            display_name='bart simpson',
+            active=True,
+            email='bart@simpson.com',
+            username=None,
+        ),
+        comment=None,
+    )
+    update_work_log_mock.assert_called_once_with(
+        issue_id_or_key='1',
+        worklog_id='2',
+        started=datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        time_spent='1h',
+        time_remaining='2h',
+        comment='some comment',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_work_log')
+async def test_update_work_item_worklog_entry_without_authors(
+    update_work_log_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    update_work_log_mock.return_value = {
+        'author': None,
+        'created': '2021-01-17T12:34:00.000+0000',
+        'id': '2',
+        'issueId': '1',
+        'started': '2021-01-16T12:34:00.000+0000',
+        'timeSpent': '1h',
+        'timeSpentSeconds': 3600,
+        'updateAuthor': None,
+        'updated': '2021-01-17T12:34:00.000+0000',
+    }
+    # WHEN
+    response = await jira_api_controller.update_worklog(
+        '1',
+        '2',
+        datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        '1h',
+        '2h',
+        'some comment',
+        '3h',
+    )
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == JiraWorklog(
+        id='2',
+        issue_id='1',
+        started=datetime(2021, 1, 16, 12, 34, 0, tzinfo=timezone.utc),
+        updated=datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        time_spent='1h',
+        time_spent_seconds=3600,
+        author=None,
+        update_author=None,
+        comment=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_work_log')
+async def test_update_work_item_worklog_entry_with_api_error(
+    update_work_log_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    update_work_log_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.update_worklog(
+        '1',
+        '2',
+        datetime(2021, 1, 17, 12, 34, 0, tzinfo=timezone.utc),
+        '1h',
+        '2h',
+        'some comment',
+        '3h',
+    )
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+
+
+@pytest.mark.asyncio
 @patch.object(JiraAPI, 'add_issue_work_log')
 async def test_add_work_item_worklog_without_current_time_remaining(
     add_issue_work_log_mock: Mock,

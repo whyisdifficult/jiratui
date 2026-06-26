@@ -2631,6 +2631,103 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
+    async def update_worklog(
+        self,
+        issue_key_or_id: str,
+        worklog_id: str,
+        started: datetime,
+        time_spent: str,
+        time_remaining: str | None = None,
+        comment: str | None = None,
+        remaining_estimate: str | None = None,
+    ) -> APIControllerResponse:
+        """Updates a worklog associated to a work item.
+
+        Args:
+            issue_key_or_id: the id or key of the work item whose worklog we want to update.
+            worklog_id: the id of the worklog we want to update.
+            started: the datetime on which the worklog effort was started. Required when creating a worklog. Optional
+            when updating a worklog.
+            time_spent: the time spent working on the issue as days (#d), hours (#h), or minutes (#m or #). Required
+            when creating a worklog if timeSpentSeconds isn't provided. Optional when updating a worklog. Cannot be
+            provided if timeSpentSecond is provided.
+            time_remaining: the value to set as the issue's remaining time estimate, as days (#d), hours (#h), or
+            minutes (#m or #). For example, 2d. Required when adjustEstimate is new.
+            comment: a comment about the worklog in Atlassian Document Format. Optional when creating or updating a
+            worklog.
+            remaining_estimate: the current remaining estimate of the work item before the update takes place.
+
+        Returns:
+            An instance of APIControllerResponse with an instance of JiraWorklog as the result if the update
+            succeeds. Otherwise, an instance of APIControllerResponse with success=False.
+        """
+
+        remaining_time = None
+        if time_remaining and remaining_estimate and time_remaining != remaining_estimate:
+            remaining_time = time_remaining
+
+        try:
+            response: dict = await self.api.update_work_log(
+                issue_id_or_key=issue_key_or_id,
+                worklog_id=worklog_id,
+                time_spent=time_spent,
+                started=started,
+                time_remaining=remaining_time,
+                comment=comment,
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to update worklog',
+                extra={
+                    'time_spent': time_spent,
+                    'time_remaining': time_remaining,
+                    'current_remaining_estimate': remaining_estimate,
+                    'started': str(started) if started else None,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        update_author = None
+        if value := response.get('updateAuthor'):
+            update_author = JiraUser(
+                account_id=value.get('accountId')
+                if self.config.cloud
+                else value.get('emailAddress'),
+                display_name=value.get('displayName'),
+                active=value.get('active'),
+                username=value.get('name') if not self.config.cloud else None,
+                email=value.get('emailAddress'),
+            )
+        author = None
+        if value := response.get('author'):
+            author = JiraUser(
+                account_id=value.get('accountId')
+                if self.config.cloud
+                else value.get('emailAddress'),
+                display_name=value.get('displayName'),
+                active=value.get('active'),
+                username=value.get('name') if not self.config.cloud else None,
+                email=value.get('emailAddress'),
+            )
+
+        # the comment of a worklog could be a string if Jira DC API or Jira Cloud API v2 is used; if Jira Cloud API v3
+        # is used then this will be an ADF.
+        return APIControllerResponse(
+            result=JiraWorklog(
+                id=response.get('id'),
+                issue_id=response.get('issueId'),
+                started=isoparse(response.get('started')) if response.get('started') else None,
+                updated=isoparse(response.get('updated')) if response.get('updated') else None,
+                time_spent=response.get('timeSpent'),
+                time_spent_seconds=response.get('timeSpentSeconds'),
+                author=author,
+                update_author=update_author,
+                comment=response.get('comment'),
+            )
+        )
+
     async def get_fields(self, field_name: str | None = None) -> APIControllerResponse:
         """Retrieves system and custom issue fields.
 

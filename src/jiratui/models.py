@@ -826,9 +826,11 @@ class JiraWorklog(BaseModel):
                 return f'{self.author.display_user} logged {self.time_spent}'
         else:
             if local_dt:
-                return f'{self.author.display_user} logged {self.time_spent} on {datetime.strftime(local_dt, "%Y-%m-%d %H:%M")}'
+                return (
+                    f'Logged {self.time_spent} on {datetime.strftime(local_dt, "%Y-%m-%d %H:%M")}'
+                )
             else:
-                return f'{self.author.display_user} logged {self.time_spent}'
+                return f'Logged {self.time_spent}'
 
     def get_comment(self) -> str:
         """Gets the value of the worklog's comment.
@@ -853,7 +855,7 @@ class JiraWorklog(BaseModel):
     def display_time_spent(self):
         return self.time_spent if self.time_spent else ''
 
-    def display_started(self):
+    def display_started(self) -> str:
         if self.started:
             local_dt = self.started.astimezone()
             return datetime.strftime(local_dt, '%Y-%m-%d %H:%M')
@@ -867,6 +869,12 @@ class JiraWorklog(BaseModel):
     def display_update_author(self) -> str:
         if self.update_author:
             return self.update_author.display_user
+        return ''
+
+    def get_date_started(self) -> str:
+        if self.started:
+            local_dt = self.started.astimezone()
+            return datetime.strftime(local_dt, '%Y-%m-%d %H:%M')
         return ''
 
 

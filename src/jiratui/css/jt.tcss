@@ -1442,3 +1442,7 @@ MultiSelectWidget {
 .message-tip {
     color: $text-muted;
 }
+
+.time-tracking-container {
+    height: auto;
+}

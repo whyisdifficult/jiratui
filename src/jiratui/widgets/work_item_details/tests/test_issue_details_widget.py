@@ -39,7 +39,7 @@ from jiratui.widgets.work_item_details.fields import (
     WorkItemDetailsDueDate,
 )
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
-from jiratui.widgets.work_item_details.work_log import LogWorkScreen, WorkItemWorkLogScreen
+from jiratui.widgets.work_item_details.work_log import WorkItemWorkLogScreen
 
 
 @pytest.fixture
@@ -197,6 +197,7 @@ def jira_issue() -> JiraIssue:
                 ),
             ),
         ],
+        time_tracking=TimeTracking(time_spent='10'),
     )
 
 
@@ -1573,17 +1574,46 @@ async def test_action_flag_work_item_does_not_open_modal_screen(
         assert not isinstance(app.screen, FlagWorkItemScreen)
 
 
-@patch.object(IssueDetailsWidget, 'issue')
+@patch.object(APIController, 'search_users_assignable_to_issue')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_action_view_worklog(issue_mock: Mock, app: JiraApp):
-    # GIVEN
+async def test_action_view_worklog_opens_modal_screen(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
     async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
         # WHEN
-        details_widget.action_view_worklog()
-        # THEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('ctrl+l')
         assert isinstance(app.screen, WorkItemWorkLogScreen)
 
 
@@ -1594,54 +1624,8 @@ async def test_action_view_worklog_no_issue_set(app: JiraApp):
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
+        assert details_widget.issue is None
         # WHEN
         details_widget.action_view_worklog()
         # THEN
         assert not isinstance(app.screen, WorkItemWorkLogScreen)
-
-
-@patch.object(IssueDetailsWidget, 'issue')
-@pytest.mark.asyncio
-async def test_action_log_work(issue_mock: Mock, app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        issue_mock.configure_mock(key='key-2', time_tracking=None)
-        # WHEN
-        details_widget.action_log_work()
-        # THEN
-        assert isinstance(app.screen, LogWorkScreen)
-        assert app.screen._work_item_key == 'key-2'
-        assert app.screen._current_remaining_estimate is None
-
-
-@patch.object(IssueDetailsWidget, 'issue')
-@pytest.mark.asyncio
-async def test_action_log_work_with_time_remaining(issue_mock: Mock, app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        issue_mock.configure_mock(key='key-2', time_tracking=TimeTracking(remaining_estimate='1h'))
-        # WHEN
-        details_widget.action_log_work()
-        # THEN
-        assert isinstance(app.screen, LogWorkScreen)
-        assert app.screen._work_item_key == 'key-2'
-        assert app.screen._current_remaining_estimate == '1h'
-
-
-@pytest.mark.asyncio
-async def test_action_log_work_no_issue_set(app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        # WHEN
-        details_widget.action_log_work()
-        # THEN
-        assert not isinstance(app.screen, LogWorkScreen)
