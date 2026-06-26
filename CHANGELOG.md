@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for sessions using `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
 - Add support for remembering the last-used directory when uploading files. This uses `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
+- Add support for updating worklog entries. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- **DEPRECATED**: pressing `^t` after selecting an item will no longer open the modal to log work for the item. Instead,
+it will open the modal screen that displays the item's work log entries. The keybind `^t` will be removed in future
+versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ### Minor Improvements
 

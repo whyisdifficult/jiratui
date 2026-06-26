@@ -1317,6 +1317,58 @@ class JiraAPI:
             params=params,
         )
 
+    async def update_work_log(
+        self,
+        issue_id_or_key: str,
+        worklog_id: str,
+        time_spent: str,
+        started: datetime,
+        time_remaining: str | None = None,
+        comment: str | None = None,
+    ) -> dict:
+        """Updates a worklog from an issue.
+
+        ```{important}
+        Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see
+        [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-worklog-id-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-id-put)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            worklog_id: the ID of the worklog.
+            comment: a comment about the worklog. Optional when creating or updating a worklog.
+            started: the datetime on which the worklog effort was started. Required when creating a worklog. Optional
+            when updating a worklog.
+            time_spent: the time spent working on the issue as days (#d), hours (#h), or minutes (#m or #). Required
+            when creating a worklog if timeSpentSeconds isn't provided. Optional when updating a worklog. Cannot be
+            provided if timeSpentSecond is provided.
+            time_remaining: the value to set as the issue's remaining time estimate, as days (#d), hours (#h),
+            or minutes (#m or #). For example, 2d. Required when adjustEstimate is new.
+
+        Returns:
+            True if the operation succeeds.
+        """
+
+        payload: dict[str, Any] = {
+            'started': started.isoformat(timespec='milliseconds').replace('+00:00', '+0000'),
+            'timeSpent': time_spent,
+        }
+        if comment and (comment_payload := self._build_worklog_comment_payload(comment)):
+            payload['comment'] = comment_payload
+        params = {'adjustEstimate': 'auto'}
+        if time_remaining:
+            params = {'newEstimate': time_remaining, 'adjustEstimate': 'new'}
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url=f'issue/{issue_id_or_key}/worklog/{worklog_id}',
+            data=json.dumps(payload),
+            params=params,
+        )
+
     async def delete_work_log(self, issue_id_or_key: str, worklog_id: str) -> bool:
         """Deletes a worklog from an issue.
 
@@ -1753,6 +1805,65 @@ class JiraDataCenterAPI(JiraAPI):
         return await self._client.make_request(  # type:ignore[return-value]
             method=httpx.AsyncClient.post,
             url=f'issue/{issue_id_or_key}/worklog',
+            data=json.dumps(payload),
+            params=params,
+        )
+
+    async def update_work_log(
+        self,
+        issue_id_or_key: str,
+        worklog_id: str,
+        time_spent: str,
+        started: datetime,
+        time_remaining: str | None = None,
+        comment: str | None = None,
+    ) -> dict:
+        """Updates a worklog from an issue.
+
+        ```{important}
+        - Fields possible for editing are: comment, visibility, started, timeSpent and timeSpentSeconds.
+        - Either timeSpent or timeSpentSeconds can be set.
+        - Fields which are not set will not be updated.
+        - For a request to be valid, it has to have at least one field change
+        ```
+
+        ```{important}
+        Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see
+        [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
+        ```
+
+        **See Also**:
+        - [api-api-2-issue-issueidorkey-worklog-id-put](https://developer.atlassian.com/server/jira/platform/rest/v11001/api-group-issue/#api-api-2-issue-issueidorkey-worklog-id-put)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            worklog_id: the ID of the worklog.
+            comment: a comment about the worklog. Optional when creating or updating a worklog.
+            started: the datetime on which the worklog effort was started. Required when creating a worklog. Optional
+            when updating a worklog.
+            time_spent: the time spent working on the issue as days (#d), hours (#h), or minutes (#m or #). Required
+            when creating a worklog if timeSpentSeconds isn't provided. Optional when updating a worklog. Cannot be
+            provided if timeSpentSecond is provided.
+            time_remaining: the value to set as the issue's remaining time estimate, as days (#d), hours (#h),
+            or minutes (#m or #). For example, 2d. Required when adjustEstimate is new.
+
+        Returns:
+            True if the operation succeeds.
+        """
+
+        payload: dict[str, Any] = {
+            'started': started.isoformat(timespec='milliseconds').replace('+00:00', '+0000'),
+            'timeSpent': time_spent,
+        }
+        if comment:
+            payload['comment'] = comment
+        params = {'adjustEstimate': 'auto'}
+        if time_remaining:
+            params = {'newEstimate': time_remaining, 'adjustEstimate': 'new'}
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url=f'issue/{issue_id_or_key}/worklog/{worklog_id}',
             data=json.dumps(payload),
             params=params,
         )

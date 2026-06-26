@@ -20,6 +20,7 @@ from jiratui.models import (
     JiraWorklog,
     LinkIssueType,
     Project,
+    TimeTracking,
     WorkItemsSearchOrderBy,
 )
 
@@ -406,6 +407,14 @@ def jira_issues() -> list[JiraIssue]:
                     ),
                 ),
             ],
+            time_tracking=TimeTracking(
+                time_spent='1m',
+                time_spent_seconds=60,
+                remaining_estimate='1h',
+                remaining_estimate_seconds=3600,
+                original_estimate_seconds=86400,
+                original_estimate='1d',
+            ),
         ),
     ]
 
