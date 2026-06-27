@@ -26,6 +26,7 @@ class GoToItemsTable(DataTable):
 
     **See Also**:
     - [Use Cases](#use-case-goto-screen)
+    - [Architecture](#architecture-goto-screen)
     """
 
     BINDINGS = [
@@ -118,6 +119,7 @@ class GotToScreen(ModalScreen[str]):
 
     **See Also**:
     - [Use Case](#use-case-goto-screen)
+    - [Architecture](#architecture-goto-screen)
     """
 
     BINDINGS = [

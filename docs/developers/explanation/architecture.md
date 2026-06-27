@@ -1420,3 +1420,35 @@ C4Component
         LogWorkScreen o--> WorkDescription
 ```
 ````
+
+(architecture-goto-screen)=
+### Widgets for Supporting Go-To (Related Items) Screen
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+        class:
+            hideEmptyMembersBox: true
+    ---
+    classDiagram
+        namespace textual {
+            class Rule
+            class Static
+            class VerticalScroll
+            class Footer
+        }
+
+        namespace widgets.screens.goto {
+            class GotToScreen
+            class GoToItemsTable
+        }
+
+        GotToScreen o--> Static
+        GotToScreen o--> VerticalScroll
+        GotToScreen o--> Rule
+        GotToScreen o--> Footer
+        GotToScreen "1" o--> "1..4" GoToItemsTable
+```
+````
