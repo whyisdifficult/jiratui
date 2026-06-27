@@ -443,11 +443,11 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             project_id_or_key=self.project_selector.selection, query=query
         )
 
-    async def _fetch_reporter(self):
+    async def _fetch_reporter(self) -> None:
         """Checks if the user identified by self.reporter_account_id exist and if it does, it sets the reporter
         dropdown widget."""
 
-        response: APIControllerResponse = await self.app.api.get_user(self.reporter_account_id)
+        response: APIControllerResponse = await self.app.api.get_user(self.reporter_account_id)  # type:ignore[attr-defined]
         if response.success and (user_details := response.result):
             self.reporter_selector.set_value(self.reporter_account_id, user_details.display_name)
 
