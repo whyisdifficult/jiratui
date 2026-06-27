@@ -1,10 +1,8 @@
 """This module contains the widgets used for displaying and updating fields associated to a work item."""
 
 from textual import on
-from textual.app import ComposeResult
 from textual.reactive import Reactive, reactive
-from textual.widget import Widget
-from textual.widgets import Input, Label, ProgressBar, Select
+from textual.widgets import Input, Label, Select
 
 from jiratui.widgets.base import ReadOnlyField
 from jiratui.widgets.commons import FieldMode
@@ -236,52 +234,3 @@ class WorkItemDetailsDueDate(DateInputWidget):
     def watch_update_enabled(self, enabled: bool = True) -> None:
         self.update_is_enabled = enabled
         self.disabled = not enabled
-
-
-class TimeTrackingWidget(Widget):
-    """A widget to display time tracking information for a work item using a progress bar and a label."""
-
-    DEFAULT_CSS = """
-    Bar > .bar--bar {
-        color: $accent;
-        background: $secondary;
-    }
-    """
-
-    def __init__(
-        self,
-        original_estimate: str | None = None,
-        time_spent: str | None = None,
-        remaining_estimate: str | None = None,
-        original_estimate_seconds: int | None = None,
-        time_spent_seconds: int | None = None,
-        remaining_estimate_seconds: int | None = None,
-    ):
-        super().__init__()
-        self.border_title = 'Time Tracking'
-        self._original_estimate = original_estimate or ''
-        self._time_spent = time_spent or ''
-        self._remaining_estimate = remaining_estimate or ''
-        self._original_estimate_seconds = original_estimate_seconds
-        self._time_spent_seconds = time_spent_seconds or 0
-        self._remaining_estimate_seconds = remaining_estimate_seconds
-
-    @property
-    def progress_bar(self) -> ProgressBar:
-        return self.query_one(ProgressBar)
-
-    def compose(self) -> ComposeResult:
-        yield Label(
-            f'Original Estimate: {self._original_estimate} | Time Spent: {self._time_spent} | Remaining Estimate: {self._remaining_estimate}'
-        )
-        yield ProgressBar(total=100, show_percentage=True, show_eta=False)
-
-    def on_mount(self):
-        if self._original_estimate_seconds:
-            self.progress_bar.progress = (
-                self._time_spent_seconds * 100
-            ) / self._original_estimate_seconds
-        elif self._remaining_estimate_seconds and self._time_spent_seconds:
-            self.progress_bar.progress = (self._time_spent_seconds * 100) / (
-                self._remaining_estimate_seconds + self._time_spent_seconds
-            )

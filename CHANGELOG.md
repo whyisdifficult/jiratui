@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for sessions using `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
 - Add support for remembering the last-used directory when uploading files. This uses `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
-- Add support for updating worklog entries. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add support for updating worklog entries. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
 - **DEPRECATED**: pressing `^t` after selecting an item will no longer open the modal to log work for the item. Instead,
 it will open the modal screen that displays the item's work log entries. The keybind `^t` will be removed in future
-versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+
+### Bug Fixes
+
+- Fixes a bug when the user tries to add a new work log entry and the work item does not have time tracking data set. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
 
 ### Minor Improvements
 
@@ -22,11 +26,16 @@ versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 (un)checked first. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
 - Set `config.enable_recent_history=True` as default. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
 - Set `config.enable_goto=True` as default. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/277
-- Bump `click`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Bump `pydanticsettings`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Bump `marklas`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Bump `pytest`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Bump `ruff`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Bump `click`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Bump `pydanticsettings`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Bump `marklas`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Bump `pytest`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Bump `ruff`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Refactor worklog classes to make it possible to reuse some components. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
+
+### Documentation
+
+- Update developers documentation related to worklog management. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
 
 ## [1.9.1] 2026-06-18
 

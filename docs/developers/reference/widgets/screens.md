@@ -72,11 +72,11 @@
 
 ## WorkItemWorkLogScreen
 
-```{autodoc2-object} jiratui.widgets.work_item_details.work_log.WorkItemWorkLogScreen
+```{autodoc2-object} jiratui.widgets.work_item_worklog.screens.WorkItemWorkLogScreen
 ```
 
 ## LogWorkScreen
-```{autodoc2-object} jiratui.widgets.work_item_details.work_log.LogWorkScreen
+```{autodoc2-object} jiratui.widgets.work_item_worklog.screens.LogWorkScreen
 ```
 
 ## AddRemoteLinkScreen

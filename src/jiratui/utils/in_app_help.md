@@ -42,7 +42,7 @@ is loaded into the tabs on the right-hand side. Depending on the tab that is act
 | `^k`        | Details               | Copies the key of the work item currently selected                         |
 | `^j`        | Details               | Copies the URL of the work item currently selected                         |
 | `^l`        | Details               | View the work log                                                          |
-| `^t`        | Details               | Log work for a work item                                                   |
+| `^t`        | Details               | [DEPRECATED] Log work for a work item. Use `^l` instead.                   |
 | `^f`        | Details               | Add/Remove flag to work items                                              |
 | `d`         | Worklogs              | Delete a work log                                                          |
 | `^o`        | Worklogs              | Open worklog in the browser                                                |
@@ -373,12 +373,15 @@ another work item `B` if the parent of `A` is `B`.
 
 ## Worklogs
 
-The "Details" tab also allows you to log work for a given work item. To do so you can press `^t` to open a pop-up screen
-that will allow you to indicate the amount of time you work on a task, the date/time and an optional description.
+The "Details" tab also allows you to log work for a given work item. To do so you can press `^l` to open a pop-up screen
+that will show you the time tracking information of the selected item together with the log entries. In this new screen
+you can do the following:
 
-Moreover, to view the work log associated to a work item you can press `^l` in the "Details" tab. This will open up a
-pop-up screen that will display the work done on the task. Selecting 1 log in the list and pressing `d` allows you to
-delete the entry. You can also press `^o` to open a worklog details in the browser.
+- press `n` to add a new entry.
+- press `tab` to select an entry and then
+  - press `^e` to update it.
+  - press `d` to delete it.
+  - press `^o` to open the entry in the browser.
 
 ## Flagging Work Items
 
@@ -390,4 +393,43 @@ can add an optional message to let your team know why the task is (not) flagged.
 To delete a work item you can select an item from the search results pane on the left and then click `d`. This will
 open a modal screen that will let you confirm the deletion.
 
-Important: if an item has subtasks all of them will also be deleted.
+**Important**: if an item has subtasks all of them will also be deleted.
+
+
+# View Related Items
+
+After you perform a search and select an item from the search results you can view the items related to the selected
+work item. To do this press `f6`.
+
+Pressing `f6` will open a modal screen that will list all the related items. These can be subtasks, a parent task, or
+tasks related via another relationship, e.g. "causes".
+
+In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
+can do the following:
+
+- press `^o` to open the item in the browser.
+- press `^k` to copy the item's key to the clipboard.
+- press `^j` to copy the item's URL to the clipboard.
+
+In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
+fetch the details of the select item. This gives you a quick way to navigate through related items.
+
+# View Recent Items
+
+Every time you select an item from the search results by pressing `enter` JiraTUI will remember the item in the current
+application's session. The same happens when you add or update an item. To view the list of recently added/updated/viewed
+items you can press `f7`.
+
+Doing so will open a modal screen that will display a list of items.
+
+In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
+can do the following:
+
+- press `^o` to open the item in the browser.
+- press `^k` to copy the item's key to the clipboard.
+- press `^j` to copy the item's URL to the clipboard.
+
+In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
+fetch the details of the select item. This gives you a quick way to navigate through related items.
+
+Last, you can empty the list of recent items by pressing `d`.

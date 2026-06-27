@@ -1372,3 +1372,83 @@ C4Component
         IssueDetailsWidget --> SingleUserPickerWidget: contains
 ```
 ````
+
+(architecture-worklogs)=
+### Widgets for Supporting Managing Work Logs
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+        class:
+            hideEmptyMembersBox: true
+    ---
+    classDiagram
+        namespace textual {
+            class Horizontal
+            class Vertical
+            class VerticalScroll
+            class Footer
+        }
+        namespace work_item_worklog.widgets {
+            class TimeTrackingWidget
+            class TimeSpentInput
+            class TimeRemainingInput
+            class LogDateTimeInput
+            class WorkDescription
+        }
+
+        namespace work_item_worklog.screens {
+            class WorkItemWorkLogScreen
+            class WorkLogCollapsible
+            class LogWorkScreen
+        }
+
+        WorkItemWorkLogScreen o--> Vertical
+        WorkItemWorkLogScreen o--> VerticalScroll
+        WorkItemWorkLogScreen o--> Horizontal
+        WorkItemWorkLogScreen o--> Footer
+        WorkItemWorkLogScreen o--> TimeTrackingWidget
+        WorkItemWorkLogScreen "1" o--> "0..n" WorkLogCollapsible
+
+        WorkItemWorkLogScreen --> LogWorkScreen: opens
+
+        LogWorkScreen o--> TimeSpentInput
+        LogWorkScreen o--> TimeRemainingInput
+        LogWorkScreen o--> LogDateTimeInput
+        LogWorkScreen o--> WorkDescription
+```
+````
+
+(architecture-goto-screen)=
+### Widgets for Supporting Go-To (Related Items) Screen
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+        class:
+            hideEmptyMembersBox: true
+    ---
+    classDiagram
+        namespace textual {
+            class Rule
+            class Static
+            class VerticalScroll
+            class Footer
+        }
+
+        namespace widgets.screens.goto {
+            class GotToScreen
+            class GoToItemsTable
+        }
+
+        GotToScreen o--> Static
+        GotToScreen o--> VerticalScroll
+        GotToScreen o--> Rule
+        GotToScreen o--> Footer
+        GotToScreen "1" o--> "1..4" GoToItemsTable
+```
+````

@@ -1218,9 +1218,12 @@ the application takes to view the list of tasks related to an existing work item
 ```
 ````
 
-## Manage Log Work
+(use-case-worklog)=
+## Work Items Worklog
 
-### View Item Work Log
+The following are the use cases related to the managing (viewing, adding, editing and deleting) a work item's worklog.
+
+### View the Work Logs of a Work Item
 
 The following sequence diagram depicts the interaction of the user with the application and the series of steps that
 the application takes to view the work logged for a selected work item.
@@ -1235,8 +1238,8 @@ the application takes to view the work logged for a selected work item.
         actor User
         participant IssueDetailsWidget
         participant WorkItemWorkLogScreen
-        participant APICtrl as APIController
-        participant Jira as JiraAPI
+        participant APIController
+        participant JiraAPI
 
         User->>IssueDetailsWidget: Press ^l
         activate IssueDetailsWidget
@@ -1245,27 +1248,27 @@ the application takes to view the work logged for a selected work item.
         activate WorkItemWorkLogScreen
 
         WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Mount screen
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Start worker to fetch_work_log()
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Start worker to retrieve the log entries
 
-        WorkItemWorkLogScreen->>APICtrl: Call get_work_item_worklog(work_item_key)
+        WorkItemWorkLogScreen->>APIController: Call get_work_item_worklog(work_item_key)
         deactivate WorkItemWorkLogScreen
-        activate APICtrl
+        activate APIController
 
-        APICtrl->>Jira: GET worklogs for work item
-        deactivate APICtrl
-        activate Jira
+        APIController->>JiraAPI: GET worklogs for work item
+        deactivate APIController
+        activate JiraAPI
 
-        Jira->>Jira: Query worklogs and pagination
-        Jira-->>APICtrl: Return PaginatedJiraWorklog with logs list
-        deactivate Jira
-        activate APICtrl
+        JiraAPI->>JiraAPI: Query worklogs and pagination
+        JiraAPI-->>APIController: Return PaginatedJiraWorklog with logs list
+        deactivate JiraAPI
+        activate APIController
 
-        APICtrl-->>WorkItemWorkLogScreen: Return APIControllerResponse with result
-        deactivate APICtrl
+        APIController-->>WorkItemWorkLogScreen: Return APIControllerResponse with result
+        deactivate APIController
         activate WorkItemWorkLogScreen
 
         WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Extract worklog list from response
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Set worklog_counter and worklog_total_count
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Set worklog's counter and worklog's total count
         WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Update subtitle with counts
 
         loop For each worklog in logs
@@ -1277,59 +1280,99 @@ the application takes to view the work logged for a selected work item.
 
         WorkItemWorkLogScreen->>User: Display list of worklogs in collapsible widgets
         deactivate WorkItemWorkLogScreen
+```
+````
 
-        User->>WorkItemWorkLogScreen: (Optional) Press Ctrl+O on worklog
+### Open Worklog Details in the Browser
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant IssueDetailsWidget
+        participant WorkItemWorkLogScreen
+
+        User->>IssueDetailsWidget: Press ^l
+        activate IssueDetailsWidget
+        IssueDetailsWidget->>WorkItemWorkLogScreen: show modal screen
+        deactivate IssueDetailsWidget
+        activate WorkItemWorkLogScreen
+
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Retrieve and display log entries
+        deactivate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>User: show log entries
+
+        User->>WorkItemWorkLogScreen: press 'tab' to select a work log entry
+        User->>WorkItemWorkLogScreen: Press ^o on the selected entry
         activate WorkItemWorkLogScreen
         WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Open worklog URL in default browser
+        WorkItemWorkLogScreen->>User: notify "Opening log entry in the browser"
         deactivate WorkItemWorkLogScreen
+```
+````
 
-        User->>WorkItemWorkLogScreen: (Optional) Press D on worklog
+### Delete Worklog Entry
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes to delete a log entry.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant IssueDetailsWidget
+        participant WorkItemWorkLogScreen
+        participant WorkLogCollapsible
+        participant APIController
+        participant JiraAPI
+
+        User->>IssueDetailsWidget: Press ^l
+        activate IssueDetailsWidget
+        IssueDetailsWidget->>WorkItemWorkLogScreen: show modal screen
+        deactivate IssueDetailsWidget
+        activate WorkItemWorkLogScreen
+
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Retrieve and display log entries
+        deactivate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>User: show log entries
+
+        activate WorkItemWorkLogScreen
+        User->>WorkItemWorkLogScreen: press 'tab' to select a work log entry
+        WorkItemWorkLogScreen->>WorkLogCollapsible: select entry
+        deactivate WorkItemWorkLogScreen
+        User->>WorkLogCollapsible: press 'd'
+        WorkLogCollapsible->>WorkItemWorkLogScreen: send message WorkLogCollapsible.LogEntryDeleted
+
         activate WorkItemWorkLogScreen
         WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Start worker to delete worklog
-        WorkItemWorkLogScreen->>APICtrl: Call remove_worklog(work_item_key, worklog_id)
+        WorkItemWorkLogScreen->>APIController: Call remove_worklog(work_item_key, worklog_id)
         deactivate WorkItemWorkLogScreen
-        activate APICtrl
+        activate APIController
 
-        APICtrl->>Jira: DELETE worklog
-        deactivate APICtrl
-        activate Jira
+        APIController->>JiraAPI: DELETE worklog
+        deactivate APIController
+        activate JiraAPI
 
-        Jira->>Jira: Remove worklog entry
-        Jira-->>APICtrl: Success response
-        deactivate Jira
-        activate APICtrl
+        JiraAPI->>JiraAPI: Remove worklog entry
+        JiraAPI-->>APIController: Success response
+        deactivate JiraAPI
+        activate APIController
 
-        APICtrl-->>WorkItemWorkLogScreen: Return APIControllerResponse
-        deactivate APICtrl
+        APIController-->>WorkItemWorkLogScreen: Return APIControllerResponse
+        deactivate APIController
         activate WorkItemWorkLogScreen
-
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Notify "Worklog deleted"
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Hide WorkLogCollapsible (display: none)
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Update counters and subtitle
-        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Set work_logs_deleted = true
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: refresh list of entries
+        Note right of WorkItemWorkLogScreen: See use case: View the Work Logs of a Work Item
+        WorkItemWorkLogScreen->>User: notify "entry deleted"
         deactivate WorkItemWorkLogScreen
-
-        User->>WorkItemWorkLogScreen: Press Escape to close
-        activate WorkItemWorkLogScreen
-        WorkItemWorkLogScreen->>IssueDetailsWidget: Dismiss with work_logs_deleted flag
-        deactivate WorkItemWorkLogScreen
-        activate IssueDetailsWidget
-
-        IssueDetailsWidget->>IssueDetailsWidget: Check if work_logs_deleted is true
-
-        alt work_logs_deleted == true
-            IssueDetailsWidget->>APICtrl: Call get_issue() to refresh
-            deactivate IssueDetailsWidget
-            activate APICtrl
-            APICtrl->>Jira: GET issue details
-            Jira-->>APICtrl: Return updated issue
-            APICtrl-->>DetaIssueDetailsWidgetils: Return updated JiraIssue
-            deactivate APICtrl
-            activate IssueDetailsWidget
-            IssueDetailsWidget->>IssueDetailsWidget: Update work item details
-        end
-
-        deactivate IssueDetailsWidget
 ```
 ````
 
@@ -1348,72 +1391,119 @@ the application takes to log work for a selected work item.
     sequenceDiagram
         actor User
         participant IssueDetailsWidget
+        participant WorkItemWorkLogScreen
         participant LogWorkScreen
-        participant APICtrl as APIController
-        participant Jira as JiraAPI
+        participant APIController
+        participant JiraAPI
 
-        User ->> IssueDetailsWidget: Press ^t
+        User->>IssueDetailsWidget: Press ^l
         activate IssueDetailsWidget
-        IssueDetailsWidget->>LogWorkScreen: Push LogWorkScreen with work_item.key and current_remaining_estimate
+        IssueDetailsWidget->>WorkItemWorkLogScreen: show modal screen
         deactivate IssueDetailsWidget
+        activate WorkItemWorkLogScreen
+
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Retrieve and display log entries
+        deactivate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>User: show log entries
+
+        User->>WorkItemWorkLogScreen: press 'n' to add a new entry
+        activate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>LogWorkScreen: open modal screen
+        deactivate WorkItemWorkLogScreen
+        Note right of LogWorkScreen: user fills in the form
+        User->>LogWorkScreen: press "Save" button
+        LogWorkScreen->>WorkItemWorkLogScreen: Send form data: LogWorkScreenResult
+
+        activate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Start worker to add worklog entry
+        WorkItemWorkLogScreen->>APIController: Call add_work_item_worklog(work_item_key, data)
+        deactivate WorkItemWorkLogScreen
+        activate APIController
+
+        APIController->>JiraAPI: ADD worklog
+        deactivate APIController
+        activate JiraAPI
+
+        JiraAPI->>APIController: Update's response *success or failure)
+        deactivate JiraAPI
+        activate APIController
+
+        APIController-->>WorkItemWorkLogScreen: Return APIControllerResponse
+        deactivate APIController
+        activate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: refresh list of entries and fetch work <br> item's time tracking information
+        Note right of WorkItemWorkLogScreen: See use case: View the Work Logs of a Work Item
+        WorkItemWorkLogScreen->>User: notify "entry added"
+        deactivate WorkItemWorkLogScreen
+```
+````
+
+### Update Worklog Entry
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes to update a log entry.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User
+        participant IssueDetailsWidget
+        participant WorkItemWorkLogScreen
+        participant WorkLogCollapsible
+        participant APIController
+        participant JiraAPI
+        participant LogWorkScreen
+
+        User->>IssueDetailsWidget: Press ^l
+        activate IssueDetailsWidget
+        IssueDetailsWidget->>WorkItemWorkLogScreen: show modal screen
+        deactivate IssueDetailsWidget
+        activate WorkItemWorkLogScreen
+
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Retrieve and display log entries
+        deactivate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>User: show log entries
+
+        activate WorkItemWorkLogScreen
+        User->>WorkItemWorkLogScreen: press 'tab' to select a work log entry
+        WorkItemWorkLogScreen->>WorkLogCollapsible: select entry
+        deactivate WorkItemWorkLogScreen
+        User->>WorkLogCollapsible: press '^e'
+        activate WorkLogCollapsible
+        WorkLogCollapsible->>LogWorkScreen: open modal screen
+        deactivate WorkLogCollapsible
         activate LogWorkScreen
-
-        LogWorkScreen->>User: Display form (Time Spent, Time Remaining, Date Started, Work Description)
-
-        User->>LogWorkScreen: Enter time spent value
-        activate User
-        LogWorkScreen->>LogWorkScreen: Validate time format
-        LogWorkScreen->>LogWorkScreen: Enable/disable related fields and save button
-        deactivate User
-
-        User->>LogWorkScreen: (Optional) Enter time remaining
-        activate User
-        LogWorkScreen->>LogWorkScreen: Validate time format
-        deactivate User
-
-        User->>LogWorkScreen: (Optional) Add work description
-        User->>LogWorkScreen: Click Save
-
-        LogWorkScreen->>IssueDetailsWidget: Dismiss with form data dict
+        Note right of LogWorkScreen: user fills in the form
+        User->>LogWorkScreen: press "Save" button
+        LogWorkScreen->>WorkLogCollapsible: Send form data: LogWorkScreenResult
         deactivate LogWorkScreen
-        activate IssueDetailsWidget
+        WorkLogCollapsible->>WorkItemWorkLogScreen: send message WorkLogCollapsible.UpdateLogEntry
 
-        IssueDetailsWidget->>IssueDetailsWidget: Extract data from result dict
-        IssueDetailsWidget->>IssueDetailsWidget: Start worker for async execution
+        activate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: Start worker to update worklog entry
+        WorkItemWorkLogScreen->>APIController: Call update_worklog(work_item_key, worklog_id)
+        deactivate WorkItemWorkLogScreen
+        activate APIController
 
-        IssueDetailsWidget->>APICtrl: Call add_work_item_worklog()
-        deactivate IssueDetailsWidget
-        activate APICtrl
+        APIController->>JiraAPI: UPDATE worklog
+        deactivate APIController
+        activate JiraAPI
 
-        APICtrl->>APICtrl: Convert local datetime to UTC
-        APICtrl->>Jira: POST worklog with time_spent, time_remaining, started, comment
-        deactivate APICtrl
-        activate Jira
+        JiraAPI->>APIController: Update's response *success or failure)
+        deactivate JiraAPI
+        activate APIController
 
-        Jira->>Jira: Create worklog entry and update time tracking
-        Jira-->>APICtrl: Success response
-        deactivate Jira
-        activate APICtrl
-
-        APICtrl-->>IssueDetailsWidget: Return APIControllerResponse
-        deactivate APICtrl
-        activate IssueDetailsWidget
-
-        IssueDetailsWidget->>IssueDetailsWidget: Check response.success
-        IssueDetailsWidget->>User: Notify "Work logged successfully"
-
-        IssueDetailsWidget->>APICtrl: Call get_issue() to refresh
-        deactivate IssueDetailsWidget
-        activate APICtrl
-        APICtrl->>Jira: GET issue details
-        Jira-->>APICtrl: Return updated issue
-        APICtrl-->>IssueDetailsWidget: Return updated JiraIssue
-        deactivate APICtrl
-        activate IssueDetailsWidget
-
-        IssueDetailsWidget->>IssueDetailsWidget: Update form fields with refreshed data
-        IssueDetailsWidget->>IssueDetailsWidget: Re-render time tracking widget
-        deactivate IssueDetailsWidget
+        APIController-->>WorkItemWorkLogScreen: Return APIControllerResponse
+        deactivate APIController
+        activate WorkItemWorkLogScreen
+        WorkItemWorkLogScreen->>WorkItemWorkLogScreen: refresh list of entries and fetch work <br> item's time tracking information
+        Note right of WorkItemWorkLogScreen: See use case: View the Work Logs of a Work Item
+        WorkItemWorkLogScreen->>User: notify "entry updated"
+        deactivate WorkItemWorkLogScreen
 ```
 ````
 
@@ -1601,6 +1691,7 @@ the application takes when the user wants to search/fetch an item from the recen
 ````
 
 (use-case-goto-screen)=
+
 ## Access Related Work Items Using the Go-To Screen
 
 The use case describe the interaction of the user with the application while using the Go-To feature. The feature allows

@@ -26,6 +26,7 @@ class GoToItemsTable(DataTable):
 
     **See Also**:
     - [Use Cases](#use-case-goto-screen)
+    - [Architecture](#architecture-goto-screen)
     """
 
     BINDINGS = [
@@ -118,17 +119,23 @@ class GotToScreen(ModalScreen[str]):
 
     **See Also**:
     - [Use Case](#use-case-goto-screen)
+    - [Architecture](#architecture-goto-screen)
     """
 
     BINDINGS = [
         ('escape', 'app.pop_screen', 'Close'),
     ]
-    TITLE = 'Related Work Items'
+    TITLE = 'See Related Work Items section in the help'
+    HELP = 'View Related Items'
 
     def __init__(self, work_item_key: str, controller: APIController):
         super().__init__()
         self.__work_item_key = work_item_key
         self.__controller = controller
+
+    @property
+    def help_anchor(self) -> str:
+        return '#view-related-items'
 
     @property
     def table_subtasks(self) -> GoToItemsTable:
