@@ -14,7 +14,6 @@ from jiratui.models import (
     Project,
     RelatedJiraIssue,
 )
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
 from jiratui.widgets.related_work_items.related_issues import (
     RelatedIssueCollapsible,
@@ -22,6 +21,7 @@ from jiratui.widgets.related_work_items.related_issues import (
     WorkItemRelatedItems,
 )
 from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 

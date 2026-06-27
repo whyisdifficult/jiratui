@@ -5,8 +5,8 @@ import pytest
 from textual.widgets import Button
 
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
-from jiratui.widgets.git_screen import GitScreen
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screens.git import GitScreen
 
 
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')

@@ -9,8 +9,8 @@ from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueRemoteLink
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.remote_links.add import AddRemoteLinkScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
 class IssueRemoteLinkCollapsible(Collapsible):

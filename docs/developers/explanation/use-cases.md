@@ -108,7 +108,7 @@ the application takes to search work items based on a full-text term.
 The following are the main components used by the application to support this use case:
 
 - [MainScreen](#jiratui.widgets.screen.MainScreen): Main screen that handles the `/` key binding and manages the flow
-- [TextSearchScreen](#jiratui.widgets.text_search.TextSearchScreen): Modal screen for full-text search input and results display
+- [TextSearchScreen](#jiratui.widgets.screens.text_search.TextSearchScreen): Modal screen for full-text search input and results display
 - [APIController](#jiratui.api_controller.controller.APIController): API communication for executing the full-text search
 
 ````{toggle}

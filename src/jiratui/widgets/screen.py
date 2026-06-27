@@ -38,21 +38,21 @@ from jiratui.widgets.filters import (
     ProjectSelectionInput,
     WorkItemInputWidget,
 )
-from jiratui.widgets.git_screen import GitScreen
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.related_issues import (
     RelatedIssuesWidget,
     WorkItemRelatedItems,
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.history import HistoryScreen
+from jiratui.widgets.screens.text_search import TextSearchScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import (
     DataTableSearchInput,
     IssuesSearchResultsTable,
     SearchResultsContainer,
 )
-from jiratui.widgets.text_search import TextSearchScreen
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_subtasks.subtasks import (

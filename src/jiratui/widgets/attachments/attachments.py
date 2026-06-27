@@ -25,7 +25,7 @@ from jiratui.utils.mime import (
 )
 from jiratui.utils.urls import build_external_url_for_attachment
 from jiratui.widgets.attachments.add import AddAttachmentScreen
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
 @dataclass

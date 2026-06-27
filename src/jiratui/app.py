@@ -13,10 +13,10 @@ from jiratui.constants import LOGGER_NAME
 from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
 from jiratui.utils.session import ApplicationSession
-from jiratui.widgets.config_info import ConfigFileScreen
-from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screen import MainScreen
-from jiratui.widgets.server_info import ServerInfoScreen
+from jiratui.widgets.screens.config import ConfigFileScreen
+from jiratui.widgets.screens.quit import QuitScreen
+from jiratui.widgets.screens.server import ServerInfoScreen
 
 
 class JiraApp(App):
@@ -145,7 +145,7 @@ class JiraApp(App):
         self.__session.clear()
 
     async def action_help(self) -> None:
-        from jiratui.widgets.help import HelpScreen
+        from jiratui.widgets.screens.help import HelpScreen
 
         # get the widget that is currently focused
         focused = self.focused

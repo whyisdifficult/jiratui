@@ -10,7 +10,7 @@ from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import WorkItemsSearchOrderBy
 from jiratui.widgets.screen import MainScreen
-from jiratui.widgets.text_search import TextSearchScreen
+from jiratui.widgets.screens.text_search import TextSearchScreen
 
 
 @pytest.fixture()

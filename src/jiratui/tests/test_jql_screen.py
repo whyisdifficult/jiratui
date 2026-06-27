@@ -3,8 +3,8 @@ from unittest.mock import Mock, PropertyMock, patch
 import pytest
 from textual.widgets import TextArea
 
-from jiratui.widgets.jql import JQLEditorScreen, PreDefinedJQLExpressionsWidget
 from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.jql import JQLEditorScreen, PreDefinedJQLExpressionsWidget
 
 
 @patch.object(JQLEditorScreen, '_pre_defined_jql_expressions', PropertyMock(return_value=None))

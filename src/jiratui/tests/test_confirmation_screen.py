@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from textual.widgets import Label
 
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
 @pytest.mark.parametrize(

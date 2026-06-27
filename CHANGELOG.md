@@ -32,6 +32,7 @@ versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 - Bump `pytest`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
 - Bump `ruff`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
 - Refactor worklog classes to make it possible to reuse some components. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
+- Refactor screens and move them to jiratui.widgets.screens. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ### Documentation
 

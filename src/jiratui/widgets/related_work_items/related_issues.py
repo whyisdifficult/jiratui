@@ -15,9 +15,9 @@ from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, RelatedJiraIssue
 from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GotToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
@@ -36,7 +36,7 @@ class RelatedIssueCollapsible(Collapsible):
     - opening a modal screen to view the details of the currently-selected work item.
     - (optionally) posting a [SearchWorkItem](#jiratui.widgets.messages.SearchWorkItem) message to load the work item
     being displayed after the quick view screen is dismissed.
-    - opening a [ConfirmationScreen](#jiratui.widgets.confirmation_screen.ConfirmationScreen) to confirm deleting the
+    - opening a [ConfirmationScreen](#jiratui.widgets.screens.confirmation.ConfirmationScreen) to confirm deleting the
     currently selected work item.
     - posting a [LinkDeleted](#jiratui.widgets.related_work_items.related_issues.RelatedIssueCollapsible.LinkDeleted)
     message to refresh the list of related work items after deleting one.
