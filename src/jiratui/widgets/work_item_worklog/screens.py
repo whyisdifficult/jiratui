@@ -21,7 +21,6 @@ from textual.widgets import (
     Label,
     Markdown,
     Static,
-    TextArea,
 )
 
 from jiratui.api_controller.controller import APIControllerResponse
@@ -33,8 +32,13 @@ from jiratui.models import (
     TimeTracking,
 )
 from jiratui.utils.urls import build_external_url_for_work_log
-from jiratui.widgets.base import DateInput
-from jiratui.widgets.work_item_details.fields import TimeTrackingWidget
+from jiratui.widgets.work_item_worklog.widgets import (
+    LogDateTimeInput,
+    TimeRemainingInput,
+    TimeSpentInput,
+    TimeTrackingWidget,
+    WorkDescription,
+)
 
 
 class LogWorkScreenMode(Enum):
@@ -54,7 +58,7 @@ class LogWorkScreenResult:
     started: str
     time_remaining: str | None = None
     description: str | None = None
-    worklog_id: str | None = None
+    worklog_id: str | None = None  # required when editing a og entry
 
 
 class WorkLogCollapsible(Collapsible):
@@ -62,13 +66,17 @@ class WorkLogCollapsible(Collapsible):
     browser and deleting work logs.
 
     This widget is responsible for:
-    - posting a message [LogEntryDeleted](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible.LogEntryDeleted)
+    - posting a message [LogEntryDeleted](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.LogEntryDeleted)
     when a worklog entry is deleted after the user presses `d`.
-    - opening the screen [LogWorkScreen](#jiratui.widgets.work_item_details.work_log.LogWorkScreen) to allow the user to
+    - opening the screen [LogWorkScreen](#jiratui.widgets.work_item_worklog.screens.LogWorkScreen) to allow the user to
     update a worklog entry after the user presses `^e`.
-    - posting a message [UpdateLogEntry](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible.UpdateLogEntry)
+    - posting a message [UpdateLogEntry](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.UpdateLogEntry)
     when the user wants to update a worklog entry. The handler will take care of making the update.
     - opening a worklog entry's URL in the browser when the user presses `^o`.
+
+    **See Also**
+    - [Use Case: Manage Worklog](#use-case-worklog)
+    - [Architecture](#architecture-worklogs)
     """
 
     BINDINGS = [
@@ -136,7 +144,7 @@ class WorkLogCollapsible(Collapsible):
             self.post_message(self.LogEntryDeleted(self._worklog_id))
 
     def action_edit_worklog_entry(self) -> None:
-        """Opens a [LogWorkScreen](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible.LogWorkScreen) to
+        """Opens a [LogWorkScreen](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.LogWorkScreen) to
         allow the user to update a log entry.
 
         Returns:
@@ -180,16 +188,20 @@ class WorkItemWorkLogScreen(Screen[dict]):
     - fetching the logs associated to the selected work item and displaying them.
     - optionally fetching the work item's current remaining time estimate; the data is not passed to the screen.
     - allowing the user to add and delete work logs.
-    - opening the screen [LogWorkScreen](#jiratui.widgets.work_item_details.work_log.LogWorkScreen) when the user
+    - opening the screen [LogWorkScreen](#jiratui.widgets.work_item_worklog.screens.LogWorkScreen) when the user
     presses `n` to add a new log entry.
-    - handling the message [UpdateLogEntry](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible.UpdateLogEntry)
+    - handling the message [UpdateLogEntry](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.UpdateLogEntry)
     when the user updates a log entry.
-    - handling the message [LogEntryDeleted](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible.LogEntryDeleted)
+    - handling the message [LogEntryDeleted](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.LogEntryDeleted)
     when the user deletes a log entry.
 
     The screen can be dismissed with dictionary. This dict can contain a key called `work_logs_deleted` to indicate to
     the caller that at least 1 worklog has been deleted. This lets the caller refresh the work item (if needed) to
     reflect the changes to the remaining time estimate.
+
+    **See Also**
+    - [Use Case: Manage Worklog](#use-case-worklog)
+    - [Architecture](#architecture-worklogs)
     """
 
     HELP = 'See Worklogs section in the help'
@@ -208,12 +220,12 @@ class WorkItemWorkLogScreen(Screen[dict]):
         super().__init__()
         self._work_item_key = work_item_key
         self._work_item_time_tracking = time_tracking
+        self._log_entries: dict[str, WorkLogCollapsible] = {}
         self._worklog_counter = 0
         self._worklog_total_count = 0
         # True when at least 1 work log was deleted; useful for refreshing the details of the work item after this
         # screen is dismissed
         self._work_logs_deleted = False
-        self._log_entries: dict[str, WorkLogCollapsible] = {}
 
     @property
     def help_anchor(self) -> str:
@@ -244,7 +256,7 @@ class WorkItemWorkLogScreen(Screen[dict]):
 
         This sends a request to the Jira API to retrieve the worklog details of the work item. If the work item has
         worklog entries then this method will build a dictionary of
-        [WorkLogCollapsible](#jiratui.widgets.work_item_details.work_log.WorkLogCollapsible) and mounts the values on
+        [WorkLogCollapsible](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible) and mounts the values on
         the screen.
 
         This method also update the counters displayed in the container's border's subtitle.
@@ -258,7 +270,7 @@ class WorkItemWorkLogScreen(Screen[dict]):
 
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
 
-        if self._work_item_time_tracking is None or fetch_time_tracking:
+        if fetch_time_tracking:
             # fetch the work item's time tracking information
             work_item_response: APIControllerResponse = await application.api.get_issue(
                 issue_id_or_key=self._work_item_key,
@@ -540,10 +552,10 @@ class WorkItemWorkLogScreen(Screen[dict]):
         """Deletes a worklog.
 
         Args:
-            event:
+            event: the message sent by the `WorkLogCollapsible` widget with the id of the worklog to be deleted.
 
         Returns:
-
+            None
         """
 
         self.notify('Deleting worklog entry...')
@@ -566,64 +578,16 @@ class WorkItemWorkLogScreen(Screen[dict]):
             )
 
 
-class TimeSpentInput(Input):
-    """An input field that contains a string representing the time spent by the user in a task."""
-
-    def __init__(self, initial_value: str | None = None):
-        super().__init__(
-            value=initial_value or '',
-            placeholder='E.g. 1w 1d',
-            valid_empty=False,
-            classes='required',
-        )
-        self.border_title = 'Time Spent'
-        self.border_subtitle = '(*)'
-        self.tooltip = 'Enter the amount of time you work on this task'
-
-
-class TimeRemainingInput(Input):
-    """An input field that contains a string representing the time remaining in a task."""
-
-    def __init__(self, initial_value: str | None = None):
-        super().__init__(value=initial_value or '', placeholder='E.g. 1d 1h 30m')
-        self.border_title = 'Time Remaining'
-        self.tooltip = 'Optionally, enter the time remaining in the task'
-
-
-class LogDateTimeInput(DateInput):
-    """An DateInput field that contains a string representing the date/time when the user did work on a task."""
-
-    TEMPLATE = '9999-99-99 99:99'
-    PLACEHOLDER = '2025-10-12 13:50'
-
-    def __init__(self, initial_value: str | None = None):
-        super().__init__(valid_empty=False)
-        self.disabled = True
-        self.border_title = 'Date Started'
-        self.tooltip = 'Enter the date/time on which the work was done'
-        self.value = initial_value or datetime.now().strftime('%Y-%m-%d %H:%M')
-
-
-class WorkDescription(TextArea):
-    """A textarea field that contains an optional comment for a work log entry."""
-
-    def __init__(self, initial_value: str | None = None):
-        super().__init__(text=initial_value or '')
-        self.disabled = True
-        self.border_title = 'Work Description'
-        self.compact = True
-        self.tooltip = 'Add an optional description'
-
-
 class LogWorkScreen(Screen[LogWorkScreenResult | None]):
     """A modal screen that allow users to provide data for creating new work log entries or updating an existing entry.
 
     The screen's result is an instance of
-    [LogWorkScreenResult](#jiratui.widgets.work_item_details.work_log.LogWorkScreenResult). The object contains the
+    [LogWorkScreenResult](#jiratui.widgets.work_item_worklog.screens.LogWorkScreenResult). The object contains the
     values to add or update a work log entry
 
     **See Also**:
     - [Use Case: Log Work](#use-case-log-work)
+    - [Architecture](#architecture-worklogs)
     """
 
     BINDINGS = [

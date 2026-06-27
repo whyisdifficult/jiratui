@@ -39,7 +39,7 @@ from jiratui.widgets.work_item_details.fields import (
     WorkItemDetailsDueDate,
 )
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
-from jiratui.widgets.work_item_details.work_log import WorkItemWorkLogScreen
+from jiratui.widgets.work_item_worklog.screens import WorkItemWorkLogScreen
 
 
 @pytest.fixture

@@ -31,6 +31,11 @@ versions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 - Bump `marklas`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
 - Bump `pytest`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
 - Bump `ruff`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282
+- Refactor worklog classes to make it possible to reuse some components. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
+
+### Documentation
+
+- Update developers documentation related to worklog management. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
 
 ## [1.9.1] 2026-06-18
 

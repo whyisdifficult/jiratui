@@ -12,16 +12,18 @@ from jiratui.models import JiraIssue, JiraIssueSearchResponse, JiraWorklog, Pagi
 from jiratui.widgets.filters import ProjectSelectionInput
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
-from jiratui.widgets.work_item_details.work_log import (
-    LogDateTimeInput,
+from jiratui.widgets.work_item_worklog.screens import (
     LogWorkScreen,
     LogWorkScreenMode,
     LogWorkScreenResult,
+    WorkItemWorkLogScreen,
+    WorkLogCollapsible,
+)
+from jiratui.widgets.work_item_worklog.widgets import (
+    LogDateTimeInput,
     TimeRemainingInput,
     TimeSpentInput,
     WorkDescription,
-    WorkItemWorkLogScreen,
-    WorkLogCollapsible,
 )
 
 
@@ -831,7 +833,7 @@ async def test_adding_worklog_when_users_clicks_cancel(
         add_work_item_worklog_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.work_item_worklog.screens.build_external_url_for_work_log')
 @patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screen.APIController.get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -888,7 +890,7 @@ async def test_open_modal_to_view_work_logs(
 
 
 @patch.object(WorkItemWorkLogScreen, '_delete_log_entry')
-@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.work_item_worklog.screens.build_external_url_for_work_log')
 @patch.object(APIController, 'get_work_item_worklog')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -951,7 +953,7 @@ async def test_delete_worklog(
 
 @patch.object(WorkItemWorkLogScreen, '_delete_log_entry')
 @patch('jiratui.widgets.screen.APIController.remove_worklog')
-@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.work_item_worklog.screens.build_external_url_for_work_log')
 @patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screen.APIController.get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -1014,7 +1016,7 @@ async def test_delete_worklog_and_close_worklog_screen(
 
 
 @patch('jiratui.widgets.screen.APIController.remove_worklog')
-@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.work_item_worklog.screens.build_external_url_for_work_log')
 @patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screen.APIController.get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -1072,7 +1074,7 @@ async def test_show_and_close_worklog_screen_without_deleting(
 
 
 @patch.object(JiraApp, 'open_url')
-@patch('jiratui.widgets.work_item_details.work_log.build_external_url_for_work_log')
+@patch('jiratui.widgets.work_item_worklog.screens.build_external_url_for_work_log')
 @patch('jiratui.widgets.screen.APIController.get_work_item_worklog')
 @patch('jiratui.widgets.screen.APIController.get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -1144,8 +1146,8 @@ async def test_work_log_screen_fetch_work_logs_without_initial_time_tracking_set
         await app.push_screen(WorkItemWorkLogScreen(work_item.key, None))
         screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
-        get_issue_mock.assert_called_once_with(issue_id_or_key=work_item.key)
-        assert screen._work_item_time_tracking == work_item.time_tracking
+        get_issue_mock.assert_not_called()
+        assert screen._work_item_time_tracking is None
         assert screen.query_one('#time-tracking-container', Horizontal) is not None
         get_work_item_worklog_mock.assert_called_once_with('key-2')
 
@@ -1163,7 +1165,7 @@ async def test_work_log_screen_fetch_work_logs_without_initial_time_tracking_set
         await app.push_screen(WorkItemWorkLogScreen(work_item.key, None))
         screen = cast('WorkItemWorkLogScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # THEN
-        get_issue_mock.assert_called_once_with(issue_id_or_key=work_item.key)
+        get_issue_mock.assert_not_called()
         assert screen._work_item_time_tracking is None
         assert screen.query_one('#time-tracking-container', Horizontal) is not None
         get_work_item_worklog_mock.assert_called_once_with('key-2')
@@ -1247,9 +1249,7 @@ async def test_work_log_screen_fetch_work_logs_with_fetch_time_tracking_true(
         # WHEN
         await screen._fetch_work_logs(fetch_time_tracking=True)
         # THEN
-        get_issue_mock.assert_has_calls(
-            [call(issue_id_or_key=work_item.key), call(issue_id_or_key=work_item.key)]
-        )
+        get_issue_mock.assert_has_calls([call(issue_id_or_key=work_item.key)])
         assert screen._work_item_time_tracking == work_item.time_tracking
 
 

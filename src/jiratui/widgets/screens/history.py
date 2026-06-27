@@ -113,6 +113,7 @@ class HistoryScreen(ModalScreen[str]):
     - [Use Case: Manage Recent History](#use-case-recent-history)
     """
 
+    HELP = 'See View Recent Items section in the help'
     BINDINGS = [
         ('escape', 'app.pop_screen', 'Close'),
         Binding(
@@ -141,6 +142,10 @@ class HistoryScreen(ModalScreen[str]):
             yield Rule()
             yield HistoryWorkItemsTable(cursor_type='row', classes='recent-history-table')
         yield Footer(show_command_palette=False, compact=True)
+
+    @property
+    def help_anchor(self) -> str:
+        return '#view-recent-items'
 
     async def on_mount(self) -> None:
         table = self.query_one(HistoryWorkItemsTable)
