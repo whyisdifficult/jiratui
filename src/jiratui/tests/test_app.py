@@ -7,11 +7,11 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraServerInfo, WorkItemsSearchOrderBy
-from jiratui.widgets.config_info import ConfigFileScreen
-from jiratui.widgets.help import HelpScreen
-from jiratui.widgets.quit import QuitScreen
 from jiratui.widgets.screen import MainScreen
-from jiratui.widgets.server_info import ServerInfoScreen
+from jiratui.widgets.screens.config import ConfigFileScreen
+from jiratui.widgets.screens.help import HelpScreen
+from jiratui.widgets.screens.quit import QuitScreen
+from jiratui.widgets.screens.server import ServerInfoScreen
 
 
 @pytest.fixture()

@@ -9,7 +9,8 @@ from jiratui.config import CONFIGURATION
 
 
 class PreDefinedJQLExpressionsWidget(Select):
-    """A custom Select widget for selecting pre-defined JQL expressions loaded for the configuration file."""
+    """A custom [Select](#textual.widgets.Select) widget for selecting pre-defined JQL expressions loaded for the
+    configuration file."""
 
     def __init__(self, options: list):
         super().__init__(

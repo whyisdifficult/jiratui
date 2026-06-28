@@ -27,7 +27,7 @@ COMMENTS_PER_PAGE = 10
 
 class CommandHandler:
     def __init__(self):
-        CONFIGURATION.set(ApplicationConfiguration())  # noqa
+        CONFIGURATION.set(ApplicationConfiguration())  # type:ignore[call-arg]
         self.api = APIController()
 
     def users(self, email_or_name: str) -> list[JiraUser]:

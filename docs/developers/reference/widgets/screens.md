@@ -7,27 +7,27 @@
 
 ## ServerInfoScreen
 
-```{autodoc2-object} jiratui.widgets.server_info.ServerInfoScreen
+```{autodoc2-object} jiratui.widgets.screens.server_info.ServerInfoScreen
 ```
 
 ## QuitScreen
 
-```{autodoc2-object} jiratui.widgets.quit.QuitScreen
+```{autodoc2-object} jiratui.widgets.screens.quit.QuitScreen
 ```
 
 ## ConfirmationScreen
 
-```{autodoc2-object} jiratui.widgets.confirmation_screen.ConfirmationScreen
+```{autodoc2-object} jiratui.widgets.screens.confirmation.ConfirmationScreen
 ```
 
 ## ConfigFileScreen
 
-```{autodoc2-object} jiratui.widgets.config_info.ConfigFileScreen
+```{autodoc2-object} jiratui.widgets.screens.config.ConfigFileScreen
 ```
 
 ## HelpScreen
 
-```{autodoc2-object} jiratui.widgets.help.HelpScreen
+```{autodoc2-object} jiratui.widgets.screens.help.HelpScreen
 ```
 
 ## ConfirmDeleteItemScreen
@@ -37,17 +37,17 @@
 
 ## JQLEditorScreen
 
-```{autodoc2-object} jiratui.widgets.jql.JQLEditorScreen
+```{autodoc2-object} jiratui.widgets.screens.jql.JQLEditorScreen
 ```
 
 ## GitScreen
 
-```{autodoc2-object} jiratui.widgets.git_screen.GitScreen
+```{autodoc2-object} jiratui.widgets.screens.git.GitScreen
 ```
 
 ## TextSearchScreen
 
-```{autodoc2-object} jiratui.widgets.text_search.TextSearchScreen
+```{autodoc2-object} jiratui.widgets.screens.text_search.TextSearchScreen
 ```
 
 ## DisplayTextContentScreen

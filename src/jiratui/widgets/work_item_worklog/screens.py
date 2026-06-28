@@ -137,7 +137,7 @@ class WorkLogCollapsible(Collapsible):
         if self._url:
             self.app.open_url(self._url)
 
-    def action_delete_worklog(self):
+    def action_delete_worklog(self) -> None:
         """Posts a message to request deleting a work log entry."""
 
         if self._worklog_id:

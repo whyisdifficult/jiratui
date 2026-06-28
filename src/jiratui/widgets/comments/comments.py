@@ -19,7 +19,7 @@ from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
-from jiratui.widgets.confirmation_screen import ConfirmationScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
 @dataclass

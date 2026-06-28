@@ -171,13 +171,17 @@ C4Component
         JiraApp *-- ConfigFileScreen
         JiraApp --> JiraServerInfo
         namespace jiratui.widgets {
-            class QuitScreen {}
-            class MainScreen {}
-            class ServerInfoScreen {}
-            class ConfigFileScreen {}
+            class MainScreen
+        }
+        namespace jiratui.widgets.screens {
+            class QuitScreen
+            class ConfigFileScreen
+        }
+        namespace jiratui.widgets.screens {
+            class ServerInfoScreen
         }
         namespace jiratui.models {
-            class JiraServerInfo{}
+            class JiraServerInfo
         }
 ```
 ````

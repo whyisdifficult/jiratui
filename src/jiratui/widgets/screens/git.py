@@ -23,7 +23,7 @@ class GitRepositorySelectionWidget(Select):
 
 
 class GitBranchNameInput(Input):
-    """A `textual.widgets.Input` widget to provide the name of the branch that the user wants to create."""
+    """A [Input](#textual.widgets.Input) widget to provide the name of the branch that the user wants to create."""
 
     def __init__(self, value: str):
         super().__init__(value=value, placeholder='Type in the name of the branch')

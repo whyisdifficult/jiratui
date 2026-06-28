@@ -5,7 +5,7 @@ from textual.reactive import Reactive, reactive
 from textual.widgets import Checkbox, Input, Select
 
 from jiratui.widgets.base import DateInput
-from jiratui.widgets.jql import JQLEditorScreen
+from jiratui.widgets.screens.jql import JQLEditorScreen
 
 
 class ProjectSelectionInput(Select):
