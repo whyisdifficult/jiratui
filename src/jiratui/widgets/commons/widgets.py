@@ -72,7 +72,7 @@ from textual.binding import Binding
 from textual.events import Key
 from textual.message import Message
 from textual.validation import Number, ValidationResult
-from textual.widgets import Input, MaskedInput, Select, SelectionList, TextArea
+from textual.widgets import Input, MaskedInput, Select, SelectionList, Static, TextArea
 from textual.widgets.selection_list import Selection
 
 from jiratui.widgets.base import DateInput
@@ -1611,6 +1611,26 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
     @property
     def field_title(self) -> str:
         return self.__title
+
+
+class EmptyTextAreaStaticWidget(Static):
+    """A Static widget that holds the jira_field_key for updating a text-based field such as description, environment
+    or any other textarea-based custom field.
+
+    This widget is used for displaying a message to the user that the underlying field is empty but to allow the user
+    to edit the field using an editor. The jira_field_key value is used to store the content of the field after the user
+    update its content in the editor.
+    """
+
+    def __init__(
+        self,
+        jira_field_key: str,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.jira_field_key = jira_field_key
+        name = self.name or self.jira_field_key.replace('_', ' ').title()
+        self.content = f'There is no "{name}" set. Press "^e" to edit it.'
 
 
 # ============================================================================
