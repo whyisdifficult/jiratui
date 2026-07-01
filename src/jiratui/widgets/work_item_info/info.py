@@ -25,7 +25,10 @@ from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import (
+    EmptyTextAreaStaticWidget,
+    ReadOnlyPlainTextTextAreaWidget,
+)
 from jiratui.widgets.work_item_info.screens import DisplayTextContentScreen, EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
 
@@ -69,6 +72,13 @@ class WorkItemInfoContainer(Vertical):
 
     @on(InfoTabbedContent.EditContent)
     def _edit_content(self, event: InfoTabbedContent.EditContent) -> None:
+        if not self.issue:
+            self.notify(
+                'No work item is loaded. Select a work item and try again.',
+                severity='error',
+                title='Update Work Item',
+            )
+
         if self._updating_rich_text_is_enabled:
             if self._editor:
                 new_content = self._open_as_temporary_file(self._editor, event.content)
@@ -92,6 +102,7 @@ class WorkItemInfoContainer(Vertical):
 
     def _handle_edit_result(self, data: dict | None) -> None:
         """Receives the result from the built-in editor and schedules the API update."""
+
         if not data:
             return
         if not data.get('jira_field_key'):
@@ -107,14 +118,6 @@ class WorkItemInfoContainer(Vertical):
         """Updates the value of a text-based field in the work item."""
 
         if not data or not data.get('jira_field_key'):
-            return
-
-        if not self.issue:
-            self.notify(
-                'No work item is loaded. Select a work item and try again.',
-                severity='error',
-                title='Update Work Item',
-            )
             return
 
         if self._updating_rich_text_is_enabled:
@@ -193,15 +196,43 @@ class WorkItemInfoContainer(Vertical):
         self.query_one(Rule).visible = False
 
     async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
+        """Sets up the TextAreaTabPane widget that holds and display the work item's description field.
+
+        The type of widget generated and mounted inside the TextAreaTabPane depends on whether the work item's field
+        has data or not and, on whether ADF is supported by the API.
+
+        - If the field does not have data yet then this method will generate a EmptyTextAreaStaticWidget. The widget
+        will simply display a hint to the user and hold the field's key so that the API can update its value.
+        - If the field has data and ADF is supported by the API then this method will build a
+        ReadOnlyADFMarkdownTextAreaWidget. The widget's content will be Markdown rendered from the ADF content of the
+        field.
+        - If the field has data and ADF is not supported by the API then this method will build a
+        ReadOnlyPlainTextTextAreaWidget. The widget's content will be the text content of the field.
+
+        Fields are processed based on the work item's edit-metadata.
+
+        Args:
+          work_item: the work item whose description field we want to display.
+
+        Returns:
+          None
+        """
+
         if issue_edit_metadata := work_item.get_edit_metadata():
             if field_metadata := issue_edit_metadata.get(JiraWorkItemFields.DESCRIPTION.value, {}):
-                field_name = field_metadata.get('name', field_metadata.get('key')).title()
-                widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                field_name = field_metadata.get('name') or field_metadata.get('key', 'Description')
+                field_name = field_name.title()
+                widget: (
+                    ReadOnlyADFMarkdownTextAreaWidget
+                    | ReadOnlyPlainTextTextAreaWidget
+                    | EmptyTextAreaStaticWidget
+                )
                 if work_item.rich_text_value_is_empty(work_item.description):  # type:ignore[arg-type]
-                    widget = Static(
-                        f'There is no "{field_name}" set. Press "^e" to edit it.',
-                        classes='tip',
+                    widget = EmptyTextAreaStaticWidget(
+                        jira_field_key=field_metadata.get('key')
+                        or JiraWorkItemFields.DESCRIPTION.value,
                         id=field_metadata.get('key') or JiraWorkItemFields.DESCRIPTION.value,
+                        classes='tip',
                         name=field_name,
                     )
                 else:
@@ -217,6 +248,28 @@ class WorkItemInfoContainer(Vertical):
                 await pane.mount(widget)
 
     async def _refresh_tabs_and_set_work_item(self, work_item: JiraIssue | None):
+        """Updates the content of the Info tab, i.e. its TextAreaTabPane widgets and the summary widget.
+
+        After the user select a work item form the search results the application needs to set up the "Info" tab. This
+        tab contains a series of TextAreaTabPane, each of which holds and display the work' item's textarea-based
+        fields. The info tab also shows holds a widget that displays the summary of the item.
+
+        This method updates the content of the Info tab, i.e. its TextAreaTabPane widgets and the summary widget.
+
+        How the widgets are set up?
+
+        If updating additional fields for a work item is enabled then this method will build a list of widgets to
+        display textarea-based content. Each widget is mounted within a TextAreaTabPane.
+        The type of widget that is generated depends on whether the work item's field has data and, on whether ADF is
+        supported by the API. For more details refer to self._build_textarea_widgets.
+
+        Args:
+            work_item: the instance of the work item whose text-based widgets we want to set up.
+
+        Returns:
+            None
+        """
+
         self._clear_static_widgets()
 
         # re-build the InfoTabbedContent widget by removing it first
@@ -244,16 +297,17 @@ class WorkItemInfoContainer(Vertical):
             # build widgets for the fields with rich-text support
             if self._enable_updating_additional_fields:
                 widgets: list[
-                    ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                    ReadOnlyADFMarkdownTextAreaWidget
+                    | ReadOnlyPlainTextTextAreaWidget
+                    | EmptyTextAreaStaticWidget
                 ] = self._build_textarea_widgets(work_item)
                 for widget in widgets:
-                    if isinstance(widget, Static):
+                    if isinstance(widget, EmptyTextAreaStaticWidget):
                         pane_title = widget.name
-                        pane_id = f'pane-{widget.id}'
                     else:
                         pane_title = widget.field_title
-                        pane_id = f'pane-{widget.jira_field_key}'
 
+                    pane_id = f'pane-{widget.jira_field_key}'
                     pane = TextAreaTabPane(title=pane_title, widget_id=pane_id)
                     await self.info_tabbed_content.add_pane(pane)
                     await pane.mount(widget)
@@ -261,9 +315,40 @@ class WorkItemInfoContainer(Vertical):
     def _build_textarea_widgets(
         self,
         work_item: JiraIssue,
-    ) -> list[ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static]:
+    ) -> list[
+        ReadOnlyADFMarkdownTextAreaWidget
+        | ReadOnlyPlainTextTextAreaWidget
+        | EmptyTextAreaStaticWidget
+    ]:
+        """Build a list of widgets to hold and display the value of textarea-based fields.
+
+        The type of widget generated depends on whether the work item's field has data or not and, on whether ADF is
+        supported by the API.
+
+        - If the field does not have data yet then this method will generate a EmptyTextAreaStaticWidget. The widget
+        will simply display a hint to the user and hold the field's key so that the API can update its value.
+        - If the field has data and ADF is supported by the API then this method will build a
+        ReadOnlyADFMarkdownTextAreaWidget. The widget's content will be Markdown rendered from the ADF content of the
+        field.
+        - If the field has data and ADF is not supported by the API then this method will build a
+        ReadOnlyPlainTextTextAreaWidget. The widget's content will be the text content of the field.
+
+        Fields are processed based on the work item's edit-metadata.
+
+        Important: the work item's description field is handled separately. For details
+        see: self._setup_work_item_description
+
+        Args:
+            work_item: the instance of the work item whose text-based widgets we want to set up.
+
+        Returns:
+            A list of ReadOnlyADFMarkdownTextAreaWidget, ReadOnlyPlainTextTextAreaWidget or EmptyTextAreaStaticWidget.
+        """
+
         widgets: list[
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+            ReadOnlyADFMarkdownTextAreaWidget
+            | ReadOnlyPlainTextTextAreaWidget
+            | EmptyTextAreaStaticWidget
         ] = []
         if issue_edit_metadata := work_item.get_edit_metadata():
             ignored_fields = self._update_additional_fields_ignore_ids
@@ -286,36 +371,39 @@ class WorkItemInfoContainer(Vertical):
                 ):
                     field_name = metadata.name or metadata.key.replace('_', ' ').title()
                     textarea_widget: (
-                        ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
+                        ReadOnlyADFMarkdownTextAreaWidget
+                        | ReadOnlyPlainTextTextAreaWidget
+                        | EmptyTextAreaStaticWidget
                     )
                     if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
                         if work_item.rich_text_value_is_empty(work_item.environment):  # type:ignore[arg-type]
-                            textarea_widget = Static(
-                                f'There is no "{field_name}" set. Press "^e" to edit it.',
+                            textarea_widget = EmptyTextAreaStaticWidget(
+                                jira_field_key=metadata.key or JiraWorkItemFields.ENVIRONMENT.value,
                                 classes='tip',
-                                id=metadata.key or field_id,
+                                id=metadata.key or JiraWorkItemFields.ENVIRONMENT.value,
                                 name=field_name,
                             )
                         else:
                             textarea_widget = build_read_only_rich_text_widget(
-                                jira_field_key=metadata.key or field_id,
+                                jira_field_key=metadata.key or JiraWorkItemFields.ENVIRONMENT.value,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=work_item.environment,
                             )
                     else:
+                        # handle any other textarea-based field
                         # get the value of the field
                         field_value: Any | None = work_item.get_custom_field_value(field_id)
                         if work_item.rich_text_value_is_empty(field_value):
-                            textarea_widget = Static(
-                                f'There is no "{field_name}" set. Press "^e" to edit it.',
+                            textarea_widget = EmptyTextAreaStaticWidget(
+                                jira_field_key=metadata.key,
                                 classes='tip',
-                                id=metadata.key or field_id,
+                                id=metadata.key or metadata.field_id,
                                 name=field_name,
                             )
                         else:
                             textarea_widget = build_read_only_rich_text_widget(
-                                jira_field_key=metadata.key or field_id,
+                                jira_field_key=metadata.key or metadata.field_id,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=field_value,

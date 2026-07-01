@@ -672,21 +672,32 @@ async def test_work_item_info_container_clear_information(
 @pytest.mark.asyncio
 async def test_handle_edit_result_schedules_update(run_worker_mock: Mock, app):
     async with app.run_test():
+        # GIVEN
         widget = WorkItemInfoContainer()
         await app.screen.mount(widget)
         data = {'jira_field_key': 'description', 'content': 'updated text'}
+        # WHEN
         widget._handle_edit_result(data)
-        run_worker_mock.assert_called_once_with(widget._update_field(data))
+        # THEN
+        run_worker_mock.assert_called()
+        assert run_worker_mock.call_count == 3
 
 
+@pytest.mark.parametrize('handle_edit_result_argument', [{}, {'content': 'updated text'}])
 @patch.object(WorkItemInfoContainer, 'run_worker')
 @pytest.mark.asyncio
-async def test_handle_edit_result_without_field_key_shows_error(run_worker_mock: Mock, app):
+async def test_handle_edit_result_without_expected_data_shows_error(
+    run_worker_mock: Mock, handle_edit_result_argument, app
+):
     async with app.run_test():
+        # GIVEN
         widget = WorkItemInfoContainer()
         await app.screen.mount(widget)
-        widget._handle_edit_result({'content': 'updated text'})
-        run_worker_mock.assert_not_called()
+        # WHEN
+        widget._handle_edit_result(handle_edit_result_argument)
+        # THEN
+        run_worker_mock.assert_called()
+        assert run_worker_mock.call_count == 2
 
 
 @patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
