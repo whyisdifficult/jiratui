@@ -668,6 +668,27 @@ async def test_work_item_info_container_clear_information(
         assert len(widget.tabs_container.children) == 0
 
 
+@patch.object(WorkItemInfoContainer, 'run_worker')
+@pytest.mark.asyncio
+async def test_handle_edit_result_schedules_update(run_worker_mock: Mock, app):
+    async with app.run_test():
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        data = {'jira_field_key': 'description', 'content': 'updated text'}
+        widget._handle_edit_result(data)
+        run_worker_mock.assert_called_once_with(widget._update_field(data))
+
+
+@patch.object(WorkItemInfoContainer, 'run_worker')
+@pytest.mark.asyncio
+async def test_handle_edit_result_without_field_key_shows_error(run_worker_mock: Mock, app):
+    async with app.run_test():
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        widget._handle_edit_result({'content': 'updated text'})
+        run_worker_mock.assert_not_called()
+
+
 @patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
 @patch.object(APIController, 'update_issue')
 @pytest.mark.parametrize(

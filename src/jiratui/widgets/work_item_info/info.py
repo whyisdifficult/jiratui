@@ -81,7 +81,7 @@ class WorkItemInfoContainer(Vertical):
                 # fallback to built-in rudimentary editor
                 self.app.push_screen(
                     EditTextContentScreen(event.content, event.jira_field_key, event.title),
-                    self._update_field,
+                    self._handle_edit_result,
                 )
         event.stop()
 
@@ -90,10 +90,31 @@ class WorkItemInfoContainer(Vertical):
         self.app.push_screen(DisplayTextContentScreen(event.content, event.title))
         event.stop()
 
+    def _handle_edit_result(self, data: dict | None) -> None:
+        """Receives the result from the built-in editor and schedules the API update."""
+        if not data:
+            return
+        if not data.get('jira_field_key'):
+            self.notify(
+                'Unable to save: the field key is missing.',
+                severity='error',
+                title='Update Work Item',
+            )
+            return
+        self.run_worker(self._update_field(data))
+
     async def _update_field(self, data: dict) -> None:
         """Updates the value of a text-based field in the work item."""
 
         if not data or not data.get('jira_field_key'):
+            return
+
+        if not self.issue:
+            self.notify(
+                'No work item is loaded. Select a work item and try again.',
+                severity='error',
+                title='Update Work Item',
+            )
             return
 
         if self._updating_rich_text_is_enabled:
@@ -178,11 +199,15 @@ class WorkItemInfoContainer(Vertical):
                 widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
                 if work_item.rich_text_value_is_empty(work_item.description):  # type:ignore[arg-type]
                     widget = Static(
-                        f'There is no "{field_name}" set. Press "^e" to edit it.', classes='tip'
+                        f'There is no "{field_name}" set. Press "^e" to edit it.',
+                        classes='tip',
+                        id=field_metadata.get('key') or JiraWorkItemFields.DESCRIPTION.value,
+                        name=field_name,
                     )
                 else:
                     widget = build_read_only_rich_text_widget(
-                        jira_field_key=field_metadata.get('key'),
+                        jira_field_key=field_metadata.get('key')
+                        or JiraWorkItemFields.DESCRIPTION.value,
                         field_name=field_name,
                         required=field_metadata.get('required', False),
                         content=work_item.description,
@@ -268,12 +293,12 @@ class WorkItemInfoContainer(Vertical):
                             textarea_widget = Static(
                                 f'There is no "{field_name}" set. Press "^e" to edit it.',
                                 classes='tip',
-                                id=metadata.key,
+                                id=metadata.key or field_id,
                                 name=field_name,
                             )
                         else:
                             textarea_widget = build_read_only_rich_text_widget(
-                                jira_field_key=metadata.key,
+                                jira_field_key=metadata.key or field_id,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=work_item.environment,
@@ -285,12 +310,12 @@ class WorkItemInfoContainer(Vertical):
                             textarea_widget = Static(
                                 f'There is no "{field_name}" set. Press "^e" to edit it.',
                                 classes='tip',
-                                id=metadata.key,
+                                id=metadata.key or field_id,
                                 name=field_name,
                             )
                         else:
                             textarea_widget = build_read_only_rich_text_widget(
-                                jira_field_key=metadata.key,
+                                jira_field_key=metadata.key or field_id,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=field_value,
