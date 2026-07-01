@@ -403,7 +403,7 @@ class WorkItemInfoContainer(Vertical):
                             )
                         else:
                             textarea_widget = build_read_only_rich_text_widget(
-                                jira_field_key=metadata.key or metadata.field_id,
+                                jira_field_key=metadata.key,
                                 field_name=field_name,
                                 required=metadata.required,
                                 content=field_value,
