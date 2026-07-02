@@ -65,6 +65,7 @@ from jiratui.models import (
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.adf import convert_markdown_to_adf
+from jiratui.utils.mentions import expand_mention_tokens
 
 
 @dataclass
@@ -1923,7 +1924,7 @@ class APIController:
 
     def _convert_comment_message_to_adf(self, message: str) -> dict:
         try:
-            return convert_markdown_to_adf(message)
+            return convert_markdown_to_adf(expand_mention_tokens(message))
         except Exception as e:
             self.logger.warning('Failed to convert Markdown to ADF: %s', str(e))
             return {

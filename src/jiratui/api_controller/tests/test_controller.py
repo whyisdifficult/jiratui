@@ -5005,3 +5005,37 @@ async def test_issue_picker_with_error(issue_picker_mock: Mock, jira_api_control
         show_sub_tasks=True,
         current_issue_key=None,
     )
+
+
+def test_convert_comment_message_to_adf_expands_mention_token(
+    jira_api_controller: APIController,
+):
+    # GIVEN a comment containing a picker-generated mention token
+    message = 'Please review @[Homer Simpson](557058:abc-123)'
+    # WHEN
+    adf = jira_api_controller._convert_comment_message_to_adf(message)
+    # THEN the token becomes a proper ADF mention node
+    nodes = [
+        node
+        for paragraph in adf['content']
+        for node in paragraph.get('content', [])
+        if node.get('type') == 'mention'
+    ]
+    assert len(nodes) == 1
+    assert nodes[0]['attrs']['id'] == '557058:abc-123'
+    assert nodes[0]['attrs']['text'] == '@Homer Simpson'
+
+
+def test_convert_comment_message_to_adf_without_mentions(
+    jira_api_controller: APIController,
+):
+    # GIVEN a plain comment (an '@' that is not a token stays literal text)
+    adf = jira_api_controller._convert_comment_message_to_adf('ping user@example.com')
+    # THEN there are no mention nodes
+    nodes = [
+        node
+        for paragraph in adf['content']
+        for node in paragraph.get('content', [])
+        if node.get('type') == 'mention'
+    ]
+    assert nodes == []

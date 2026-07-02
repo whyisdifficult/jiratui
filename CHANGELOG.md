@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add support for mentioning users in comments. Typing `@` (or pressing `ctrl+@`) while writing a comment on
+Jira Cloud (API v3) opens a user search; selecting a user inserts an `@[Name](accountId)` token that is
+submitted as an ADF `mention` node. Resolves [#125](https://github.com/whyisdifficult/jiratui/issues/125).
 - Add support for sessions using `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
 - Add support for remembering the last-used directory when uploading files. This uses `ApplicationSession`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/276
 - Add support for updating worklog entries. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/282

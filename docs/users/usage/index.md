@@ -667,6 +667,18 @@ This image shows a list of comments associated to the selected work item.
 This contains the comments associated to the selected work item. Comments can be deleted by focusing on them and then
 pressing `d`. Comments can be added by pressing `n`.
 
+##### Mentioning users in a comment
+
+While writing a comment you can mention another Jira user. Type `@` (at the start of a word) or press `ctrl+@`
+to open the user search, type part of a name or email, and select a user. The mention is inserted as a
+`@[Display Name](accountId)` token and submitted to Jira as a proper mention, so the mentioned user is
+notified. Press `Esc` to cancel the search (your `@` is kept as normal text).
+
+```{note}
+Mentions are available on Jira Cloud using API v3 (the default), where comments are submitted using the
+Atlassian Document Format (ADF). On Jira Data Center or when using API v2 the `@` search is not shown.
+```
+
 #### Related Work Items
 
 ```{figure} /_static/assets/images/related.png
