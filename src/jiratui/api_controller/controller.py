@@ -2844,10 +2844,11 @@ class APIController:
             )
 
         # set the field value; we expect the field to accept a single option and to always accept the "set" operation
+        payload: dict[str, dict] = {'update': {}}
         if add_flag:
-            payload = {field_configuration.key: [{'set': [{'value': 'Impediment'}]}]}
+            payload['update'] = {field_configuration.key: [{'set': [{'value': 'Impediment'}]}]}
         else:
-            payload = {field_configuration.key: [{'set': [{'id': None}]}]}
+            payload['update'] = {field_configuration.key: [{'set': [{'id': None}]}]}
 
         try:
             # attempt to update the issue to flag it
