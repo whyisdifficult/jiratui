@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-- Fix bug that causes to show the flagged status of a work item even though the item is not flagged. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Fix bug that causes to show the flagged status of a work item even though the item is not flagged. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/289
 
 ## [1.10.0] 2026-07-03
 
