@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.10.0] 2026-07-03
 
 ### Added
 
@@ -23,6 +23,7 @@ textarea-based field in the Info tab. By [@whyisdifficult](https://github.com/wh
 - Fixes a bug when the user tries to add a new work log entry and the work item does not have time tracking data set. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/283
 - Fix bugs in tests after fixing issues with the update of textarea-based fields in the Info tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/286
 - Fix bug when editing textarea-based fields in the Info tab when the fields do not have content. By [@WangLaoShi](https://github.com/WangLaoShi) in https://github.com/whyisdifficult/jiratui/pull/281
+- Fix bug that prevented flagging a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/287
 
 ### Minor Improvements
 

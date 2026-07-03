@@ -4174,7 +4174,7 @@ async def test_update_issue_flagged_status_updating_fails(
     assert result == APIControllerResponse(success=False, error='some error')
     get_fields_mock.assert_called_once_with('flagged')
     update_issue_mock.assert_called_once_with(
-        '1', {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}
+        '1', {'update': {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}}
     )
 
 
@@ -4209,7 +4209,9 @@ async def test_update_issue_flagged_status_updating_fails_when_removing_flag(
     # THEN
     assert result == APIControllerResponse(success=False, error='some error')
     get_fields_mock.assert_called_once_with('flagged')
-    update_issue_mock.assert_called_once_with('1', {'customfield_10021': [{'set': [{'id': None}]}]})
+    update_issue_mock.assert_called_once_with(
+        '1', {'update': {'customfield_10021': [{'set': [{'id': None}]}]}}
+    )
 
 
 @pytest.mark.asyncio
@@ -4251,7 +4253,7 @@ async def test_update_issue_flagged_status_updating_succeeds_with_note(
     )
     get_fields_mock.assert_called_once_with('flagged')
     update_issue_mock.assert_called_once_with(
-        '1', {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}
+        '1', {'update': {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}}
     )
     add_comment_mock.assert_called_once_with('1', 'comment')
 
@@ -4293,7 +4295,7 @@ async def test_update_issue_flagged_status_updating_succeeds_without_note(
     )
     get_fields_mock.assert_called_once_with('flagged')
     update_issue_mock.assert_called_once_with(
-        '1', {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}
+        '1', {'update': {'customfield_10021': [{'set': [{'value': 'Impediment'}]}]}}
     )
     add_comment_mock.assert_not_called()
 
