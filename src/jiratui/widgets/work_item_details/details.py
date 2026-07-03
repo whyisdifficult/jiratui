@@ -307,7 +307,6 @@ class IssueDetailsWidget(Vertical):
         """Hides the loading indicator and shows content."""
         self.loading_container.display = False
         self.content_container.display = True
-        self.work_item_flag_widget.display = True
 
     def compose(self) -> ComposeResult:
         with Center(id='work-item-details-loading-container') as loading_container:
