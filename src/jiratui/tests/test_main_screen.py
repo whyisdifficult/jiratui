@@ -552,10 +552,15 @@ async def test_click_search_button_resets_widgets(
         # THEN
         search_issues_mock.assert_called_once()
         assert main_screen.issue_comments_widget.comments is None
+        assert main_screen.issue_comments_widget._work_item_key is None
         assert main_screen.related_issues_widget.issues is None
+        assert main_screen.related_issues_widget._issue_key is None
         assert main_screen.issue_remote_links_widget.issue_key is None
         assert main_screen.issue_attachments_widget.attachments is None
         assert main_screen.issue_attachments_widget.issue_key is None
+        assert main_screen.issue_child_work_items_widget.issues is None
+        assert main_screen.issue_child_work_items_widget._work_item_key is None
+        assert main_screen.issue_child_work_items_widget._work_item_project_key is None
         assert main_screen.search_results_table.token_by_page == {}
         assert main_screen.search_results_table.page == 1
         assert main_screen.issue_info_container.issue_summary_widget.visible is False

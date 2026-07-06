@@ -12,7 +12,7 @@ from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.models import JiraIssue, RelatedJiraIssue
+from jiratui.models import RelatedJiraIssue
 from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
@@ -200,7 +200,7 @@ class RelatedIssuesWidget(VerticalScroll):
             self.run_worker(self.link_work_items(data))
 
     async def action_link_work_item(self) -> None:
-        """Opens a screen to adda link between two work items."""
+        """Opens a screen to add a link between two work items."""
 
         if self._issue_key:
             await self.app.push_screen(
@@ -209,7 +209,8 @@ class RelatedIssuesWidget(VerticalScroll):
         else:
             self.notify(
                 'Select a work item before attempting to link work items.',
-                title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                title='No item selected',
+                severity='warning',
             )
 
     async def link_work_items(self, data: dict) -> None:
@@ -231,10 +232,9 @@ class RelatedIssuesWidget(VerticalScroll):
             # fetch the issue but only the issue-links field
             response = await application.api.get_issue(self._issue_key, fields=['issuelinks'])
             if response.success and response.result and response.result.issues:
-                work_item: JiraIssue = response.result.issues[0]
                 self.issues = WorkItemRelatedItems(
-                    work_item_key=self._issue_key,
-                    related_items=work_item.related_issues or [],
+                    work_item_key=self._issue_key or '',
+                    related_items=response.result.issues[0].related_issues or [],
                 )
 
     def watch_issues(self, data: WorkItemRelatedItems | None) -> None:
@@ -248,12 +248,12 @@ class RelatedIssuesWidget(VerticalScroll):
             None
         """
 
+        # reset the widget's data
         self.remove_children()
+        self._issue_key = data.work_item_key if data else None
 
         if data is None:
             return
-
-        self._issue_key = data.work_item_key
 
         rows: list[RelatedIssueCollapsible] = []
         issue: RelatedJiraIssue

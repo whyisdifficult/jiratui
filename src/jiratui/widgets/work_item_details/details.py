@@ -378,7 +378,7 @@ class IssueDetailsWidget(Vertical):
                 # set widgets in row 9 - cols 3
                 # yield WorkItemLabelsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
-            yield DynamicFieldsWidgets()
+            yield DynamicFieldsWidgets()  # the container for all the widgets created dynamically
 
     def on_mount(self) -> None:
         """Initializes the autocomplete fields after mounting."""
@@ -541,8 +541,10 @@ class IssueDetailsWidget(Vertical):
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
+            self.time_tracking_container.remove_children()
+            self.dynamic_fields_widgets_container.remove_children()
 
-    def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
+    def _setup_time_tracking(self, time_tracking_data: TimeTracking | None = None) -> None:
         self.time_tracking_container.remove_children(TimeTrackingWidget)
 
         if not time_tracking_data:
@@ -908,7 +910,7 @@ class IssueDetailsWidget(Vertical):
             )
 
         self.issue_created_date_field.value = datetime.strftime(work_item.created, '%Y-%m-%d %H:%M')
-        self.issue_key_field.value = self._work_item_key
+        self.issue_key_field.value = self._work_item_key or ''
         self.project_id_field.value = f'({work_item.project.key}) {work_item.project.name}'
         self.issue_type_field.value = work_item.work_item_type_name
         # set the value of the parent field and determine if it can be edited
@@ -1003,5 +1005,5 @@ class IssueDetailsWidget(Vertical):
             self.notify(
                 'Unable to flag the work item. Missing fields configuration',
                 severity='error',
-                title='Flag Work Item',
+                title='Flagging not supported',
             )

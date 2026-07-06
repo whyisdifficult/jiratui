@@ -1027,7 +1027,7 @@ class MainScreen(Screen):
         # clear the information pane
         self.issue_info_container.clear_information = True
         # clear the details pane
-        self.issue_details_widget.clear_form = True
+        self.issue_details_widget.issue = None
         # clear the comments
         self.issue_comments_widget.comments = None
         # clear related issues
