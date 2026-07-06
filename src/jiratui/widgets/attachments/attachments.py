@@ -295,8 +295,8 @@ class IssueAttachmentsWidget(VerticalScroll):
         else:
             self.notify(
                 'You need to select a work item before attempting to attach a file.',
-                title=self.NOTIFICATIONS_DEFAULT_TITLE,
-                severity='error',
+                title='No item selected',
+                severity='warning',
             )
 
     def upload_attachment(self, content: str) -> None:
@@ -335,9 +335,11 @@ class IssueAttachmentsWidget(VerticalScroll):
     def watch_attachments(self, data: WorkItemAttachments | None) -> None:
         """Updates the table that displays the attached files with new attachments."""
 
+        # reset the widget's data
         self.remove_children()
         self.issue_key = data.work_item_key if data else None
-        if data and data.attachments:
+
+        if self.issue_key and data and data.attachments:
             table = AttachmentsDataTable(self.issue_key)
             table.add_columns(*['File Name', 'Size (KB)', 'Added', 'Author', 'Type'])
             item: Attachment

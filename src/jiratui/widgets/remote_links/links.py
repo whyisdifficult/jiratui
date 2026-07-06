@@ -142,7 +142,7 @@ class IssueRemoteLinksWidget(VerticalScroll):
         else:
             self.notify(
                 'Select a work item before attempting to add a link.',
-                title=self.NOTIFICATIONS_DEFAULT_TITLE,
+                title='No item selected',
                 severity='warning',
             )
 

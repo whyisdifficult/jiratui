@@ -311,6 +311,29 @@ async def test_related_issues_widget_set_issues(
             ],
         )
         assert len(list(widget.query_children(RelatedIssueCollapsible))) == 2
+        assert widget._issue_key == 'WI-1'
+
+
+@patch('jiratui.widgets.related_work_items.related_issues.build_external_url_for_issue')
+@pytest.mark.asyncio
+async def test_related_issues_widget_set_issues_to_none(
+    build_external_url_for_issue_mock: Mock,
+    app,
+):
+    """When the issues attribute is set to None then the list of collapsible is empty and the attribute_issue_key is set
+    to None."""
+    # GIVEN
+    build_external_url_for_issue_mock.return_value = 'foo.bar'
+    async with app.run_test():
+        widget = RelatedIssuesWidget()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.issues = None
+        # THEN
+        assert widget.issues is None
+        assert len(list(widget.query_children(RelatedIssueCollapsible))) == 0
+        assert widget._issue_key is None
 
 
 @pytest.mark.asyncio

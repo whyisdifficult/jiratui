@@ -175,7 +175,11 @@ class IssueCommentsWidget(VerticalScroll):
         if self._work_item_key:
             self.app.push_screen(AddCommentScreen(self._work_item_key), self._save_comment)
         else:
-            self.notify('Select a work item before attempting to add a comment.', title='Comments')
+            self.notify(
+                'Select a work item before attempting to add a comment.',
+                title='No item selected',
+                severity='warning',
+            )
 
     def _save_comment(self, content: str) -> None:
         if content and content.strip():

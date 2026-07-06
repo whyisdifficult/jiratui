@@ -156,7 +156,9 @@ class IssueChildWorkItemsWidget(VerticalScroll):
             )
         else:
             self.notify(
-                'Select a work item before attempting to create a subtask.', title='Create Subtask'
+                'Select a work item before attempting to create a subtask.',
+                title='No item selected',
+                severity='warning',
             )
 
     def watch_issues(self, work_item_subtasks: WorkItemSubtasks | None = None) -> None:
@@ -170,7 +172,10 @@ class IssueChildWorkItemsWidget(VerticalScroll):
             None
         """
 
+        # reset the widget's data
         self.remove_children()
+        self._work_item_key = None
+        self._work_item_project_key = None
 
         if work_item_subtasks is None:
             return

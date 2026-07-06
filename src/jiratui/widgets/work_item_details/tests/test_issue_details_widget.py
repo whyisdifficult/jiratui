@@ -1101,6 +1101,8 @@ async def test_clear_form(app: JiraApp):
         assert details_widget._work_item_is_flagged is None
         assert details_widget._issue_supports_flagging is True
         assert details_widget.work_item_flag_widget.show is False
+        assert len(details_widget.time_tracking_container.children) == 0
+        assert len(details_widget.dynamic_fields_widgets_container.children) == 0
 
 
 @patch.object(APIController, 'update_issue')

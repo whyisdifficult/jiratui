@@ -468,6 +468,12 @@ class JiraIssue(JiraBaseIssue):
         return ''
 
     @property
+    def updated_on(self) -> str:
+        if self.updated:
+            return datetime.strftime(self.updated, '%Y-%m-%d %H:%M')
+        return ''
+
+    @property
     def display_due_date(self) -> str:
         if self.due_date:
             return datetime.strftime(self.due_date, '%Y-%m-%d')

@@ -54,7 +54,6 @@ Dependencies:
 """
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, cast
 
 from textual.app import ComposeResult
@@ -378,7 +377,7 @@ class IssueDetailsWidget(Vertical):
                 # set widgets in row 9 - cols 3
                 # yield WorkItemLabelsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
-            yield DynamicFieldsWidgets()
+            yield DynamicFieldsWidgets()  # the container for all the widgets created dynamically
 
     def on_mount(self) -> None:
         """Initializes the autocomplete fields after mounting."""
@@ -493,7 +492,9 @@ class IssueDetailsWidget(Vertical):
                 return
 
     def _setup_priority_selector(
-        self, issue_edit_meta: dict | None, issue_priority: IssuePriority
+        self,
+        issue_edit_meta: dict | None,
+        issue_priority: IssuePriority | None = None,
     ) -> None:
         if issue_edit_meta:
             # the issue may not support priority, for example Epics. In that case disable the select widget
@@ -541,8 +542,10 @@ class IssueDetailsWidget(Vertical):
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
+            self.time_tracking_container.remove_children()
+            self.dynamic_fields_widgets_container.remove_children()
 
-    def _setup_time_tracking(self, time_tracking_data: TimeTracking) -> None:
+    def _setup_time_tracking(self, time_tracking_data: TimeTracking | None = None) -> None:
         self.time_tracking_container.remove_children(TimeTrackingWidget)
 
         if not time_tracking_data:
@@ -896,19 +899,12 @@ class IssueDetailsWidget(Vertical):
         self.reporter_selector.update_enabled = editable_fields.get('reporter')
 
         # set the value of the form fields based on the work item's data
-        if work_item.resolution_date:
-            self.issue_resolution_date_field.value = datetime.strftime(
-                work_item.resolution_date, '%Y-%m-%d %H:%M'
-            )
+        self.issue_last_update_date_field.value = work_item.updated_on
+        self.issue_created_date_field.value = work_item.created_on
+        self.issue_resolution_date_field.value = work_item.resolved_on
         if work_item.resolution:
             self.issue_resolution_field.value = work_item.resolution
-        if work_item.updated:
-            self.issue_last_update_date_field.value = datetime.strftime(
-                work_item.updated, '%Y-%m-%d %H:%M'
-            )
-
-        self.issue_created_date_field.value = datetime.strftime(work_item.created, '%Y-%m-%d %H:%M')
-        self.issue_key_field.value = self._work_item_key
+        self.issue_key_field.value = self._work_item_key or ''
         self.project_id_field.value = f'({work_item.project.key}) {work_item.project.name}'
         self.issue_type_field.value = work_item.work_item_type_name
         # set the value of the parent field and determine if it can be edited
@@ -1003,5 +999,5 @@ class IssueDetailsWidget(Vertical):
             self.notify(
                 'Unable to flag the work item. Missing fields configuration',
                 severity='error',
-                title='Flag Work Item',
+                title='Flagging not supported',
             )
