@@ -10,7 +10,7 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 
-from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI
+from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI, JiraSoftwareCloudAPI
 from jiratui.api_controller.constants import (
     MAXIMUM_PAGE_NUMBER_LIST_GROUPS,
     MAXIMUM_PAGE_NUMBER_SEARCH_PROJECTS,
@@ -27,7 +27,6 @@ from jiratui.constants import (
     ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES,
     DEFAULT_JIRA_API_VERSION,
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
-    LOGGER_NAME,
 )
 from jiratui.exceptions import (
     ServiceInvalidResponseException,
@@ -36,6 +35,8 @@ from jiratui.exceptions import (
     ValidationError,
 )
 from jiratui.models import (
+    AgileSprint,
+    AgileSprintState,
     Attachment,
     BaseModel,
     IssueComment,
@@ -89,6 +90,7 @@ class APIController:
         # initialize the API depending on whether we are connecting to Jira Cloud or Jira DC platform
         if self.config.cloud:
             if self.api_version == 2:
+                # sets up the Jira Cloud Platform REST API v2
                 self.api = JiraAPIv2(
                     base_url=self.config.jira_api_base_url,
                     api_username=self.config.jira_api_username,
@@ -96,6 +98,7 @@ class APIController:
                     configuration=self.config,
                 )
             else:
+                # sets up the Jira Cloud Platform REST API v3
                 self.api = JiraAPI(
                     base_url=self.config.jira_api_base_url,
                     api_username=self.config.jira_api_username,
@@ -103,14 +106,23 @@ class APIController:
                     configuration=self.config,
                 )
         else:
+            # sets up the JIRA Server platform REST API
             self.api = JiraDataCenterAPI(
                 base_url=self.config.jira_api_base_url,
                 api_username=self.config.jira_api_username,
                 api_token=self.config.jira_api_token.get_secret_value(),
                 configuration=self.config,
             )
+        # set up the Jira Software Cloud REST API. This API is used to retrieve certain information from Jira that is
+        # not available in the Jira Cloud Platform or Jira DC APIs.
+        self.jira_software_cloud_api = JiraSoftwareCloudAPI(
+            base_url=self.config.jira_api_base_url,
+            api_username=self.config.jira_api_username,
+            api_token=self.config.jira_api_token.get_secret_value(),
+            configuration=self.config,
+        )
         self.skip_users_without_email = self.config.ignore_users_without_email
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._required_fields_cache: dict[str, list[str]] = {}
 
     def _adf_support_enabled(self) -> bool:
@@ -122,6 +134,56 @@ class APIController:
         error_messages = extra.get('errorMessages', [])
         message = error_messages[0] if error_messages else str(exception)
         return {'message': message, 'extra': extra}
+
+    # Projects
+
+    async def get_project_sprints(self, key: str) -> APIControllerResponse:
+        """Retrieves the active and future sprints for a project/space.
+
+        This uses the [Jira Software Cloud REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/).
+
+        Args:
+            key: the key or Id of a project/space in Jira.
+
+        Returns:
+            An instance of APIControllerResponse with the list of sprints in the project. If an error occurs then it
+            returns an instance of APIControllerResponse with success == False an error message.
+        """
+
+        try:
+            response: list[dict] = await self.jira_software_cloud_api.get_project_sprints(
+                key, state=','.join([AgileSprintState.ACTIVE.value, AgileSprintState.FUTURE.value])
+            )
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve the sprints in the project',
+                extra={
+                    'key': key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        sprints: list[AgileSprint] = []
+        for item in response:
+            sprints.append(
+                AgileSprint(
+                    id=int(item.get('id')),
+                    name=item.get('name'),
+                    state=AgileSprintState(item.get('state')),
+                    goal=item.get('goal', ''),
+                    start_date=isoparse(item.get('startDate')) if item.get('startDate') else None,
+                    end_date=isoparse(item.get('endDate')) if item.get('endDate') else None,
+                    complete_date=isoparse(item.get('completeDate'))
+                    if item.get('completeDate')
+                    else None,
+                    origin_board_id=int(item.get('originBoardId'))
+                    if item.get('originBoardId') is not None
+                    else None,
+                )
+            )
+        return APIControllerResponse(result=sprints)
 
     async def get_project(self, key: str) -> APIControllerResponse:
         """Retrieves the details of a project by key.
@@ -279,7 +341,7 @@ class APIController:
             )
         return APIControllerResponse(result=statuses)
 
-    # USERS GROUPS METHODS
+    # Users & Groups
 
     async def find_groups(
         self,
@@ -420,76 +482,6 @@ class APIController:
             result=sorted(users, key=lambda x: x.display_name or x.email or x.account_id)
         )
 
-    # WORK ITEM TYPES
-
-    async def get_issue_types_for_project(self, project_key: str) -> APIControllerResponse:
-        """Retrieves the types of issues associated to a project.
-
-        Args:
-            project_key: the ID or (case-sensitive) key of the project whose issue types we want to retrieve.
-
-        Returns:
-            An instance of `APIControllerResponse` with the list of `IssueType` instances. If an error occurs an
-            instance of `APIControllerResponse` with the `error` message.
-        """
-        try:
-            project: dict = await self.api.get_project(project_key)
-        except Exception as e:
-            exception_details: dict = self._extract_exception_details(e)
-            self.logger.error(
-                'Unable to find issue types for the given project',
-                extra={
-                    'project_key': project_key,
-                    **exception_details.get('extra', {}),
-                },
-            )
-            return APIControllerResponse(success=False, error=exception_details.get('message'))
-        return APIControllerResponse(
-            result=[
-                IssueType(id=str(item.get('id')), name=item.get('name'))
-                for item in project.get('issueTypes', []) or []
-            ]
-        )
-
-    async def get_issue_types(self) -> APIControllerResponse:
-        """Retrieves all the types of issues relevant for any project.
-
-        Warning: this may contain multiple issue types with the same name (different IDs though).
-
-        Returns:
-            An instance of `APIControllerResponse` with the list of `IssueType` instances. If an error occurs an
-            instance of `APIControllerResponse` with the `error` message.
-        """
-        try:
-            response: list[dict] = await self.api.get_issue_types_for_user()
-        except Exception as e:
-            exception_details: dict = self._extract_exception_details(e)
-            self.logger.error(
-                'Unable to find issue types', extra=exception_details.get('extra', {})
-            )
-            return APIControllerResponse(success=False, error=exception_details.get('message'))
-        else:
-            projects_by_id: dict[str, Project] = {}
-            projects: APIControllerResponse = await self.search_projects()
-            if projects.success:
-                # group projects by ID
-                projects_by_id = {p.id: p for p in projects.result or []}
-
-            result: list[IssueType] = []
-            for item in response:
-                scope_project: Project | None = None
-                if (scope := item.get('scope', {})) and scope.get('type').lower() == 'project':
-                    scope_project = projects_by_id.get(str(scope.get('project').get('id')))
-
-                result.append(
-                    IssueType(
-                        id=str(item.get('id')),
-                        name=item.get('name'),
-                        scope_project=scope_project,
-                    )
-                )
-            return APIControllerResponse(result=result)
-
     async def search_users(self, email_or_name: str) -> APIControllerResponse:
         """Searches users by email or name.
 
@@ -520,14 +512,16 @@ class APIController:
             email = user.get('emailAddress')
             if self.skip_users_without_email and not email:
                 continue
+            if not user.get('accountId') and not user.get('name'):
+                continue
             users.append(
                 JiraUser(
                     email=email,
                     account_id=user.get('accountId')
                     if self.config.cloud is True
                     else user.get('name'),
-                    active=user.get('active'),
-                    display_name=user.get('displayName'),
+                    active=user.get('active', True),
+                    display_name=user.get('displayName', ''),
                     username=user.get('name') if not self.config.cloud else None,
                 )
             )
@@ -741,6 +735,76 @@ class APIController:
                     username=response.get('name') if not self.config.cloud else None,
                 )
             )
+
+    # Work Items (aka. Issues)
+
+    async def get_issue_types_for_project(self, project_key: str) -> APIControllerResponse:
+        """Retrieves the types of issues associated to a project.
+
+        Args:
+            project_key: the ID or (case-sensitive) key of the project whose issue types we want to retrieve.
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `IssueType` instances. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message.
+        """
+        try:
+            project: dict = await self.api.get_project(project_key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to find issue types for the given project',
+                extra={
+                    'project_key': project_key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse(
+            result=[
+                IssueType(id=str(item.get('id')), name=item.get('name'))
+                for item in project.get('issueTypes', []) or []
+            ]
+        )
+
+    async def get_issue_types(self) -> APIControllerResponse:
+        """Retrieves all the types of issues relevant for any project.
+
+        Warning: this may contain multiple issue types with the same name (different IDs though).
+
+        Returns:
+            An instance of `APIControllerResponse` with the list of `IssueType` instances. If an error occurs an
+            instance of `APIControllerResponse` with the `error` message.
+        """
+        try:
+            response: list[dict] = await self.api.get_issue_types_for_user()
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to find issue types', extra=exception_details.get('extra', {})
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        else:
+            projects_by_id: dict[str, Project] = {}
+            projects: APIControllerResponse = await self.search_projects()
+            if projects.success:
+                # group projects by ID
+                projects_by_id = {p.id: p for p in projects.result or []}
+
+            result: list[IssueType] = []
+            for item in response:
+                scope_project: Project | None = None
+                if (scope := item.get('scope', {})) and scope.get('type').lower() == 'project':
+                    scope_project = projects_by_id.get(str(scope.get('project').get('id')))
+
+                result.append(
+                    IssueType(
+                        id=str(item.get('id')),
+                        name=item.get('name'),
+                        scope_project=scope_project,
+                    )
+                )
+            return APIControllerResponse(result=result)
 
     async def delete_work_item(self, issue_id_or_key: str) -> APIControllerResponse:
         """Deletes a work item.
@@ -1189,6 +1253,8 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         return APIControllerResponse(result=int(response.get('count', 0)))
+
+    # Work Items Web Links
 
     async def get_issue_remote_links(
         self, issue_key_or_id: str, global_id: str | None = None
@@ -1816,6 +1882,8 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
 
+    # Comments
+
     async def get_comment(self, issue_key_or_id: str, comment_id: str) -> APIControllerResponse:
         """Retrieves the details of a comment.
 
@@ -2005,6 +2073,8 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse()
+
+    # Work Items Links
 
     async def link_work_items(
         self,
@@ -2261,6 +2331,8 @@ class APIController:
                 # the caller is responsible for proper formatting
                 fields[field_key] = field_value
 
+        self.logger.info(fields)
+
         try:
             result: dict = await self.api.create_work_item(fields)
         except Exception as e:
@@ -2297,6 +2369,8 @@ class APIController:
         return APIControllerResponse(
             result=JiraBaseIssue(id=result.get('id'), key=result.get('key'))
         )
+
+    # Attachments
 
     def add_attachment(self, issue_key_or_id: str, filename: str) -> APIControllerResponse:
         """Adds a file attachment to a work item.
@@ -2427,6 +2501,8 @@ class APIController:
                 },
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+    # Worklogs
 
     async def get_work_item_worklog(
         self,

@@ -19,6 +19,7 @@ from jiratui.widgets.commons.widgets import (
     PlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -26,7 +27,7 @@ from jiratui.widgets.commons.widgets import (
 
 
 def create_widgets_for_work_item_creation(
-    data: list[dict],
+    data: list[dict[str, Any]],
     api_controller: APIController | None = None,
     adf_support_enabled: bool = True,
 ) -> list[Widget]:
@@ -73,8 +74,8 @@ def create_widgets_for_work_item_creation(
         if field_id == 'duedate':
             widget = DateInputWidget(
                 mode=FieldMode.CREATE,
-                field_id=item.get('fieldId') or '',
-                jira_field_key=item.get('fieldId'),
+                field_id=field_id or '',
+                jira_field_key=field_id,
                 title='Due Date',
                 required=required,
             )
@@ -110,13 +111,26 @@ def create_widgets_for_work_item_creation(
                 )
                 widget.tooltip = f'{item.get("name")} (Tip: to ignore use id: {field_id})'
             elif custom_type == CustomFieldType.SPRINT.value:
-                widget = SprintWidget(
-                    mode=FieldMode.CREATE,
-                    field_id=field_id or '',
-                    jira_field_key=item.get('key') or field_id,
-                    title=item.get('name'),
-                    required=required,
-                )
+                if config.cloud:
+                    widget = SprintSelectionWidget(
+                        mode=FieldMode.CREATE,
+                        field_id=field_id or '',
+                        jira_field_key=item.get('key') or field_id,
+                        options=[],
+                        title=item.get('name'),
+                        required=bool(required),
+                        initial_value=Select.NULL,
+                        allow_blank=True,
+                        prompt=f'Select {item.get("name")}',
+                    )
+                else:
+                    widget = SprintWidget(
+                        mode=FieldMode.CREATE,
+                        field_id=field_id or '',
+                        jira_field_key=item.get('key') or field_id,
+                        title=item.get('name'),
+                        required=required,
+                    )
                 widget.tooltip = f'{item.get("name")} (Tip: to ignore use id: {field_id})'
             elif custom_type == CustomFieldType.FLOAT.value or (
                 schema_type and schema_type.lower() == 'number'
@@ -170,7 +184,7 @@ def create_widgets_for_work_item_creation(
                 widget.border_title = item.get('name')
             elif 'allowedValues' in item:
                 # the field supports pre-defined values
-                if not (allowed_values := item.get('allowedValues')):
+                if not (allowed_values := item.get('allowedValues', [])):
                     # if the field does not have any pre-defined values then the field can not be use for creating a
                     # work item because we don't know the possible allowed values to choose from; Jira admins need to
                     # pre-define the values first
