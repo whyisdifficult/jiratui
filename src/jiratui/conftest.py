@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 from pydantic import SecretStr
 import pytest
 
-from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI
+from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI, JiraSoftwareCloudAPI
 from jiratui.api_controller.controller import APIController
 from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
@@ -213,18 +213,23 @@ def issue_types() -> list[IssueType]:
 
 
 @pytest.fixture
-def jira_api(config_for_testing) -> JiraAPI:
+def jira_api(config_for_testing: ApplicationConfiguration) -> JiraAPI:
     return JiraAPI('https://foo.bar', 'foo', 'bar', config_for_testing)
 
 
 @pytest.fixture
-def jira_api_v2(config_for_testing) -> JiraAPIv2:
+def jira_api_v2(config_for_testing: ApplicationConfiguration) -> JiraAPIv2:
     return JiraAPIv2('https://foo.bar', 'foo', 'bar', config_for_testing)
 
 
 @pytest.fixture
-def jira_api_dc(config_for_testing_jira_dc) -> JiraDataCenterAPI:
+def jira_api_dc(config_for_testing_jira_dc: ApplicationConfiguration) -> JiraDataCenterAPI:
     return JiraDataCenterAPI('https://foo.bar', 'foo', 'bar', config_for_testing_jira_dc)
+
+
+@pytest.fixture
+def jira_api_software_cloud(config_for_testing: ApplicationConfiguration) -> JiraSoftwareCloudAPI:
+    return JiraSoftwareCloudAPI('https://foo.bar', 'foo', 'bar', config_for_testing)
 
 
 @pytest.fixture

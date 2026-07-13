@@ -7,6 +7,7 @@ help:
 	@echo "  lint                       - Lint the code"
 	@echo "  lint-fix                   - Lint the code and apply fixes"
 	@echo "  test                       - Run tests"
+	@echo "  coverage                   - Generate coverage report"
 	@echo "  docs-live                  - Generate documentation with live reload"
 	@echo "  docs-markdown              - Generate documentation in Markdown format"
 	@echo "  docs-html                  - Generate documentation in HTML format"
@@ -41,6 +42,10 @@ lint-fix:
 .PHONY: test
 test:
 	uv run --no-sync pytest src/jiratui
+
+.PHONY: coverage
+coverage:
+	pytest --cov=src/jiratui --cov-report=term-missing src/jiratui/
 
 .PHONY: docs-live
 docs-live:

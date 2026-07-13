@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, datetime
 from io import BufferedReader
 import json
@@ -1998,10 +1999,11 @@ class JiraSoftwareCloudAPI:
             A list of dictionaries with the details of every sprint found.
         """
 
+        tasks = [self.get_board_sprints(board_id, state=state) for board_id in board_ids]
+        responses = await asyncio.gather(*tasks)
         sprints: list[dict] = []
-        for board_id in board_ids:
-            response = await self.get_board_sprints(board_id, state=state)
-            if response and (values := response.get('values', [])):
+        for response in responses:
+            if values := response.get('values', []):
                 sprints.extend(values)
         return sprints
 
@@ -2022,9 +2024,11 @@ class JiraSoftwareCloudAPI:
         project_boards: dict = await self.get_boards(project_key_or_id=project_key_or_id)
         if project_boards and (boards := project_boards.get('values', [])):
             sprints: list[dict] = []
-            for board_id in [board.get('id') for board in boards]:
-                response = await self.get_board_sprints(board_id, state=state)
-                if response and (values := response.get('values', [])):
+            board_ids: list[int] = [board.get('id') for board in boards]
+            tasks = [self.get_board_sprints(board_id, state=state) for board_id in board_ids]
+            responses = await asyncio.gather(*tasks)
+            for response in responses:
+                if values := response.get('values', []):
                     sprints.extend(values)
             return sprints
         return []

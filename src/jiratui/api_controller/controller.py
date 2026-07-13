@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 import dataclasses
 from dataclasses import dataclass
@@ -142,47 +143,83 @@ class APIController:
 
         This uses the [Jira Software Cloud REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/).
 
+        To retrieve the sprints in the given project this method first retrieves the project's boards. Then, it
+        retrieves the active and future sprints in every board.
+
         Args:
             key: the key or Id of a project/space in Jira.
 
         Returns:
-            An instance of APIControllerResponse with the list of sprints in the project. If an error occurs then it
+            An instance of APIControllerResponse with the list of AgileSprint in the project. If an error occurs then it
             returns an instance of APIControllerResponse with success == False an error message.
         """
 
         try:
-            response: list[dict] = await self.jira_software_cloud_api.get_project_sprints(
-                key, state=','.join([AgileSprintState.ACTIVE.value, AgileSprintState.FUTURE.value])
+            boards_in_project_response: dict = await self.jira_software_cloud_api.get_boards(
+                project_key_or_id=key
             )
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'Unable to retrieve the sprints in the project',
+                'Unable to retrieve the boards of the project',
                 extra={
-                    'key': key,
+                    'project_key': key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        if not boards_in_project_response or not (
+            boards_in_project := boards_in_project_response.get('values', [])
+        ):
+            return APIControllerResponse(result=[])
+
+        # get the sprints in every board
+        boards_by_id: dict[int, dict] = {board.get('id'): board for board in boards_in_project}
+        state = ','.join([AgileSprintState.ACTIVE.value, AgileSprintState.FUTURE.value])
+        tasks = [
+            self.jira_software_cloud_api.get_board_sprints(board_id, state=state)
+            for board_id in boards_by_id.keys()
+        ]
+        try:
+            sprints_in_board_responses = await asyncio.gather(*tasks)
+        except Exception as e:
+            exception_details = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve the sprints on every board in the project',
+                extra={
+                    'project_key': key,
                     **exception_details.get('extra', {}),
                 },
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
         sprints: list[AgileSprint] = []
-        for item in response:
-            sprints.append(
-                AgileSprint(
-                    id=int(item.get('id')),
-                    name=item.get('name'),
-                    state=AgileSprintState(item.get('state')),
-                    goal=item.get('goal', ''),
-                    start_date=isoparse(item.get('startDate')) if item.get('startDate') else None,
-                    end_date=isoparse(item.get('endDate')) if item.get('endDate') else None,
-                    complete_date=isoparse(item.get('completeDate'))
-                    if item.get('completeDate')
-                    else None,
-                    origin_board_id=int(item.get('originBoardId'))
-                    if item.get('originBoardId') is not None
-                    else None,
+        for item in sprints_in_board_responses:
+            for sprint in item.get('values', []):
+                sprints.append(
+                    AgileSprint(
+                        id=int(sprint.get('id')),
+                        name=sprint.get('name'),
+                        state=AgileSprintState(sprint.get('state')),
+                        goal=sprint.get('goal', ''),
+                        start_date=isoparse(sprint.get('startDate'))
+                        if sprint.get('startDate')
+                        else None,
+                        end_date=isoparse(sprint.get('endDate')) if sprint.get('endDate') else None,
+                        complete_date=isoparse(sprint.get('completeDate'))
+                        if sprint.get('completeDate')
+                        else None,
+                        origin_board_id=int(sprint.get('originBoardId'))
+                        if sprint.get('originBoardId') is not None
+                        else None,
+                        origin_board_name=(
+                            boards_by_id.get(int(sprint.get('originBoardId')), {}).get('name')
+                            if sprint.get('originBoardId') is not None
+                            else None
+                        ),
+                    )
                 )
-            )
         return APIControllerResponse(result=sprints)
 
     async def get_project(self, key: str) -> APIControllerResponse:
@@ -220,7 +257,7 @@ class APIController:
         self,
         query: str | None = None,
         order_by: str | None = None,
-        keys: list[str] = None,
+        keys: list[str] | None = None,
     ) -> APIControllerResponse:
         """Searches for projects using different filters.
 

@@ -28,7 +28,7 @@ from textual.widgets import (
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.models import IssueType, JiraIssue, Project
+from jiratui.models import AgileSprint, IssueType, JiraIssue, Project
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import (
@@ -499,14 +499,16 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         This also:
         - updates the status of the "Save" button.
-        - remove all the panes used for displaying textarea-based field widgets.
+        - removes all the panes used for displaying textarea-based field widgets.
+        - retrieves the project's active and future sprints and stores them in the application's session.
 
         Returns:
-            None.
+            None
         """
 
         self.run_worker(self.fetch_available_issue_types(self.project_selector.selection))
-        self.run_worker(self._fetch_project_sprints(self.project_selector.selection))
+        if self.project_selector.selection:
+            self.run_worker(self._fetch_sprints_in_project(self.project_selector.selection))
         # clean up the panes that contain textarea-based widgets
         self.additional_fields.remove_children()
         self.save_button.disabled = not self._validate_required_fields()
@@ -518,7 +520,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         This also updates the status of the "Save" button.
 
         Returns:
-            None.
+            None
         """
 
         if self.project_selector.selection and self.issue_type_selector.selection:
@@ -657,7 +659,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     for sprint_widget in sprint_selection_widgets:
                         sprint_widget.set_options(sprints)
 
-    async def _fetch_project_sprints(self, key: str | None = None) -> None:
+    async def _fetch_sprints_in_project(self, key: str | None = None) -> None:
         """Fetches the sprints of a project and update the data in the application's session.
 
         This function attempts to get the data from the application's session to avoid making unnecessary API
@@ -676,7 +678,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         sprints: dict[str, list] | None = application.session.get('sprints')
         if not sprints or not sprints.get(key):
-            response = await self.app.api.get_project_sprints(key)
+            sprints_in_project: list[AgileSprint] | None
+            response: APIControllerResponse = await self.app.api.get_project_sprints(key)
             if response.success and (sprints_in_project := response.result):
                 if not sprints:
                     application.session.sprints = {key: sprints_in_project}

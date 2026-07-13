@@ -26,6 +26,16 @@ from jiratui.widgets.commons.widgets import (
 )
 
 
+def _uses_cloud_api() -> bool:
+    config = CONFIGURATION.get()
+    return config.cloud
+
+
+def _creating_additional_fields_widgets_is_enabled() -> bool:
+    config = CONFIGURATION.get()
+    return config.enable_creating_additional_fields
+
+
 def create_widgets_for_work_item_creation(
     data: list[dict[str, Any]],
     api_controller: APIController | None = None,
@@ -51,7 +61,7 @@ def create_widgets_for_work_item_creation(
     widgets: list[Widget] = []
     config = CONFIGURATION.get()
     ignore_list = config.create_additional_fields_ignore_ids or []
-    enable_additional = config.enable_creating_additional_fields
+    enable_additional = _creating_additional_fields_widgets_is_enabled()
 
     for item in data:
         field_id: str = item.get('fieldId')
@@ -111,7 +121,7 @@ def create_widgets_for_work_item_creation(
                 )
                 widget.tooltip = f'{item.get("name")} (Tip: to ignore use id: {field_id})'
             elif custom_type == CustomFieldType.SPRINT.value:
-                if config.cloud:
+                if _uses_cloud_api():
                     widget = SprintSelectionWidget(
                         mode=FieldMode.CREATE,
                         field_id=field_id or '',

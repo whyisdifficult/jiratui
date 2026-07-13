@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.config import ApplicationConfiguration
 from jiratui.models import IssueType, JiraIssueSearchResponse, Project
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
@@ -16,6 +17,7 @@ from jiratui.widgets.commons.widgets import (
     PlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -956,7 +958,7 @@ async def test_jira_field_key(
 
 
 def test_create_widgets_for_work_item_creation_additional_fields_with_adf_support_enabled(
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
@@ -1249,7 +1251,7 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10020':
             assert widget.jira_field_key == 'customfield_10020'
-            assert isinstance(widget, SprintWidget)
+            assert isinstance(widget, SprintSelectionWidget)
         elif widget.id == 'customfield_10021':
             assert widget.jira_field_key == 'customfield_10021'
             assert isinstance(widget, MultiSelectWidget)
@@ -1280,8 +1282,41 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
     assert len(widgets) == 15
 
 
+def test_create_widgets_for_work_item_creation_with_sprint_widget(
+    config_for_testing_jira_dc: ApplicationConfiguration,
+):
+    # GIVEN
+    fields = [
+        {
+            'required': True,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    ]
+    # WHEN
+    with patch('jiratui.widgets.create_work_item.factory._uses_cloud_api') as uses_cloud_api_mock:
+        uses_cloud_api_mock.return_value = False
+        widgets = create_widgets_for_work_item_creation(fields, None, True)
+    # THEN
+    for widget in widgets:
+        assert widget.jira_field_key is not None
+        if widget.id == 'customfield_10020':
+            assert widget.jira_field_key == 'customfield_10020'
+            assert isinstance(widget, SprintWidget)
+    assert len(widgets) == 1
+
+
 def test_create_widgets_for_work_item_creation_additional_fields_without_adf_support_enabled(
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
@@ -1574,7 +1609,7 @@ def test_create_widgets_for_work_item_creation_additional_fields_without_adf_sup
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10020':
             assert widget.jira_field_key == 'customfield_10020'
-            assert isinstance(widget, SprintWidget)
+            assert isinstance(widget, SprintSelectionWidget)
         elif widget.id == 'customfield_10021':
             assert widget.jira_field_key == 'customfield_10021'
             assert isinstance(widget, MultiSelectWidget)
