@@ -1,10 +1,19 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
+from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
+from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
-from jiratui.models import IssueType, JiraIssueSearchResponse, Project
+from jiratui.models import (
+    AgileSprint,
+    AgileSprintState,
+    IssueType,
+    JiraIssueSearchResponse,
+    Project,
+)
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
@@ -1979,6 +1988,347 @@ async def test_save_button_status_after_project_selection(
         screen.handle_project_selection()
         # THEN
         assert screen.save_button.disabled is not validate_required_fields
+
+
+@patch.object(AddWorkItemScreen, '_fetch_sprints_in_project')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_not_called_when_project_selection_is_none(
+    fetch_available_issue_types_mock: Mock,
+    fetch_sprints_in_project_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    fetch_available_issue_types_mock.return_value = None
+    fetch_sprints_in_project_mock.return_value = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen.project_selector.value = Select.NULL
+        # WHEN
+        screen.handle_project_selection()
+        # THEN
+        fetch_sprints_in_project_mock.assert_not_called()
+        fetch_available_issue_types_mock.assert_called_with(None)
+
+
+@patch.object(AddWorkItemScreen, '_fetch_sprints_in_project')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_called_when_project_selection_is_not_none(
+    fetch_available_issue_types_mock: Mock,
+    fetch_sprints_in_project_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    fetch_available_issue_types_mock.return_value = None
+    fetch_sprints_in_project_mock.return_value = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen.project_selector.projects = {
+            'projects': [Project(id='1', key='TEST', name='Project 1')],
+            'selection': 'TEST',
+        }
+        # WHEN
+        screen.handle_project_selection()
+        # THEN
+        fetch_sprints_in_project_mock.assert_called_with('TEST')
+        fetch_available_issue_types_mock.assert_called_with('TEST')
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_sprints_in_session(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={'P2': []}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_project_sprints_in_session(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_without_project_key(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_not_called()
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_project_sprints_in_session_fetching_returns_sprints(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    app.session.sprints = {}
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+        assert app.session.sprints.get('P1') == [
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+        app.session.clear()
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_sprints_in_session_fetching_returns_sprints(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    app.session.sprints = {
+        'P2': [
+            AgileSprint(
+                id=10,
+                name='sprint 10',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 10 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=1,
+                origin_board_name='scrum board',
+            )
+        ]
+    }
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+        assert app.session.sprints.get('P1') == [
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+        assert app.session.sprints.get('P2') == [
+            AgileSprint(
+                id=10,
+                name='sprint 10',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 10 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=1,
+                origin_board_name='scrum board',
+            )
+        ]
+        app.session.clear()
+
+
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_get_sprints_in_project_without_project_key(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    app: JiraApp,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._get_sprints_in_project('')
+        # THEN
+        assert result == []
+
+
+@pytest.mark.parametrize(
+    'sprints_in_session, expected_result',
+    [
+        (
+            {
+                'P1': [
+                    AgileSprint(
+                        id=10,
+                        name='sprint 10',
+                        state=AgileSprintState.ACTIVE,
+                        goal='sprint 10 goal',
+                        start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                        end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                        complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                        origin_board_id=1,
+                        origin_board_name='scrum board',
+                    )
+                ]
+            },
+            [('(ACTIVE) scrum board - sprint 10', '10')],
+        ),
+        ({}, []),
+    ],
+)
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_get_sprints_in_project(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    sprints_in_session,
+    expected_result,
+    app: JiraApp,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        app.session.sprints = sprints_in_session
+        # WHEN
+        result = await screen._get_sprints_in_project('P1')
+        # THEN
+        assert result == expected_result
 
 
 @pytest.mark.asyncio

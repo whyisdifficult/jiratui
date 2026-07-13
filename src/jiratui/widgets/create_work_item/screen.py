@@ -500,7 +500,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         This also:
         - updates the status of the "Save" button.
         - removes all the panes used for displaying textarea-based field widgets.
-        - retrieves the project's active and future sprints and stores them in the application's session.
+        - if the user selected a project then it retrieves the project's active and future sprints and stores them in
+        the application's session.
 
         Returns:
             None
@@ -569,19 +570,19 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         response: APIControllerResponse = await application.api.get_issue_create_metadata(
             project_key, issue_type_id
         )
-        if not response.success or not response.result:
+        work_item_create_metadata: dict | None = response.result
+        if not response.success or not work_item_create_metadata:
             self.notify(
                 'Unable to find the required information for creating a work item.',
                 title='Missing Required Data',
                 severity='error',
             )
         else:
-            work_item_create_metadata: dict = response.result
             # store fields metadata for proper value formatting later
             fields_data: list[dict[str, Any]] = work_item_create_metadata.get('fields', [])
 
             for field in fields_data:
-                if field_id := field.get('fieldId'):
+                if field_id := field.get('fieldId', ''):
                     self._field_metadata[field_id] = field
 
                 # check if description is required and update the widget
@@ -676,7 +677,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if not key:
             return None
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-        sprints: dict[str, list] | None = application.session.get('sprints')
+        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session(
+            application
+        )
         if not sprints or not sprints.get(key):
             sprints_in_project: list[AgileSprint] | None
             response: APIControllerResponse = await self.app.api.get_project_sprints(key)
@@ -687,6 +690,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     sprints[key] = sprints_in_project
                     application.session.sprints = sprints
         return None
+
+    @staticmethod
+    def _get_sprints_from_application_session(application) -> dict[str, list[AgileSprint]]:
+        return application.session.get('sprints', {})
 
     async def _get_sprints_in_project(self, key: str | None = None) -> list[tuple[str, str]]:
         """Extracts a project's sprints from the application's session.
@@ -701,10 +708,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if not key:
             return []
         application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-        sprints: dict[str, list] = application.session.get('sprints', {})
-        if sprints_in_project := sprints.get(key):
-            return [(sprint.display_name, str(sprint.id)) for sprint in sprints_in_project]
-        return []
+        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session(
+            application
+        )
+        return [(sprint.display_name, str(sprint.id)) for sprint in sprints.get(key, [])]
 
     async def _remove_textarea_panes(self) -> None:
         """Removes the panes that contain dynamically-created textarea-based widgets.
