@@ -23,6 +23,7 @@ from jiratui.widgets.commons.widgets import (
     NumericInputWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -1843,6 +1844,289 @@ class TestSelectionWidget:
         )
 
         assert widget.prompt == 'Select Priority'
+
+
+class TestSprintSelectionWidget:
+    """Tests for SprintSelectionWidget in both CREATE and UPDATE modes."""
+
+    def test_create_mode_initialization(self):
+        """Test SelectionWidget initialization in CREATE mode."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            title='Sprint',
+            required=False,
+        )
+        # THEN
+        assert widget.mode == FieldMode.CREATE
+        assert widget.field_id == 'customfield_10020'
+        assert widget.border_title == 'Sprint'
+        assert widget.compact is True
+        assert 'create-work-item-generic-selector' in widget.classes
+
+    def test_create_mode_required_field(self):
+        """Test SelectionWidget with required flag in CREATE mode."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            title='Sprint',
+            required=True,
+        )
+        # THEN
+        assert widget.border_subtitle == '(*)'
+        assert 'required' in widget.classes
+
+    def test_create_mode_with_initial_value(self):
+        """Test SelectionWidget with initial value in CREATE mode."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            initial_value='2',
+        )
+        # THEN
+        assert widget.value == '2'
+
+    def test_update_mode_initialization(self):
+        """Test SelectionWidget initialization in UPDATE mode."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            title='Sprint',
+            original_value='2',
+            field_supports_update=True,
+        )
+        # THEN
+        assert widget.mode == FieldMode.UPDATE
+        assert widget.field_id == 'customfield_10020'
+        assert widget.jira_field_key == 'customfield_10020'
+        assert widget.original_value == '2'
+        assert widget.value == '2'
+        assert widget.disabled is False
+        assert 'create-work-item-generic-selector' in widget.classes
+        assert 'required' not in widget.classes
+
+    def test_update_mode_disabled_field(self):
+        """Test SelectionWidget with update disabled."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+            field_supports_update=False,
+        )
+
+        assert widget.disabled is True
+
+    def test_update_mode_none_original_value(self):
+        """Test SelectionWidget with None original value."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value=None,
+        )
+
+        assert widget.original_value is None
+
+    def test_get_value_for_update_with_selection(self):
+        """Test get_value_for_update with valid selection."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+        )
+
+        widget.value = '3'
+        result = widget.get_value_for_update()
+        assert result == 3
+
+    def test_get_value_for_update_no_selection(self):
+        """Test get_value_for_update with no selection."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+        )
+
+        # Simulate no selection (selection property is None)
+        widget.value = Select.NULL
+        result = widget.get_value_for_update()
+        assert result is None
+
+    def test_get_value_for_update_wrong_mode(self):
+        """Test get_value_for_update raises error in CREATE mode."""
+        options = [('Sprint 1', '1')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+        )
+
+        with pytest.raises(ValueError, match='only valid in UPDATE mode'):
+            widget.get_value_for_update()
+
+    def test_get_value_for_create_with_selection(self):
+        """Test get_value_for_create with valid selection."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+        )
+        widget.value = '3'
+        result = widget.get_value_for_create()
+        assert result == 3
+
+    def test_get_value_for_create_no_selection(self):
+        """Test get_value_for_create with no selection."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+        )
+
+        widget.value = Select.NULL
+        result = widget.get_value_for_create()
+        assert result is None
+
+    def test_get_value_for_create_wrong_mode(self):
+        """Test get_value_for_create raises error in UPDATE mode."""
+        options = [('Sprint 1', '1')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+        )
+
+        with pytest.raises(ValueError, match='only valid in CREATE mode'):
+            widget.get_value_for_create()
+
+    def test_value_has_changed_no_original(self):
+        """Test value_has_changed when original value is None."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value=None,
+        )
+
+        # No change - both emptys
+        widget.value = Select.NULL
+        assert widget.value_has_changed is False
+
+        # Change - now has selection
+        widget.value = '1'
+        assert widget.value_has_changed is True
+
+    def test_value_has_changed_cleared_selection(self):
+        """Test value_has_changed when selection is cleared."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+        )
+
+        widget.value = Select.NULL
+        assert widget.value_has_changed is True
+
+    def test_value_has_changed_same_value(self):
+        """Test value_has_changed with same value."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+        )
+
+        widget.value = '2'
+        assert widget.value_has_changed is False
+
+    def test_value_has_changed_different_value(self):
+        """Test value_has_changed with different value."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2'), ('Sprint 3', '3')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            original_value='2',
+        )
+
+        widget.value = '3'
+        assert widget.value_has_changed is True
+
+    def test_value_has_changed_wrong_mode(self):
+        """Test value_has_changed raises error in CREATE mode."""
+        options = [('Sprint 1', '1')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+        )
+
+        with pytest.raises(ValueError, match='only valid in UPDATE mode'):
+            _ = widget.value_has_changed
+
+    def test_custom_prompt(self):
+        """Test SelectionWidget with custom prompt."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            prompt='Choose a value',
+        )
+
+        assert widget.prompt == 'Choose a value'
+
+    def test_default_prompt_generation(self):
+        """Test SelectionWidget default prompt generation."""
+        options = [('Sprint 1', '1'), ('Sprint 2', '2')]
+        widget = SprintSelectionWidget(
+            mode=FieldMode.CREATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=options,
+            title='Sprint',
+        )
+
+        assert widget.prompt == 'Select Sprint'
 
 
 # ============================================================================

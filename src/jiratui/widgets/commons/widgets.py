@@ -2140,34 +2140,127 @@ class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidg
         return current_selected != original_selected
 
 
-class SprintSelectionWidget(SelectionWidget):
-    """A [SelectionWidget](#jiratui.widgets.commons.widgets.SelectionWidget) widget that supports both CREATE and
+class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
+    """A [Select](#textual.widgets.Select) widget that supports both CREATE and
     UPDATE modes for selecting a sprint from a list of options."""
 
-    def get_value_for_update(self) -> dict | None:
-        """Returns the value formatted for Jira API updates (UPDATE mode).
+    def __init__(
+        self,
+        mode: FieldMode,
+        field_id: str,
+        jira_field_key: str,
+        options: list[tuple[str, str]],
+        title: str | None = None,
+        required: bool = False,
+        # CREATE mode parameters
+        initial_value: Any = Select.NULL,
+        # UPDATE mode parameters
+        original_value: str | None = None,
+        field_supports_update: bool = True,
+        # Common parameters
+        allow_blank: bool = True,
+        prompt: str | None = None,
+    ):
+        """Initializes a [Select](#textual.widgets.Select).
 
-        The Id of the sprint MUST be an int.
-
-        Returns:
-            The ID of the sprint selected by the user, or None if no selection.
+        Args:
+            mode: The field mode (CREATE or UPDATE)
+            field_id: Field identifier (Jira field key)
+            jira_field_key: the key of the field that it is used for updating the field value in the API.
+            options: List of (display_name, value) tuples for the dropdown
+            title: Display title (defaults to field_id)
+            required: Whether the field is required (mainly for CREATE mode)
+            initial_value: Initial selected value (CREATE mode only)
+            original_value: Original value from Jira (UPDATE mode only)
+            field_supports_update: Whether field can be updated (UPDATE mode only)
+            allow_blank: Whether to allow blank/empty selection
+            prompt: Prompt text for the dropdown
         """
 
+        # Determine the appropriate prompt
+        display_prompt = prompt or f'Select {title or field_id}'
+
+        # Initialize Select with common parameters
+        super().__init__(
+            options=options,
+            prompt=display_prompt,
+            id=field_id,
+            allow_blank=allow_blank,
+            compact=True,
+            type_to_search=True,
+        )
+
+        # Setup base field properties
+        self.setup_base_field(
+            mode=mode,
+            field_id=field_id,
+            jira_field_key=jira_field_key,
+            title=title,
+            required=required,
+            compact=True,
+        )
+
+        # mode-specific setup
+        self.add_class('create-work-item-generic-selector')
+        if mode == FieldMode.UPDATE:
+            self.setup_update_field(
+                jira_field_key=jira_field_key,
+                original_value=original_value,
+                field_supports_update=field_supports_update,
+            )
+            # Set initial value for UPDATE mode
+            if original_value is not None:
+                self.value = original_value
+        else:
+            # CREATE mode specific setup
+            if initial_value != Select.NULL:
+                self.value = initial_value
+
+    def get_value_for_update(self) -> int | None:
+        """Returns the value formatted for Jira API updates (UPDATE mode).
+
+        Returns:
+            A dictionary with the id of the selected option, or None if no selection
+        """
         if self.mode != FieldMode.UPDATE:
             raise ValueError('get_value_for_update() only valid in UPDATE mode')
 
-        return None if self.selection is None else {'id': int(self.selection)}
+        if self.selection is None:
+            return None
+        return int(self.selection)
 
-    def get_value_for_create(self) -> dict | None:
+    def get_value_for_create(self) -> int | None:
         """Returns the value formatted for Jira API creation (CREATE mode).
 
-        The Id of the sprint MUST be an int.
-
         Returns:
-            The ID of the sprint selected by the user, or None if no selection.
+            A dictionary with the id of the selected option, or None if no selection
         """
-
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')
 
-        return None if self.selection is None else {'id': int(self.selection)}
+        if self.value and self.value != Select.NULL:
+            return int(self.value)
+        return None
+
+    @property
+    def value_has_changed(self) -> bool:
+        """
+        Determines if the current value differs from the original value (UPDATE mode).
+
+        Returns:
+            True if value has changed, False otherwise
+        """
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('value_has_changed only valid in UPDATE mode')
+
+        # No original value
+        if not self.original_value:
+            # Changed if we now have a selection
+            return bool(self.selection)
+
+        # Had original value, now no selection
+        if not self.selection:
+            return True
+
+        # Both exist - compare them
+        return self.original_value != self.selection

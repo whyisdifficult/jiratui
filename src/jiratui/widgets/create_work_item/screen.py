@@ -852,7 +852,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     continue
                 elif isinstance(widget, SprintSelectionWidget):
                     if value := widget.get_value_for_create():
-                        data[widget.jira_field_key] = value.get('id')
+                        data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, Select):
                     value = widget.selection
