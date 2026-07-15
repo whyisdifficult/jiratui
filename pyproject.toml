@@ -32,7 +32,7 @@ dependencies = [
     "click>=8.4.2,<9.0.0",
     "gitpython>=3.1.47,<3.2.0",
     "httpx>=0.28.1",
-    "marklas==0.8.2",
+    "marklas==0.8.6",
     "puremagic>=2.2.0,<3.0.0",
     "pydantic-settings[yaml]>=2.14.2,<3.0.0",
     "python-dateutil>=2.9.0.post0",
@@ -72,7 +72,7 @@ lint = [
     "ruff>=0.15.20,<0.16.0",
 ]
 test = [
-    "pytest>=9.1.1,<10.0.0",
+    "pytest==9.1.0",
     "pytest-asyncio>=1.4.0,<2.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
     "respx>=0.23.1",

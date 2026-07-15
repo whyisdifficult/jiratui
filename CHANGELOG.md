@@ -10,17 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a new widget `SprintSelectionWidget` that will allow users to select a sprint when creating new work items.
-This feature uses the Jira Software Cloud REST API. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+This feature uses the Jira Software Cloud REST API. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Implement a client for the Jira Software Cloud REST API. The application can use this API to retrieve the sprints of a
-project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 
 ### Bug Fixes
 
 - Reset the form in the details tab every time the user performs a search. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/291
 - Fix a bug that causes the application to fail when the user create a work item and provides the ID of a sprint. The
 sprint ID must be passed to the API as `int` instead of `str`. The widget `SprintWidget` now returns its value as
-an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Fixes the `ApplicationSession` class to work with async workers and contexts. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
+- Fixes the `ApplicationSession` class to work with async workers and contexts. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
+
+### Minor Improvements
+
+- Bump `marklas` to version `0.8.6`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 
 ## [1.10.1] 2026-07-03
 
