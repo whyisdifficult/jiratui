@@ -713,14 +713,14 @@ class TestSprintWidgetWidget:
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
                 title='Custom Text',
-                original_value='original text',
+                original_value='1',
                 field_supports_update=True,
             )
 
             assert widget.mode == FieldMode.UPDATE
             assert widget.jira_field_key == 'customfield_10002'
-            assert widget.original_value == 'original text'
-            assert widget.value == 'original text'
+            assert widget.original_value == '1'
+            assert widget.value == '1'
             assert 'create-update-field-widget' in widget.classes
 
     @pytest.mark.asyncio
@@ -731,12 +731,27 @@ class TestSprintWidgetWidget:
                 mode=FieldMode.UPDATE,
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
-                original_value='original',
+                original_value='1',
             )
 
-            widget.value = 'updated text'
+            widget.value = '1'
             result = widget.get_value_for_update()
-            assert result == 'updated text'
+            assert result == 1
+
+    @pytest.mark.asyncio
+    async def test_get_value_for_create(self, app):
+        """Test get_value_for_create returns current value."""
+        async with app.run_test():
+            widget = SprintWidget(
+                mode=FieldMode.CREATE,
+                field_id='customfield_10002',
+                jira_field_key='customfield_10002',
+                original_value='1',
+            )
+
+            widget.value = '1'
+            result = widget.get_value_for_create()
+            assert result == 1
 
     @pytest.mark.asyncio
     async def test_value_has_changed_no_change(self, app):
@@ -746,10 +761,10 @@ class TestSprintWidgetWidget:
                 mode=FieldMode.UPDATE,
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
-                original_value='original text',
+                original_value='1',
             )
 
-            widget.value = 'original text'
+            widget.value = '1'
             assert widget.value_has_changed is False
 
     @pytest.mark.asyncio
@@ -760,10 +775,10 @@ class TestSprintWidgetWidget:
                 mode=FieldMode.UPDATE,
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
-                original_value='original text',
+                original_value='1',
             )
 
-            widget.value = ' original text '
+            widget.value = ' 1 '
             # Should not detect change due to whitespace stripping
             assert widget.value_has_changed is False
 
@@ -775,10 +790,10 @@ class TestSprintWidgetWidget:
                 mode=FieldMode.UPDATE,
                 field_id='customfield_10002',
                 jira_field_key='customfield_10002',
-                original_value='original text',
+                original_value='1',
             )
 
-            widget.value = 'updated text'
+            widget.value = '2'
             assert widget.value_has_changed is True
 
     @pytest.mark.asyncio
@@ -806,7 +821,7 @@ class TestSprintWidgetWidget:
                 original_value='',
             )
 
-            widget.value = 'new text'
+            widget.value = '1'
             assert widget.value_has_changed is True
 
     @pytest.mark.asyncio

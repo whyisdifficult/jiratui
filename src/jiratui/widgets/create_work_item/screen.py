@@ -574,7 +574,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         if not response.success or not work_item_create_metadata:
             self.notify(
                 'Unable to find the required information for creating a work item.',
-                title='Missing Required Data',
+                title='Missing Required Metadata',
                 severity='error',
             )
         else:
@@ -851,8 +851,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         data[widget.jira_field_key] = value
                     continue
                 elif isinstance(widget, SprintSelectionWidget):
-                    if (value := widget.selection) is not None:
-                        data[widget.jira_field_key] = int(value)
+                    if value := widget.get_value_for_create():
+                        data[widget.jira_field_key] = value.get('id')
                     continue
                 elif isinstance(widget, Select):
                     value = widget.selection

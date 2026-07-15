@@ -1114,8 +1114,7 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
     def get_value_for_create(self) -> int | None:
         """Get value for create work item request."""
         if self.mode != FieldMode.CREATE:
-            msg = 'get_value_for_create() can only be called in CREATE mode'
-            raise ValueError(msg)
+            raise ValueError('get_value_for_create() can only be called in CREATE mode')
         if self.value and (cleaned_value := self.value.strip()):
             return int(cleaned_value)
         return None
@@ -1123,8 +1122,7 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
     def get_value_for_update(self) -> int | None:
         """Get value for update work item request."""
         if self.mode != FieldMode.UPDATE:
-            msg = 'get_value_for_update() can only be called in UPDATE mode'
-            raise ValueError(msg)
+            raise ValueError('get_value_for_update() can only be called in UPDATE mode')
         if self.value and (cleaned_value := self.value.strip()):
             return int(cleaned_value)
         return None
@@ -1133,8 +1131,7 @@ class SprintWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
     def value_has_changed(self) -> bool:
         """Check if the value has changed from original."""
         if self.mode != FieldMode.UPDATE:
-            msg = 'value_has_changed can only be checked in UPDATE mode'
-            raise ValueError(msg)
+            raise ValueError('value_has_changed can only be checked in UPDATE mode')
 
         original = self.original_value.strip()
         current = self.value.strip()
@@ -1954,8 +1951,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
                 self.value = initial_value
 
     def get_value_for_update(self) -> dict | None:
-        """
-        Returns the value formatted for Jira API updates (UPDATE mode).
+        """Returns the value formatted for Jira API updates (UPDATE mode).
 
         Returns:
             A dictionary with the id of the selected option, or None if no selection
@@ -1968,8 +1964,7 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         return {'id': self.selection}
 
     def get_value_for_create(self) -> dict | None:
-        """
-        Returns the value formatted for Jira API creation (CREATE mode).
+        """Returns the value formatted for Jira API creation (CREATE mode).
 
         Returns:
             A dictionary with the id of the selected option, or None if no selection
@@ -2149,4 +2144,30 @@ class SprintSelectionWidget(SelectionWidget):
     """A [SelectionWidget](#jiratui.widgets.commons.widgets.SelectionWidget) widget that supports both CREATE and
     UPDATE modes for selecting a sprint from a list of options."""
 
-    pass
+    def get_value_for_update(self) -> dict | None:
+        """Returns the value formatted for Jira API updates (UPDATE mode).
+
+        The Id of the sprint MUST be an int.
+
+        Returns:
+            The ID of the sprint selected by the user, or None if no selection.
+        """
+
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('get_value_for_update() only valid in UPDATE mode')
+
+        return None if self.selection is None else {'id': int(self.selection)}
+
+    def get_value_for_create(self) -> dict | None:
+        """Returns the value formatted for Jira API creation (CREATE mode).
+
+        The Id of the sprint MUST be an int.
+
+        Returns:
+            The ID of the sprint selected by the user, or None if no selection.
+        """
+
+        if self.mode != FieldMode.CREATE:
+            raise ValueError('get_value_for_create() only valid in CREATE mode')
+
+        return None if self.selection is None else {'id': int(self.selection)}
