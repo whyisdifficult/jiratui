@@ -682,7 +682,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         )
         if not sprints or not sprints.get(key):
             sprints_in_project: list[AgileSprint] | None
-            response: APIControllerResponse = await self.app.api.get_project_sprints(key)  # type:ignore[name-defined]
+            response: APIControllerResponse = await self.app.api.get_project_sprints(key)  # type:ignore[attr-defined]
             if response.success and (sprints_in_project := response.result):
                 if not sprints:
                     application.session.sprints = {key: sprints_in_project}
