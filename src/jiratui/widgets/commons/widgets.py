@@ -2220,8 +2220,9 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         """Returns the value formatted for Jira API updates (UPDATE mode).
 
         Returns:
-            A dictionary with the id of the selected option, or None if no selection
+            The selected option representing the id of the sprint selected, or None if no selection.
         """
+
         if self.mode != FieldMode.UPDATE:
             raise ValueError('get_value_for_update() only valid in UPDATE mode')
 
@@ -2233,14 +2234,15 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         """Returns the value formatted for Jira API creation (CREATE mode).
 
         Returns:
-            A dictionary with the id of the selected option, or None if no selection
+            The selected option representing the id of the sprint selected, or None if no selection.
         """
+
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')
 
-        if self.value and self.value != Select.NULL:
-            return int(self.value)
-        return None
+        if self.selection is None:
+            return None
+        return int(self.selection)
 
     @property
     def value_has_changed(self) -> bool:

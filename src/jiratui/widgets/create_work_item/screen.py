@@ -846,11 +846,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     or isinstance(widget, SingleUserPickerWidget)
                     or isinstance(widget, LabelsWidget)
                     or isinstance(widget, SprintWidget)
+                    or isinstance(widget, SprintSelectionWidget)
                 ):
-                    if value := widget.get_value_for_create():
-                        data[widget.jira_field_key] = value
-                    continue
-                elif isinstance(widget, SprintSelectionWidget):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value
                     continue
