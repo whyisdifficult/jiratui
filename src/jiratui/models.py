@@ -917,3 +917,56 @@ class JiraField(BaseModel):
 class JQLAutocompleteSuggestion(BaseModel):
     value: str | None = None
     display_name: str | None = None
+
+
+########################################
+# Models for the Jira Software Cloud API
+########################################
+
+
+class AgileBoardTypes(enum.Enum):
+    SCRUM = 'scrum'
+    KANBAN = 'kanban'
+    SIMPLE = 'simple'
+
+
+class AgileSprintState(enum.Enum):
+    FUTURE = 'future'
+    ACTIVE = 'active'
+    CLOSED = 'closed'
+
+
+@dataclass
+class AgileBoard(BaseModel):
+    """Board details as defined by
+    https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get
+    """
+
+    id: int
+    name: str
+    board_type: AgileBoardTypes
+
+
+@dataclass
+class AgileSprint(BaseModel):
+    """Sprint details as defined by
+    https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get
+
+    This model adds a property `origin_board_name` which is not part of the API response.
+    """
+
+    id: int
+    name: str
+    state: AgileSprintState
+    goal: str
+    origin_board_id: int | None = None
+    origin_board_name: str | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    complete_date: datetime | None = None
+
+    @property
+    def display_name(self) -> str:
+        if self.origin_board_name:
+            return f'({self.state.name}) {self.origin_board_name} - {self.name}'
+        return f'({self.state.name}) {self.name}'

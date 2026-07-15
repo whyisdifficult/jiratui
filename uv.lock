@@ -771,7 +771,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.4.2,<9.0.0" },
     { name = "gitpython", specifier = ">=3.1.47,<3.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "marklas", specifier = "==0.8.2" },
+    { name = "marklas", specifier = "==0.8.6" },
     { name = "puremagic", specifier = ">=2.2.0,<3.0.0" },
     { name = "pydantic-settings", extras = ["yaml"], specifier = ">=2.14.2,<3.0.0" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
@@ -804,7 +804,7 @@ lint = [
     { name = "ruff", specifier = ">=0.15.20,<0.16.0" },
 ]
 test = [
-    { name = "pytest", specifier = ">=9.1.1,<10.0.0" },
+    { name = "pytest", specifier = "==9.1.0" },
     { name = "pytest-asyncio", specifier = ">=1.4.0,<2.0.0" },
     { name = "pytest-cov", specifier = ">=7.1.0,<8.0.0" },
     { name = "respx", specifier = ">=0.23.1" },
@@ -901,14 +901,14 @@ linkify = [
 
 [[package]]
 name = "marklas"
-version = "0.8.2"
+version = "0.8.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mistune" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/92/b2352fa3fe9810d59dd747a713b05a3841d64cc4a256ae6dc5f9cadde7ee/marklas-0.8.2.tar.gz", hash = "sha256:1d6baa8688ea1bb56d1c9e0eac19979a78d496d408814dffb1b90a318334eec2", size = 48209, upload-time = "2026-06-30T07:20:59.399Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/20/d0b4cd62958301c1c542da5a89bff347931b9f6dc1e3f347099f1b4fbe32/marklas-0.8.6.tar.gz", hash = "sha256:9b2ef133e466986d5fea3997c7f7590c4faf10283e74f7b62173918f96e1eee5", size = 50540, upload-time = "2026-07-10T09:43:46.586Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/47/79b835c0e08982fb0a2f808ab7406617e40206f636b630f0277248790e3f/marklas-0.8.2-py3-none-any.whl", hash = "sha256:bd0bf739d784b40e83ca9ef2e3502b2915b1faa4125ff7173f19bc2fddff799a", size = 56592, upload-time = "2026-06-30T07:20:58.147Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/86/9e9b0ee1149d3f2667b4dcfccb9580e8e5e46f34cc8451f268afbede6b87/marklas-0.8.6-py3-none-any.whl", hash = "sha256:46da4627be55292df24294cad289b7d6b2bf327c0489f9334c7a8bd7a15a553a", size = 59311, upload-time = "2026-07-10T09:43:45.319Z" },
 ]
 
 [[package]]
@@ -972,11 +972,11 @@ wheels = [
 
 [[package]]
 name = "mistune"
-version = "3.3.2"
+version = "3.3.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/04/5f/007786743f962224423753b78f7d7acb0f2ade46d1604f2e0fa2bedf9020/mistune-3.3.2.tar.gz", hash = "sha256:e12ee4f1e74336e91aa1141e35f913b337c40bdf7c0cc49f21fb853a27e8b62f", size = 111284, upload-time = "2026-06-23T00:29:28.568Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/a5/2dab368d6950e6808904dec98f54c7e726ee7be4a0c6afe00e6e011bd52d/mistune-3.3.3.tar.gz", hash = "sha256:c4c6c0c840b8637a2e9b8b6d607eb7c8f00888bf14c754409bcd339e848c2477", size = 115363, upload-time = "2026-07-09T06:18:05.268Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/43/894c2cbbcbdf53b57d1257a249811abe2ee9ab7ef76af301b40f1c054533/mistune-3.3.2-py3-none-any.whl", hash = "sha256:a678a56387d487db7368ede4647cb2ba1deff22ce61f92343e4ebe0ddfce4f2d", size = 61554, upload-time = "2026-06-23T00:29:27.088Z" },
+    { url = "https://files.pythonhosted.org/packages/89/70/b1e4737b84163db5bb1dfde6f216dbfbf32783330a9989c965e121172830/mistune-3.3.3-py3-none-any.whl", hash = "sha256:99de1585e42dcbd826faa9e11a202727a5e202e4e4722a4c69ac1ff615793dd7", size = 63569, upload-time = "2026-07-09T06:18:03.839Z" },
 ]
 
 [[package]]
@@ -1543,7 +1543,7 @@ wheels = [
 
 [[package]]
 name = "pytest"
-version = "9.1.1"
+version = "9.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -1552,9 +1552,9 @@ dependencies = [
     { name = "pluggy" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/0e/b5858858d74958632c49b72cb25a3976ff9f632397626715be71c89d3971/pytest-9.1.0.tar.gz", hash = "sha256:41dd9148c08072446394cefd3d79701701335a9f4cae69ba92e39f6c7f5c061c", size = 1634181, upload-time = "2026-06-13T18:52:45.983Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/24/25/1de2678b631f5a49215c6c96fff41ba892b0a34df68d6d80292b1b48aa7f/pytest-9.1.1-py3-none-any.whl", hash = "sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c", size = 386536, upload-time = "2026-06-19T10:58:31.347Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/5a/ba30a81239b909821b3153e303e7def45178bf353da4f72380e6c5e8793b/pytest-9.1.0-py3-none-any.whl", hash = "sha256:8ebb0e7888bdf2bdfc602ec51f8f62d50200af37356c74e503c79a94f5c81f32", size = 386453, upload-time = "2026-06-13T18:52:44.045Z" },
 ]
 
 [[package]]

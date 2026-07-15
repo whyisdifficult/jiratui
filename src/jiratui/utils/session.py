@@ -1,13 +1,12 @@
-from contextvars import ContextVar
 from typing import Any
 
 
 class ApplicationSession:
-    """Session storage using Python's contextvars for async-safe isolation.
+    """Session storage using a simple class-level dict for persistent session across the lifetime of the app.
 
     Example:
     # create the session object
-    session = ContextualSession()
+    session = ApplicationSession()
     # set a variable
     session.some_variable = 42
     # if you know the variable has been set you can retrieve its value using
@@ -23,32 +22,24 @@ class ApplicationSession:
     session.clear()
     """
 
-    _session_var: ContextVar[dict[str, Any]] = ContextVar('application_session', default=None)
-
-    @classmethod
-    def _get_session(cls) -> dict[str, Any]:
-        session = cls._session_var.get()
-        if session is None:
-            session = {}
-            cls._session_var.set(session)
-        return session
+    __session: dict[str, Any] = {}  # Class-level shared storage
 
     def __setattr__(self, name: str, value):
         if name.startswith('_'):
             super().__setattr__(name, value)
         else:
-            self._get_session()[name] = value
+            ApplicationSession.__session[name] = value
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         if name.startswith('_'):
             return super().__getattribute__(name)
         try:
-            return self._get_session()[name]
+            return ApplicationSession.__session[name]
         except KeyError as e:
             raise AttributeError(f"ApplicationSession has no attribute '{name}'") from e
 
-    def get(self, name: str, default=None):
-        return self._get_session().get(name, default)
+    def get(self, name: str, default=None) -> Any:
+        return ApplicationSession.__session.get(name, default)
 
-    def clear(self):
-        self._get_session().clear()
+    def clear(self) -> None:
+        ApplicationSession.__session.clear()

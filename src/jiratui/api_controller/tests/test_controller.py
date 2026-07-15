@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
-from jiratui.api.api import JiraAPI, JiraDataCenterAPI
+from jiratui.api.api import JiraAPI, JiraDataCenterAPI, JiraSoftwareCloudAPI
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.api_controller.factories import WorkItemFactory
 from jiratui.exceptions import (
@@ -13,6 +13,8 @@ from jiratui.exceptions import (
     ValidationError,
 )
 from jiratui.models import (
+    AgileSprint,
+    AgileSprintState,
     Attachment,
     IssueComment,
     IssueRemoteLink,
@@ -5007,3 +5009,131 @@ async def test_issue_picker_with_error(issue_picker_mock: Mock, jira_api_control
         show_sub_tasks=True,
         current_issue_key=None,
     )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraSoftwareCloudAPI, 'get_boards')
+async def test_get_project_sprints_raises_exception(
+    get_boards_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_boards_mock.side_effect = ValueError('test error')
+    # WHEN
+    result = await jira_api_controller.get_project_sprints('P1')
+    # THEN
+    assert result == APIControllerResponse(success=False, error='test error')
+    get_boards_mock.assert_awaited_once_with(project_key_or_id='P1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraSoftwareCloudAPI, 'get_boards')
+async def test_get_project_sprints_no_boards_found(
+    get_boards_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_boards_mock.return_value = {'values': []}
+    # WHEN
+    result = await jira_api_controller.get_project_sprints('P1')
+    # THEN
+    assert result == APIControllerResponse(success=True, result=[])
+    get_boards_mock.assert_awaited_once_with(project_key_or_id='P1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraSoftwareCloudAPI, 'get_board_sprints')
+@patch.object(JiraSoftwareCloudAPI, 'get_boards')
+async def test_get_project_sprints(
+    get_boards_mock: AsyncMock,
+    get_board_sprints_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_boards_mock.return_value = {
+        'values': [
+            {'id': 84, 'name': 'scrum board', 'type': 'scrum'},
+            {'id': 92, 'name': 'kanban board', 'type': 'kanban'},
+        ]
+    }
+    get_board_sprints_mock.side_effect = [
+        {
+            'isLast': False,
+            'maxResults': 2,
+            'startAt': 1,
+            'total': 5,
+            'values': [
+                {
+                    'id': 37,
+                    'state': 'closed',
+                    'name': 'sprint 1',
+                    'startDate': '2015-04-11T15:22:00.000+10:00',
+                    'endDate': '2015-04-20T01:22:00.000+10:00',
+                    'completeDate': '2015-04-20T11:04:00.000+10:00',
+                    'originBoardId': 84,
+                    'goal': 'sprint 1 goal',
+                },
+                {'id': 72, 'state': 'future', 'name': 'sprint 2', 'goal': 'sprint 2 goal'},
+            ],
+        },
+        {'isLast': False, 'maxResults': 10, 'startAt': 0, 'total': 0, 'values': []},
+    ]
+    # WHEN
+    result = await jira_api_controller.get_project_sprints('P1')
+    # THEN
+    get_boards_mock.assert_awaited_once_with(project_key_or_id='P1')
+    get_board_sprints_mock.assert_has_awaits(
+        [call(84, state='active,future'), call(92, state='active,future')]
+    )
+    assert result == APIControllerResponse(
+        success=True,
+        result=[
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.CLOSED,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            ),
+            AgileSprint(
+                id=72,
+                name='sprint 2',
+                state=AgileSprintState.FUTURE,
+                goal='sprint 2 goal',
+                start_date=None,
+                end_date=None,
+                complete_date=None,
+                origin_board_id=None,
+            ),
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraSoftwareCloudAPI, 'get_board_sprints')
+@patch.object(JiraSoftwareCloudAPI, 'get_boards')
+async def test_get_project_sprints_getting_sprints_in_board_raises_exception(
+    get_boards_mock: AsyncMock,
+    get_board_sprints_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_boards_mock.return_value = {
+        'values': [
+            {'id': 84, 'name': 'scrum board', 'type': 'scrum'},
+            {'id': 92, 'name': 'kanban board', 'type': 'kanban'},
+        ]
+    }
+    get_board_sprints_mock.side_effect = ValueError('test error')
+    # WHEN
+    result = await jira_api_controller.get_project_sprints('P1')
+    # THEN
+    get_boards_mock.assert_awaited_once_with(project_key_or_id='P1')
+    get_board_sprints_mock.assert_has_awaits(
+        [call(84, state='active,future'), call(92, state='active,future')]
+    )
+    assert result == APIControllerResponse(success=False, error='test error')

@@ -1,9 +1,19 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
+from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.models import IssueType, JiraIssueSearchResponse, Project
+from jiratui.app import JiraApp
+from jiratui.config import ApplicationConfiguration
+from jiratui.models import (
+    AgileSprint,
+    AgileSprintState,
+    IssueType,
+    JiraIssueSearchResponse,
+    Project,
+)
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
@@ -16,6 +26,7 @@ from jiratui.widgets.commons.widgets import (
     PlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
     SprintWidget,
     TextInputWidget,
     URLWidget,
@@ -212,6 +223,20 @@ def create_metadata_with_editable_reporter() -> dict:
                 'key': 'customfield_10147',
                 'fieldId': 'customfield_10147',
                 'operations': ['set'],
+            },
+            {
+                'required': True,
+                'schema': {
+                    'type': 'array',
+                    'items': 'json',
+                    'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                    'customId': 10020,
+                },
+                'name': 'Sprint',
+                'key': 'customfield_10020',
+                'hasDefaultValue': False,
+                'operations': ['set'],
+                'fieldId': 'customfield_10020',
             },
         ]
     }
@@ -598,7 +623,7 @@ async def test_save_excludes_reporter_when_not_editable(
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_reporter_when_editable(
-    get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
+    get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter: dict
 ):
     """Test that save handler includes reporter field when it's editable."""
     # GIVEN
@@ -791,6 +816,392 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
         }
 
 
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_with_support_for_sprint_selection_sprint_selected(
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+    create_metadata_with_editable_reporter: dict,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(SprintSelectionWidget, 'get_value_for_create') as mock_sprint_selection,
+            patch.object(
+                ADFMarkdownTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_adf_markdown,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_sprint_selection.return_value = 101
+            mock_textarea_adf_markdown.return_value = {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {
+                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                        'type': 'paragraph',
+                    }
+                ],
+            }
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 11
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['customfield_10147'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        }
+        assert dismiss_args['customfield_10020'] == 101
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_with_support_for_sprint_selection_no_sprint_selected(
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+    create_metadata_with_editable_reporter: dict,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(SprintSelectionWidget, 'get_value_for_create') as mock_sprint_selection,
+            patch.object(
+                ADFMarkdownTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_adf_markdown,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_sprint_selection.return_value = None
+            mock_textarea_adf_markdown.return_value = {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {
+                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                        'type': 'paragraph',
+                    }
+                ],
+            }
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 10
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['customfield_10147'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        }
+        assert 'customfield_10020' not in dismiss_args
+
+
+@patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_with_support_for_sprint_input_sprint_provided(
+    get_issue_create_metadata_mock: AsyncMock,
+    uses_cloud_api_mock: Mock,
+    app,
+    create_metadata_with_editable_reporter: dict,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    uses_cloud_api_mock.return_value = False
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_input,
+            patch.object(
+                ADFMarkdownTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_adf_markdown,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_sprint_input.return_value = 101
+            mock_textarea_adf_markdown.return_value = {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {
+                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                        'type': 'paragraph',
+                    }
+                ],
+            }
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 11
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['customfield_10147'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        }
+        assert dismiss_args['customfield_10020'] == 101
+
+
+@patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_save_with_support_for_sprint_input_sprint_not_provided(
+    get_issue_create_metadata_mock: AsyncMock,
+    uses_cloud_api_mock: Mock,
+    app,
+    create_metadata_with_editable_reporter: dict,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    uses_cloud_api_mock.return_value = False
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        await app.push_screen(screen)
+        await pilot.pause()
+
+        # trigger metadata fetch
+        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await pilot.pause()
+
+        # Mock dismiss
+        screen.dismiss = Mock()
+
+        # Mock the selection and value properties
+        with (
+            patch.object(
+                type(screen.project_selector), 'selection', new_callable=PropertyMock
+            ) as mock_project,
+            patch.object(
+                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
+            ) as mock_issue_type,
+            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
+            patch.object(
+                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
+            ) as mock_reporter,
+            patch.object(
+                type(screen.parent_key_field), 'value', new_callable=PropertyMock
+            ) as mock_parent,
+            patch.object(
+                type(screen.summary_field), 'value', new_callable=PropertyMock
+            ) as mock_summary,
+            patch.object(
+                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
+            ),
+            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_input,
+            patch.object(
+                ADFMarkdownTextAreaWidget, 'get_value_for_create'
+            ) as mock_textarea_adf_markdown,
+        ):
+            mock_project.return_value = 'TEST'
+            mock_issue_type.return_value = 'task-123'
+            mock_reporter.return_value = 'reporter123'
+            mock_parent.return_value = 'issue-1'
+            mock_summary.return_value = 'Test Summary'
+            mock_sprint_input.return_value = None
+            mock_textarea_adf_markdown.return_value = {
+                'type': 'doc',
+                'version': 1,
+                'content': [
+                    {
+                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                        'type': 'paragraph',
+                    }
+                ],
+            }
+            # WHEN
+            screen.handle_save()
+
+        # THEN
+        # get the data passed to dismiss
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 10
+        assert dismiss_args['project_key'] == 'TEST'
+        assert dismiss_args['parent_key'] == 'issue-1'
+        assert dismiss_args['issue_type_id'] == 'task-123'
+        assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['reporter_account_id'] == 'reporter123'
+        assert dismiss_args['duedate'] == '2026-10-10'
+        assert dismiss_args['priority'] == '3'
+        assert dismiss_args['customfield_10147'] == {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {
+                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
+                    'type': 'paragraph',
+                }
+            ],
+        }
+        assert 'customfield_10020' not in dismiss_args
+
+
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
@@ -956,7 +1367,7 @@ async def test_jira_field_key(
 
 
 def test_create_widgets_for_work_item_creation_additional_fields_with_adf_support_enabled(
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
@@ -1249,7 +1660,7 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10020':
             assert widget.jira_field_key == 'customfield_10020'
-            assert isinstance(widget, SprintWidget)
+            assert isinstance(widget, SprintSelectionWidget)
         elif widget.id == 'customfield_10021':
             assert widget.jira_field_key == 'customfield_10021'
             assert isinstance(widget, MultiSelectWidget)
@@ -1280,8 +1691,41 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
     assert len(widgets) == 15
 
 
+def test_create_widgets_for_work_item_creation_with_sprint_widget(
+    config_for_testing_jira_dc: ApplicationConfiguration,
+):
+    # GIVEN
+    fields = [
+        {
+            'required': True,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    ]
+    # WHEN
+    with patch('jiratui.widgets.create_work_item.factory._uses_cloud_api') as uses_cloud_api_mock:
+        uses_cloud_api_mock.return_value = False
+        widgets = create_widgets_for_work_item_creation(fields, None, True)
+    # THEN
+    for widget in widgets:
+        assert widget.jira_field_key is not None
+        if widget.id == 'customfield_10020':
+            assert widget.jira_field_key == 'customfield_10020'
+            assert isinstance(widget, SprintWidget)
+    assert len(widgets) == 1
+
+
 def test_create_widgets_for_work_item_creation_additional_fields_without_adf_support_enabled(
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
@@ -1574,7 +2018,7 @@ def test_create_widgets_for_work_item_creation_additional_fields_without_adf_sup
             assert isinstance(widget, TextInputWidget)
         elif widget.id == 'customfield_10020':
             assert widget.jira_field_key == 'customfield_10020'
-            assert isinstance(widget, SprintWidget)
+            assert isinstance(widget, SprintSelectionWidget)
         elif widget.id == 'customfield_10021':
             assert widget.jira_field_key == 'customfield_10021'
             assert isinstance(widget, MultiSelectWidget)
@@ -1944,6 +2388,347 @@ async def test_save_button_status_after_project_selection(
         screen.handle_project_selection()
         # THEN
         assert screen.save_button.disabled is not validate_required_fields
+
+
+@patch.object(AddWorkItemScreen, '_fetch_sprints_in_project')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_not_called_when_project_selection_is_none(
+    fetch_available_issue_types_mock: Mock,
+    fetch_sprints_in_project_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    fetch_available_issue_types_mock.return_value = None
+    fetch_sprints_in_project_mock.return_value = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen.project_selector.value = Select.NULL
+        # WHEN
+        screen.handle_project_selection()
+        # THEN
+        fetch_sprints_in_project_mock.assert_not_called()
+        fetch_available_issue_types_mock.assert_called_with(None)
+
+
+@patch.object(AddWorkItemScreen, '_fetch_sprints_in_project')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_called_when_project_selection_is_not_none(
+    fetch_available_issue_types_mock: Mock,
+    fetch_sprints_in_project_mock: Mock,
+    app,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    fetch_available_issue_types_mock.return_value = None
+    fetch_sprints_in_project_mock.return_value = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        screen.project_selector.projects = {
+            'projects': [Project(id='1', key='TEST', name='Project 1')],
+            'selection': 'TEST',
+        }
+        # WHEN
+        screen.handle_project_selection()
+        # THEN
+        fetch_sprints_in_project_mock.assert_called_with('TEST')
+        fetch_available_issue_types_mock.assert_called_with('TEST')
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_sprints_in_session(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={'P2': []}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_project_sprints_in_session(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+
+
+@patch.object(JiraApp, 'session', PropertyMock(return_value={}))
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_without_project_key(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    get_project_sprints_mock.return_value = APIControllerResponse(result=[])
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_not_called()
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_no_project_sprints_in_session_fetching_returns_sprints(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    app.session.sprints = {}
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+        assert app.session.sprints.get('P1') == [
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+        app.session.clear()
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_sprints_in_session_fetching_returns_sprints(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_project_sprints_mock: Mock,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    fetch_available_issue_types_mock.return_value = None
+    fetch_available_projects_mock.return_value = None
+    app.session.sprints = {
+        'P2': [
+            AgileSprint(
+                id=10,
+                name='sprint 10',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 10 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=1,
+                origin_board_name='scrum board',
+            )
+        ]
+    }
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_sprints_in_project('P1')
+        # THEN
+        fetch_available_projects_mock.assert_called_once()
+        fetch_available_issue_types_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once()
+        assert app.session.sprints.get('P1') == [
+            AgileSprint(
+                id=37,
+                name='sprint 1',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 1 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=84,
+                origin_board_name='scrum board',
+            )
+        ]
+        assert app.session.sprints.get('P2') == [
+            AgileSprint(
+                id=10,
+                name='sprint 10',
+                state=AgileSprintState.ACTIVE,
+                goal='sprint 10 goal',
+                start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                origin_board_id=1,
+                origin_board_name='scrum board',
+            )
+        ]
+        app.session.clear()
+
+
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_get_sprints_in_project_without_project_key(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    app: JiraApp,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        result = await screen._get_sprints_in_project('')
+        # THEN
+        assert result == []
+
+
+@pytest.mark.parametrize(
+    'sprints_in_session, expected_result',
+    [
+        (
+            {
+                'P1': [
+                    AgileSprint(
+                        id=10,
+                        name='sprint 10',
+                        state=AgileSprintState.ACTIVE,
+                        goal='sprint 10 goal',
+                        start_date=datetime.fromisoformat('2015-04-11T15:22:00.000+10:00'),
+                        end_date=datetime.fromisoformat('2015-04-20T01:22:00.000+10:00'),
+                        complete_date=datetime.fromisoformat('2015-04-20T11:04:00.000+10:00'),
+                        origin_board_id=1,
+                        origin_board_name='scrum board',
+                    )
+                ]
+            },
+            [('(ACTIVE) scrum board - sprint 10', '10')],
+        ),
+        ({}, []),
+    ],
+)
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_get_sprints_in_project(
+    fetch_available_projects_mock: Mock,
+    fetch_available_issue_types_mock: AsyncMock,
+    sprints_in_session,
+    expected_result,
+    app: JiraApp,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        app.session.sprints = sprints_in_session
+        # WHEN
+        result = await screen._get_sprints_in_project('P1')
+        # THEN
+        assert result == expected_result
 
 
 @pytest.mark.asyncio

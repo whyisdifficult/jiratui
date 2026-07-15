@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, datetime
 from io import BufferedReader
 import json
@@ -11,13 +12,20 @@ from urllib3.util import parse_url
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
 from jiratui.config import ApplicationConfiguration
-from jiratui.constants import ISSUE_SEARCH_DEFAULT_MAX_RESULTS, LOGGER_NAME
+from jiratui.constants import (
+    ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
+    JIRA_SOFTWARE_CLOUD_API_BOARD_SEARCH_LIMIT,
+    JIRA_SOFTWARE_CLOUD_API_SPRINT_SEARCH_LIMIT,
+    LOGGER_NAME,
+)
 from jiratui.exceptions import FileUploadException
 from jiratui.models import WorkItemsSearchOrderBy
 
 
 class JiraAPI:
-    """Implements methods to connect to the Jira REST API provided by the Jira Cloud Platform.
+    """Implements a base client for the Jira Cloud Platform REST API.
+
+    This class implements methods for connecting to Jira REST API v2 and v3.
 
     **Supported Versions**
     - [https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#version)
@@ -1474,7 +1482,7 @@ class JiraAPI:
 
 
 class JiraAPIv2(JiraAPI):
-    """Implements methods to connect to the REST API v2 exposed by the Jira Cloud Platform.
+    """Implements a client for the Jira Cloud Platform REST API v2.
 
     This class implements methods for connecting to Jira REST API v2.
 
@@ -1485,7 +1493,7 @@ class JiraAPIv2(JiraAPI):
 
 
 class JiraDataCenterAPI(JiraAPI):
-    """Implements the API exposed by the Jira Data Center (aka. on-premises) platform.
+    """Implements a client for the JIRA Server platform REST API (aka. Data Center, on-premises).
 
     - [API Docs](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted)
     """
@@ -1867,3 +1875,160 @@ class JiraDataCenterAPI(JiraAPI):
             data=json.dumps(payload),
             params=params,
         )
+
+
+class JiraSoftwareCloudAPI:
+    """Implements a client for the
+    [Jira Software Cloud REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/).
+
+    - [API Docs](https://developer.atlassian.com/cloud/jira/software/rest/intro/)
+
+    ```{important}
+    Jira Software is built on the Jira platform. As such, there is an overlap in functionality between what is provided
+    by Jira Software and what is provided by the Jira platform. The REST API reference for the Jira Cloud platform is
+    here: [Jira Cloud platform REST API](https://developer.atlassian.com/cloud/jira/platform/rest).
+    ```
+
+    ```{important}
+    Do not use this API to access resources that are available via the
+    [Jira Cloud Platform REST API](#jiratui.api.api.JiraAPI). Priority is always given to the latter. Before adding new
+    methods here make sure that there is no other way to access the resources using the Jira Cloud Platform REST API.
+    ```
+    """
+
+    API_PATH_PREFIX = '/rest/agile/1.0/'
+
+    def __init__(
+        self,
+        base_url: str,
+        api_username: str,
+        api_token: str,
+        configuration: ApplicationConfiguration,
+    ):
+        # Async JSON client
+        self._client = AsyncJiraClient(
+            base_url=f'{base_url.rstrip("/")}{self.API_PATH_PREFIX}',
+            api_username=api_username,
+            api_token=api_token.strip(),
+            configuration=configuration,
+        )
+        self._base_url = base_url
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    async def get_boards(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+        board_type: str | None = None,
+        board_name: str | None = None,
+        project_key_or_id: str | None = None,
+    ) -> dict:
+        """Searches boards.
+
+        Args:
+            offset: the starting index of the returned boards. Base index: 0.
+            limit: the maximum number of boards to return per page. The default is 50.
+            board_type: filters results to boards of the specified types. Valid values: `scrum`, `kanban`, `simple`.
+            board_name: filters results to boards that match or partially match the specified name.
+            project_key_or_id: filters results to boards that are relevant to a project. Relevance means that the jql
+            filter defined in board contains a reference to a project.
+
+        Returns:
+            A list of dictionaries with the details of every board found.
+        """
+
+        params: dict[str, Any] = {}
+        if offset is not None:
+            params['startAt'] = offset
+        if board_type:
+            params['type'] = board_type
+        if board_name:
+            params['name'] = board_name
+        if project_key_or_id:
+            params['projectKeyOrId'] = project_key_or_id
+        params['maxResults'] = limit or JIRA_SOFTWARE_CLOUD_API_BOARD_SEARCH_LIMIT
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url='board',
+            params=params,
+        )
+
+    async def get_board_sprints(
+        self,
+        board_id: int,
+        offset: int | None = None,
+        limit: int | None = None,
+        state: str | None = None,
+    ) -> dict:
+        """Retrieves all the sprints of a board.
+
+        Args:
+            board_id: the ID of the board that contains the requested sprints.
+            offset: the starting index of the returned boards. Base index: 0.
+            limit: the maximum number of boards to return per page.
+            state: filters results to sprints in specified states. Valid values: `future`, `active`, `closed`. You can
+            define multiple states separated by commas, e.g. `state=active,closed`.
+
+        Returns:
+            A dictionary with the details of every sprint found.
+        """
+
+        params: dict[str, Any] = {}
+        if offset is not None:
+            params['startAt'] = offset
+        if state:
+            params['state'] = state
+        params['maxResults'] = limit or JIRA_SOFTWARE_CLOUD_API_SPRINT_SEARCH_LIMIT
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url=f'board/{board_id}/sprint',
+            params=params,
+        )
+
+    async def get_boards_sprints(
+        self, board_ids: list[int], state: str | None = None
+    ) -> list[dict]:
+        """Retrieves all the sprints for a list of boards.
+
+        Args:
+            board_ids: the IDs of the boards that contains the requested sprints.
+            state: filters results to sprints in specified states. Valid values: `future`, `active`, `closed`. You can
+            define multiple states separated by commas, e.g. `state=active,closed`.
+
+        Returns:
+            A list of dictionaries with the details of every sprint found.
+        """
+
+        tasks = [self.get_board_sprints(board_id, state=state) for board_id in board_ids]
+        responses = await asyncio.gather(*tasks)
+        sprints: list[dict] = []
+        for response in responses:
+            if values := response.get('values', []):
+                sprints.extend(values)
+        return sprints
+
+    async def get_project_sprints(
+        self, project_key_or_id: str, state: str | None = None
+    ) -> list[dict]:
+        """Retrieves all the sprints for a list of boards.
+
+        Args:
+            project_key_or_id: the ID of the project/space whose sprints we want to retrieve.
+            state: filters results to sprints in specified states. Valid values: `future`, `active`, `closed`. You can
+            define multiple states separated by commas, e.g. `state=active,closed`.
+
+        Returns:
+            A list of dictionaries with the details of every sprint found.
+        """
+
+        project_boards: dict = await self.get_boards(project_key_or_id=project_key_or_id)
+        if project_boards and (boards := project_boards.get('values', [])):
+            sprints: list[dict] = []
+            board_ids: list[int] = [board.get('id') for board in boards]
+            tasks = [self.get_board_sprints(board_id, state=state) for board_id in board_ids]
+            responses = await asyncio.gather(*tasks)
+            for response in responses:
+                if values := response.get('values', []):
+                    sprints.extend(values)
+            return sprints
+        return []
