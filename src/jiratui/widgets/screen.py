@@ -22,6 +22,7 @@ from jiratui.models import (
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.history import HistoryEntry, HistoryManager
+from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
 from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
@@ -281,7 +282,6 @@ class MainScreen(Screen):
         be used for searching issues when the user does not select any filter/criteria in the UI. """
         self.focus_item_on_startup = focus_item_on_startup
         """The position of the work item to focus and open on startup. Requires search_on_startup to be enabled."""
-        self.logger = logging.getLogger(LOGGER_NAME)
         self.current_loaded_work_item_key: str | None = None
         """Track the currently loaded work item key to prevent redundant reloads."""
         # maps keys to widget ids to enable quick navigation
@@ -319,6 +319,7 @@ class MainScreen(Screen):
                 'issue_subtasks': 'Subtasks (8)',
             }
         self.__recent_history_manager = HistoryManager()
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.config.enable_logging)
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -594,13 +595,14 @@ class MainScreen(Screen):
             user_response: APIControllerResponse = await self.api.get_user(
                 self.initial_assignee_account_id
             )
-            user_details: JiraUser
+            user_details: JiraUser | None
             if user_response.success and (user_details := user_response.result):
                 self.users_selector.set_value(user_details.account_id, user_details.display_name)
             else:
                 self.notify(
                     f'Unable to find the user with account ID: {self.initial_assignee_account_id}. Check the configuration and/or the launch arguments',
                     severity='warning',
+                    title='Not Found',
                 )
 
         if self.initial_jql_expression_id and (
@@ -660,7 +662,7 @@ class MainScreen(Screen):
                 project_keys = [self.initial_project_key]
         response: APIControllerResponse = await self.api.search_projects(keys=project_keys)
         if not response.success:
-            self.notify(f'Failed to fetch the list of projects: {response.error}')
+            self.notify(f'Failed to fetch the list of projects: {response.error}', severity='error')
         projects = response.result or []
         projects = list(projects)  # sort is async!
         projects.sort(key=lambda x: x.name)
@@ -1238,7 +1240,7 @@ class MainScreen(Screen):
         if not response.success or not response.result:
             self.issue_info_container.hide_loading()
             self.notify(
-                'Unable to find the selected work item', title='Find Work Item', severity='error'
+                'Unable to find the selected work item', title='Not Found', severity='error'
             )
             return
 

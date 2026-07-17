@@ -77,6 +77,7 @@ def app() -> JiraApp:
         on_start_up_only_fetch_projects=False,
         log_file='',
         log_level='ERROR',
+        enable_logging=False,
         theme=None,
         search_results_page_filtering_enabled=False,
         ssl=None,

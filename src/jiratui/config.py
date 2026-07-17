@@ -173,6 +173,8 @@ class ApplicationConfiguration(BaseSettings):
     """If `True` the application will fetch server information from the Jira API instance and use the server title or
     server base URL to build the title of the application. If set to `False` the title will be the default or, to the
     value of the `tui_custom_title` setting above; if defined."""
+    enable_logging: bool = False
+    """Enable/Disable logging."""
     log_file: str | None = None
     """The filename of the log file to use. If you set an empty string logging to a file is disabled."""
     log_level: str = 'WARNING'

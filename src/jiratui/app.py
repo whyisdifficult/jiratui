@@ -10,8 +10,8 @@ from textual.binding import Binding
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
-from jiratui.files import get_log_file
 from jiratui.models import JiraServerInfo
+from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.session import ApplicationSession
 from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.screens.config import ConfigFileScreen
@@ -106,9 +106,11 @@ class JiraApp(App):
         )
 
         self.focus_item_on_startup: int | None = focus_item_on_startup
-
         self.server_info: JiraServerInfo | None = None
         self._setup_logging()
+        self.logger = JiraTUILogger(
+            logging.getLogger(LOGGER_NAME), CONFIGURATION.get().enable_logging
+        )
         self._setup_theme(user_theme)
 
     def _setup_theme(self, user_theme: str | None = None) -> None:
@@ -212,28 +214,33 @@ class JiraApp(App):
                 self.run_worker(self._set_application_title_using_server_info())
 
     def _setup_logging(self) -> None:
-        self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.setLevel(CONFIGURATION.get().log_level or logging.WARNING)
+        log_level = CONFIGURATION.get().log_level or logging.WARNING
+        base_logger = logging.getLogger(LOGGER_NAME)
+        base_logger.setLevel(log_level)
 
+        log_file = None
         if jira_tui_log_file := os.getenv('JIRA_TUI_LOG_FILE'):
             log_file = Path(jira_tui_log_file).resolve()
         elif config_log_file := CONFIGURATION.get().log_file:
-            log_file = Path(config_log_file).resolve()
-        else:
-            log_file = get_log_file()
+            log_file = Path(str(config_log_file)).resolve()
 
-        try:
-            fh = logging.FileHandler(log_file)
-        except Exception:
-            pass
-        else:
-            fh.setLevel(CONFIGURATION.get().log_level or logging.WARNING)
-            fh.setFormatter(
-                JsonFormatter(
-                    '%(asctime)s %(levelname)s %(message)s %(lineno)s %(module)s %(pathname)s '
+        handlers = []
+
+        if log_file:
+            try:
+                fh = logging.FileHandler(log_file)
+            except Exception:
+                pass
+            else:
+                fh.setLevel(log_level)
+                fh.setFormatter(
+                    JsonFormatter(
+                        '%(asctime)s %(levelname)s %(message)s %(lineno)s %(module)s %(pathname)s '
+                    )
                 )
-            )
-            self.logger.addHandler(fh)
+                handlers.append(fh)
+
+        logging.basicConfig(level=log_level, handlers=handlers)
 
 
 if __name__ == '__main__':

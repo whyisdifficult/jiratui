@@ -28,6 +28,7 @@ from jiratui.constants import (
     ATTACHMENT_MAXIMUM_FILE_SIZE_IN_BYTES,
     DEFAULT_JIRA_API_VERSION,
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
+    LOGGER_NAME,
 )
 from jiratui.exceptions import (
     ServiceInvalidResponseException,
@@ -67,6 +68,7 @@ from jiratui.models import (
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.adf import convert_markdown_to_adf
+from jiratui.utils.logging import JiraTUILogger
 
 
 @dataclass
@@ -123,7 +125,7 @@ class APIController:
             configuration=self.config,
         )
         self.skip_users_without_email = self.config.ignore_users_without_email
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.config.enable_logging)
         self._required_fields_cache: dict[str, list[str]] = {}
 
     def _adf_support_enabled(self) -> bool:
@@ -1448,16 +1450,16 @@ class APIController:
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         return APIControllerResponse(
             result=JiraServerInfo(
-                base_url=response.get('baseUrl'),
+                base_url=response.get('baseUrl', ''),
                 display_url_servicedesk_help_center=response.get('displayUrlServicedeskHelpCenter'),
                 display_url_confluence=response.get('displayUrlConfluence'),
-                version=response.get('version'),
+                version=response.get('version', ''),
                 deployment_type=response.get('deploymentType'),
                 build_number=int(response.get('buildNumber', 0)),
-                build_date=response.get('buildDate'),
+                build_date=response.get('buildDate', ''),
                 server_time=response.get('serverTime'),
-                scm_info=response.get('scmInfo'),
-                server_title=response.get('serverTitle'),
+                scm_info=response.get('scmInfo', ''),
+                server_title=response.get('serverTitle', ''),
                 default_locale=response.get('defaultLocale', {}).get('locale'),
                 server_time_zone=response.get('serverTimeZone'),
             )
@@ -1484,8 +1486,8 @@ class APIController:
                 result=JiraMyselfInfo(
                     account_id=response.get('accountId'),
                     account_type=response.get('accountType'),
-                    active=response.get('active'),
-                    display_name=response.get('displayName'),
+                    active=response.get('active', False),
+                    display_name=response.get('displayName', ''),
                     email=response.get('emailAddress'),
                     groups=[
                         JiraUserGroup(id=g.get('id'), name=g.get('name'))
@@ -1498,8 +1500,8 @@ class APIController:
             result=JiraMyselfInfo(
                 account_id=response.get('accountId') or '',
                 account_type=response.get('accountType'),
-                active=response.get('active'),
-                display_name=response.get('displayName'),
+                active=response.get('active', False),
+                display_name=response.get('displayName', ''),
                 email=response.get('emailAddress'),
                 username=response.get('name'),
                 groups=[
@@ -2367,8 +2369,6 @@ class APIController:
                 # for all other fields (including custom fields), pass as-is
                 # the caller is responsible for proper formatting
                 fields[field_key] = field_value
-
-        self.logger.info(fields)
 
         try:
             result: dict = await self.api.create_work_item(fields)

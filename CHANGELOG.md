@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This feature uses the Jira Software Cloud REST API. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Implement a client for the Jira Software Cloud REST API. The application can use this API to retrieve the sprints of a
 project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
+- Add config variable `enable_logging` to enable/disable logging. The default is `False`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ### Bug Fixes
 
