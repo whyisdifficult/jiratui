@@ -42,6 +42,7 @@ def config_for_testing() -> ApplicationConfiguration:
         on_start_up_only_fetch_projects=False,
         log_file='',
         log_level='ERROR',
+        enable_logging=False,
         search_issues_default_day_interval=15,
     )
     return config_mock

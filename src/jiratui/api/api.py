@@ -20,6 +20,7 @@ from jiratui.constants import (
 )
 from jiratui.exceptions import FileUploadException
 from jiratui.models import WorkItemsSearchOrderBy
+from jiratui.utils.logging import JiraTUILogger
 
 
 class JiraAPI:
@@ -77,7 +78,7 @@ class JiraAPI:
         # this allows us to issue requests to different endpoints depending on whether Jira runs on the cloud (default)
         # or on-premises
         self.cloud = configuration.cloud if configuration.cloud is False else True
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), configuration.enable_logging)
 
     @property
     def base_url(self) -> str:
@@ -1913,7 +1914,7 @@ class JiraSoftwareCloudAPI:
             configuration=configuration,
         )
         self._base_url = base_url
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), configuration.enable_logging)
 
     async def get_boards(
         self,

@@ -14,6 +14,7 @@ from jiratui.exceptions import (
     ServiceInvalidResponseException,
     ServiceUnavailableException,
 )
+from jiratui.utils.logging import JiraTUILogger
 
 
 class JiraTUIBearerAuth(httpx.Auth):
@@ -83,7 +84,7 @@ class JiraTUIAsyncHTTPClient:
             cert=ssl_certificate_settings.cert,
             timeout=None,
         )
-        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), configuration.enable_logging)
 
     @staticmethod
     def set_headers(headers: dict | None = None) -> dict:
