@@ -72,7 +72,7 @@ lint = [
     "ruff>=0.15.20,<0.16.0",
 ]
 test = [
-    "pytest==9.1.0",
+    "pytest==9.1.1",
     "pytest-asyncio>=1.4.0,<2.0.0",
     "pytest-cov>=7.1.0,<8.0.0",
     "respx>=0.23.1",

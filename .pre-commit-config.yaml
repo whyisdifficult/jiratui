@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: mypy
   - repo: https://github.com/seddonym/import-linter
-    rev: v2.11
+    rev: v2.13
     hooks:
       - id: import-linter
         name: '[Imports] Lint'
