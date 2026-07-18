@@ -41,7 +41,7 @@ def create_widgets_for_work_item_creation(
     api_controller: APIController | None = None,
     adf_support_enabled: bool = True,
 ) -> list[Widget]:
-    """Creates a list of Textual widgets for the "form" that allows users to create work items.
+    """Creates a list of widgets for the "form" that allows users to create work items.
 
     Fields that are statically included in the form, such as `project`, `issuetype`, `reporter`, etc. are ignored by
     this function. As a result this function will not return Textual's Widget instances for them. These fields are

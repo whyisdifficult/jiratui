@@ -688,7 +688,10 @@ WorkItemTypeSelectionField {
 
 .create-work-item-generic-selector {
     border: round $primary-lighten-3;
+    width: 100%;
+    margin: 0 0;
     padding: 0 1;
+    background: $background;
     &.required {
         border: round $accent;
     }

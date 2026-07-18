@@ -10,6 +10,7 @@ from jiratui.config import ApplicationConfiguration
 from jiratui.models import (
     AgileSprint,
     AgileSprintState,
+    IssueStatus,
     IssueType,
     JiraIssueSearchResponse,
     Project,
@@ -37,7 +38,7 @@ from jiratui.widgets.create_work_item.fields import (
     WorkItemProjectSelectionField,
     WorkItemTypeSelectionField,
 )
-from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
+from jiratui.widgets.create_work_item.screen import AddWorkItemScreen, TextAreaTabbedContent
 
 
 @pytest.fixture
@@ -58,7 +59,7 @@ def create_metadata_with_editable_reporter() -> dict:
             {
                 'fieldId': 'description',
                 'name': 'Description',
-                'required': False,
+                'required': True,
                 'operations': ['set'],
             },
             {
@@ -471,7 +472,7 @@ async def test_reporter_field_hidden_when_not_editable(
         await pilot.pause()
 
         # Trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Assertions
@@ -496,7 +497,7 @@ async def test_reporter_field_shown_when_editable(
         await pilot.pause()
 
         # Trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Assertions
@@ -521,7 +522,7 @@ async def test_validation_skips_reporter_when_not_editable(
         await pilot.pause()
 
         # Trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Mock the selection properties to return valid values
@@ -567,7 +568,7 @@ async def test_save_excludes_reporter_when_not_editable(
         await pilot.pause()
 
         # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Mock dismiss
@@ -596,6 +597,9 @@ async def test_save_excludes_reporter_when_not_editable(
             patch.object(
                 type(screen.description_field), 'text', new_callable=PropertyMock
             ) as mock_description,
+            patch.object(
+                type(screen.status_selector), 'selection', new_callable=PropertyMock
+            ) as mock_status,
         ):
             mock_project.return_value = 'TEST'
             mock_issue_type.return_value = 'task-123'
@@ -604,6 +608,7 @@ async def test_save_excludes_reporter_when_not_editable(
             mock_parent.return_value = None
             mock_summary.return_value = 'Test Summary'
             mock_description.return_value = 'Test Description'
+            mock_status.return_value = '1'
 
             # Trigger save
             screen.handle_save()
@@ -617,6 +622,7 @@ async def test_save_excludes_reporter_when_not_editable(
         )
         assert dismiss_args['project_key'] == 'TEST'
         assert dismiss_args['summary'] == 'Test Summary'
+        assert dismiss_args['status'] == '1'
 
 
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
@@ -638,7 +644,7 @@ async def test_save_includes_reporter_when_editable(
         await pilot.pause()
 
         # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Mock dismiss
@@ -697,80 +703,41 @@ async def test_save_includes_reporter_when_editable(
         }
 
 
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_additional_fields_with_adf_support_enabled(
-    get_issue_create_metadata_mock: AsyncMock, app, create_metadata_with_editable_reporter
+    get_issue_create_metadata_mock: AsyncMock, validate_required_fields_mock: Mock, app
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     get_issue_create_metadata_mock.return_value = APIControllerResponse(
-        result=create_metadata_with_editable_reporter
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                }
+            ]
+        }
     )
+    validate_required_fields_mock.return_value = True
     async with app.run_test() as pilot:
-        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='reporter123')
         await app.push_screen(screen)
         await pilot.pause()
-
-        # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
         await pilot.pause()
-
-        # Mock dismiss
         screen.dismiss = Mock()
-
-        # Mock the selection and value properties
         with (
-            patch.object(
-                type(screen.project_selector), 'selection', new_callable=PropertyMock
-            ) as mock_project,
-            patch.object(
-                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
-            ) as mock_issue_type,
-            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
-            patch.object(
-                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
-            ) as mock_reporter,
-            patch.object(
-                type(screen.parent_key_field), 'value', new_callable=PropertyMock
-            ) as mock_parent,
-            patch.object(
-                type(screen.summary_field), 'value', new_callable=PropertyMock
-            ) as mock_summary,
-            patch.object(MultiSelectWidget, 'get_value_for_create') as mock_components,
-            patch.object(
-                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
-            ),
-            patch.object(
-                URLWidget, 'value', new_callable=PropertyMock(return_value='http://example.bar')
-            ),
-            patch.object(
-                DateTimeInputWidget,
-                'value',
-                new_callable=PropertyMock(return_value='2026-05-05 12:30'),
-            ),
-            patch.object(
-                LabelsWidget, 'value', new_callable=PropertyMock(return_value='test1, test2')
-            ),
-            patch.object(
-                NumericInputWidget, 'value', new_callable=PropertyMock(return_value='123.45')
-            ),
-            patch.object(SingleUserPickerWidget, 'get_value_for_create') as mock_user_picker,
-            patch.object(MultiUserPickerWidget, 'get_value_for_create') as mock_multi_user_picker,
             patch.object(
                 ADFMarkdownTextAreaWidget, 'get_value_for_create'
             ) as mock_textarea_adf_markdown,
         ):
-            mock_project.return_value = 'TEST'
-            mock_issue_type.return_value = 'task-123'
-            mock_reporter.return_value = 'reporter123'
-            mock_parent.return_value = 'issue-1'
-            mock_summary.return_value = 'Test Summary'
-            mock_components.return_value = [{'id': '10000'}]
-            mock_multi_user_picker.return_value = [{'accountId': '3'}, {'accountId': '4'}]
-            mock_user_picker.return_value = '12345qwerty'
             mock_textarea_adf_markdown.return_value = {
                 'type': 'doc',
                 'version': 1,
@@ -788,23 +755,7 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
         # THEN
         # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 17
-        assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['parent_key'] == 'issue-1'
-        assert dismiss_args['issue_type_id'] == 'task-123'
-        assert dismiss_args['assignee_account_id'] == 'reporter123'
-        assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['components'] == [{'id': '10000'}]
-        assert dismiss_args['duedate'] == '2026-10-10'
-        assert dismiss_args['priority'] == '3'
-        assert dismiss_args['customfield_10015'] == 'http://example.bar'
-        assert dismiss_args['customfield_10098'] == '2026-05-05 12:30'
-        assert set(dismiss_args['labels']) == {'test1', 'test2'}
-        assert dismiss_args['customfield_10097'] == 123.45
-        assert dismiss_args['customfield_10095'] == [{'accountId': '3'}, {'accountId': '4'}]
-        assert dismiss_args['customfield_10096'] == '12345qwerty'
-        assert dismiss_args['customfield_10147'] == {
+        assert dismiss_args['description'] == {
             'type': 'doc',
             'version': 1,
             'content': [
@@ -816,389 +767,235 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
         }
 
 
+@patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(AddWorkItemScreen, '_get_sprints_in_project')
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_sprint_selected(
     get_issue_create_metadata_mock: AsyncMock,
+    get_sprints_in_project_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
+    uses_cloud_api_mock: Mock,
     app,
-    create_metadata_with_editable_reporter: dict,
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     get_issue_create_metadata_mock.return_value = APIControllerResponse(
-        result=create_metadata_with_editable_reporter
+        result={
+            'fields': [
+                {
+                    'required': True,
+                    'schema': {
+                        'type': 'array',
+                        'items': 'json',
+                        'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                        'customId': 10020,
+                    },
+                    'name': 'Sprint',
+                    'key': 'customfield_10020',
+                    'hasDefaultValue': False,
+                    'operations': ['set'],
+                    'fieldId': 'customfield_10020',
+                }
+            ]
+        }
     )
+    get_sprints_in_project_mock.return_value = [('1', 'Sprint 1')]
+    validate_required_fields_mock.return_value = True
+    uses_cloud_api_mock.return_value = True
     async with app.run_test() as pilot:
-        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='reporter123')
         await app.push_screen(screen)
         await pilot.pause()
-
-        # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
         await pilot.pause()
-
-        # Mock dismiss
         screen.dismiss = Mock()
-
-        # Mock the selection and value properties
         with (
-            patch.object(
-                type(screen.project_selector), 'selection', new_callable=PropertyMock
-            ) as mock_project,
-            patch.object(
-                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
-            ) as mock_issue_type,
-            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
-            patch.object(
-                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
-            ) as mock_reporter,
-            patch.object(
-                type(screen.parent_key_field), 'value', new_callable=PropertyMock
-            ) as mock_parent,
-            patch.object(
-                type(screen.summary_field), 'value', new_callable=PropertyMock
-            ) as mock_summary,
-            patch.object(
-                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
-            ),
             patch.object(SprintSelectionWidget, 'get_value_for_create') as mock_sprint_selection,
-            patch.object(
-                ADFMarkdownTextAreaWidget, 'get_value_for_create'
-            ) as mock_textarea_adf_markdown,
         ):
-            mock_project.return_value = 'TEST'
-            mock_issue_type.return_value = 'task-123'
-            mock_reporter.return_value = 'reporter123'
-            mock_parent.return_value = 'issue-1'
-            mock_summary.return_value = 'Test Summary'
             mock_sprint_selection.return_value = 101
-            mock_textarea_adf_markdown.return_value = {
-                'type': 'doc',
-                'version': 1,
-                'content': [
-                    {
-                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                        'type': 'paragraph',
-                    }
-                ],
-            }
             # WHEN
             screen.handle_save()
 
         # THEN
-        # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 11
-        assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['parent_key'] == 'issue-1'
-        assert dismiss_args['issue_type_id'] == 'task-123'
-        assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['duedate'] == '2026-10-10'
-        assert dismiss_args['priority'] == '3'
-        assert dismiss_args['customfield_10147'] == {
-            'type': 'doc',
-            'version': 1,
-            'content': [
-                {
-                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                    'type': 'paragraph',
-                }
-            ],
-        }
         assert dismiss_args['customfield_10020'] == 101
 
 
+@patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(AddWorkItemScreen, '_get_sprints_in_project')
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_no_sprint_selected(
     get_issue_create_metadata_mock: AsyncMock,
+    get_sprints_in_project_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
+    uses_cloud_api_mock: Mock,
     app,
-    create_metadata_with_editable_reporter: dict,
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     get_issue_create_metadata_mock.return_value = APIControllerResponse(
-        result=create_metadata_with_editable_reporter
+        result={
+            'fields': [
+                {
+                    'required': True,
+                    'schema': {
+                        'type': 'array',
+                        'items': 'json',
+                        'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                        'customId': 10020,
+                    },
+                    'name': 'Sprint',
+                    'key': 'customfield_10020',
+                    'hasDefaultValue': False,
+                    'operations': ['set'],
+                    'fieldId': 'customfield_10020',
+                }
+            ]
+        }
     )
+    get_sprints_in_project_mock.return_value = [('1', 'Sprint 1')]
+    validate_required_fields_mock.return_value = True
+    uses_cloud_api_mock.return_value = True
     async with app.run_test() as pilot:
-        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='reporter123')
         await app.push_screen(screen)
         await pilot.pause()
-
-        # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
         await pilot.pause()
-
-        # Mock dismiss
         screen.dismiss = Mock()
-
-        # Mock the selection and value properties
         with (
-            patch.object(
-                type(screen.project_selector), 'selection', new_callable=PropertyMock
-            ) as mock_project,
-            patch.object(
-                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
-            ) as mock_issue_type,
-            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
-            patch.object(
-                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
-            ) as mock_reporter,
-            patch.object(
-                type(screen.parent_key_field), 'value', new_callable=PropertyMock
-            ) as mock_parent,
-            patch.object(
-                type(screen.summary_field), 'value', new_callable=PropertyMock
-            ) as mock_summary,
-            patch.object(
-                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
-            ),
             patch.object(SprintSelectionWidget, 'get_value_for_create') as mock_sprint_selection,
-            patch.object(
-                ADFMarkdownTextAreaWidget, 'get_value_for_create'
-            ) as mock_textarea_adf_markdown,
         ):
-            mock_project.return_value = 'TEST'
-            mock_issue_type.return_value = 'task-123'
-            mock_reporter.return_value = 'reporter123'
-            mock_parent.return_value = 'issue-1'
-            mock_summary.return_value = 'Test Summary'
             mock_sprint_selection.return_value = None
-            mock_textarea_adf_markdown.return_value = {
-                'type': 'doc',
-                'version': 1,
-                'content': [
-                    {
-                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                        'type': 'paragraph',
-                    }
-                ],
-            }
             # WHEN
             screen.handle_save()
 
         # THEN
-        # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 10
-        assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['parent_key'] == 'issue-1'
-        assert dismiss_args['issue_type_id'] == 'task-123'
-        assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['duedate'] == '2026-10-10'
-        assert dismiss_args['priority'] == '3'
-        assert dismiss_args['customfield_10147'] == {
-            'type': 'doc',
-            'version': 1,
-            'content': [
-                {
-                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                    'type': 'paragraph',
-                }
-            ],
-        }
         assert 'customfield_10020' not in dismiss_args
 
 
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(AddWorkItemScreen, '_get_sprints_in_project')
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_provided(
     get_issue_create_metadata_mock: AsyncMock,
+    get_sprints_in_project_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
     uses_cloud_api_mock: Mock,
     app,
-    create_metadata_with_editable_reporter: dict,
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     get_issue_create_metadata_mock.return_value = APIControllerResponse(
-        result=create_metadata_with_editable_reporter
+        result={
+            'fields': [
+                {
+                    'required': True,
+                    'schema': {
+                        'type': 'array',
+                        'items': 'json',
+                        'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                        'customId': 10020,
+                    },
+                    'name': 'Sprint',
+                    'key': 'customfield_10020',
+                    'hasDefaultValue': False,
+                    'operations': ['set'],
+                    'fieldId': 'customfield_10020',
+                }
+            ]
+        }
     )
+    get_sprints_in_project_mock.return_value = [('1', 'Sprint 1')]
+    validate_required_fields_mock.return_value = True
     uses_cloud_api_mock.return_value = False
     async with app.run_test() as pilot:
-        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='reporter123')
         await app.push_screen(screen)
         await pilot.pause()
-
-        # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
         await pilot.pause()
-
-        # Mock dismiss
         screen.dismiss = Mock()
-
-        # Mock the selection and value properties
         with (
-            patch.object(
-                type(screen.project_selector), 'selection', new_callable=PropertyMock
-            ) as mock_project,
-            patch.object(
-                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
-            ) as mock_issue_type,
-            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
-            patch.object(
-                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
-            ) as mock_reporter,
-            patch.object(
-                type(screen.parent_key_field), 'value', new_callable=PropertyMock
-            ) as mock_parent,
-            patch.object(
-                type(screen.summary_field), 'value', new_callable=PropertyMock
-            ) as mock_summary,
-            patch.object(
-                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
-            ),
-            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_input,
-            patch.object(
-                ADFMarkdownTextAreaWidget, 'get_value_for_create'
-            ) as mock_textarea_adf_markdown,
+            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_selection,
         ):
-            mock_project.return_value = 'TEST'
-            mock_issue_type.return_value = 'task-123'
-            mock_reporter.return_value = 'reporter123'
-            mock_parent.return_value = 'issue-1'
-            mock_summary.return_value = 'Test Summary'
-            mock_sprint_input.return_value = 101
-            mock_textarea_adf_markdown.return_value = {
-                'type': 'doc',
-                'version': 1,
-                'content': [
-                    {
-                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                        'type': 'paragraph',
-                    }
-                ],
-            }
+            mock_sprint_selection.return_value = 101
             # WHEN
             screen.handle_save()
 
         # THEN
-        # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 11
-        assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['parent_key'] == 'issue-1'
-        assert dismiss_args['issue_type_id'] == 'task-123'
-        assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['duedate'] == '2026-10-10'
-        assert dismiss_args['priority'] == '3'
-        assert dismiss_args['customfield_10147'] == {
-            'type': 'doc',
-            'version': 1,
-            'content': [
-                {
-                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                    'type': 'paragraph',
-                }
-            ],
-        }
         assert dismiss_args['customfield_10020'] == 101
 
 
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(AddWorkItemScreen, '_get_sprints_in_project')
 @patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_not_provided(
     get_issue_create_metadata_mock: AsyncMock,
+    get_sprints_in_project_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
     uses_cloud_api_mock: Mock,
     app,
-    create_metadata_with_editable_reporter: dict,
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
     app.config.enable_creating_additional_fields = True
     get_issue_create_metadata_mock.return_value = APIControllerResponse(
-        result=create_metadata_with_editable_reporter
+        result={
+            'fields': [
+                {
+                    'required': True,
+                    'schema': {
+                        'type': 'array',
+                        'items': 'json',
+                        'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                        'customId': 10020,
+                    },
+                    'name': 'Sprint',
+                    'key': 'customfield_10020',
+                    'hasDefaultValue': False,
+                    'operations': ['set'],
+                    'fieldId': 'customfield_10020',
+                }
+            ]
+        }
     )
+    get_sprints_in_project_mock.return_value = [('1', 'Sprint 1')]
+    validate_required_fields_mock.return_value = True
     uses_cloud_api_mock.return_value = False
     async with app.run_test() as pilot:
-        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='reporter123')
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='reporter123')
         await app.push_screen(screen)
         await pilot.pause()
-
-        # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
         await pilot.pause()
-
-        # Mock dismiss
         screen.dismiss = Mock()
-
-        # Mock the selection and value properties
         with (
-            patch.object(
-                type(screen.project_selector), 'selection', new_callable=PropertyMock
-            ) as mock_project,
-            patch.object(
-                type(screen.issue_type_selector), 'selection', new_callable=PropertyMock
-            ) as mock_issue_type,
-            patch.object(type(screen.assignee_selector), 'account_id', new_callable=PropertyMock),
-            patch.object(
-                type(screen.reporter_selector), 'account_id', new_callable=PropertyMock
-            ) as mock_reporter,
-            patch.object(
-                type(screen.parent_key_field), 'value', new_callable=PropertyMock
-            ) as mock_parent,
-            patch.object(
-                type(screen.summary_field), 'value', new_callable=PropertyMock
-            ) as mock_summary,
-            patch.object(
-                DateInputWidget, 'value', new_callable=PropertyMock(return_value='2026-10-10')
-            ),
-            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_input,
-            patch.object(
-                ADFMarkdownTextAreaWidget, 'get_value_for_create'
-            ) as mock_textarea_adf_markdown,
+            patch.object(SprintWidget, 'get_value_for_create') as mock_sprint_selection,
         ):
-            mock_project.return_value = 'TEST'
-            mock_issue_type.return_value = 'task-123'
-            mock_reporter.return_value = 'reporter123'
-            mock_parent.return_value = 'issue-1'
-            mock_summary.return_value = 'Test Summary'
-            mock_sprint_input.return_value = None
-            mock_textarea_adf_markdown.return_value = {
-                'type': 'doc',
-                'version': 1,
-                'content': [
-                    {
-                        'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                        'type': 'paragraph',
-                    }
-                ],
-            }
+            mock_sprint_selection.return_value = ''
             # WHEN
             screen.handle_save()
 
         # THEN
-        # get the data passed to dismiss
         dismiss_args = screen.dismiss.call_args[0][0]
-        assert len(dismiss_args.keys()) == 10
-        assert dismiss_args['project_key'] == 'TEST'
-        assert dismiss_args['parent_key'] == 'issue-1'
-        assert dismiss_args['issue_type_id'] == 'task-123'
-        assert dismiss_args['summary'] == 'Test Summary'
-        assert dismiss_args['reporter_account_id'] == 'reporter123'
-        assert dismiss_args['duedate'] == '2026-10-10'
-        assert dismiss_args['priority'] == '3'
-        assert dismiss_args['customfield_10147'] == {
-            'type': 'doc',
-            'version': 1,
-            'content': [
-                {
-                    'content': [{'type': 'text', 'text': 'Some value for the ADF field'}],
-                    'type': 'paragraph',
-                }
-            ],
-        }
         assert 'customfield_10020' not in dismiss_args
 
 
@@ -1221,7 +1018,7 @@ async def test_save_includes_additional_fields_with_adf_support_disabled(
         await pilot.pause()
 
         # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
 
         # Mock dismiss
@@ -1353,7 +1150,7 @@ async def test_jira_field_key(
         await pilot.pause()
         # WHEN
         # trigger metadata fetch
-        await screen.fetch_issue_create_metadata('TEST', 'task-123')
+        await screen._fetch_issue_create_metadata('TEST', 'task-123')
         await pilot.pause()
         screen.handle_save()
         # THEN
@@ -1364,6 +1161,95 @@ async def test_jira_field_key(
         assert screen.parent_key_field.jira_field_key == 'parent_key'
         assert screen.summary_field.jira_field_key == 'summary'
         assert screen.description_field.jira_field_key == 'description'
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_fetch_issue_create_metadata_without_project_and_type(
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_issue_create_metadata('', '')
+        get_issue_create_metadata_mock.assert_not_called()
+
+
+@patch.object(AddWorkItemScreen, '_get_sprints_in_project')
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_fetch_issue_create_metadata_with_sprint_selection_widgets(
+    get_issue_create_metadata_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
+    get_sprints_in_project_mock: AsyncMock,
+    create_metadata_with_editable_reporter,
+    app,
+):
+    """When we retrieve the item's create-metadata and the sprint field is included and there is a project selected then
+    the screen needs to retrieve the sprints in the project."""
+
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result=create_metadata_with_editable_reporter
+    )
+    validate_required_fields_mock.return_value = True
+    get_sprints_in_project_mock.return_value = [('1', 'Sprint 1')]
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
+        # THEN
+        get_sprints_in_project_mock.assert_called_once_with('P1')
+
+
+@patch.object(AddWorkItemScreen, '_validate_required_fields')
+@patch.object(APIController, 'get_issue_create_metadata')
+@pytest.mark.asyncio
+async def test_fetch_issue_create_metadata_with_required_description(
+    get_issue_create_metadata_mock: AsyncMock,
+    validate_required_fields_mock: Mock,
+    create_metadata_with_editable_reporter,
+    app,
+):
+    """When we retrieve the item's create-metadata and the description field is included and required then
+    the screen needs to mark the description widget as required."""
+
+    # GIVEN
+    app.config.create_additional_fields_ignore_ids = []
+    app.config.enable_creating_additional_fields = True
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                }
+            ]
+        }
+    )
+    validate_required_fields_mock.return_value = True
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._fetch_issue_create_metadata('P1', 'task-123')
+        # THEN
+        assert screen.description_field.border_subtitle == '(*)'
 
 
 def test_create_widgets_for_work_item_creation_additional_fields_with_adf_support_enabled(
@@ -2345,11 +2231,16 @@ async def test_save_button_status_after_description_update(
 
 
 @pytest.mark.parametrize('validate_required_fields', [True, False])
-@patch.object(WorkItemProjectSelectionField, 'selection', PropertyMock(return_value=None))
+@patch.object(AddWorkItemScreen, '_retrieve_applicable_status_codes')
+@patch.object(AddWorkItemScreen, '_fetch_issue_create_metadata')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @pytest.mark.asyncio
 async def test_save_button_status_after_issue_type_selection(
-    validate_required_fields_mock: Mock, validate_required_fields: bool, app
+    validate_required_fields_mock: Mock,
+    fetch_issue_create_metadata_mock: AsyncMock,
+    retrieve_applicable_status_codes_mock: AsyncMock,
+    validate_required_fields: bool,
+    app,
 ):
     # GIVEN
     app.config.create_additional_fields_ignore_ids = []
@@ -2363,6 +2254,8 @@ async def test_save_button_status_after_issue_type_selection(
         screen.handle_issue_type_selection()
         # THEN
         assert screen.save_button.disabled is not validate_required_fields
+        fetch_issue_create_metadata_mock.assert_called_once()
+        retrieve_applicable_status_codes_mock.assert_called_once()
 
 
 @pytest.mark.parametrize('validate_required_fields', [True, False])
@@ -3122,3 +3015,154 @@ async def test_search_work_items_with_advanced_search_enabled_project_selected(
             jql_query='(text ~ "test" OR workItemKey ~ "test") AND (spaceJira = "P1")',
             fields=['id', 'key', 'summary'],
         )
+
+
+@patch.object(APIController, 'get_project_statuses')
+@pytest.mark.asyncio
+async def test_retrieve_applicable_status_codes_without_project_and_type(
+    get_project_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._retrieve_applicable_status_codes('', '')
+        # THEN
+        assert screen.status_selector._options == [('', Select.NULL)]
+        get_project_statuses_mock.assert_not_called()
+
+
+@patch.object(APIController, 'get_project_statuses')
+@pytest.mark.asyncio
+async def test_retrieve_applicable_status_codes_with_project_and_type_no_statuses_found(
+    get_project_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_project_statuses_mock.return_value = APIControllerResponse(result=None)
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._retrieve_applicable_status_codes('P1', '1')
+        # THEN
+        assert screen.status_selector._options == [('', Select.NULL)]
+        get_project_statuses_mock.assert_called_once_with('P1')
+
+
+@patch.object(APIController, 'get_project_statuses')
+@pytest.mark.asyncio
+async def test_retrieve_applicable_status_codes_with_project_and_type_statuses_found(
+    get_project_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_project_statuses_mock.return_value = APIControllerResponse(
+        result={'1': {'issue_type_statuses': [IssueStatus(id='1', name='Todo')]}}
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN
+        await screen._retrieve_applicable_status_codes('P1', '1')
+        # THEN
+        assert screen.status_selector._options == [('', Select.NULL), ('Todo', '1')]
+        get_project_statuses_mock.assert_called_once_with('P1')
+
+
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_press_cancel_dismisses_screen_without_data(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='TEST', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('escape')
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        dismiss_args = screen.dismiss.call_args[0][0]
+        assert len(dismiss_args.keys()) == 0
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(TextAreaTabbedContent, '_edit_text_content')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_press_edit_on_description_widget_calls_edit_text_content(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    edit_text_content_mock: Mock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('b')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('ctrl+e')
+        # THEN
+        edit_text_content_mock.assert_called_once_with('')

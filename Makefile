@@ -45,7 +45,7 @@ test:
 
 .PHONY: coverage
 coverage:
-	pytest --cov=src/jiratui --cov-report=term-missing src/jiratui/
+	pytest --cov=src/jiratui --cov-report term-missing:skip-covered src/jiratui/
 
 .PHONY: docs-live
 docs-live:
