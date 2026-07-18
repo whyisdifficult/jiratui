@@ -14,7 +14,7 @@ This feature uses the Jira Software Cloud REST API. By [@whyisdifficult](https:/
 - Implement a client for the Jira Software Cloud REST API. The application can use this API to retrieve the sprints of a
 project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Add config variable `enable_logging` to enable/disable logging. The default is `False`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/294
-- Add support for specifying the status of a work item being created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add support for specifying the status of a work item being created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/295
 
 ### Bug Fixes
 
