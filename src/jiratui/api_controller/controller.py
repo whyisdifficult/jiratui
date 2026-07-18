@@ -1896,7 +1896,7 @@ class APIController:
             )
         # extract the ID of the transition that corresponds to the selected status ID
         transition_id: str | None = None
-        for transition in response.result:
+        for transition in response.result or []:
             if transition.to_state.id == status_id:
                 transition_id = transition.id
                 break
@@ -2303,8 +2303,8 @@ class APIController:
         fields: dict[str, Any] = {}
 
         # fetch create metadata to check which fields are available for this project/issue type
-        project_key = data.get('project_key')
-        issue_type_id = data.get('issue_type_id')
+        project_key = data.get('project_key', '')
+        issue_type_id = data.get('issue_type_id', '')
         available_fields: set[str] = set()
 
         if project_key and issue_type_id:

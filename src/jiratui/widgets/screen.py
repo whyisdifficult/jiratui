@@ -16,6 +16,7 @@ from jiratui.config import CONFIGURATION
 from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
 from jiratui.models import (
     IssueType,
+    JiraBaseIssue,
     JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
@@ -1121,8 +1122,16 @@ class MainScreen(Screen):
         """Handles the event to create a work item after the user clicks on the "save" button in the create-work-item
         screen.
 
+        This method calls the API to create the new work item with the data returned by the create-work-item screen and,
+        if the user set the status of the item then it calls the API to transition item to the desired status.
+
+        If the item is created successfully this method will open the quick-view modal screen (if
+        `config.view_work_item_after_creation = True`) and, if `config.enable_recent_history = True` it will also add
+        the item to the recent history.
+
         Args:
-            data: a dictionary with the details of the fields and values to create the item.
+            data: a dictionary with the details of the fields and values to create the item. This data is provided upon
+            dismissal of the create-work-item modal screen.
 
         Returns:
             None
@@ -1132,7 +1141,7 @@ class MainScreen(Screen):
             self.loading_container.display = True
 
             # split data into base fields and dynamic fields (custom fields, components, etc.)
-            # Base fields are handled explicitly by the controller
+            # base fields are handled explicitly by the controller
             base_fields = {
                 'project_key',
                 'parent_key',
@@ -1143,29 +1152,41 @@ class MainScreen(Screen):
                 'description',
                 'duedate',
                 'priority',
+                'status',
             }
-
-            # Separate base data from dynamic fields (custom fields, components, etc.)
+            # separate base data from dynamic fields (custom fields, components, etc.)
             base_data = {k: v for k, v in data.items() if k in base_fields}
             dynamic_fields = {k: v for k, v in data.items() if k not in base_fields}
-
             # request the API to create the work item
             response: APIControllerResponse = await self.api.create_work_item(
                 base_data, **dynamic_fields
             )
-            self.loading_container.display = False
-
-            if response.success and response.result:
+            created_work_item: JiraBaseIssue | None
+            if response.success and (created_work_item := response.result):
+                new_status: str | None
+                # check if the user wants to set the new item's status; i.e. transition the item to a different status
+                if (new_status := data.get('status')) is not None:
+                    response = await self.api.transition_issue_status(
+                        created_work_item.key, new_status
+                    )
+                    self.loading_container.display = False
+                    if not response.success:
+                        self.notify(
+                            f'Failed to transition the work item to a different status: {response.error}',
+                            severity='error',
+                            title='Status Transition',
+                        )
+                self.loading_container.display = False
                 self.notify(
-                    f'Work item {response.result.key} created successfully',
+                    f'Work item {created_work_item.key} created successfully',
                     title='Create Work Item',
                 )
                 if self.config.view_work_item_after_creation:
-                    self.call_next(self._open_quick_view_screen, response.result.key)
+                    self.call_next(self._open_quick_view_screen, created_work_item.key)
                 if self.config.enable_recent_history:
-                    # add the work item to the recent history
-                    self._add_item_to_recent_history(response.result.key, '', '', '')
+                    self._add_item_to_recent_history(created_work_item.key, '', '', '')
             else:
+                self.loading_container.display = False
                 self.notify(
                     f'Failed to create the work item: {response.error}',
                     severity='error',

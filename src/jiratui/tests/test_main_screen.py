@@ -911,9 +911,9 @@ async def test_show_quick_view_screen_after_creating_work_item_view_work_item_af
         result=JiraBaseIssue(id='2', key='key-2')
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, WorkItemQuickViewScreen)
@@ -949,6 +949,104 @@ async def test_create_work_item_with_recent_history_enabled(
         add_item_to_recent_history_mock.assert_called_once_with('key-2', '', '', '')
 
 
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_with_status_transition(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    app,
+):
+    """Creating a work item when the status field is set will request the API to transition the status of the recently
+    created work item."""
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen.create_work_item({'summary': 'some value here', 'status': '1'})
+        await pilot.pause()
+        # THEN
+        transition_issue_status_mock.assert_called_once_with('key-2', '1')
+
+
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_without_status_transition(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    app,
+):
+    """Creating a work item when the status field is not set will not request the API to transition the status of the
+    recently created work item."""
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen.create_work_item({'summary': 'some value here'})
+        await pilot.pause()
+        # THEN
+        transition_issue_status_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch('jiratui.widgets.screen.MainScreen._open_quick_view_screen')
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_fails_to_create_item(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    open_quick_view_screen_mock: AsyncMock,
+    add_item_to_recent_history_mock: Mock,
+    app,
+):
+    """When the API fails to create the work item then the work item's status is not transitioned and the app does not
+    open the quick view and does not update the recent history."""
+    # GIVEN
+    app.config.view_work_item_after_creation = True
+    app.config.enable_recent_history = True
+    create_work_item_mock.return_value = APIControllerResponse(success=False, result=None)
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen.create_work_item({'summary': 'some value here', 'status': '1'})
+        await pilot.pause()
+        # THEN
+        transition_issue_status_mock.assert_not_called()
+        open_quick_view_screen_mock.assert_not_called()
+        add_item_to_recent_history_mock.assert_not_called()
+        assert not screen.loading_container.display
+
+
 @patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
 @patch.object(APIController, 'create_work_item')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -970,9 +1068,9 @@ async def test_create_work_item_with_recent_history_disabled(
         result=JiraBaseIssue(id='2', key='key-2')
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         # THEN
         add_item_to_recent_history_mock.assert_not_called()
@@ -996,9 +1094,9 @@ async def test_show_quick_view_screen_after_creating_work_item_view_work_item_af
         result=JiraBaseIssue(id='2', key='key-2')
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         # THEN
         assert isinstance(app.screen, MainScreen)
@@ -1025,9 +1123,9 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_search(
         result=JiraBaseIssue(id='2', key='key-2')
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
         await pilot.press('ctrl+r')  # hit search to dismiss and search
@@ -1072,9 +1170,9 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selec
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
         await pilot.press('tab')
@@ -1120,9 +1218,9 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selec
         result=JiraIssueSearchResponse(issues=[jira_issues[1]])
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
         await pilot.press('tab')
@@ -1154,9 +1252,9 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_escape(
         result=JiraBaseIssue(id='2', key='key-2')
     )
     async with app.run_test() as pilot:
-        cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        await app.screen.create_work_item({'summary': 'some value here'})
+        await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
         await pilot.press('escape')  # dismiss with escape does not trigger search

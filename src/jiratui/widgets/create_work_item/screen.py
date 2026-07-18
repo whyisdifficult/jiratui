@@ -52,6 +52,7 @@ from jiratui.widgets.create_work_item.fields import (
     ParentKeyField,
     SummaryField,
     WorkItemProjectSelectionField,
+    WorkItemStatusField,
     WorkItemTypeSelectionField,
 )
 
@@ -176,7 +177,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     This screen does not actually create the work item. Instead, upon dismissing the screen the caller will receive the
     necessary data to create the work item via the Jira API.
     ```
-
     **See Also**:
     - [Create Work Item Screen Design](#components-create-work-item-screen)
     - [Use Case: Create Work Item](#use-case-create-work-item)
@@ -255,6 +255,10 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     @property
     def assignee_selector(self) -> JiraUserInput:
         return self.query_one('#create-work-item-assignee-selector', expect_type=JiraUserInput)
+
+    @property
+    def status_selector(self) -> WorkItemStatusField:
+        return self.query_one(WorkItemStatusField)
 
     @property
     def assignee_autocomplete(self) -> UsersAutoComplete:
@@ -342,6 +346,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                         ).add_class(*['create-update-users-field-widget'])
                         yield SummaryField()
                         yield ParentKeyField(self._parent_work_item_key)
+                        yield WorkItemStatusField([])
                     # dynamically-created widgets
                     with VerticalScroll(classes='add-work-item-form-textarea-fields'):
                         with TextAreaTabbedContent(
@@ -415,7 +420,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         return self.__configuration.enable_advanced_full_text_search
 
     async def _search_work_items(self, query: str) -> list[JiraIssue] | None:
-        """Search and retrieve work items to fill in the autocomplete suggestions for parent key.
+        """Searches and retrieves work items to fill in the autocomplete suggestions for parent key.
 
         See Also: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
 
@@ -490,8 +495,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             if response.success:
                 types = response.result or []
             types.sort(key=lambda x: x.name)
-            options = [(t.name, t.id) for t in types]
-            self.issue_type_selector.set_options(options)
+            self.issue_type_selector.set_options([(t.name, t.id) for t in types])
 
     @on(Select.Changed, 'WorkItemProjectSelectionField')
     def handle_project_selection(self) -> None:
@@ -499,7 +503,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         This also:
         - updates the status of the "Save" button.
-        - removes all the panes used for displaying textarea-based field widgets.
+        - removes all the panes used for displaying non-textarea field widgets.
         - if the user selected a project then it retrieves the project's active and future sprints and stores them in
         the application's session.
 
@@ -507,29 +511,35 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             None
         """
 
+        # clear the (non-textarea) dynamic widgets
+        self.additional_fields.remove_children()
         self.run_worker(self.fetch_available_issue_types(self.project_selector.selection))
         if self.project_selector.selection:
             self.run_worker(self._fetch_sprints_in_project(self.project_selector.selection))
-        # clean up the panes that contain textarea-based widgets
-        self.additional_fields.remove_children()
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Select.Changed, 'WorkItemTypeSelectionField')
     def handle_issue_type_selection(self) -> None:
         """Fetches metadata for creating issues in the selected project and of the selected type.
 
-        This also updates the status of the "Save" button.
+        This also retrieves the applicable status codes and updates the status of the "Save" button.
 
         Returns:
             None
         """
 
-        if self.project_selector.selection and self.issue_type_selector.selection:
-            self.run_worker(
-                self.fetch_issue_create_metadata(
-                    self.project_selector.selection, self.issue_type_selector.selection
-                ),
+        # clear the (non-textarea) dynamic widgets
+        self.additional_fields.remove_children()
+        self.run_worker(
+            self._fetch_issue_create_metadata(
+                self.project_selector.selection, self.issue_type_selector.selection
             )
+        )
+        self.run_worker(
+            self._retrieve_applicable_status_codes(
+                self.project_selector.selection, self.issue_type_selector.selection
+            )
+        )
         self.save_button.disabled = not self._validate_required_fields()
 
     @on(Select.Changed, '#create-work-item-reporter-selector')
@@ -550,7 +560,9 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         self.save_button.disabled = not self._validate_required_fields()
 
-    async def fetch_issue_create_metadata(self, project_key: str, issue_type_id: str) -> None:
+    async def _fetch_issue_create_metadata(
+        self, project_key: str | None = None, issue_type_id: str | None = None
+    ) -> None:
         """Fetches the metadata for creating work items of a given type in the given project.
 
         This function does a few things:
@@ -558,110 +570,131 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         - Builds and mounts the necessary widgets that compose the create-work-item form.
 
         Args:
-            project_key: the key of the project for which we want to create a work item.
-            issue_type_id: the type of work item we want to create.
+            project_key: the key of the project selected by the user.
+            issue_type_id: the ID of the type of work item selected by the user.
 
         Returns:
             None
         """
 
-        await self.additional_fields.remove_children()
-        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-        response: APIControllerResponse = await application.api.get_issue_create_metadata(
-            project_key, issue_type_id
-        )
-        work_item_create_metadata: dict | None = response.result
-        if not response.success or not work_item_create_metadata:
-            self.notify(
-                'Unable to find the required information for creating a work item.',
-                title='Missing Required Metadata',
-                severity='error',
+        if project_key and issue_type_id:
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+            response: APIControllerResponse = await application.api.get_issue_create_metadata(
+                project_key, issue_type_id
             )
-        else:
-            # store fields metadata for proper value formatting later
-            fields_data: list[dict[str, Any]] = work_item_create_metadata.get('fields', [])
+            work_item_create_metadata: dict | None = response.result
+            if not response.success or not work_item_create_metadata:
+                self.notify(
+                    'Unable to find the required information for creating a work item.',
+                    title='Missing Required Metadata',
+                    severity='error',
+                )
+            else:
+                # store fields metadata for proper value formatting later
+                fields_data: list[dict[str, Any]] = work_item_create_metadata.get('fields', [])
 
-            for field in fields_data:
-                if field_id := field.get('fieldId', ''):
-                    self._field_metadata[field_id] = field
+                for field in fields_data:
+                    if field_id := field.get('fieldId', ''):
+                        self._field_metadata[field_id] = field
 
-                # check if description is required and update the widget
-                if field_id == 'description' and field.get('required', False):
-                    self.description_field.mark_required()
+                    # check if description is required and update the widget
+                    if field_id == 'description' and field.get('required', False):
+                        self.description_field.mark_required()
 
-                # check if reporter field is editable
-                if field_id == 'reporter':
-                    operations = field.get('operations', [])
-                    self._reporter_is_editable = 'set' in operations
-                    # hide reporter field if not editable
-                    self.reporter_selector.display = self._reporter_is_editable
+                    # check if reporter field is editable
+                    if field_id == 'reporter':
+                        operations = field.get('operations', [])
+                        self._reporter_is_editable = 'set' in operations
+                        # hide reporter field if not editable
+                        self.reporter_selector.display = self._reporter_is_editable
 
-            # create all the widgets for the additional fields supported
-            widgets_to_create_work_item: list[Widget] = create_widgets_for_work_item_creation(
-                data=fields_data,
-                api_controller=application.api,
-                adf_support_enabled=self.adf_support_enabled,
-            )
-
-            # split the fields based on type so we can mount them in different places in the UI
-            textarea_widgets: list[ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget] = []
-            non_textarea_widgets: list[Widget] = []
-            sprint_selection_widgets: list[SprintSelectionWidget] = []
-            for widget in widgets_to_create_work_item:
-                if isinstance(widget, ADFMarkdownTextAreaWidget) or isinstance(
-                    widget, PlainTextTextAreaWidget
-                ):
-                    textarea_widgets.append(widget)
-                elif isinstance(widget, SprintSelectionWidget):
-                    sprint_selection_widgets.append(widget)
-                    non_textarea_widgets.append(widget)
-                else:
-                    non_textarea_widgets.append(widget)
-
-            # mount the (non-textarea) widgets on the left column
-            await self.additional_fields.mount_all(non_textarea_widgets)
-            # mount the widgets on the right column but before make sure we remove all the panes except the
-            # statically-defined pane that contains the description widget
-            await self._remove_textarea_panes()
-            for textarea_widget in textarea_widgets:
-                await self.textarea_fields_tabbed_content.add_pane(
-                    TextAreaTabPane(textarea_widget.border_title, textarea_widget)
+                # create all the widgets for the additional fields supported
+                widgets_to_create_work_item: list[Widget] = create_widgets_for_work_item_creation(
+                    data=fields_data,
+                    api_controller=application.api,
+                    adf_support_enabled=self.adf_support_enabled,
                 )
 
-            # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
-            for input_widget in self.additional_fields.query(Input):
-                if isinstance(input_widget, LabelsWidget):
-                    # set up the autocomplete widget for the field that allows users to select labels
-                    field_meta = self._field_metadata.get('labels', {})
-                    required = field_meta.get('required', False)
-                    title = field_meta.get('name', 'Labels')
-                    await self.additional_fields.mount(
-                        LabelsAutoComplete(
-                            target=input_widget,
-                            api_controller=application.api,
-                            required=required,
-                            title=title,
-                        )
-                    )
-                elif isinstance(input_widget, MultiUserPickerWidget):
-                    await self.additional_fields.mount(
-                        MultiUserPickerAutoComplete(
-                            target=input_widget, api_controller=application.api
-                        )
-                    )
-                elif isinstance(input_widget, SingleUserPickerWidget):
-                    await self.additional_fields.mount(
-                        UsersAutoComplete(target=input_widget, api_controller=application.api)
+                # split the fields based on type so we can mount them in different places in the UI
+                textarea_widgets: list[ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget] = []
+                non_textarea_widgets: list[Widget] = []
+                sprint_selection_widgets: list[SprintSelectionWidget] = []
+                for widget in widgets_to_create_work_item:
+                    if isinstance(widget, ADFMarkdownTextAreaWidget) or isinstance(
+                        widget, PlainTextTextAreaWidget
+                    ):
+                        textarea_widgets.append(widget)
+                    elif isinstance(widget, SprintSelectionWidget):
+                        sprint_selection_widgets.append(widget)
+                        non_textarea_widgets.append(widget)
+                    else:
+                        non_textarea_widgets.append(widget)
+
+                # mount the (non-textarea) widgets on the left column
+                await self.additional_fields.mount_all(non_textarea_widgets)
+                # mount the widgets on the right column but before make sure we remove all the panes except the
+                # statically-defined pane that contains the description widget
+                await self._remove_textarea_panes()
+                for textarea_widget in textarea_widgets:
+                    await self.textarea_fields_tabbed_content.add_pane(
+                        TextAreaTabPane(textarea_widget.border_title, textarea_widget)
                     )
 
-            # populate the sprint selection widget(s) with the options
-            if sprint_selection_widgets and self.project_selector.selection:
-                if sprints := await self._get_sprints_in_project(self.project_selector.selection):
-                    for sprint_widget in sprint_selection_widgets:
-                        sprint_widget.set_options(sprints)
+                # create and mount AutoComplete widgets for labels inputs and custom fields that support multiple users
+                for input_widget in self.additional_fields.query(Input):
+                    if isinstance(input_widget, LabelsWidget):
+                        # set up the autocomplete widget for the field that allows users to select labels
+                        field_meta = self._field_metadata.get('labels', {})
+                        required = field_meta.get('required', False)
+                        title = field_meta.get('name', 'Labels')
+                        await self.additional_fields.mount(
+                            LabelsAutoComplete(
+                                target=input_widget,
+                                api_controller=application.api,
+                                required=required,
+                                title=title,
+                            )
+                        )
+                    elif isinstance(input_widget, MultiUserPickerWidget):
+                        await self.additional_fields.mount(
+                            MultiUserPickerAutoComplete(
+                                target=input_widget, api_controller=application.api
+                            )
+                        )
+                    elif isinstance(input_widget, SingleUserPickerWidget):
+                        await self.additional_fields.mount(
+                            UsersAutoComplete(target=input_widget, api_controller=application.api)
+                        )
+
+                # populate the sprint selection widget(s) with the options
+                if sprint_selection_widgets and project_key:
+                    if sprints := await self._get_sprints_in_project(project_key):
+                        for sprint_widget in sprint_selection_widgets:
+                            sprint_widget.set_options(sprints)
+
+    async def _retrieve_applicable_status_codes(
+        self, project_key: str | None = None, issue_type_id: str | None = None
+    ) -> None:
+        work_status_codes_options: list[tuple[str, str]] = []
+        if project_key and issue_type_id:
+            application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+            response: APIControllerResponse = await application.api.get_project_statuses(
+                project_key
+            )
+            status_codes_by_work_item_type_id: dict | None
+            if response.success and (status_codes_by_work_item_type_id := response.result):
+                record: dict = status_codes_by_work_item_type_id.get(issue_type_id, {})
+                work_status_codes_options = sorted(
+                    [
+                        (status.name, str(status.id))
+                        for status in record.get('issue_type_statuses', [])
+                    ],
+                    key=lambda x: x[0],
+                )
+        self.status_selector.set_options(work_status_codes_options)
 
     async def _fetch_sprints_in_project(self, key: str | None = None) -> None:
-        """Fetches the sprints of a project and update the data in the application's session.
+        """Fetches the sprints of a project and updates the data in the application's session.
 
         This function attempts to get the data from the application's session to avoid making unnecessary API
         requests. If the session does not have the data then it fetches the sprints from the API and updates the
@@ -752,7 +785,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         if custom_type == CustomFieldType.USER_PICKER.value:
             return {'accountId': value}
-
         elif custom_type == CustomFieldType.FLOAT.value or schema.get('type') == 'number':
             if value:  # Type-safe check to prevent ~AlwaysFalsy error
                 try:
@@ -760,7 +792,6 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                 except (ValueError, TypeError):
                     # invalid float - skip this field
                     return None
-            return None
 
         # labels field (array of strings)
         elif field_id == 'labels' or (
@@ -812,13 +843,25 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
             )
         else:
             # process widgets that are created statically
-            data: dict[str, Any] = {
-                self.project_selector.jira_field_key: self.project_selector.selection,
-                self.parent_key_field.jira_field_key: self.parent_key_field.value,
-                self.issue_type_selector.jira_field_key: self.issue_type_selector.selection,
-                self.assignee_selector.jira_field_key: self.assignee_selector.account_id,
-                self.summary_field.jira_field_key: self.summary_field.value,
-            }
+            data: dict[str, Any] = {}
+
+            if self.project_selector.selection:
+                data[self.project_selector.jira_field_key] = self.project_selector.selection
+
+            if self.parent_key_field.value:
+                data[self.parent_key_field.jira_field_key] = self.parent_key_field.value
+
+            if self.issue_type_selector.selection:
+                data[self.issue_type_selector.jira_field_key] = self.issue_type_selector.selection
+
+            if self.assignee_selector.account_id:
+                data[self.assignee_selector.jira_field_key] = self.assignee_selector.account_id
+
+            if self.summary_field.value:
+                data[self.summary_field.jira_field_key] = self.summary_field.value
+
+            if self.status_selector.selection:
+                data[self.status_selector.jira_field_key] = self.status_selector.selection
 
             if self.description_field.value_is_empty:
                 data[self.description_field.jira_field_key] = None

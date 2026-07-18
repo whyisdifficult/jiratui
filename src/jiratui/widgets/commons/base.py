@@ -332,7 +332,7 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             allow_blank=True,
         )
 
-        # Setup base field properties
+        # setup base field properties
         self.setup_base_field(
             mode=mode,
             field_id=field_id,
@@ -342,7 +342,7 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
         )
 
-        # Mode-specific setup
+        # mode-specific setup
         if mode == FieldMode.UPDATE:
             self.setup_update_field(
                 jira_field_key=jira_field_key,
@@ -352,7 +352,7 @@ class ProjectSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             self.add_class('create-update-field-widget')
         else:
             # CREATE mode specific setup
-            self.add_class('create-work-item-project-selector')
+            self.add_class('create-work-item-generic-selector')
 
     def watch_projects(self, projects: dict | None = None) -> None:
         """Watches for changes to the projects reactive property (CREATE mode).

@@ -1,9 +1,10 @@
-"""these widgets are used by the screen that allows users to create new work items."""
+"""These widgets are used by the screen that allows users to create new work items."""
 
 from textual import on
 from textual.widgets import Input
 
 from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget, ProjectSelectionWidget
+from jiratui.widgets.filters import IssueStatusSelectionInput
 
 
 class WorkItemProjectSelectionField(ProjectSelectionWidget):
@@ -77,3 +78,16 @@ class ParentKeyField(Input):
     def clean_value(self, event: Input.Blurred) -> None:
         if event.value is not None:
             self.value = event.value.strip().replace(' ', '')
+
+
+class WorkItemStatusField(IssueStatusSelectionInput):
+    """A [IssueStatusSelectionInput](#jiratui.widgets.filters.IssueStatusSelectionInput) widget to pick the status of
+    the work item being created."""
+
+    WIDGET_ID = 'jira-issue-status-selector-create'
+
+    def __init__(self, statuses: list):
+        super().__init__(statuses, classes='create-work-item-generic-selector')
+        self.jira_field_key = 'status'
+        """The key to used by Jira to identify this field in the edit-metadata."""
+        self.border_subtitle = None
