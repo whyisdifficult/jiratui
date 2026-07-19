@@ -316,7 +316,7 @@ def create_dynamic_widgets_for_updating_work_item(
                 initial_options: list[tuple[str, str]] = []
                 if work_item.sprint:
                     initial_options = [
-                        ('', Select.NULL),
+                        ('', Select.NULL),  # type:ignore[list-item]
                         (work_item.sprint.name, str(work_item.sprint.id)),
                     ]
                 widget = SprintSelectionWidget(

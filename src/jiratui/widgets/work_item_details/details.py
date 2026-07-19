@@ -1058,15 +1058,14 @@ class IssueDetailsWidget(Vertical):
                         current_sprint_id = str(work_item.sprint.id)
 
                     # set the options for every sprint selection widget
-                    for widget in self.dynamic_fields_widgets_container.query(
+                    for sprint_widget in self.dynamic_fields_widgets_container.query(
                         SprintSelectionWidget
                     ):
-                        widget.set_options(
+                        sprint_widget.set_options(
                             [(sprint.display_name, str(sprint.id)) for sprint in sprints]
                         )
                         if current_sprint_id:
-                            widget.value = current_sprint_id
-                        # TODO update required field after setting the options
+                            sprint_widget.value = current_sprint_id
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
