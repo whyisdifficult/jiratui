@@ -61,12 +61,13 @@ from textual.binding import Binding
 from textual.containers import Center, HorizontalGroup, ItemGrid, Right, Vertical, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
+from textual.widget import Widget
 from textual.widgets import LoadingIndicator, ProgressBar
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
-from jiratui.models import IssuePriority, JiraIssue, TimeTracking
+from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_parent_has_changed,
@@ -85,6 +86,7 @@ from jiratui.widgets.commons.widgets import (
     NumericInputWidget,
     SelectionWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -245,8 +247,8 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(IssueParentField)
 
     @property
-    def issue_sprint_field(self) -> IssueSprintField:
-        return self.query_one(IssueSprintField)
+    def issue_sprint_field(self) -> IssueSprintField | None:
+        return self.query_one_optional(IssueSprintField)
 
     @property
     def issue_resolution_field(self) -> ReadOnlyTextField:
@@ -296,6 +298,14 @@ class IssueDetailsWidget(Vertical):
     def content_container(self) -> VerticalScroll:
         return self.query_one('#issue-details-form', expect_type=VerticalScroll)
 
+    @property
+    def support_sprint_selection(self) -> bool:
+        return CONFIGURATION.get().cloud
+
+    @property
+    def support_updating_additional_fields(self) -> bool:
+        return CONFIGURATION.get().enable_updating_additional_fields
+
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
         self.loading_container.display = True
@@ -331,7 +341,8 @@ class IssueDetailsWidget(Vertical):
                 yield IssueKeyField()
                 # set widgets in row 4
                 yield IssueParentField()
-                yield IssueSprintField()
+                if not self.support_sprint_selection:
+                    yield IssueSprintField()
                 yield IssueTypeField()
                 # set widgets in row 5
                 # this input field contains the id of the Jira user that we can use to update the item's reporter field
@@ -532,17 +543,19 @@ class IssueDetailsWidget(Vertical):
             self.issue_key_field.clear()
             self.project_id_field.clear()
             self.issue_type_field.clear()
-            self.issue_sprint_field.clear()
             self.issue_status_selector.clear()
             self.assignee_selector.clear()
             self.reporter_selector.clear()
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.set_original_value(None)
+            if widget := self.issue_sprint_field:
+                widget.clear()
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
             self.time_tracking_container.remove_children()
+            # clear all the dynamically-generated widgets
             self.dynamic_fields_widgets_container.remove_children()
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking | None = None) -> None:
@@ -653,6 +666,7 @@ class IssueDetailsWidget(Vertical):
                     and not isinstance(dynamic_widget, LabelsWidget)
                     and not isinstance(dynamic_widget, MultiUserPickerWidget)
                     and not isinstance(dynamic_widget, SingleUserPickerWidget)
+                    and not isinstance(dynamic_widget, SprintSelectionWidget)
                 ):
                     continue
                 if dynamic_widget.value_has_changed:
@@ -710,7 +724,7 @@ class IssueDetailsWidget(Vertical):
                 self.notify(
                     f'Data validation error: {e}',
                     severity='error',
-                    title='Update Work Item',
+                    title='Validation Error',
                 )
             except Exception as e:
                 self.notify(str(e), severity='error', title='Update Work Item')
@@ -720,9 +734,10 @@ class IssueDetailsWidget(Vertical):
                     issue_was_updated = True
                 else:
                     self.notify(
-                        'The work item was not updated.', severity='error', title='Update Work Item'
+                        f'The work item was not updated: {response.error or ""}',
+                        severity='error',
+                        title='Update Work Item',
                     )
-                    self.notify(response.error, severity='error', title='Update Work Item')
 
         if issue_requires_transition:
             response = await application.api.transition_issue_status(
@@ -838,6 +853,46 @@ class IssueDetailsWidget(Vertical):
             if current_status_id and work_status_codes_options:
                 self.issue_status_selector.value = current_status_id
 
+    async def _fetch_sprints_in_project(self, project_key: str) -> list[AgileSprint] | None:
+        """Retrieves the sprints of a project and updates the data in the application's session.
+
+        This function attempts to get the data from the application's session to avoid making unnecessary API
+        requests. If the session does not have the data then it fetches the sprints from the API and updates the
+        application's session.
+
+        Args:
+            project_key: the key or id of the project/space whose sprints we want to retrieve.
+
+        Returns:
+            A list of AgileSprint with the details of the active and future sprints in the project/space.
+        """
+
+        if not project_key:
+            return None
+
+        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session()
+
+        sprints_in_project: list[AgileSprint] | None
+        if sprints_in_project := sprints.get(project_key):
+            return sprints_in_project
+
+        # retrieve the project's sprints
+        response: APIControllerResponse = await self.app.api.get_project_sprints(project_key)  # type:ignore[attr-defined]
+        if response.success and (sprints_in_project := response.result):
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+            if not sprints:
+                application.session.sprints = {project_key: sprints_in_project}
+            else:
+                sprints[project_key] = sprints_in_project
+                application.session.sprints = sprints
+            return sprints_in_project
+
+        return None
+
+    def _get_sprints_from_application_session(self) -> dict[str, list[AgileSprint]]:
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        return application.session.get('sprints', {})
+
     def watch_issue(self, work_item: JiraIssue | None) -> None:
         """Updates the form fields with the details of the work item selected by the user.
 
@@ -853,7 +908,7 @@ class IssueDetailsWidget(Vertical):
             work_item: a work item selected by the user in the left-hand side panel.
 
         Returns:
-            None.
+            None
         """
 
         # "reset" the form by setting the value of all its elements to the default
@@ -899,6 +954,8 @@ class IssueDetailsWidget(Vertical):
         self.reporter_selector.update_enabled = editable_fields.get('reporter')
 
         # set the value of the form fields based on the work item's data
+        if not self.support_sprint_selection:
+            self.issue_sprint_field.value = work_item.sprint_name
         self.issue_last_update_date_field.value = work_item.updated_on
         self.issue_created_date_field.value = work_item.created_on
         self.issue_resolution_date_field.value = work_item.resolved_on
@@ -915,7 +972,6 @@ class IssueDetailsWidget(Vertical):
         self.issue_parent_field.jira_field_is_required = required_fields.get(
             self.issue_parent_field.jira_field_key
         )
-        self.issue_sprint_field.value = work_item.sprint_name
         self.issue_summary_field.value = work_item.summary
         self.issue_summary_field.update_enabled = editable_fields.get(
             self.issue_summary_field.jira_field_key
@@ -932,43 +988,51 @@ class IssueDetailsWidget(Vertical):
         # check if the work item has been flagged; and show a label at the top with a message for the user
         self.run_worker(self._determine_issue_flagged_status(work_item))
 
-        if CONFIGURATION.get().enable_updating_additional_fields:
-            # add dynamic widgets to support updating additional fields including custom fields and other system fields
+        if self.support_updating_additional_fields:
+            # add dynamic widgets to support updating custom fields and other system fields
             self.run_worker(self._add_dynamic_widgets(work_item))
 
     async def _add_dynamic_widgets(self, work_item: JiraIssue) -> None:
-        """Builds and mounts a list of (dynamic) widgets to support updating (some) system and custom field types
+        """Builds and mounts a list of (dynamic) widgets to support updating (some) system and custom field types.
 
         This method sorts the dynamic widgets before mounting them so `MultiUserPickerWidget` instances appear
         first. This ensures that the autocomplete feature for multi-user picker widgets works well in the UI and that
         `Textarea` fields with rendered Markdown are displayed at the bottom.
 
+        The method updates the `DynamicFieldsWidgets` widget by mounting all the dynamic widgets that were created.
+
         Args:
-            work_item: the work item.
+            work_item: the method generates widgets for the system and custom fields of this item.
 
         Returns:
-            None; updates the `DynamicFieldsWidgets` widget.
+            None
         """
 
         # get filter configuration to ignore fields from the dynamic form
         ignore_filter_ids = CONFIGURATION.get().update_additional_fields_ignore_ids
         await self.dynamic_fields_widgets_container.remove_children()
+        dynamic_widgets: list[Widget]
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
-            work_item,
-            ignore_filter_ids=ignore_filter_ids,
+            work_item, ignore_filter_ids=ignore_filter_ids
         ):
             user_picker_widgets: list[MultiUserPickerWidget | SingleUserPickerWidget] = []
-            other_widgets = []
+            other_widgets: list[Widget] = []
+            sprint_selection_widgets: list[SprintSelectionWidget] = []
             for dynamic_widget in dynamic_widgets:
                 if isinstance(dynamic_widget, MultiUserPickerWidget) or isinstance(
                     dynamic_widget, SingleUserPickerWidget
                 ):
                     user_picker_widgets.append(dynamic_widget)
+                elif isinstance(dynamic_widget, SprintSelectionWidget):
+                    sprint_selection_widgets.append(dynamic_widget)
                 else:
                     other_widgets.append(dynamic_widget)
-            sorted_widgets = user_picker_widgets + other_widgets
+
+            sorted_widgets = user_picker_widgets + sprint_selection_widgets + other_widgets
+
             # mount the dynamic widgets
             await self.dynamic_fields_widgets_container.mount(*sorted_widgets)
+
             # mount autocomplete widgets for the dynamic widgets that require them
             for widget in self.dynamic_fields_widgets_container.query(MultiUserPickerWidget):
                 await self.dynamic_fields_widgets_container.mount(
@@ -982,6 +1046,27 @@ class IssueDetailsWidget(Vertical):
                 await self.dynamic_fields_widgets_container.mount(
                     LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
+            if self.support_sprint_selection and sprint_selection_widgets:
+                # fetch the sprints associated to the item's project and store them in the application's session
+                sprints: list[AgileSprint] | None = await self._fetch_sprints_in_project(
+                    work_item.project.key
+                )
+                if sprints:
+                    current_sprint_id: str | None = None
+                    sprint_ids: set[str] = {str(sprint.id) for sprint in sprints}
+                    if work_item.sprint and str(work_item.sprint.id) in sprint_ids:
+                        current_sprint_id = str(work_item.sprint.id)
+
+                    # set the options for every sprint selection widget
+                    for widget in self.dynamic_fields_widgets_container.query(
+                        SprintSelectionWidget
+                    ):
+                        widget.set_options(
+                            [(sprint.display_name, str(sprint.id)) for sprint in sprints]
+                        )
+                        if current_sprint_id:
+                            widget.value = current_sprint_id
+                        # TODO update required field after setting the options
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821

@@ -9,6 +9,8 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.app import JiraApp
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import (
+    AgileSprint,
+    AgileSprintState,
     Attachment,
     IssuePriority,
     IssueStatus,
@@ -30,12 +32,14 @@ from jiratui.widgets.commons.widgets import (
     MultiUserPickerWidget,
     NumericInputWidget,
     SingleUserPickerWidget,
+    SprintSelectionWidget,
 )
 from jiratui.widgets.screen import WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.fields import (
     IssueDetailsPrioritySelection,
     IssueDetailsStatusSelection,
+    IssueSprintField,
     WorkItemDetailsDueDate,
 )
 from jiratui.widgets.work_item_details.flag_work_item import FlagWorkItemScreen
@@ -270,7 +274,7 @@ async def test_search_users_by_issue_key(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_select_and_display_work_item(
+async def test_select_and_display_work_item_without_cloud_use(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -285,6 +289,7 @@ async def test_select_and_display_work_item(
     app.config.search_results_style_work_item_type = False
     app.config.search_results_per_page = 10
     app.config.show_issue_web_links = False
+    app.config.cloud = False
     async with app.run_test() as pilot:
         # GIVEN
         search_work_items_mock.return_value = WorkItemSearchResult(
@@ -328,6 +333,74 @@ async def test_select_and_display_work_item(
         assert focused_widget.assignee_selector.value == ''
         assert focused_widget.issue_resolution_field.value == 'this was done'
         assert focused_widget.issue_sprint_field.value == 'This Sprint'
+
+
+@patch.object(APIController, 'search_users_assignable_to_issue')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_select_and_display_work_item_with_cloud_use(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    app.config.cloud = True
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('tab')
+        await pilot.press('right')
+        await pilot.press('tab')
+        # THEN
+        assert main_screen.search_results_table.focus()
+        assert main_screen.search_results_table.page == 1
+        search_work_items_mock.assert_called_once()
+        assert main_screen.search_results_table.search_results == JiraIssueSearchResponse(
+            issues=jira_issues, next_page_token=None, is_last=None
+        )
+        assert main_screen.search_results_table.current_work_item_key == 'key-2'
+        focused_widget = main_screen.focused
+        assert isinstance(focused_widget, IssueDetailsWidget)
+        assert focused_widget.issue_key_field.value == 'key-2'
+        assert focused_widget.issue_summary_field.value == 'qwerty'
+        assert focused_widget.project_id_field.value == '(P1) Project 1'
+        assert focused_widget.issue_created_date_field.value == '2025-10-11 00:00'
+        assert focused_widget.issue_created_date_field.value == '2025-10-11 00:00'
+        assert focused_widget.issue_due_date_field.value == '2025-10-12'
+        assert focused_widget.issue_resolution_date_field.value == '2025-10-11 00:00'
+        assert focused_widget.issue_parent_field.value == 'P2'
+        assert focused_widget.issue_type_field.value == 'Bug'
+        assert focused_widget.priority_selector.selection == '1'
+        assert focused_widget.reporter_selector.value == 'Bart Simpson'
+        assert focused_widget.assignee_selector.value == ''
+        assert focused_widget.issue_resolution_field.value == 'this was done'
+        assert focused_widget.issue_sprint_field is None
 
 
 @pytest.mark.parametrize('edit_metadata', [None, {'fields': {}}, {'fields': None}])
@@ -1070,8 +1143,9 @@ async def test_action_focus_widget(key: str, widget, app: JiraApp):
         assert isinstance(app.screen.focused, widget)
 
 
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
 @pytest.mark.asyncio
-async def test_clear_form(app: JiraApp):
+async def test_clear_form_with_support_for_sprint_selection(app: JiraApp):
     # GIVEN
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
@@ -1089,7 +1163,6 @@ async def test_clear_form(app: JiraApp):
         assert details_widget.issue_key_field.value == ''
         assert details_widget.project_id_field.value == ''
         assert details_widget.issue_type_field.value == ''
-        assert details_widget.issue_sprint_field.value == ''
         assert details_widget.issue_status_selector.selection is None
         assert details_widget.assignee_selector.value == ''
         assert details_widget.assignee_selector.account_id is None
@@ -1103,6 +1176,20 @@ async def test_clear_form(app: JiraApp):
         assert details_widget.work_item_flag_widget.show is False
         assert len(details_widget.time_tracking_container.children) == 0
         assert len(details_widget.dynamic_fields_widgets_container.children) == 0
+
+
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_clear_form_without_support_for_sprint_selection(app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        details_widget.clear_form = True
+        # THEN
+        assert details_widget.issue_sprint_field.value == ''
 
 
 @patch.object(APIController, 'update_issue')
@@ -1338,13 +1425,14 @@ async def test_watch_issue(jira_issue, app: JiraApp):
         assert result is None
 
 
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
 @patch.object(IssueDetailsWidget, '_setup_time_tracking')
 @patch.object(IssueDetailsWidget, '_add_dynamic_widgets')
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
 @patch.object(IssueDetailsWidget, '_extract_editable_and_required_fields')
 @patch.object(APIController, 'get_project_statuses')
 @pytest.mark.asyncio
-async def test_watch_issue_with_valid_issue(
+async def test_watch_issue_with_valid_issue_with_support_for_sprint_selection(
     get_project_statuses_mock: AsyncMock,
     extract_editable_and_required_fields_mock: Mock,
     determine_issue_flagged_status_mock: Mock,
@@ -1390,7 +1478,7 @@ async def test_watch_issue_with_valid_issue(
         assert details_widget.issue_type_field.value == 'Bug'
         assert details_widget.issue_parent_field.value == 'P2'
         assert details_widget.issue_parent_field.update_enabled is True
-        assert details_widget.issue_sprint_field.value == 'This Sprint'
+        assert details_widget.issue_sprint_field is None
         assert details_widget.issue_summary_field.value == 'qwerty'
         assert details_widget.issue_summary_field.update_enabled is True
         assert details_widget.issue_due_date_field.value == '2025-10-12'
@@ -1511,8 +1599,162 @@ async def test_add_dynamic_widgets(
         assert isinstance(children[5], UsersAutoComplete)
 
 
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
-async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
+async def test_add_dynamic_widgets_with_support_for_sprint_selection(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=[],
+        ),
+    ]
+    fetch_sprints_in_project_mock.return_value = [
+        AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE)
+    ]
+    jira_issue.sprint = None
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert isinstance(children[0], SprintSelectionWidget)
+        assert children[0]._options == [('', Select.NULL), ('(ACTIVE) Sprint 2', '2')]
+        assert children[0].selection is None
+        assert children[0].border_subtitle is None
+
+
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
+@pytest.mark.asyncio
+async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_current_sprint_selected(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=[],
+        ),
+    ]
+    fetch_sprints_in_project_mock.return_value = [
+        AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE)
+    ]
+    jira_issue.sprint = JiraSprint(id='2', active=True, name='Sprint 2')
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert isinstance(children[0], SprintSelectionWidget)
+        assert children[0]._options == [('', Select.NULL), ('(ACTIVE) Sprint 2', '2')]
+        assert children[0].selection == '2'
+        assert children[0].border_subtitle is None
+
+
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
+@pytest.mark.asyncio
+async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_found(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=[],
+        ),
+    ]
+    fetch_sprints_in_project_mock.return_value = []
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert isinstance(children[0], SprintSelectionWidget)
+        assert children[0]._options == [('', Select.NULL)]
+
+
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
+@pytest.mark.asyncio
+async def test_add_dynamic_widgets_without_support_for_sprint_selection(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        MultiUserPickerWidget(
+            mode=FieldMode.UPDATE, field_id='approvers', jira_field_key='approvers'
+        )
+    ]
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_not_called()
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert len(children) == 2
+        assert isinstance(children[0], MultiUserPickerWidget)
+        assert isinstance(children[1], MultiUserPickerAutoComplete)
+
+
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_static_widgets_css_classes_with_support_for_sprint_selection(
+    jira_issue, app: JiraApp
+):
     # GIVEN
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
@@ -1521,7 +1763,6 @@ async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
         assert 'create-update-field-widget' in details_widget.issue_summary_field.classes
         assert 'create-update-field-widget' in details_widget.issue_key_field.classes
         assert 'work-item-key' in details_widget.issue_key_field.classes
-        assert 'create-update-field-widget' in details_widget.issue_sprint_field.classes
         assert 'create-update-field-widget' in details_widget.issue_parent_field.classes
         assert 'work-item-key' in details_widget.issue_parent_field.classes
         assert 'create-update-field-widget' in details_widget.project_id_field.classes
@@ -1533,6 +1774,17 @@ async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
         assert 'create-update-field-widget' in details_widget.issue_resolution_date_field.classes
         assert 'input-date' in details_widget.issue_resolution_date_field.classes
         assert 'create-update-field-widget' in details_widget.issue_resolution_field.classes
+
+
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert 'create-update-field-widget' in details_widget.issue_sprint_field.classes
 
 
 @patch.object(IssueDetailsWidget, 'issue')
@@ -1631,3 +1883,177 @@ async def test_action_view_worklog_no_issue_set(app: JiraApp):
         details_widget.action_view_worklog()
         # THEN
         assert not isinstance(app.screen, WorkItemWorkLogScreen)
+
+
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_without_project_key(app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert details_widget.issue is None
+        # WHEN
+        sprints = await details_widget._fetch_sprints_in_project('')
+        # THEN
+        assert sprints is None
+
+
+@patch.object(IssueDetailsWidget, '_get_sprints_from_application_session')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_sprints_in_session(
+    get_sprints_from_application_session_mock: Mock, app: JiraApp
+):
+    # GIVEN
+    get_sprints_from_application_session_mock.return_value = {
+        'P1': [AgileSprint(id=1, name='Sprint 1', state=AgileSprintState.ACTIVE)]
+    }
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert details_widget.issue is None
+        # WHEN
+        sprints = await details_widget._fetch_sprints_in_project('P1')
+        # THEN
+        assert sprints == [AgileSprint(id=1, name='Sprint 1', state=AgileSprintState.ACTIVE)]
+
+
+@pytest.mark.parametrize(
+    'get_project_sprints_response',
+    [
+        APIControllerResponse(success=False),
+        APIControllerResponse(result=None),
+    ],
+)
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(IssueDetailsWidget, '_get_sprints_from_application_session')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_without_sprints_in_session_fetching_fails(
+    get_sprints_from_application_session_mock: Mock,
+    get_project_sprints_mock: AsyncMock,
+    get_project_sprints_response,
+    app: JiraApp,
+):
+    # GIVEN
+    get_sprints_from_application_session_mock.return_value = {
+        'P2': [AgileSprint(id=1, name='Sprint 1', state=AgileSprintState.ACTIVE)]
+    }
+    get_project_sprints_mock.return_value = get_project_sprints_response
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert details_widget.issue is None
+        # WHEN
+        sprints = await details_widget._fetch_sprints_in_project('P1')
+        # THEN
+        get_sprints_from_application_session_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once_with('P1')
+        assert sprints is None
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(IssueDetailsWidget, '_get_sprints_from_application_session')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_without_sprints_in_session_fetching_succeeds(
+    get_sprints_from_application_session_mock: Mock,
+    get_project_sprints_mock: AsyncMock,
+    app: JiraApp,
+):
+    # GIVEN
+    get_sprints_from_application_session_mock.return_value = {}
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE),
+            AgileSprint(id=3, name='Sprint 3', state=AgileSprintState.FUTURE),
+        ]
+    )
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert details_widget.issue is None
+        # WHEN
+        sprints = await details_widget._fetch_sprints_in_project('P1')
+        # THEN
+        get_sprints_from_application_session_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once_with('P1')
+        assert sprints == [
+            AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE),
+            AgileSprint(id=3, name='Sprint 3', state=AgileSprintState.FUTURE),
+        ]
+
+
+@patch.object(APIController, 'get_project_sprints')
+@patch.object(IssueDetailsWidget, '_get_sprints_from_application_session')
+@pytest.mark.asyncio
+async def test_fetch_sprints_in_project_with_sprints_in_session_fetching_succeeds(
+    get_sprints_from_application_session_mock: Mock,
+    get_project_sprints_mock: AsyncMock,
+    app: JiraApp,
+):
+    # GIVEN
+    get_sprints_from_application_session_mock.return_value = {
+        'P2': [AgileSprint(id=1, name='Sprint 1', state=AgileSprintState.ACTIVE)]
+    }
+    get_project_sprints_mock.return_value = APIControllerResponse(
+        result=[
+            AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE),
+            AgileSprint(id=3, name='Sprint 3', state=AgileSprintState.FUTURE),
+        ]
+    )
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        assert details_widget.issue is None
+        # WHEN
+        sprints = await details_widget._fetch_sprints_in_project('P1')
+        # THEN
+        get_sprints_from_application_session_mock.assert_called_once()
+        get_project_sprints_mock.assert_called_once_with('P1')
+        assert sprints == [
+            AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE),
+            AgileSprint(id=3, name='Sprint 3', state=AgileSprintState.FUTURE),
+        ]
+
+
+@pytest.mark.parametrize(
+    'sprint, expected_sprint_widget_value',
+    [
+        (JiraSprint(id='1', name='Sprint 1', active=True), 'Sprint 1'),
+        (None, ''),
+    ],
+)
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_set_issue_without_support_for_sprint_selection(
+    sprint, expected_sprint_widget_value, jira_issue: JiraIssue, app: JiraApp
+):
+    # GIVEN
+    jira_issue.sprint = sprint
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        details_widget.issue = jira_issue
+        # THEN
+        assert details_widget.issue_sprint_field.value == expected_sprint_widget_value
+        assert isinstance(details_widget.issue_sprint_field, IssueSprintField)
+
+
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_set_issue_with_support_for_sprint_selection(jira_issue: JiraIssue, app: JiraApp):
+    # GIVEN
+    jira_issue.sprint = JiraSprint(id='1', name='Sprint 1', active=True)
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        details_widget.issue = jira_issue
+        # THEN
+        assert details_widget.issue_sprint_field is None

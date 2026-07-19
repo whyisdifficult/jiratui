@@ -15,6 +15,8 @@ This feature uses the Jira Software Cloud REST API. By [@whyisdifficult](https:/
 project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Add config variable `enable_logging` to enable/disable logging. The default is `False`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/294
 - Add support for specifying the status of a work item being created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/295
+- Add support for updating the sprint of a work item. This is only supported when the JiraTUI connects to the Jira Cloud
+Platform. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 
 ### Bug Fixes
 

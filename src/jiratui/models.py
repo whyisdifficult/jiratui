@@ -958,7 +958,7 @@ class AgileSprint(BaseModel):
     id: int
     name: str
     state: AgileSprintState
-    goal: str
+    goal: str | None = None
     origin_board_id: int | None = None
     origin_board_name: str | None = None
     start_date: datetime | None = None

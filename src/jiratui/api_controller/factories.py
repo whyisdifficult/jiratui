@@ -25,16 +25,16 @@ from jiratui.utils.fields import get_additional_fields_values, get_custom_fields
 class WorkItemFactory:
     @staticmethod
     def create_work_item(data: dict) -> JiraIssue:
-        """Creates an instance of [JiraIssue](#jiratui.models.JiraIssue) for a work item as returned by the API.
+        """Creates an instance of [JiraIssue](#jiratui.models.JiraIssue) from the work item data as returned by the API.
 
         Args:
-            data: the work item as returned by the API.
+            data: the work item data as returned by the API.
 
         Returns:
             An instance of `JiraIssue` with the value of the work item's fields supported by the app.
         """
 
-        fields: dict = data.get('fields', {})
+        fields: dict[str, Any] = data.get('fields', {})
         project: dict = fields.get(JiraWorkItemFields.PROJECT.value, {})
         status: dict = fields.get(JiraWorkItemFields.STATUS.value, {})
         assignee: dict | None = fields.get(JiraWorkItemFields.ASSIGNEE.value)
@@ -59,11 +59,11 @@ class WorkItemFactory:
 
         sprint: JiraSprint | None = None
         if sprint_custom_field_id := CONFIGURATION.get().custom_field_id_sprint:
-            if sprint_ids := fields.get(sprint_custom_field_id):
+            if sprint_data := fields.get(sprint_custom_field_id):
                 sprint = JiraSprint(
-                    id=sprint_ids[0].get('id'),
-                    name=sprint_ids[0].get('name'),
-                    active=sprint_ids[0].get('active'),
+                    id=str(sprint_data[0].get('id', '')),
+                    name=sprint_data[0].get('name'),
+                    active=sprint_data[0].get('active') or False,
                 )
 
         attachments: list[Attachment] = []
@@ -100,8 +100,8 @@ class WorkItemFactory:
 
         # extract the value of the issue's custom fields
         custom_fields_values: dict[str, Any] | None = None
-        if editmeta := data.get('editmeta', {}):
-            custom_fields_values = get_custom_fields_values(fields, editmeta.get('fields', {}))
+        if edit_meta := data.get('editmeta', {}):
+            custom_fields_values = get_custom_fields_values(fields, edit_meta.get('fields', {}))
 
         # extract the value of the issue's additional fields
         additional_fields: dict[str, Any] = get_additional_fields_values(
@@ -110,13 +110,13 @@ class WorkItemFactory:
         )
 
         return JiraIssue(
-            id=data.get('id'),
-            key=data.get('key'),
+            id=str(data.get('id')),
+            key=str(data.get('key')),
             summary=fields.get(JiraWorkItemFields.SUMMARY.value, ''),
             description=fields.get(JiraWorkItemFields.DESCRIPTION.value),
             project=Project(
                 id=project.get('id'),
-                name=project.get('name'),
+                name=project.get('name', ''),
                 key=project.get('key'),
             )
             if project

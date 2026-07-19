@@ -1467,14 +1467,18 @@ class MainScreen(Screen):
         self._load_work_item(work_item_key)
 
     def _add_item_to_recent_history(
-        self, key: str, item_type: str, status: str, summary: str
+        self,
+        key: str,
+        item_type: str | None = None,
+        status: str | None = None,
+        summary: str | None = None,
     ) -> None:
         self.__recent_history_manager.add_work_item(
             HistoryEntry(
                 key=key,
-                item_type=item_type,
-                status=status,
-                summary=summary,
+                item_type=item_type or '',
+                status=status or '',
+                summary=summary or '',
             )
         )
 

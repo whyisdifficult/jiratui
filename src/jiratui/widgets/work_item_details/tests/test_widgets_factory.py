@@ -1,7 +1,9 @@
+from unittest.mock import patch
+
 import pytest
 
 from jiratui.app import JiraApp
-from jiratui.models import IssueStatus, IssueType, JiraIssue
+from jiratui.models import IssueStatus, IssueType, JiraIssue, JiraSprint
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
@@ -9,6 +11,7 @@ from jiratui.widgets.commons.widgets import (
     MultiSelectWidget,
     NumericInputWidget,
     SelectionWidget,
+    SprintSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -1184,3 +1187,118 @@ async def test_create_dynamic_widgets_field_date_changing_value(
         widgets[0].value = '2025-12-30'
         assert widgets[0].value_has_changed is True
         assert widgets[0].original_value == '2025-12-31'
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_api_without_current_sprint(
+    uses_cloud_api_mock,
+    work_item: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = True
+    work_item.edit_meta['fields'] = {
+        'customfield_10020': {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    }
+    work_item.sprint = None
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], SprintSelectionWidget)
+        widget: SprintSelectionWidget = widgets[0]
+        assert widget.id == 'customfield_10020'
+        assert widget.original_value is None
+        assert widget.disabled is False
+        assert widget.get_value_for_update() is None
+        assert widget.selection is None
+        assert widget.border_subtitle is None
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_api_with_current_sprint(
+    uses_cloud_api_mock,
+    work_item: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = True
+    work_item.edit_meta['fields'] = {
+        'customfield_10020': {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    }
+    work_item.sprint = JiraSprint(id='1', active=True, name='Sprint 1')
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], SprintSelectionWidget)
+        widget: SprintSelectionWidget = widgets[0]
+        assert widget.id == 'customfield_10020'
+        assert widget.original_value == '1'
+        assert widget.disabled is False
+        assert widget.get_value_for_update() == 1
+        assert widget.selection == '1'
+        assert widget.border_subtitle is None
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_sprint_selection_without_using_cloud_api(
+    uses_cloud_api_mock,
+    work_item: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = False
+    work_item.edit_meta['fields'] = {
+        'customfield_10020': {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'hasDefaultValue': False,
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    }
+
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 0
