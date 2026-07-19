@@ -6,11 +6,18 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 from textual.widget import Widget
+from textual.widgets import Select
 
+from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
 from jiratui.widgets.commons import CustomFieldType, FieldMode
 from jiratui.widgets.commons.factory_utils import AllowedValuesParser, FieldMetadata, WidgetBuilder
-from jiratui.widgets.commons.widgets import LabelsWidget, MultiSelectWidget, MultiUserPickerWidget
+from jiratui.widgets.commons.widgets import (
+    LabelsWidget,
+    MultiSelectWidget,
+    MultiUserPickerWidget,
+    SprintSelectionWidget,
+)
 
 
 class WorkItemManualUpdateFieldKeys(Enum):
@@ -54,6 +61,11 @@ class WorkItemUnsupportedUpdateFieldKeys(Enum):
     ISSUE_TYPE = 'issuetype'
     SPRINT = 'sprint'
     TEAM = 'team'
+
+
+def _uses_cloud_api() -> bool:
+    config = CONFIGURATION.get()
+    return config.cloud
 
 
 def create_dynamic_widgets_for_updating_work_item(
@@ -212,7 +224,7 @@ def create_dynamic_widgets_for_updating_work_item(
                     jira_field_key=metadata.key,
                     options=options,
                     title=field.get('name'),
-                    required=field.get('required', False),
+                    required=metadata.required,
                     original_value=current_ids,
                     field_supports_update=metadata.supports_update,
                 )
@@ -299,6 +311,26 @@ def create_dynamic_widgets_for_updating_work_item(
                         options=options,
                         current_value=value,
                     )
+            elif schema_custom_type == CustomFieldType.SPRINT.value and _uses_cloud_api():
+                # set the current value (original_value) of the widget base don the current sprint (if any) of the item
+                initial_options: list[tuple[str, str]] = []
+                if work_item.sprint:
+                    initial_options = [
+                        ('', Select.NULL),  # type:ignore[list-item]
+                        (work_item.sprint.name, str(work_item.sprint.id)),
+                    ]
+                widget = SprintSelectionWidget(
+                    mode=FieldMode.UPDATE,
+                    field_id=metadata.field_id,
+                    jira_field_key=metadata.key,
+                    options=initial_options,
+                    title=metadata.name,
+                    required=False,
+                    original_value=str(work_item.sprint.id) if work_item.sprint else None,
+                    field_supports_update=metadata.supports_update,
+                    allow_blank=not metadata.required,
+                    prompt=f'Select {metadata.name}',
+                )
         else:
             # process the non-custom fields based on the schema type
             if schema.get('system', '').lower() == 'labels':

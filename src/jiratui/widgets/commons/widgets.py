@@ -2164,17 +2164,17 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         """Initializes a [Select](#textual.widgets.Select).
 
         Args:
-            mode: The field mode (CREATE or UPDATE)
-            field_id: Field identifier (Jira field key)
+            mode: the field mode (CREATE or UPDATE)
+            field_id: field identifier (Jira field key)
             jira_field_key: the key of the field that it is used for updating the field value in the API.
-            options: List of (display_name, value) tuples for the dropdown
-            title: Display title (defaults to field_id)
-            required: Whether the field is required (mainly for CREATE mode)
-            initial_value: Initial selected value (CREATE mode only)
-            original_value: Original value from Jira (UPDATE mode only)
-            field_supports_update: Whether field can be updated (UPDATE mode only)
-            allow_blank: Whether to allow blank/empty selection
-            prompt: Prompt text for the dropdown
+            options: list of (display_name, value) tuples for the dropdown
+            title: display title (defaults to field_id)
+            required: whether the field is required (mainly for CREATE mode)
+            initial_value: initial selected value (CREATE mode only)
+            original_value: original value from Jira (UPDATE mode only)
+            field_supports_update: whether field can be updated (UPDATE mode only)
+            allow_blank: whether to allow blank/empty selection
+            prompt: prompt text for the dropdown
         """
 
         # Determine the appropriate prompt
@@ -2190,7 +2190,7 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             type_to_search=True,
         )
 
-        # Setup base field properties
+        # setup base field properties
         self.setup_base_field(
             mode=mode,
             field_id=field_id,
@@ -2208,7 +2208,7 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-            # Set initial value for UPDATE mode
+            # set initial value for UPDATE mode
             if original_value is not None:
                 self.value = original_value
         else:
@@ -2246,8 +2246,7 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
     @property
     def value_has_changed(self) -> bool:
-        """
-        Determines if the current value differs from the original value (UPDATE mode).
+        """Determines if the current value differs from the original value (UPDATE mode).
 
         Returns:
             True if value has changed, False otherwise
@@ -2255,14 +2254,14 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         if self.mode != FieldMode.UPDATE:
             raise ValueError('value_has_changed only valid in UPDATE mode')
 
-        # No original value
+        # no original value
         if not self.original_value:
-            # Changed if we now have a selection
+            # changed if we now have a selection
             return bool(self.selection)
 
-        # Had original value, now no selection
+        # had original value, now no selection
         if not self.selection:
             return True
 
-        # Both exist - compare them
+        # both exist - compare them
         return self.original_value != self.selection

@@ -709,14 +709,12 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         if not key:
             return None
-        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session(
-            application
-        )
+        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session()
         if not sprints or not sprints.get(key):
             sprints_in_project: list[AgileSprint] | None
             response: APIControllerResponse = await self.app.api.get_project_sprints(key)  # type:ignore[attr-defined]
             if response.success and (sprints_in_project := response.result):
+                application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
                 if not sprints:
                     application.session.sprints = {key: sprints_in_project}
                 else:
@@ -724,8 +722,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
                     application.session.sprints = sprints
         return None
 
-    @staticmethod
-    def _get_sprints_from_application_session(application) -> dict[str, list[AgileSprint]]:
+    def _get_sprints_from_application_session(self) -> dict[str, list[AgileSprint]]:
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
         return application.session.get('sprints', {})
 
     async def _get_sprints_in_project(self, key: str | None = None) -> list[tuple[str, str]]:
@@ -740,10 +738,8 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
 
         if not key:
             return []
-        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session(
-            application
-        )
+
+        sprints: dict[str, list[AgileSprint]] = self._get_sprints_from_application_session()
         return [(sprint.display_name, str(sprint.id)) for sprint in sprints.get(key, [])]
 
     async def _remove_textarea_panes(self) -> None:
