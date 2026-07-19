@@ -258,8 +258,14 @@ class RelatedJiraIssue(BaseModel):
         return self.priority.name if self.priority else ''
 
     def cleaned_summary(self, max_length: int | None = None) -> str:
-        if max_length is not None:
-            return f'{self.summary.strip()[:max_length]}...'
+        if max_length is not None and max_length > 0:
+            if (stripped_summary := self.summary.strip()) and len(stripped_summary) > max_length:
+                suffix = '...'
+                end_idx = max_length - len(suffix)
+                if max_length <= len(suffix):
+                    suffix = ''
+                    end_idx = max_length
+                return f'{stripped_summary[:end_idx]}{suffix}'
         return self.summary.strip()
 
     def display_status(self) -> str:
@@ -395,11 +401,14 @@ class JiraIssue(JiraBaseIssue):
         return f'{self.key.strip()} - {self.summary.strip()}'
 
     def cleaned_summary(self, max_length: int | None = None) -> str:
-        if max_length is not None:
-            if (stripped_summary := self.summary.strip()) and len(
-                stripped_summary
-            ) > max_length - 3:
-                return f'{stripped_summary[: max_length - 3]}...'
+        if max_length is not None and max_length > 0:
+            if (stripped_summary := self.summary.strip()) and len(stripped_summary) > max_length:
+                suffix = '...'
+                end_idx = max_length - len(suffix)
+                if max_length <= len(suffix):
+                    suffix = ''
+                    end_idx = max_length
+                return f'{stripped_summary[:end_idx]}{suffix}'
         return self.summary.strip()
 
     def display_status(self) -> str:

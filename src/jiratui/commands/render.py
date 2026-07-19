@@ -196,7 +196,9 @@ class JiraIssueSearchRenderer(Renderer):
                 issue.display_status(),
                 issue.display_reporter(),
                 issue.display_assignee(),
-                issue.cleaned_summary(20),
+                issue.cleaned_summary(
+                    CONFIGURATION.get().cli_search_results_truncate_work_item_summary
+                ),
             )
         console.print(table)
 
