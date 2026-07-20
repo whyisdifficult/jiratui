@@ -115,7 +115,7 @@ class BaseModel:
 
 @dataclass
 class Project(BaseModel):
-    """A Jira project."""
+    """A Jira project (aka. Space)."""
 
     id: str
     name: str
@@ -143,7 +143,7 @@ class IssueStatus(BaseModel):
 
 @dataclass
 class IssueType(BaseModel):
-    """The type of work item."""
+    """The type of a work item."""
 
     id: str
     name: str
@@ -286,6 +286,8 @@ class TimeTracking(BaseModel):
 
 @dataclass
 class Attachment(BaseModel):
+    """An attachment for a work item."""
+
     id: str
     filename: str
     mime_type: str
@@ -322,16 +324,9 @@ class Attachment(BaseModel):
 
 
 @dataclass
-class JiraSprint(BaseModel):
-    """The sprint of a work item."""
-
-    id: str
-    name: str
-    active: bool
-
-
-@dataclass
 class JiraBaseIssue(BaseModel):
+    """The minimal information required for a work item in Jira."""
+
     id: str
     key: str
 
@@ -354,6 +349,8 @@ class JiraIssueComponent(BaseModel):
 
 @dataclass
 class JiraIssue(JiraBaseIssue):
+    """The details of a work item in Jira."""
+
     summary: str
     status: IssueStatus
     """The [IssueStatus](#jiratui.models.IssueStatus) of the work item."""
@@ -382,8 +379,6 @@ class JiraIssue(JiraBaseIssue):
     labels: list[str] | None = None
     attachments: list[Attachment] | None = None
     """The list of files [Attachment](#jiratui.models.Attachment) of the work item."""
-    sprint: JiraSprint | None = None
-    """The [JiraSprint](#jiratui.models.JiraSprint) of the work item."""
     edit_meta: dict | None = None
     """a dictionary with the issue's edit metadata"""
     custom_fields: dict[str, Any] | None = None
@@ -434,12 +429,6 @@ class JiraIssue(JiraBaseIssue):
             return self.issue_type.name
         return ''
 
-    @property
-    def sprint_name(self) -> str:
-        if self.sprint:
-            return self.sprint.name
-        return ''
-
     def display_assignee(self) -> str:
         if assignee := self.assignee:
             if email := assignee.email:
@@ -485,7 +474,7 @@ class JiraIssue(JiraBaseIssue):
     @property
     def display_due_date(self) -> str:
         if self.due_date:
-            return datetime.strftime(self.due_date, '%Y-%m-%d')
+            return self.due_date.strftime('%Y-%m-%d')
         return ''
 
     @property

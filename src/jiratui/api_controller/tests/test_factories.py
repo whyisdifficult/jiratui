@@ -242,8 +242,7 @@ def test_build_comments_with_error(raw_comments: list[dict]):
     ]
 
 
-@patch('jiratui.api_controller.factories.CONFIGURATION')
-def test_build_issue_instance(configuration_mock: Mock, config_for_testing):
+def test_build_issue_instance(config_for_testing):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
     # WHEN
@@ -310,8 +309,7 @@ def test_build_issue_instance(configuration_mock: Mock, config_for_testing):
     )
 
 
-@patch('jiratui.api_controller.factories.CONFIGURATION')
-def test_build_issue_instance_with_more_details(configuration_mock: Mock, config_for_testing):
+def test_build_issue_instance_with_more_details(config_for_testing):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
     # WHEN
@@ -543,10 +541,7 @@ def test_build_issue_instance_with_more_details(configuration_mock: Mock, config
     )
 
 
-@patch('jiratui.api_controller.factories.CONFIGURATION')
-def test_build_issue_instance_with_more_details_no_adf(
-    configuration_mock: Mock, config_for_testing
-):
+def test_build_issue_instance_with_more_details_no_adf(config_for_testing):
     # comments and description do not use ADF
     # GIVEN
     work_item = load_json_response(__file__, 'issue_no_adf.json')
@@ -831,8 +826,7 @@ def test_build_issue_instance_with_more_details_no_adf(
     }
 
 
-@patch('jiratui.api_controller.factories.CONFIGURATION')
-def test_build_issue_instance_with_components(configuration_mock: Mock, config_for_testing):
+def test_build_issue_instance_with_components(config_for_testing: ApplicationConfiguration):
     # GIVEN
     json_data = load_json_response(__file__, 'issue.json')
     json_data['fields']['components'] = [{'id': '1', 'name': 'Component 1'}]
@@ -844,8 +838,7 @@ def test_build_issue_instance_with_components(configuration_mock: Mock, config_f
     assert issue.components == [JiraIssueComponent(id='1', name='Component 1')]
 
 
-@patch('jiratui.api_controller.factories.CONFIGURATION')
-def test_build_related_work_items(config_for_testing):
+def test_build_related_work_items(config_for_testing: ApplicationConfiguration):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
     # WHEN
@@ -882,11 +875,9 @@ def test_build_related_work_items(config_for_testing):
 
 
 @patch('jiratui.api_controller.factories._build_related_inward_issue')
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 def test_build_related_work_items_fail_creating_inward_issue(
-    configuration_mock: Mock,
     build_related_inward_issue_mock: Mock,
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')
@@ -912,11 +903,9 @@ def test_build_related_work_items_fail_creating_inward_issue(
 
 
 @patch('jiratui.api_controller.factories._build_related_outward_issue')
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 def test_build_related_work_items_fail_creating_outward_issue(
-    configuration_mock: Mock,
     build_related_outward_issue_mock: Mock,
-    config_for_testing,
+    config_for_testing: ApplicationConfiguration,
 ):
     # GIVEN
     work_item = load_json_response(__file__, 'issue.json')

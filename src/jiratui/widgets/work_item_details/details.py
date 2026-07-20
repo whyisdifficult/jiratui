@@ -96,7 +96,6 @@ from jiratui.widgets.work_item_details.fields import (
     IssueDetailsStatusSelection,
     IssueKeyField,
     IssueParentField,
-    IssueSprintField,
     IssueSummaryField,
     IssueTypeField,
     ProjectIDField,
@@ -133,7 +132,6 @@ class IssueDetailsWidget(Vertical):
     - Priority
     - Key
     - Parent
-    - Sprint
     - Type
     - Project Key
     - Created Date
@@ -247,10 +245,6 @@ class IssueDetailsWidget(Vertical):
         return self.query_one(IssueParentField)
 
     @property
-    def issue_sprint_field(self) -> IssueSprintField | None:
-        return self.query_one_optional(IssueSprintField)
-
-    @property
     def issue_resolution_field(self) -> ReadOnlyTextField:
         return self.query_one('#issue_resolution', expect_type=ReadOnlyTextField)
 
@@ -341,8 +335,6 @@ class IssueDetailsWidget(Vertical):
                 yield IssueKeyField()
                 # set widgets in row 4
                 yield IssueParentField()
-                if not self.support_sprint_selection:
-                    yield IssueSprintField()
                 yield IssueTypeField()
                 # set widgets in row 5
                 # this input field contains the id of the Jira user that we can use to update the item's reporter field
@@ -549,8 +541,6 @@ class IssueDetailsWidget(Vertical):
             self.priority_selector.clear()
             self.priority_selector.update_enabled = True
             self.issue_due_date_field.set_original_value(None)
-            if widget := self.issue_sprint_field:
-                widget.clear()
             self._work_item_is_flagged = None
             self._issue_supports_flagging = True
             self.work_item_flag_widget.show = False
@@ -954,8 +944,6 @@ class IssueDetailsWidget(Vertical):
         self.reporter_selector.update_enabled = editable_fields.get('reporter')
 
         # set the value of the form fields based on the work item's data
-        if not self.support_sprint_selection:
-            self.issue_sprint_field.value = work_item.sprint_name
         self.issue_last_update_date_field.value = work_item.updated_on
         self.issue_created_date_field.value = work_item.created_on
         self.issue_resolution_date_field.value = work_item.resolved_on
@@ -1046,17 +1034,13 @@ class IssueDetailsWidget(Vertical):
                 await self.dynamic_fields_widgets_container.mount(
                     LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
-            if self.support_sprint_selection and sprint_selection_widgets:
+            if sprint_selection_widgets and self.support_sprint_selection:
                 # fetch the sprints associated to the item's project and store them in the application's session
                 sprints: list[AgileSprint] | None = await self._fetch_sprints_in_project(
                     work_item.project.key
                 )
                 if sprints:
-                    current_sprint_id: str | None = None
                     sprint_ids: set[str] = {str(sprint.id) for sprint in sprints}
-                    if work_item.sprint and str(work_item.sprint.id) in sprint_ids:
-                        current_sprint_id = str(work_item.sprint.id)
-
                     # set the options for every sprint selection widget
                     for sprint_widget in self.dynamic_fields_widgets_container.query(
                         SprintSelectionWidget
@@ -1064,8 +1048,11 @@ class IssueDetailsWidget(Vertical):
                         sprint_widget.set_options(
                             [(sprint.display_name, str(sprint.id)) for sprint in sprints]
                         )
-                        if current_sprint_id:
-                            sprint_widget.value = current_sprint_id
+                        if (
+                            sprint_widget.original_value is not None
+                            and str(sprint_widget.original_value) in sprint_ids
+                        ):
+                            sprint_widget.value = sprint_widget.original_value
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821

@@ -15,7 +15,6 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraIssueComponent,
-    JiraSprint,
     JiraUser,
     JiraWorklog,
     LinkIssueType,
@@ -321,7 +320,6 @@ def jira_issues() -> list[JiraIssue]:
             priority=IssuePriority(id='1', name='Medium'),
             reporter=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
             resolution='this was done',
-            sprint=JiraSprint(id='5', name='This Sprint', active=True),
             edit_meta={
                 'fields': {
                     'customfield_10021': {

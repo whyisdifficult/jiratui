@@ -3,7 +3,6 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 
-from jiratui.config import CONFIGURATION
 from jiratui.models import (
     Attachment,
     IssueComment,
@@ -12,7 +11,6 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraIssueComponent,
-    JiraSprint,
     JiraUser,
     JiraWorkItemFields,
     Project,
@@ -56,15 +54,6 @@ class WorkItemFactory:
                 remaining_estimate_seconds=time_tracking.get('remainingEstimateSeconds'),
                 time_spent_seconds=time_tracking.get('timeSpentSeconds'),
             )
-
-        sprint: JiraSprint | None = None
-        if sprint_custom_field_id := CONFIGURATION.get().custom_field_id_sprint:
-            if sprint_data := fields.get(sprint_custom_field_id):
-                sprint = JiraSprint(
-                    id=str(sprint_data[0].get('id', '')),
-                    name=sprint_data[0].get('name'),
-                    active=sprint_data[0].get('active') or False,
-                )
 
         attachments: list[Attachment] = []
         for item in fields.get(JiraWorkItemFields.ATTACHMENT.value, []):
@@ -181,7 +170,6 @@ class WorkItemFactory:
             if fields.get(JiraWorkItemFields.LABELS.value)
             else None,
             attachments=attachments,
-            sprint=sprint,
             edit_meta=data.get('editmeta', {}),
             due_date=datetime.strptime(
                 fields.get(JiraWorkItemFields.DUE_DATE.value), '%Y-%m-%d'
