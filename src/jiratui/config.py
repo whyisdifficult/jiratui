@@ -156,6 +156,9 @@ class ApplicationConfiguration(BaseSettings):
     search_results_truncate_work_item_summary: int | None = None
     """When this is defined the summary of a work item will be truncated to the specified length when it is displayed in
     the search results."""
+    cli_search_results_truncate_work_item_summary: int | None = 20
+    """When this is defined the summary of a work item will be truncated to the specified length when it is displayed in
+    the search results for cli tool."""
     search_results_style_work_item_status: bool = True
     """If `True` (default) the status of a work item will be styled when it is displayed in the search results."""
     search_results_style_work_item_type: bool = True
