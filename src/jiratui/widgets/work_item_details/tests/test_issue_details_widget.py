@@ -17,7 +17,6 @@ from jiratui.models import (
     IssueType,
     JiraIssue,
     JiraIssueSearchResponse,
-    JiraSprint,
     JiraUser,
     Project,
     TimeTracking,
@@ -64,7 +63,6 @@ def jira_issue() -> JiraIssue:
         assignee=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
         reporter=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
         resolution='this was done',
-        sprint=JiraSprint(id='5', name='This Sprint', active=True),
         edit_meta={
             'fields': {
                 'summary': {
@@ -202,6 +200,17 @@ def jira_issue() -> JiraIssue:
             ),
         ],
         time_tracking=TimeTracking(time_spent='10'),
+        custom_fields={
+            'customfield_10020': [
+                {
+                    'id': 5,
+                    'name': 'This Sprint',
+                    'state': 'active',
+                    'startDate': '2026-01-23T08:59:46.636Z',
+                    'endDate': '2026-02-06T09:19:46.636Z',
+                }
+            ]
+        },
     )
 
 
@@ -332,7 +341,6 @@ async def test_select_and_display_work_item_without_cloud_use(
         assert focused_widget.reporter_selector.value == 'Bart Simpson'
         assert focused_widget.assignee_selector.value == ''
         assert focused_widget.issue_resolution_field.value == 'this was done'
-        assert focused_widget.issue_sprint_field.value == 'This Sprint'
 
 
 @patch.object(APIController, 'search_users_assignable_to_issue')
@@ -400,7 +408,6 @@ async def test_select_and_display_work_item_with_cloud_use(
         assert focused_widget.reporter_selector.value == 'Bart Simpson'
         assert focused_widget.assignee_selector.value == ''
         assert focused_widget.issue_resolution_field.value == 'this was done'
-        assert focused_widget.issue_sprint_field is None
 
 
 @pytest.mark.parametrize('edit_metadata', [None, {'fields': {}}, {'fields': None}])
@@ -1178,20 +1185,6 @@ async def test_clear_form_with_support_for_sprint_selection(app: JiraApp):
         assert len(details_widget.dynamic_fields_widgets_container.children) == 0
 
 
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
-@pytest.mark.asyncio
-async def test_clear_form_without_support_for_sprint_selection(app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        # WHEN
-        details_widget.clear_form = True
-        # THEN
-        assert details_widget.issue_sprint_field.value == ''
-
-
 @patch.object(APIController, 'update_issue')
 @patch.object(IssueDetailsWidget, '_build_payload_for_update')
 @patch.object(IssueDetailsWidget, 'issue')
@@ -1478,12 +1471,12 @@ async def test_watch_issue_with_valid_issue_with_support_for_sprint_selection(
         assert details_widget.issue_type_field.value == 'Bug'
         assert details_widget.issue_parent_field.value == 'P2'
         assert details_widget.issue_parent_field.update_enabled is True
-        assert details_widget.issue_sprint_field is None
         assert details_widget.issue_summary_field.value == 'qwerty'
         assert details_widget.issue_summary_field.update_enabled is True
         assert details_widget.issue_due_date_field.value == '2025-10-12'
         assert details_widget.issue_due_date_field.update_enabled is True
         assert details_widget.priority_selector.update_enabled is True
+        assert details_widget.query_one_optional(SprintSelectionWidget) is None
         determine_issue_flagged_status_mock.assert_called_once()
         setup_time_tracking_mock.assert_called_once()
         add_dynamic_widgets_mock.assert_not_called()
@@ -1603,7 +1596,7 @@ async def test_add_dynamic_widgets(
 @patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
-async def test_add_dynamic_widgets_with_support_for_sprint_selection(
+async def test_add_dynamic_widgets_with_support_for_sprint_selection_without_current_sprint(
     create_dynamic_widgets_for_updating_work_item_mock: Mock,
     fetch_sprints_in_project_mock: AsyncMock,
     jira_issue: JiraIssue,
@@ -1618,12 +1611,13 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection(
             field_id='customfield_10020',
             jira_field_key='customfield_10020',
             options=[],
+            original_value=None,
         ),
     ]
     fetch_sprints_in_project_mock.return_value = [
         AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE)
     ]
-    jira_issue.sprint = None
+    jira_issue.custom_fields['customfield_10020'] = []
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
@@ -1658,13 +1652,14 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_curren
             mode=FieldMode.UPDATE,
             field_id='customfield_10020',
             jira_field_key='customfield_10020',
-            options=[],
+            options=[('(ACTIVE) Sprint 5', '5')],
+            original_value='5',
         ),
     ]
     fetch_sprints_in_project_mock.return_value = [
-        AgileSprint(id=2, name='Sprint 2', state=AgileSprintState.ACTIVE)
+        AgileSprint(id=5, name='Sprint 5', state=AgileSprintState.ACTIVE),
+        AgileSprint(id=6, name='Sprint 6', state=AgileSprintState.FUTURE),
     ]
-    jira_issue.sprint = JiraSprint(id='2', active=True, name='Sprint 2')
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
@@ -1676,8 +1671,12 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_curren
         fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
         children = list(details_widget.dynamic_fields_widgets_container.children)
         assert isinstance(children[0], SprintSelectionWidget)
-        assert children[0]._options == [('', Select.NULL), ('(ACTIVE) Sprint 2', '2')]
-        assert children[0].selection == '2'
+        assert children[0]._options == [
+            ('', Select.NULL),
+            ('(ACTIVE) Sprint 5', '5'),
+            ('(FUTURE) Sprint 6', '6'),
+        ]
+        assert children[0].selection == '5'
         assert children[0].border_subtitle is None
 
 
@@ -1774,17 +1773,6 @@ async def test_static_widgets_css_classes_with_support_for_sprint_selection(
         assert 'create-update-field-widget' in details_widget.issue_resolution_date_field.classes
         assert 'input-date' in details_widget.issue_resolution_date_field.classes
         assert 'create-update-field-widget' in details_widget.issue_resolution_field.classes
-
-
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
-@pytest.mark.asyncio
-async def test_static_widgets_css_classes(jira_issue, app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        assert 'create-update-field-widget' in details_widget.issue_sprint_field.classes
 
 
 @patch.object(IssueDetailsWidget, 'issue')
@@ -2019,41 +2007,130 @@ async def test_fetch_sprints_in_project_with_sprints_in_session_fetching_succeed
         ]
 
 
-@pytest.mark.parametrize(
-    'sprint, expected_sprint_widget_value',
-    [
-        (JiraSprint(id='1', name='Sprint 1', active=True), 'Sprint 1'),
-        (None, ''),
-    ],
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@patch.object(
+    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
 )
 @patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
 @pytest.mark.asyncio
-async def test_set_issue_without_support_for_sprint_selection(
-    sprint, expected_sprint_widget_value, jira_issue: JiraIssue, app: JiraApp
+async def test_set_issue_without_support_for_sprint_selection_with_current_sprint(
+    uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp
 ):
     # GIVEN
-    jira_issue.sprint = sprint
+    jira_issue.edit_meta['fields']['customfield_10020'] = {
+        'required': False,
+        'schema': {
+            'type': 'array',
+            'items': 'json',
+            'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+            'customId': 10020,
+        },
+        'name': 'Sprint',
+        'key': 'customfield_10020',
+        'hasDefaultValue': False,
+        'operations': ['set'],
+        'fieldId': 'customfield_10020',
+    }
+    uses_cloud_api_mock.return_value = False
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
         # WHEN
         details_widget.issue = jira_issue
+        await app.workers.wait_for_complete()
         # THEN
-        assert details_widget.issue_sprint_field.value == expected_sprint_widget_value
-        assert isinstance(details_widget.issue_sprint_field, IssueSprintField)
+        assert (
+            details_widget.dynamic_fields_widgets_container.query_one(IssueSprintField).value
+            == 'This Sprint'
+        )
 
 
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@patch.object(
+    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
+)
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_set_issue_without_support_for_sprint_selection_without_current_sprint(
+    uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp
+):
+    # GIVEN
+    jira_issue.custom_fields = {'customfield_10020': []}
+    jira_issue.edit_meta['fields']['customfield_10020'] = {
+        'required': False,
+        'schema': {
+            'type': 'array',
+            'items': 'json',
+            'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+            'customId': 10020,
+        },
+        'name': 'Sprint',
+        'key': 'customfield_10020',
+        'hasDefaultValue': False,
+        'operations': ['set'],
+        'fieldId': 'customfield_10020',
+    }
+    uses_cloud_api_mock.return_value = False
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        details_widget.issue = jira_issue
+        await app.workers.wait_for_complete()
+        # THEN
+        assert (
+            details_widget.dynamic_fields_widgets_container.query_one_optional(
+                SprintSelectionWidget
+            )
+            is None
+        )
+        assert (
+            details_widget.dynamic_fields_widgets_container.query_one(IssueSprintField) is not None
+        )
+
+
+@patch.object(
+    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
+)
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
 @pytest.mark.asyncio
-async def test_set_issue_with_support_for_sprint_selection(jira_issue: JiraIssue, app: JiraApp):
+async def test_set_issue_with_support_for_sprint_selection(
+    uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp
+):
     # GIVEN
-    jira_issue.sprint = JiraSprint(id='1', name='Sprint 1', active=True)
+    jira_issue.edit_meta['fields']['customfield_10020'] = {
+        'required': False,
+        'schema': {
+            'type': 'array',
+            'items': 'json',
+            'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+            'customId': 10020,
+        },
+        'name': 'Sprint',
+        'key': 'customfield_10020',
+        'hasDefaultValue': False,
+        'operations': ['set'],
+        'fieldId': 'customfield_10020',
+    }
+    uses_cloud_api_mock.return_value = True
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
         await app.mount(details_widget)
         await pilot.pause()
         # WHEN
         details_widget.issue = jira_issue
+        await app.workers.wait_for_complete()
         # THEN
-        assert details_widget.issue_sprint_field is None
+        assert (
+            details_widget.dynamic_fields_widgets_container.query_one_optional(IssueSprintField)
+            is None
+        )
+        assert (
+            details_widget.dynamic_fields_widgets_container.query_one_optional(
+                SprintSelectionWidget
+            )
+            is not None
+        )

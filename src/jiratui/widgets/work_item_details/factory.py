@@ -6,7 +6,6 @@ from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 from textual.widget import Widget
-from textual.widgets import Select
 
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
@@ -18,6 +17,7 @@ from jiratui.widgets.commons.widgets import (
     MultiUserPickerWidget,
     SprintSelectionWidget,
 )
+from jiratui.widgets.work_item_details.fields import IssueSprintField
 
 
 class WorkItemManualUpdateFieldKeys(Enum):
@@ -59,7 +59,6 @@ class WorkItemUnsupportedUpdateFieldKeys(Enum):
 
     PROJECT = 'project'
     ISSUE_TYPE = 'issuetype'
-    SPRINT = 'sprint'
     TEAM = 'team'
 
 
@@ -159,23 +158,23 @@ def create_dynamic_widgets_for_updating_work_item(
         if schema_custom_type:
             # process custom fields based on the schema custom type
             if schema_custom_type == CustomFieldType.FLOAT.value or schema.get('type') == 'number':
-                if __field_id in work_item.get_custom_fields():
+                if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_custom_field_value(__field_id)
+                    value = work_item.get_custom_field_value(metadata.field_id)
                     widget = builder.build_numeric(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
             elif schema_custom_type == CustomFieldType.DATE_PICKER.value:
-                if __field_id in work_item.get_custom_fields():
+                if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_custom_field_value(__field_id)
+                    value = work_item.get_custom_field_value(metadata.field_id)
                     widget = builder.build_date(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
             elif schema_custom_type == CustomFieldType.DATETIME.value:
-                if __field_id in work_item.get_custom_fields():
+                if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    if value := work_item.get_custom_field_value(__field_id):
+                    if value := work_item.get_custom_field_value(metadata.field_id):
                         value = isoparse(value).strftime('%Y-%m-%d %H:%M:%S')
                     widget = builder.build_datetime(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
@@ -185,7 +184,7 @@ def create_dynamic_widgets_for_updating_work_item(
                 if allowed_values := field.get('allowedValues'):
                     options = AllowedValuesParser.parse_options(allowed_values)
                     # get the current value of the field
-                    value = work_item.get_custom_field_value(__field_id)
+                    value = work_item.get_custom_field_value(metadata.field_id)
                     widget = builder.build_selection(
                         mode=FieldMode.UPDATE,
                         metadata=metadata,
@@ -193,9 +192,9 @@ def create_dynamic_widgets_for_updating_work_item(
                         current_value=value,
                     )
             elif schema_custom_type == CustomFieldType.URL.value:
-                if __field_id in work_item.get_custom_fields():
+                if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field
-                    if (value := work_item.get_custom_field_value(__field_id)) is None:
+                    if (value := work_item.get_custom_field_value(metadata.field_id)) is None:
                         value = ''
                     widget = builder.build_url(
                         mode=FieldMode.UPDATE,
@@ -220,7 +219,7 @@ def create_dynamic_widgets_for_updating_work_item(
                 options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
                 widget = MultiSelectWidget(
                     mode=FieldMode.UPDATE,
-                    field_id=__field_id,
+                    field_id=metadata.field_id,
                     jira_field_key=metadata.key,
                     options=options,
                     title=field.get('name'),
@@ -229,19 +228,19 @@ def create_dynamic_widgets_for_updating_work_item(
                     field_supports_update=metadata.supports_update,
                 )
             elif schema_custom_type == CustomFieldType.TEXT_FIELD.value:
-                if __field_id in work_item.get_custom_fields():
+                if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_custom_field_value(__field_id)
+                    value = work_item.get_custom_field_value(metadata.field_id)
                     widget = builder.build_text(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
             elif schema_custom_type == CustomFieldType.LABELS.value:
                 # get the current value of the field
-                if (value := work_item.get_custom_field_value(__field_id)) is None:
+                if (value := work_item.get_custom_field_value(metadata.field_id)) is None:
                     value = []
                 widget = LabelsWidget(
                     mode=FieldMode.UPDATE,
-                    field_id=__field_id,
+                    field_id=metadata.field_id,
                     jira_field_key=metadata.key,
                     title=field.get('name'),
                     original_value=value,
@@ -249,13 +248,13 @@ def create_dynamic_widgets_for_updating_work_item(
                 )
             elif schema_custom_type == CustomFieldType.USER_PICKER.value:
                 # get the current value of the field
-                current_user = work_item.get_custom_field_value(__field_id)
+                current_user = work_item.get_custom_field_value(metadata.field_id)
                 widget = builder.build_user_picker(
                     mode=FieldMode.UPDATE, metadata=metadata, current_value=current_user
                 )
             elif schema_custom_type == CustomFieldType.MULTI_USER_PICKER.value:
                 # get the current value of the field
-                if (value := work_item.get_custom_field_value(__field_id)) is None:
+                if (value := work_item.get_custom_field_value(metadata.field_id)) is None:
                     value = []
                 widget = MultiUserPickerWidget(
                     mode=FieldMode.UPDATE,
@@ -286,7 +285,7 @@ def create_dynamic_widgets_for_updating_work_item(
                 options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
                 widget = MultiSelectWidget(
                     mode=FieldMode.UPDATE,
-                    field_id=__field_id,
+                    field_id=metadata.field_id,
                     jira_field_key=metadata.key,
                     options=options,
                     title=field.get('name'),
@@ -296,8 +295,8 @@ def create_dynamic_widgets_for_updating_work_item(
                 )
             elif schema_custom_type == CustomFieldType.SD_REQUEST_LANGUAGE.value:
                 # service Desk request language picker - treated as a select field
-                if __field_id in work_item.get_custom_fields():
-                    value = work_item.get_custom_field_value(__field_id)
+                if metadata.field_id in work_item.get_custom_fields():
+                    value = work_item.get_custom_field_value(metadata.field_id)
 
                     # extract the language code if it's a dict with 'languageCode' key
                     if value and isinstance(value, dict) and 'languageCode' in value:
@@ -311,26 +310,39 @@ def create_dynamic_widgets_for_updating_work_item(
                         options=options,
                         current_value=value,
                     )
-            elif schema_custom_type == CustomFieldType.SPRINT.value and _uses_cloud_api():
-                # set the current value (original_value) of the widget base don the current sprint (if any) of the item
-                initial_options: list[tuple[str, str]] = []
-                if work_item.sprint:
-                    initial_options = [
-                        ('', Select.NULL),  # type:ignore[list-item]
-                        (work_item.sprint.name, str(work_item.sprint.id)),
-                    ]
-                widget = SprintSelectionWidget(
-                    mode=FieldMode.UPDATE,
-                    field_id=metadata.field_id,
-                    jira_field_key=metadata.key,
-                    options=initial_options,
-                    title=metadata.name,
-                    required=False,
-                    original_value=str(work_item.sprint.id) if work_item.sprint else None,
-                    field_supports_update=metadata.supports_update,
-                    allow_blank=not metadata.required,
-                    prompt=f'Select {metadata.name}',
-                )
+            elif schema_custom_type == CustomFieldType.SPRINT.value:
+                if _uses_cloud_api():
+                    if metadata.field_id in work_item.get_custom_fields():
+                        initial_options: list[tuple[str, str]] = []
+                        original_value: str | None = None
+                        if value := work_item.get_custom_field_value(metadata.field_id):
+                            # set the current value (original_value) of the widget based on the item's current sprint
+                            # (if any)
+                            initial_options = [
+                                (
+                                    f'({value[0].get("state")}) {value[0].get("name", "")}',
+                                    f'{str(value[0].get("id"))}',
+                                )
+                            ]
+                            original_value = str(value[0].get('id'))
+
+                        widget = SprintSelectionWidget(
+                            mode=FieldMode.UPDATE,
+                            field_id=metadata.field_id,
+                            jira_field_key=metadata.key,
+                            options=initial_options,
+                            title=metadata.name,
+                            required=metadata.required,
+                            original_value=original_value,
+                            field_supports_update=metadata.supports_update,
+                            allow_blank=not metadata.required,
+                            prompt=f'Select {metadata.name}',
+                        )
+                else:
+                    widget = IssueSprintField()
+                    if metadata.field_id in work_item.get_custom_fields():
+                        if value := work_item.get_custom_field_value(metadata.field_id):
+                            widget.value = value[0].get('name')
         else:
             # process the non-custom fields based on the schema type
             if schema.get('system', '').lower() == 'labels':
@@ -341,16 +353,16 @@ def create_dynamic_widgets_for_updating_work_item(
                     mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                 )
             elif schema.get('type', '').lower() == 'number':
-                if __field_id in work_item.get_additional_fields():
+                if metadata.field_id in work_item.get_additional_fields():
                     # get the current value of the field from the issue's additional fields
-                    value = work_item.get_additional_field_value(__field_id)
+                    value = work_item.get_additional_field_value(metadata.field_id)
                     widget = builder.build_numeric(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
             elif schema.get('type', '').lower() == 'date':
-                if __field_id in work_item.get_additional_fields():
+                if metadata.field_id in work_item.get_additional_fields():
                     # get the current value of the field from the issue's custom field data
-                    value = work_item.get_additional_field_value(__field_id)
+                    value = work_item.get_additional_field_value(metadata.field_id)
                     widget = builder.build_date(
                         mode=FieldMode.UPDATE, metadata=metadata, current_value=value
                     )
@@ -361,8 +373,8 @@ def create_dynamic_widgets_for_updating_work_item(
                 value = None
                 if field_key and hasattr(work_item, field_key):
                     value = getattr(work_item, field_key)
-                elif __field_id in work_item.get_additional_fields():
-                    value = work_item.get_additional_field_value(__field_id)
+                elif metadata.field_id in work_item.get_additional_fields():
+                    value = work_item.get_additional_field_value(metadata.field_id)
 
                 # convert value to list of IDs for multi-select widget
                 current_ids = []
@@ -387,9 +399,9 @@ def create_dynamic_widgets_for_updating_work_item(
                 )
 
         if widget:
-            widget.border_title = field.get('name').title()
-            widget.tooltip = f'{widget.border_title} (Tip: to ignore use id: {__field_id})'
-            if field.get('required'):
+            widget.border_title = metadata.name.title()
+            widget.tooltip = f'{widget.border_title} (Tip: to ignore use id: {metadata.field_id})'
+            if metadata.required:
                 widget.add_class('required')
                 widget.border_subtitle = '(*)'
             widgets.append(widget)

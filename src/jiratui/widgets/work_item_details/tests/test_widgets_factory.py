@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from jiratui.app import JiraApp
-from jiratui.models import IssueStatus, IssueType, JiraIssue, JiraSprint
+from jiratui.models import IssueStatus, IssueType, JiraIssue
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
@@ -16,6 +16,7 @@ from jiratui.widgets.commons.widgets import (
     URLWidget,
 )
 from jiratui.widgets.work_item_details.factory import create_dynamic_widgets_for_updating_work_item
+from jiratui.widgets.work_item_details.fields import IssueSprintField
 
 
 @pytest.fixture
@@ -42,7 +43,18 @@ def work_item() -> JiraIssue:
                 },
             }
         },
-        custom_fields={'customfield_10021': 'https://foo.bar'},
+        custom_fields={
+            'customfield_10021': 'https://foo.bar',
+            'customfield_10020': [
+                {
+                    'id': 5,
+                    'name': 'This Sprint',
+                    'state': 'active',
+                    'startDate': '2026-01-23T08:59:46.636Z',
+                    'endDate': '2026-02-06T09:19:46.636Z',
+                }
+            ],
+        },
     )
 
 
@@ -137,7 +149,6 @@ def test_create_dynamic_widgets_skip_static_update_fields_by_name(
         'reporter',
         'project',
         'issuetype',
-        'sprint',
         'team',
     ],
 )
@@ -1214,7 +1225,7 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
             'fieldId': 'customfield_10020',
         }
     }
-    work_item.sprint = None
+    work_item.custom_fields['customfield_10020'] = []
     # WHEN
     async with app.run_test():
         widgets = create_dynamic_widgets_for_updating_work_item(work_item)
@@ -1255,7 +1266,6 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
             'fieldId': 'customfield_10020',
         }
     }
-    work_item.sprint = JiraSprint(id='1', active=True, name='Sprint 1')
     # WHEN
     async with app.run_test():
         widgets = create_dynamic_widgets_for_updating_work_item(work_item)
@@ -1264,10 +1274,10 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
         assert isinstance(widgets[0], SprintSelectionWidget)
         widget: SprintSelectionWidget = widgets[0]
         assert widget.id == 'customfield_10020'
-        assert widget.original_value == '1'
+        assert widget.original_value == '5'
         assert widget.disabled is False
-        assert widget.get_value_for_update() == 1
-        assert widget.selection == '1'
+        assert widget.get_value_for_update() == 5
+        assert widget.selection == '5'
         assert widget.border_subtitle is None
 
 
@@ -1301,4 +1311,10 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_without_usin
     async with app.run_test():
         widgets = create_dynamic_widgets_for_updating_work_item(work_item)
         # THEN
-        assert len(widgets) == 0
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], IssueSprintField)
+        widget: IssueSprintField = widgets[0]
+        assert widget.value == 'This Sprint'
+        assert widget.disabled is True
+        assert widget.border_subtitle is None
+        assert widget.border_title == 'Sprint'

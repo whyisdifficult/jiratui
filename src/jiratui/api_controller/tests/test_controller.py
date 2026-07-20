@@ -1224,11 +1224,8 @@ def test_build_criteria_for_searching_work_items_with_config_values(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_issue')
-async def test_get_issue(
-    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
-):
+async def test_get_issue(get_issue_mock: Mock, jira_api_controller: APIController):
     # GIVEN
     get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
     # WHEN
@@ -1294,6 +1291,38 @@ async def test_get_issue(
             ),
         )
     ]
+    assert set(response.result.issues[0].get_additional_fields().keys()) == {
+        'aggregateprogress',
+        'aggregatetimeestimate',
+        'aggregatetimeoriginalestimate',
+        'aggregatetimespent',
+        'creator',
+        'fixVersions',
+        'issuerestriction',
+        'lastViewed',
+        'progress',
+        'security',
+        'statusCategory',
+        'statuscategorychangedate',
+        'subtasks',
+        'timeestimate',
+        'timeoriginalestimate',
+        'timespent',
+        'versions',
+        'votes',
+        'watches',
+        'worklog',
+        'workratio',
+    }
+    assert set(response.result.issues[0].get_custom_fields().keys()) == {
+        'customfield_10001',
+        'customfield_10015',
+        'customfield_10016',
+        'customfield_10019',
+        'customfield_10020',
+        'customfield_10021',
+        'customfield_10036',
+    }
     get_issue_mock.assert_has_calls(
         [
             call(issue_id_or_key='10002', fields=None, properties=None),
@@ -1302,11 +1331,8 @@ async def test_get_issue(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_issue')
-async def test_get_issue_with_api_error(
-    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
-):
+async def test_get_issue_with_api_error(get_issue_mock: Mock, jira_api_controller: APIController):
     # GIVEN
     get_issue_mock.side_effect = ValueError('an error')
     # WHEN
@@ -1320,11 +1346,9 @@ async def test_get_issue_with_api_error(
 
 @pytest.mark.asyncio
 @patch.object(WorkItemFactory, 'create_work_item')
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_issue')
 async def test_get_issue_with_instance_building_error(
     get_issue_mock: Mock,
-    configuration_mock: Mock,
     create_work_item_mock: Mock,
     jira_api_controller: APIController,
 ):
@@ -1344,10 +1368,9 @@ async def test_get_issue_with_instance_building_error(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_issue')
 async def test_get_issue_with_additional_parameters(
-    get_issue_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+    get_issue_mock: Mock, jira_api_controller: APIController
 ):
     # GIVEN
     get_issue_mock.return_value = load_json_response(__file__, 'issue.json')
@@ -1367,11 +1390,8 @@ async def test_get_issue_with_additional_parameters(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_groups_in_bulk')
-async def test_find_groups(
-    get_groups_in_bulk_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
-):
+async def test_find_groups(get_groups_in_bulk_mock: Mock, jira_api_controller: APIController):
     # GIVEN
     get_groups_in_bulk_mock.return_value = {
         'values': [{'groupId': '5', 'name': 'g1'}, {'groupId': '6', 'name': 'g2'}]
@@ -1392,10 +1412,9 @@ async def test_find_groups(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_groups_in_bulk')
 async def test_find_groups_with_api_error(
-    get_groups_in_bulk_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+    get_groups_in_bulk_mock: Mock, jira_api_controller: APIController
 ):
     # GIVEN
     get_groups_in_bulk_mock.side_effect = ValueError('an error')
@@ -1415,10 +1434,9 @@ async def test_find_groups_with_api_error(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_users_in_group')
 async def test_count_users_in_group(
-    get_users_in_group_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+    get_users_in_group_mock: Mock, jira_api_controller: APIController
 ):
     # GIVEN
     get_users_in_group_mock.return_value = {'total': '5'}
@@ -1432,10 +1450,9 @@ async def test_count_users_in_group(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(JiraAPI, 'get_users_in_group')
 async def test_count_users_in_group_with_api_error(
-    get_users_in_group_mock: Mock, configuration_mock: Mock, jira_api_controller: APIController
+    get_users_in_group_mock: Mock, jira_api_controller: APIController
 ):
     # GIVEN
     get_users_in_group_mock.side_effect = ValueError('an error')
@@ -1531,13 +1548,11 @@ async def test_search_issues_with_api_error(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'search_issues')
 async def test_search_issues(
     search_issues_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    configuration_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
@@ -1670,13 +1685,11 @@ async def test_search_issues_with_missing_issues(
 
 @pytest.mark.parametrize('page, expected_offset', [(0, 0), (1, 0), (2, 50), (None, 0)])
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraDataCenterAPI, 'search_issues')
 async def test_search_issues_for_jira_dc(
     search_issues_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    configuration_mock: Mock,
     jira_api_controller_for_jira_dc: APIController,
     page,
     expected_offset,
@@ -1729,13 +1742,11 @@ async def test_search_issues_for_jira_dc(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'work_items_search_approximate_count')
 async def test_count_issues(
     work_items_search_approximate_count_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    configuration_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
@@ -1752,13 +1763,11 @@ async def test_count_issues(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'work_items_search_approximate_count')
 async def test_count_issues_with_api_error(
     work_items_search_approximate_count_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    configuration_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
@@ -1775,13 +1784,11 @@ async def test_count_issues_with_api_error(
 
 
 @pytest.mark.asyncio
-@patch('jiratui.api_controller.factories.CONFIGURATION')
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'work_items_search_approximate_count')
 async def test_count_issues_with_criteria(
     work_items_search_approximate_count_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
-    configuration_mock: Mock,
     jira_api_controller: APIController,
 ):
     # GIVEN
