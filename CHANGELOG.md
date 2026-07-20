@@ -29,8 +29,9 @@ an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 ### Minor Improvements
 
 - Bump `marklas` to version `0.8.6`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
-- Unify the handling of `SprintSelectionWidget` and `IssueSprintField` as additional fields when viewing/editing the details of a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
-- Refactor `JiraIssue` and remove the `sprint` attribute to treat it as a custom field. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Unify the handling of `SprintSelectionWidget` and `IssueSprintField` as additional fields when viewing/editing the details of a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/299
+- Refactor `JiraIssue` and remove the `sprint` attribute to treat it as a custom field. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/299
+- Improve the way we show the summary of work items in the CLI. By [@samuelfirst](https://github.com/samuelfirst) in https://github.com/whyisdifficult/jiratui/pull/297
 
 ## [1.10.1] 2026-07-03
 
@@ -57,7 +58,6 @@ textarea-based field in the Info tab. By [@whyisdifficult](https://github.com/wh
 - Fix bugs in tests after fixing issues with the update of textarea-based fields in the Info tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/286
 - Fix bug when editing textarea-based fields in the Info tab when the fields do not have content. By [@WangLaoShi](https://github.com/WangLaoShi) in https://github.com/whyisdifficult/jiratui/pull/281
 - Fix bug that prevented flagging a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/287
-- Fix bug and improve the way we show the summary of work items in the CLI. By [@samuelfirst](https://github.com/samuelfirst) in https://github.com/whyisdifficult/jiratui/pull/297
 
 ### Minor Improvements
 
