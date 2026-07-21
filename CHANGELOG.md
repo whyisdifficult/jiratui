@@ -26,7 +26,7 @@ sprint ID must be passed to the API as `int` instead of `str`. The widget `Sprin
 an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Fixes the `ApplicationSession` class to work with async workers and contexts. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Make sure that if the current sprint of an item is "CLOSED" then it appears on the list of sprints available for
-selection when editing the work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/299
+selection when editing the work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
 
 ### Minor Improvements
 

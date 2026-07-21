@@ -1057,8 +1057,9 @@ class IssueDetailsWidget(Vertical):
                             # already there.
                             options.extend(sprint_widget.options)
 
+                        options.sort(key=lambda x: x[0])
                         # set the options of the sprint selection dropdown
-                        sprint_widget.set_options(sorted(options, key=lambda x: x[0]))
+                        sprint_widget.set_options(options)
 
                         # set the current value in the dropdown if the work item's sprint is set
                         if sprint_widget.original_value is not None:
