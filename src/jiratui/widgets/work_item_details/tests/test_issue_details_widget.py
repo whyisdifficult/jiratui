@@ -1563,17 +1563,17 @@ async def test_add_dynamic_widgets(
     # GIVEN
     app.config.enable_updating_additional_fields = True
     app.config.update_additional_fields_ignore_ids = []
-    widget_2 = MultiUserPickerWidget(
+    widget_1 = MultiUserPickerWidget(
         mode=FieldMode.UPDATE, field_id='approvers', jira_field_key='approvers'
     )
-    widget_4 = SingleUserPickerWidget(mode=FieldMode.UPDATE, field_id='user', jira_field_key='user')
+    widget_2 = SingleUserPickerWidget(mode=FieldMode.UPDATE, field_id='user', jira_field_key='user')
     create_dynamic_widgets_for_updating_work_item_mock.return_value = [
         ReadOnlyADFMarkdownTextAreaWidget(field_id='environment', jira_field_key='environment'),
-        widget_2,
+        widget_1,
         NumericInputWidget(mode=FieldMode.UPDATE, field_id='score', jira_field_key='score'),
-        widget_4,
-        MultiUserPickerAutoComplete(widget_2, app.api),
-        UsersAutoComplete(widget_4, app.api),
+        widget_2,
+        MultiUserPickerAutoComplete(widget_1, app.api),
+        UsersAutoComplete(widget_2, app.api),
     ]
     async with app.run_test() as pilot:
         details_widget = IssueDetailsWidget()
@@ -1674,6 +1674,53 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_curren
         assert children[0]._options == [
             ('', Select.NULL),
             ('(ACTIVE) Sprint 5', '5'),
+            ('(FUTURE) Sprint 6', '6'),
+        ]
+        assert children[0].selection == '5'
+        assert children[0].border_subtitle is None
+
+
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
+@pytest.mark.asyncio
+async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_current_sprint_in_past_selected(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=[('(CLOSED) Sprint 5', '5')],
+            original_value='5',
+        ),
+    ]
+    fetch_sprints_in_project_mock.return_value = [
+        AgileSprint(id=6, name='Sprint 6', state=AgileSprintState.FUTURE),
+        AgileSprint(id=7, name='Sprint 7', state=AgileSprintState.ACTIVE),
+    ]
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert isinstance(children[0], SprintSelectionWidget)
+        assert children[0]._options == [
+            ('', Select.NULL),
+            ('(ACTIVE) Sprint 7', '7'),
+            ('(CLOSED) Sprint 5', '5'),
             ('(FUTURE) Sprint 6', '6'),
         ]
         assert children[0].selection == '5'

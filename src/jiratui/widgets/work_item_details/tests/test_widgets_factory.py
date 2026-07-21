@@ -1200,10 +1200,19 @@ async def test_create_dynamic_widgets_field_date_changing_value(
         assert widgets[0].original_value == '2025-12-31'
 
 
+@pytest.mark.parametrize(
+    'required_field, expected_border_sub_title',
+    [
+        (True, '(*)'),
+        (False, None),
+    ],
+)
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @pytest.mark.asyncio
 async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_api_without_current_sprint(
     uses_cloud_api_mock,
+    required_field: bool,
+    expected_border_sub_title: str | None,
     work_item: JiraIssue,
     app: JiraApp,
 ):
@@ -1211,7 +1220,7 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
     uses_cloud_api_mock.return_value = True
     work_item.edit_meta['fields'] = {
         'customfield_10020': {
-            'required': False,
+            'required': required_field,
             'schema': {
                 'type': 'array',
                 'items': 'json',
@@ -1238,13 +1247,23 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
         assert widget.disabled is False
         assert widget.get_value_for_update() is None
         assert widget.selection is None
-        assert widget.border_subtitle is None
+        assert widget.border_subtitle == expected_border_sub_title
+        assert widget.options == []
 
 
+@pytest.mark.parametrize(
+    'required_field, expected_border_sub_title',
+    [
+        (True, '(*)'),
+        (False, None),
+    ],
+)
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @pytest.mark.asyncio
 async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_api_with_current_sprint(
     uses_cloud_api_mock,
+    required_field: bool,
+    expected_border_sub_title: str | None,
     work_item: JiraIssue,
     app: JiraApp,
 ):
@@ -1252,7 +1271,7 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
     uses_cloud_api_mock.return_value = True
     work_item.edit_meta['fields'] = {
         'customfield_10020': {
-            'required': False,
+            'required': required_field,
             'schema': {
                 'type': 'array',
                 'items': 'json',
@@ -1278,7 +1297,8 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_using_cloud_
         assert widget.disabled is False
         assert widget.get_value_for_update() == 5
         assert widget.selection == '5'
-        assert widget.border_subtitle is None
+        assert widget.border_subtitle == expected_border_sub_title
+        assert widget.options == [('(active) This Sprint', '5')]
 
 
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
