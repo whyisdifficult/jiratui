@@ -317,7 +317,9 @@ def create_dynamic_widgets_for_updating_work_item(
                         original_value: str | None = None
                         if value := work_item.get_custom_field_value(metadata.field_id):
                             # set the current value (original_value) of the widget based on the item's current sprint
-                            # (if any)
+                            # (if any). Make sure we only include the item's sprint in the initial options, i.e. w/o
+                            # NULL option
+                            # important: the item's sprint may be CLOSED, i.e. in the past
                             initial_options = [
                                 (
                                     f'({value[0].get("state")}) {value[0].get("name", "")}',
@@ -326,16 +328,21 @@ def create_dynamic_widgets_for_updating_work_item(
                             ]
                             original_value = str(value[0].get('id'))
 
+                        if not initial_options:
+                            allow_blank = True
+                        else:
+                            allow_blank = not metadata.required
+
                         widget = SprintSelectionWidget(
                             mode=FieldMode.UPDATE,
                             field_id=metadata.field_id,
                             jira_field_key=metadata.key,
                             options=initial_options,
                             title=metadata.name,
-                            required=metadata.required,
+                            required=metadata.required and len(initial_options) > 0,
                             original_value=original_value,
                             field_supports_update=metadata.supports_update,
-                            allow_blank=not metadata.required,
+                            allow_blank=allow_blank,
                             prompt=f'Select {metadata.name}',
                         )
                 else:

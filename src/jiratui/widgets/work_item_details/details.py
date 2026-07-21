@@ -844,7 +844,7 @@ class IssueDetailsWidget(Vertical):
                 self.issue_status_selector.value = current_status_id
 
     async def _fetch_sprints_in_project(self, project_key: str) -> list[AgileSprint] | None:
-        """Retrieves the sprints of a project and updates the data in the application's session.
+        """Retrieves the active/future sprints of a project and updates the data in the application's session.
 
         This function attempts to get the data from the application's session to avoid making unnecessary API
         requests. If the session does not have the data then it fetches the sprints from the API and updates the
@@ -866,7 +866,7 @@ class IssueDetailsWidget(Vertical):
         if sprints_in_project := sprints.get(project_key):
             return sprints_in_project
 
-        # retrieve the project's sprints
+        # retrieve the project's active/future sprints
         response: APIControllerResponse = await self.app.api.get_project_sprints(project_key)  # type:ignore[attr-defined]
         if response.success and (sprints_in_project := response.result):
             application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
@@ -1035,23 +1035,34 @@ class IssueDetailsWidget(Vertical):
                     LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
             if sprint_selection_widgets and self.support_sprint_selection:
-                # fetch the sprints associated to the item's project and store them in the application's session
+                # fetch the active/future sprints associated to the item's project
                 sprints: list[AgileSprint] | None = await self._fetch_sprints_in_project(
                     work_item.project.key
                 )
                 if sprints:
                     sprint_ids: set[str] = {str(sprint.id) for sprint in sprints}
-                    # set the options for every sprint selection widget
+                    # set the options for every sprint selection widget using the list of sprints
                     for sprint_widget in self.dynamic_fields_widgets_container.query(
                         SprintSelectionWidget
                     ):
-                        sprint_widget.set_options(
-                            [(sprint.display_name, str(sprint.id)) for sprint in sprints]
-                        )
+                        options = [(sprint.display_name, str(sprint.id)) for sprint in sprints]
                         if (
                             sprint_widget.original_value is not None
-                            and str(sprint_widget.original_value) in sprint_ids
+                            and str(sprint_widget.original_value) not in sprint_ids
+                            and sprint_widget.options
                         ):
+                            # make sure the sprint selection dropdown includes the work item's current sprint.
+                            # important: the item's current sprint may be in the past and so it won't be in the list of
+                            # sprints fetched above. To handle this case we add the current sprint to the list if it's not
+                            # already there.
+                            options.extend(sprint_widget.options)
+
+                        options.sort(key=lambda x: x[0])
+                        # set the options of the sprint selection dropdown
+                        sprint_widget.set_options(options)
+
+                        # set the current value in the dropdown if the work item's sprint is set
+                        if sprint_widget.original_value is not None:
                             sprint_widget.value = sprint_widget.original_value
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:

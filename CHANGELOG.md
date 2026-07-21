@@ -17,6 +17,8 @@ project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://gith
 - Add support for specifying the status of a work item being created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/295
 - Add support for updating the sprint of a work item. This is only supported when the JiraTUI connects to the Jira Cloud
 Platform. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/298
+- Deprecate the config variable `custom_field_id_sprint` because the sprint field is now handled automatically as a
+custom field. See https://github.com/whyisdifficult/jiratui/pull/298. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
 
 ### Bug Fixes
 
@@ -25,6 +27,8 @@ Platform. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 sprint ID must be passed to the API as `int` instead of `str`. The widget `SprintWidget` now returns its value as
 an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Fixes the `ApplicationSession` class to work with async workers and contexts. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
+- Make sure that if the current sprint of an item is "CLOSED" then it appears on the list of sprints available for
+selection when editing the work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
 
 ### Minor Improvements
 

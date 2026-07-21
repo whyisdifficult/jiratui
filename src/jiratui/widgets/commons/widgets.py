@@ -2216,6 +2216,36 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             if initial_value != Select.NULL:
                 self.value = initial_value
 
+        self.__options = options
+
+    @property
+    def options(self) -> list[tuple[str, str]]:
+        # the Textual.Select widget does not offer a public property/method/attribute to get the list of options so we
+        # implement it here
+        return self.__options
+
+    @property
+    def value_has_changed(self) -> bool:
+        """Determines if the current value differs from the original value (UPDATE mode).
+
+        Returns:
+            True if value has changed, False otherwise
+        """
+        if self.mode != FieldMode.UPDATE:
+            raise ValueError('value_has_changed only valid in UPDATE mode')
+
+        # no original value
+        if not self.original_value:
+            # changed if we now have a selection
+            return bool(self.selection)
+
+        # had original value, now no selection
+        if not self.selection:
+            return True
+
+        # both exist - compare them
+        return self.original_value != self.selection
+
     def get_value_for_update(self) -> int | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
 
@@ -2243,25 +2273,3 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         if self.selection is None:
             return None
         return int(self.selection)
-
-    @property
-    def value_has_changed(self) -> bool:
-        """Determines if the current value differs from the original value (UPDATE mode).
-
-        Returns:
-            True if value has changed, False otherwise
-        """
-        if self.mode != FieldMode.UPDATE:
-            raise ValueError('value_has_changed only valid in UPDATE mode')
-
-        # no original value
-        if not self.original_value:
-            # changed if we now have a selection
-            return bool(self.selection)
-
-        # had original value, now no selection
-        if not self.selection:
-            return True
-
-        # both exist - compare them
-        return self.original_value != self.selection
