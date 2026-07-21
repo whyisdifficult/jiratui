@@ -3508,18 +3508,21 @@ async def test_get_attachment_content_using_jira_dc(
     get_attachment_mock: AsyncMock, jira_api_dc: JiraDataCenterAPI
 ):
     # GIVEN
-    get_attachment_mock.return_value = {'content': 'https://foo.bar/path/filename.abc?q=1#f2'}
-    route = respx.get('https://foo.bar/rest/api/2/path/filename.abc?q=1')
+    get_attachment_mock.return_value = {
+        'content': 'http://internal-jira/secure/attachment/1/filename.abc?q=1#f2'
+    }
+    route = respx.get('https://foo.bar/secure/attachment/1/filename.abc?q=1')
     route.mock(
         return_value=httpx.Response(
             200,
-            json={},
+            content=b'attachment contents',
         )
     )
     # WHEN
-    await jira_api_dc.get_attachment_content('1')
+    result = await jira_api_dc.get_attachment_content('1')
     # THEN
-    assert route.calls.last.request.url.path == '/rest/api/2/path/filename.abc'
+    assert route.calls.last.request.url.path == '/secure/attachment/1/filename.abc'
+    assert result == b'attachment contents'
 
 
 @patch.object(JiraDataCenterAPI, 'get_attachment')
