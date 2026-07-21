@@ -126,7 +126,8 @@ class ApplicationConfiguration(BaseSettings):
     """If `True`, the Active Sprint checkbox will be enabled by default when the application starts, filtering search
     results to show only work items in the currently active sprint."""
     custom_field_id_sprint: str | None = None
-    """The name of the custom field used by your Jira application to identify the sprints. Example: customfield_12345"""
+    """(DEPRECATED) The name of the custom field used by your Jira application to identify the sprints.
+    Example: customfield_12345. This will be removed in a future release."""
     fetch_attachments_on_delete: bool = True
     """When this is `True` (default) the application will fetch the attachments of a work item after an attachment is
     deleted from the list of attachments. This makes the data more accurate but slower due to the extra request. When

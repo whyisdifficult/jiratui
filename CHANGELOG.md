@@ -17,6 +17,8 @@ project. By [@whyisdifficult](https://github.com/whyisdifficult) in https://gith
 - Add support for specifying the status of a work item being created. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/295
 - Add support for updating the sprint of a work item. This is only supported when the JiraTUI connects to the Jira Cloud
 Platform. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/298
+- Deprecate the config variable `custom_field_id_sprint` because the sprint field is now handled automatically as a
+custom field. See https://github.com/whyisdifficult/jiratui/pull/298. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
 
 ### Bug Fixes
 
