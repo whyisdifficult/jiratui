@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixes bug in the logic that fetches the sprints of a project. When one of the project's boards does nto support
 sprints the API fails to retrieve the sprints of the board and this brakes the entire logic. The solution is to let
-`asyncio.gather()` to return the exceptions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/307
+`asyncio.gather()` to return the exceptions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/308
 
 ## [1.11.0] 2026-07-24
 
