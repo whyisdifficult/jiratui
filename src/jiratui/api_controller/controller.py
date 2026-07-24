@@ -184,7 +184,9 @@ class APIController:
             for board_id in boards_by_id.keys()
         ]
         try:
-            sprints_in_board_responses = await asyncio.gather(*tasks)
+            # if any exception occurs while running any of the tasks then the exception instance will be in the results
+            # list
+            sprints_in_board_responses = await asyncio.gather(*tasks, return_exceptions=True)
         except Exception as e:
             exception_details = self._extract_exception_details(e)
             self.logger.error(
@@ -196,9 +198,13 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
+        boards_with_exceptions = 0
         sprints: list[AgileSprint] = []
         for item in sprints_in_board_responses:
-            for sprint in item.get('values', []):
+            if isinstance(item, Exception):
+                boards_with_exceptions += 1
+                continue
+            for sprint in item.get('values', []):  # type:ignore[union-attr]
                 sprints.append(
                     AgileSprint(
                         id=int(sprint.get('id')),
@@ -221,6 +227,17 @@ class APIController:
                             else None
                         ),
                     )
+                )
+        if boards_with_exceptions:
+            if boards_with_exceptions == len(sprints_in_board_responses):
+                self.logger.error(
+                    'Failed to extract the sprints of all the boards in the project',
+                    extra={'boards': list(boards_by_id.keys()), 'project': key},
+                )
+            else:
+                self.logger.warning(
+                    'Failed to extract the sprints of some of the boards in the project',
+                    extra={'boards': list(boards_by_id.keys()), 'project': key},
                 )
         return APIControllerResponse(result=sprints)
 
