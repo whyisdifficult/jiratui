@@ -76,3 +76,13 @@ other words, `jira_api_version` is only applicable when `cloud: True`.
 ```
 
 Now that you have the basic configuration you can [run the tool and its commands](/users/usage/index).
+
+
+## Permissions
+
+JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
+permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
+grant them to your user account.
+
+To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
+[Permissions and Scopes](/users/configuration/permissions.md).

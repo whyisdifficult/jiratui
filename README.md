@@ -166,6 +166,15 @@ If you are using a custom config file, run:
 JIRA_TUI_CONFIG_FILE=/path/to/cutom-file/my-file.yaml jiratui ui
 ```
 
+### Setting Up Permissions and Scopes for your User
+
+JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
+permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
+grant them to your user account.
+
+To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
+[Permissions and Scopes](docs/users/configuration/permissions.md).
+
 ## CLI Interface
 
 In addition to the `ui` command, the CLI tool offers several commands to help you manage issues, comments, and users.
