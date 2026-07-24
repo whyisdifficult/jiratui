@@ -152,6 +152,15 @@ jira_api_version: 2
 **Important**: when `cloud: False` JiraTUI will use the correct version for the API and ignore the value of
 `jira_api_version`. In other words, `jira_api_version` is only applicable when `cloud: True`.
 
+### Setting Up Permissions and Scopes for your User
+
+JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
+permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
+grant them to your user account.
+
+To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
+[Permissions and Scopes](docs/users/configuration/permissions.md).
+
 ## Running the Application UI
 
 Once you have provided the necessary settings, you can run the application's UI with the following command:
@@ -165,15 +174,6 @@ If you are using a custom config file, run:
 ```shell
 JIRA_TUI_CONFIG_FILE=/path/to/cutom-file/my-file.yaml jiratui ui
 ```
-
-### Setting Up Permissions and Scopes for your User
-
-JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
-permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
-grant them to your user account.
-
-To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
-[Permissions and Scopes](docs/users/configuration/permissions.md).
 
 ## CLI Interface
 
