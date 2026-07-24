@@ -31,9 +31,9 @@ JiraTUI uses the Jira APIs listed below, each with specific scope requirements:
 
 # Scopes by Use Case
 
-## When Connecting to Jira Cloud v3/v2
+## When Connecting to Jira Cloud v2/v3
 
-If you connect to Jira Cloud v3 then most JiraTUI use cases require:
+If you connect to Jira Cloud v2/v3 then most JiraTUI use cases require:
 
 - `read:jira-work`
 - `read:jira-user`

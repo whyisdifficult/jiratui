@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.11.0] 2026-07-24
 
 ### Added
 
@@ -29,13 +29,22 @@ an `int`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://git
 - Fixes the `ApplicationSession` class to work with async workers and contexts. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
 - Make sure that if the current sprint of an item is "CLOSED" then it appears on the list of sprints available for
 selection when editing the work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
+- By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/300
+- Use correct URL when viewing attachments using Jira Server. By [@samuelfirst](https://github.com/samuelfirst) in https://github.com/whyisdifficult/jiratui/pull/302
 
 ### Minor Improvements
 
 - Bump `marklas` to version `0.8.6`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/293
+- Bump `pillow` to version `12.3.0`. https://github.com/whyisdifficult/jiratui/pull/301
+- Bump `gitpython` to version `12.3.0`. https://github.com/whyisdifficult/jiratui/pull/301
+- Bump `setuptools` to version `83.0.0`. https://github.com/whyisdifficult/jiratui/pull/305
 - Unify the handling of `SprintSelectionWidget` and `IssueSprintField` as additional fields when viewing/editing the details of a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/299
 - Refactor `JiraIssue` and remove the `sprint` attribute to treat it as a custom field. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/299
 - Improve the way we show the summary of work items in the CLI. By [@samuelfirst](https://github.com/samuelfirst) in https://github.com/whyisdifficult/jiratui/pull/297
+
+### Documentation
+
+- Add documentation related to required permissions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/304
 
 ## [1.10.1] 2026-07-03
 
