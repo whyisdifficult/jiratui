@@ -223,6 +223,30 @@ async def test_show_attachment(
 
 
 @patch('jiratui.widgets.screen.APIController.get_attachment_content')
+@pytest.mark.asyncio
+async def test_close_attachment_repaints_after_sixel(
+    get_attachment_content_mock: AsyncMock,
+    app,
+):
+    get_attachment_content_mock.return_value = APIControllerResponse(success=False)
+
+    async with app.run_test() as pilot:
+        main_screen = app.screen
+        screen = ViewAttachmentScreen('1', 'image/png', 'image.png')
+        await app.push_screen(screen)
+        screen._rendered_sixel_image = True
+
+        with (
+            patch.object(app._driver, 'write') as driver_write_mock,
+            patch.object(main_screen, 'refresh', wraps=main_screen.refresh) as refresh_mock,
+        ):
+            await pilot.press('escape')
+
+        driver_write_mock.assert_called_once_with('\x1b[2J\x1b[H')
+        refresh_mock.assert_any_call(repaint=True)
+
+
+@patch('jiratui.widgets.screen.APIController.get_attachment_content')
 @patch('jiratui.widgets.screen.APIController.get_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
