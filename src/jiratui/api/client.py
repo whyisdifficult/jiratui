@@ -96,6 +96,14 @@ class JiraTUIAsyncHTTPClient:
         return default_headers
 
     def get_resource_url(self, resource: str) -> str:
+        resource_url = httpx.URL(resource)
+        if resource_url.is_absolute_url:
+            base_url = httpx.URL(self.base_url)
+            if resource_url.copy_with(path='/', query=None, fragment=None) != base_url.copy_with(
+                path='/', query=None, fragment=None
+            ):
+                raise ValueError('Refusing to send Jira credentials to a different origin')
+            return str(resource_url)
         return f'{self.base_url}/{resource}'
 
     async def close_async_client(self):

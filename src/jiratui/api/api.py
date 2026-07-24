@@ -4,10 +4,10 @@ from io import BufferedReader
 import json
 import logging
 from typing import Any
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 import puremagic
-from urllib3.util import parse_url
 
 from jiratui.api.client import AsyncJiraClient, JiraClient, JiraTUIAsyncHTTPClient
 from jiratui.api.utils import build_issue_search_jql
@@ -1739,14 +1739,24 @@ class JiraDataCenterAPI(JiraAPI):
         attachment: dict
         if attachment := await self.get_attachment(attachment_id):
             if content := attachment.get('content'):
-                # extract relative URL because Jira DC returns absolute URL
-                if parsed := parse_url(content):
-                    content = parsed.path.lstrip('/')
-                    if parsed.query:
-                        content += '?' + parsed.query
-                    if parsed.fragment:
-                        content += '#' + parsed.fragment
-                await self._async_http_client.make_request(
+                # Jira DC returns an absolute URL.
+                # Keep the returned path but use the configured origin, since Jira may
+                # advertise an internal hostname when it is behind a reverse proxy.
+                parsed_content = urlsplit(content)
+                if parsed_content.scheme and parsed_content.netloc:
+                    parsed_base_url = urlsplit(self.base_url)
+                    content = urlunsplit(
+                        (
+                            parsed_base_url.scheme,
+                            parsed_base_url.netloc,
+                            parsed_content.path,
+                            parsed_content.query,
+                            parsed_content.fragment,
+                        )
+                    )
+                else:
+                    content = urljoin(f'{self.base_url.rstrip("/")}/', content)
+                return await self._async_http_client.make_request(
                     method=httpx.AsyncClient.get,
                     url=content,
                     follow_redirects=True,

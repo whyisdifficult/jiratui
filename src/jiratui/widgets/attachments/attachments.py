@@ -13,7 +13,7 @@ from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import DataTable, LoadingIndicator, Markdown, Static, TextArea
-from textual_image.widget import Image
+from textual_image.widget import Image, SixelImage
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -365,7 +365,7 @@ class ViewAttachmentScreen(ModalScreen):
     - Building a widget to display the contents of the file depending on the type of file.
     """
 
-    BINDINGS = [('escape', 'app.pop_screen', 'Close Image')]
+    BINDINGS = [('escape', 'close', 'Close Image')]
     TITLE = 'Image'
     HELP = None
 
@@ -374,6 +374,7 @@ class ViewAttachmentScreen(ModalScreen):
         self._attachment_id = attachment_id
         self._attachment_file_type = attachment_file_type
         self._attachment_file_name = attachment_file_name
+        self._rendered_sixel_image = False
 
     @property
     def center_widget(self) -> Center:
@@ -391,6 +392,7 @@ class ViewAttachmentScreen(ModalScreen):
     async def _download_attachment(self, attachment_id: str) -> None:
         app = cast('JiraApp', self.screen.app)  # type:ignore[name-defined] # noqa: F821
         response: APIControllerResponse = await app.api.get_attachment_content(attachment_id)
+        app.logger.warning(response)
         container = self.center_widget
         await container.remove_children(LoadingIndicator)
         if response.success and response.result:
@@ -403,6 +405,7 @@ class ViewAttachmentScreen(ModalScreen):
                 await container.mount(Static('Unable to display the file'))
             else:
                 if widget:
+                    self._rendered_sixel_image = isinstance(widget, SixelImage)
                     await container.mount(widget)
                 else:
                     await container.mount(Static('Unsupported file type'))
@@ -416,6 +419,20 @@ class ViewAttachmentScreen(ModalScreen):
 
     async def on_mount(self):
         self.run_worker(self._download_attachment(self._attachment_id))
+
+    async def action_close(self) -> None:
+        """Close the viewer and remove any Sixel graphics left by the terminal."""
+        rendered_sixel_image = self._rendered_sixel_image
+        await self.app.pop_screen()
+
+        if rendered_sixel_image:
+            if driver := self.app._driver:  # type:ignore[attr-defined]
+                # Erase the terminal display move the cursor to the
+                # top-left corner and send both commands.
+                # The active Textual screen is repainted below to restore its UI.
+                driver.write('\x1b[2J\x1b[H')
+                driver.flush()
+            self.app.screen.refresh(repaint=True)
 
 
 class FileAttachmentWidget:
