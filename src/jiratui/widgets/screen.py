@@ -678,7 +678,7 @@ class MainScreen(Screen):
         Returns:
             A list of tuples with the name and id of every project status code.
         """
-        self.logger.info('Fetching status codes')
+
         if self.project_selector.selection:
             return await self._fetch_project_statuses(self.project_selector.selection)
         response: APIControllerResponse = await self.api.status()
@@ -738,7 +738,7 @@ class MainScreen(Screen):
         Returns:
             A list of tuples with the id of the type of issue and the name of the type of issue.
         """
-        self.logger.info('Fetching type of work items')
+
         types: list[IssueType]
         if self.project_selector.selection:
             response: APIControllerResponse = await self.api.get_issue_types_for_project(

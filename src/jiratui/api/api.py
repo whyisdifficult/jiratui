@@ -1508,7 +1508,7 @@ class JiraDataCenterAPI(JiraAPI):
         limit: int | None = None,
         query: str | None = None,
         order_by: str | None = None,
-        keys: list[str] = None,
+        keys: list[str] | None = None,
     ) -> dict:
         """Retrieves all projects visible for the currently logged-in user, i.e. all the projects the user has either
         'Browse projects' or 'Administer projects' permission. If no user is logged in, it returns all projects that
