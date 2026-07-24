@@ -1063,7 +1063,15 @@ class IssueDetailsWidget(Vertical):
 
                         # set the current value in the dropdown if the work item's sprint is set
                         if sprint_widget.original_value is not None:
-                            sprint_widget.value = sprint_widget.original_value
+                            sprint_widget.clear()
+                            sprint_widget.value = str(sprint_widget.original_value)
+                else:
+                    for sprint_widget in self.dynamic_fields_widgets_container.query(
+                        SprintSelectionWidget
+                    ):
+                        if sprint_widget.original_value is not None:
+                            sprint_widget.clear()
+                            sprint_widget.value = str(sprint_widget.original_value)
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821

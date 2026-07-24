@@ -5083,6 +5083,7 @@ async def test_get_project_sprints(
                 {'id': 72, 'state': 'future', 'name': 'sprint 2', 'goal': 'sprint 2 goal'},
             ],
         },
+        ServiceInvalidResponseException('error found'),
         {'isLast': False, 'maxResults': 10, 'startAt': 0, 'total': 0, 'values': []},
     ]
     # WHEN
@@ -5128,6 +5129,7 @@ async def test_get_project_sprints_getting_sprints_in_board_raises_exception(
     get_board_sprints_mock: AsyncMock,
     jira_api_controller: APIController,
 ):
+    """Any exception raised by the tasks inside the gather call will be returned."""
     # GIVEN
     get_boards_mock.return_value = {
         'values': [
@@ -5143,4 +5145,4 @@ async def test_get_project_sprints_getting_sprints_in_board_raises_exception(
     get_board_sprints_mock.assert_has_awaits(
         [call(84, state='active,future'), call(92, state='active,future')]
     )
-    assert result == APIControllerResponse(success=False, error='test error')
+    assert result == APIControllerResponse(success=True, result=[])
