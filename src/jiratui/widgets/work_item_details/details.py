@@ -1035,43 +1035,39 @@ class IssueDetailsWidget(Vertical):
                     LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
             if sprint_selection_widgets and self.support_sprint_selection:
-                # fetch the active/future sprints associated to the item's project
-                sprints: list[AgileSprint] | None = await self._fetch_sprints_in_project(
-                    work_item.project.key
-                )
-                if sprints:
-                    sprint_ids: set[str] = {str(sprint.id) for sprint in sprints}
-                    # set the options for every sprint selection widget using the list of sprints
-                    for sprint_widget in self.dynamic_fields_widgets_container.query(
-                        SprintSelectionWidget
-                    ):
-                        options = [(sprint.display_name, str(sprint.id)) for sprint in sprints]
-                        if (
-                            sprint_widget.original_value is not None
-                            and str(sprint_widget.original_value) not in sprint_ids
-                            and sprint_widget.options
-                        ):
-                            # make sure the sprint selection dropdown includes the work item's current sprint.
-                            # important: the item's current sprint may be in the past and so it won't be in the list of
-                            # sprints fetched above. To handle this case we add the current sprint to the list if it's not
-                            # already there.
-                            options.extend(sprint_widget.options)
+                await self._setup_sprint_selection_widgets(work_item.project.key)
 
-                        options.sort(key=lambda x: x[0])
-                        # set the options of the sprint selection dropdown
-                        sprint_widget.set_options(options)
+    async def _setup_sprint_selection_widgets(self, project_key: str) -> None:
+        # fetch the active/future sprints associated to the item's project
+        sprints: list[AgileSprint] | None = await self._fetch_sprints_in_project(project_key)
+        if sprints:
+            sprint_ids: set[str] = {str(sprint.id) for sprint in sprints}
+            # set the options for every sprint selection widget using the list of sprints
+            for sprint_widget in self.dynamic_fields_widgets_container.query(SprintSelectionWidget):
+                options = [(sprint.display_name, str(sprint.id)) for sprint in sprints]
+                if (
+                    sprint_widget.original_value is not None
+                    and str(sprint_widget.original_value) not in sprint_ids
+                    and sprint_widget.options
+                ):
+                    # make sure the sprint selection dropdown includes the work item's current sprint.
+                    # important: the item's current sprint may be in the past and so it won't be in the list of
+                    # sprints fetched above. To handle this case we add the current sprint to the list if it's not
+                    # already there.
+                    options.extend(sprint_widget.options)
 
-                        # set the current value in the dropdown if the work item's sprint is set
-                        if sprint_widget.original_value is not None:
-                            sprint_widget.clear()
-                            sprint_widget.value = str(sprint_widget.original_value)
-                else:
-                    for sprint_widget in self.dynamic_fields_widgets_container.query(
-                        SprintSelectionWidget
-                    ):
-                        if sprint_widget.original_value is not None:
-                            sprint_widget.clear()
-                            sprint_widget.value = str(sprint_widget.original_value)
+                options.sort(key=lambda x: x[0])
+                # set the options of the sprint selection dropdown
+                sprint_widget.set_options(options)
+                # set the current value in the dropdown if the work item's sprint is set
+                if sprint_widget.original_value is not None:
+                    sprint_widget.clear()
+                    sprint_widget.value = str(sprint_widget.original_value)
+        else:
+            for sprint_widget in self.dynamic_fields_widgets_container.query(SprintSelectionWidget):
+                if sprint_widget.original_value is not None:
+                    sprint_widget.clear()
+                    sprint_widget.value = str(sprint_widget.original_value)
 
     async def _determine_issue_flagged_status(self, issue: JiraIssue) -> None:
         application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
