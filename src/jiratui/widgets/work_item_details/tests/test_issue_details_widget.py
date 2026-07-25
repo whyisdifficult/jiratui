@@ -1761,6 +1761,45 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_
         children = list(details_widget.dynamic_fields_widgets_container.children)
         assert isinstance(children[0], SprintSelectionWidget)
         assert children[0]._options == [('', Select.NULL)]
+        assert children[0].selection is None
+
+
+@patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
+@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
+@pytest.mark.asyncio
+async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_found_using_original_value(
+    create_dynamic_widgets_for_updating_work_item_mock: Mock,
+    fetch_sprints_in_project_mock: AsyncMock,
+    jira_issue: JiraIssue,
+    app: JiraApp,
+):
+    # GIVEN
+    app.config.enable_updating_additional_fields = True
+    app.config.update_additional_fields_ignore_ids = []
+    create_dynamic_widgets_for_updating_work_item_mock.return_value = [
+        SprintSelectionWidget(
+            mode=FieldMode.UPDATE,
+            field_id='customfield_10020',
+            jira_field_key='customfield_10020',
+            options=[('Sprint 9', '9')],
+            original_value='9',
+        ),
+    ]
+    fetch_sprints_in_project_mock.return_value = []
+    async with app.run_test() as pilot:
+        details_widget = IssueDetailsWidget()
+        await app.mount(details_widget)
+        await pilot.pause()
+        # WHEN
+        await details_widget._add_dynamic_widgets(jira_issue)
+        # THEN
+        assert details_widget.dynamic_fields_widgets_container.is_empty is False
+        fetch_sprints_in_project_mock.assert_awaited_once_with(jira_issue.project.key)
+        children = list(details_widget.dynamic_fields_widgets_container.children)
+        assert isinstance(children[0], SprintSelectionWidget)
+        assert children[0]._options == [('', Select.NULL), ('Sprint 9', '9')]
+        assert children[0].selection == '9'
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
