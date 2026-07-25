@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.2] 2026-07-25
+
+### Bug Fixes
+
+- Update the logic that parses custom fields' `allowedValues` to accept new format. By [Sanjays2402](https://github.com/Sanjays2402) in https://github.com/whyisdifficult/jiratui/pull/312
+
+### Minor Improvements
+
+- Bump `gitpython` to version `3.1.54`. https://github.com/whyisdifficult/jiratui/pull/309
+
 ## [1.11.1] 2026-07-24
 
 ### Bug Fixes

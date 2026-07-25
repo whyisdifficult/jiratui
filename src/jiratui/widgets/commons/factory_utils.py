@@ -34,7 +34,7 @@ from jiratui.widgets.commons.widgets import (
 
 
 class FieldMetadata:
-    """Parsed field metadata from Jira create/edit metadata.
+    """Parses field metadata from Jira create/edit metadata.
 
     **Purpose**: Jira's field metadata is deeply nested and uses inconsistent naming conventions. `FieldMetadata`
     extracts and normalizes the properties needed to instantiate widgets, hiding that complexity.
