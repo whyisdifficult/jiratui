@@ -135,9 +135,10 @@ class AllowedValuesParser:
         if not allowed_values:
             return options
         for value in allowed_values:
-            # Try 'name' first, fall back to 'value'
-            display_value = value.get('name') or value.get('value', '')
-            value_id = value.get('id', '')
+            # Try 'name' first, fall back to 'value' and then to 'displayName'
+            display_value = value.get('name') or value.get('value') or value.get('displayName', '')
+            # Try 'id' first, fall back to 'languageCode' used by service-desk language fields
+            value_id = value.get('id') or value.get('languageCode', '')
             if display_value and value_id:
                 options.append((display_value, value_id))
         return options
