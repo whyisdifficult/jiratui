@@ -118,7 +118,19 @@ def search_issues(
     created_from: datetime | None = None,
     created_until: datetime | None = None,
 ) -> None:
-    """Search work items."""
+    """Searches work items.
+
+    Args:
+        project_key:
+        key:
+        assignee_account_id:
+        limit:
+        created_from:
+        created_until:
+
+    Returns:
+
+    """
     if not project_key and not key:
         raise click.BadParameter(
             'One of --project-key (-p) or --key (-k) must be provided',
@@ -138,7 +150,6 @@ def search_issues(
                         'summary',
                         'created',
                         'updated',
-                        'author',
                         'reporter',
                         'issuetype',
                         'assignee',
@@ -183,10 +194,16 @@ def search_issues(
     help='The ID of a field related to the work item whose metadata for editing we want to retrieve.',
 )
 def issue_metadata(work_item_key: str, field_id: str | None = None) -> None:
-    """Retrieves metadata associated to the work item identified by WORK_ITEM_KEY.
+    """Retrieves metadata of the work item.
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
+    Args:
+        work_item_key: the case-sensitive key that identifies the work item.
+        field_id: the ID of a field related to the work item whose metadata we want to retrieve.
+
+    Returns:
+        None
     """
+
     handler = CommandHandler()
     with console.status('Fetching metadata for the selected work item...'):
         try:
@@ -199,6 +216,7 @@ def issue_metadata(work_item_key: str, field_id: str | None = None) -> None:
 
 
 @issues.command('update')
+@click.argument('work-item-key')
 @click.argument('work-item-key')
 @click.option('--summary', '-s', help='Text to set as the summary (aka. title) of the work item.')
 @click.option(
@@ -240,10 +258,9 @@ def update_issue(
     status_id: int | None = None,
     priority_id: int | None = None,
 ):
-    """Updates (some) fields of the work item identified by WORK_ITEM_KEY.
+    """Updates (some) fields of the work item identified by WORK_ITEM_KEY."""
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item we want to update.
-    """
+    # WORK_ITEM_KEY is the case-sensitive key that identifies the work item we want to update.
     handler = CommandHandler()
 
     if meta:
@@ -313,6 +330,89 @@ def update_issue(
                     console.print('Work item updated successfully.')
                 else:
                     console.print('Work item not updated.')
+
+
+@issues.command(
+    'clone',
+    help='Clones a work item using basic fields (summary, project, priority, description, type, due date, assignee, reporter and parent)',
+)
+@click.argument('work-item-key')
+@click.option(
+    '--summary',
+    '-s',
+    help='The summary (aka. title) of the new work item. Defaults to: (clone) <source-item-summary>',
+)
+@click.option(
+    '--clone-status',
+    type=bool,
+    default=False,
+    is_flag=True,
+    help='When True the new item will have the same status as the source item. The default is False.',
+)
+def clone_work_item(
+    work_item_key: str,
+    summary: str | None = None,
+    clone_status: bool = False,
+) -> None:
+    """Clones a work item.
+
+    Args:
+        work_item_key: the key of the item we want to clone.
+        summary: the summary (aka. title) of the new work item. Defaults to: "(clone) <source-item-summary>"
+        clone_status: when True the new item will have the same status as the source item. The default is False.
+
+    Returns:
+        None
+    """
+
+    handler = CommandHandler()
+    with console.status(f'Cloning work item with key {work_item_key}...'):
+        try:
+            cloned_item_result: dict = asyncio.run(
+                handler.clone_work_item(work_item_key, summary, clone_status)
+            )
+        except CLIException as e:
+            console.print(str(e))
+            renderer = CLIExceptionRenderer()
+            renderer.render(console, e.get_extra_details())
+        except Exception as e:
+            console.print(f'Unable to clone the selected work item. {str(e)}')
+        else:
+            console.print(
+                f'Work item cloned successfully. New item key: {cloned_item_result.get("key")}'
+            )
+            status_cloned = 'status,' if clone_status else ''
+            console.print(
+                f'Cloned fields: summary, project, priority, {status_cloned} description, type, due date, assignee, reporter and parent.'
+            )
+            render = JiraIssueSearchRenderer()
+            render.render(console, cloned_item_result['work_item'])
+
+
+@issues.command('delete')
+@click.argument('work-item-key')
+def delete_work_item(work_item_key: str) -> None:
+    """Deletes a work item.
+
+    Args:
+        work_item_key: the key of the item to delete.
+
+    Returns:
+        None
+    """
+
+    handler = CommandHandler()
+    with console.status(f'Deleting work item with key {work_item_key}...'):
+        try:
+            asyncio.run(handler.delete_work_item(work_item_key))
+        except CLIException as e:
+            console.print(str(e))
+            renderer = CLIExceptionRenderer()
+            renderer.render(console, e.get_extra_details())
+        except Exception as e:
+            console.print(f'Unable to delete the selected work item. {str(e)}')
+        else:
+            console.print('Work item deleted successfully.')
 
 
 # -- PROJECTS --
