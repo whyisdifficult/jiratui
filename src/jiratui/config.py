@@ -282,20 +282,23 @@ class ApplicationConfiguration(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
-            conf_file = Path(jira_tui_config_file).resolve()
-        else:
-            conf_file = get_config_file()
-
-        if not conf_file.exists():
-            raise FileNotFoundError(f'Unable to find the config file you provided: {conf_file}')
-
+        conf_file = cls._get_config_file()
         return (
             YamlConfigSettingsSource(settings_cls, yaml_file=conf_file),
             env_settings,
             dotenv_settings,
             init_settings,
         )
+
+    @classmethod
+    def _get_config_file(cls) -> Path:
+        if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
+            conf_file = Path(jira_tui_config_file).resolve()
+        else:
+            conf_file = get_config_file()
+        if not conf_file.exists():
+            raise FileNotFoundError(f'Unable to find the config file you provided: {conf_file}')
+        return conf_file
 
 
 CONFIGURATION: ContextVar[ApplicationConfiguration] = ContextVar('configuration')
