@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add a new CLI command `jiratui issues clone` to clone a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
 - Add a new CLI command `jiratui issues delete` to delete a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add new configuration option `use_cert_authentication`, to load client certs into SSLContext. By [wbh1](https://github.com/wbh1) in https://github.com/whyisdifficult/jiratui/pull/157
 
 ## [1.11.2] 2026-07-25
 
