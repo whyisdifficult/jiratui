@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 import re
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, call, patch
 
 import pytest
 
@@ -13,10 +13,12 @@ from jiratui.models import (
     IssueStatus,
     IssueTransition,
     IssueType,
+    JiraBaseIssue,
     JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
     JiraUserGroup,
+    Project,
     UpdateWorkItemResponse,
     WorkItemsSearchOrderBy,
 )
@@ -1056,3 +1058,492 @@ async def test_get_create_metadata_failure(
         project_id_or_key='INVALID',
         issue_type_id='99999',
     )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'delete_work_item')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_delete_work_item_fails(
+    config_mock, delete_work_item_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    delete_work_item_mock.return_value = APIControllerResponse(
+        success=False, error='Failed to clone'
+    )
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(
+        CLIException, match='An error occurred while trying to delete the work item.'
+    ):
+        await handler.delete_work_item('WI-1')
+    # THEN
+    delete_work_item_mock.assert_called_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'delete_work_item')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_delete_work_item(config_mock, delete_work_item_mock: AsyncMock, config_for_testing):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    delete_work_item_mock.return_value = APIControllerResponse(success=True)
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.delete_work_item('WI-1')
+    # THEN
+    delete_work_item_mock.assert_called_once_with('WI-1')
+    assert result
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_fails_to_find_source_item(
+    config_mock, get_issue_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    get_issue_mock.return_value = APIControllerResponse(success=False, error='Not Found')
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(CLIException, match='Unable to find the work item'):
+        await handler.clone_work_item('WI-1')
+    # THEN
+    get_issue_mock.assert_called_once_with(issue_id_or_key='WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_fails(
+    config_mock, get_issue_mock: AsyncMock, create_work_item_mock: AsyncMock, config_for_testing
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='1', name='To Do'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[issue])
+    )
+    create_work_item_mock.return_value = APIControllerResponse(success=False)
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(CLIException, match='Unable to clone the work item.'):
+        await handler.clone_work_item('WI-1')
+    # THEN
+    get_issue_mock.assert_called_once_with(issue_id_or_key='WI-1')
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'priority': '3',
+            'description': 'Description 1',
+            'duedate': datetime.today().date().strftime('%Y-%m-%d'),
+            'assignee_account_id': '1',
+            'reporter_account_id': '2',
+            'parent_key': 'WI-0',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_succeeds_with_clone_status_true(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    cloned_issue = JiraIssue(
+        id='2',
+        summary='(cloned) Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[cloned_issue])),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.clone_work_item('WI-1', clone_status=True)
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'priority': '3',
+            'description': 'Description 1',
+            'duedate': datetime.today().date().strftime('%Y-%m-%d'),
+            'assignee_account_id': '1',
+            'reporter_account_id': '2',
+            'parent_key': 'WI-0',
+        }
+    )
+    transition_issue_status_mock.assert_called_once_with('WI-2', '2')
+    assert result == {
+        'key': 'WI-2',
+        'work_item': JiraIssueSearchResponse(issues=[cloned_issue]),
+    }
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_succeeds_with_clone_status_false(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    cloned_issue = JiraIssue(
+        id='2',
+        summary='(cloned) Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[cloned_issue])),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.clone_work_item('WI-1', clone_status=False)
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'priority': '3',
+            'description': 'Description 1',
+            'duedate': datetime.today().date().strftime('%Y-%m-%d'),
+            'assignee_account_id': '1',
+            'reporter_account_id': '2',
+            'parent_key': 'WI-0',
+        }
+    )
+    transition_issue_status_mock.assert_not_called()
+    assert result == {
+        'key': 'WI-2',
+        'work_item': JiraIssueSearchResponse(issues=[cloned_issue]),
+    }
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_fails_to_get_cloned_item(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        ValueError('some error'),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(
+        CLIException,
+        match='An error occurred while trying to retrieve the cloned item with key WI-2',
+    ):
+        await handler.clone_work_item('WI-1', clone_status=False)
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'priority': '3',
+            'description': 'Description 1',
+            'duedate': datetime.today().date().strftime('%Y-%m-%d'),
+            'assignee_account_id': '1',
+            'reporter_account_id': '2',
+            'parent_key': 'WI-0',
+        }
+    )
+    transition_issue_status_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_fails_to_get_cloned_item_without_exception(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key='WI-0',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=IssuePriority(id='3', name='Medium'),
+        assignee=JiraUser(account_id='1', display_name='Bart Simpson', active=True),
+        reporter=JiraUser(account_id='2', display_name='Homer Simpson', active=True),
+        due_date=datetime.today().date(),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        APIControllerResponse(success=False),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    with pytest.raises(CLIException, match=re.escape('Not Found: (cloned) item with key WI-2')):
+        await handler.clone_work_item('WI-1', clone_status=False)
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'priority': '3',
+            'description': 'Description 1',
+            'duedate': datetime.today().date().strftime('%Y-%m-%d'),
+            'assignee_account_id': '1',
+            'reporter_account_id': '2',
+            'parent_key': 'WI-0',
+        }
+    )
+    transition_issue_status_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_succeeds_without_cloning_some_fields(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    cloned_issue = JiraIssue(
+        id='2',
+        summary='(cloned) Summary 1',
+        description='Description 1',
+        key='WI-1',
+        parent_issue_key=None,
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        priority=None,
+        assignee=None,
+        reporter=None,
+        due_date=None,
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[cloned_issue])),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.clone_work_item('WI-1', clone_status=False)
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': '(cloned) Summary 1',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'description': 'Description 1',
+        }
+    )
+    transition_issue_status_mock.assert_not_called()
+    assert result == {
+        'key': 'WI-2',
+        'work_item': JiraIssueSearchResponse(issues=[cloned_issue]),
+    }
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+async def test_clone_work_item_cloning_succeeds_with_custom_summary(
+    config_mock,
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    config_for_testing,
+):
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        summary='Summary 1',
+        description='Description 1',
+        key='WI-1',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    cloned_issue = JiraIssue(
+        id='2',
+        summary='Custom summary',
+        description='Description 1',
+        key='WI-1',
+        status=IssueStatus(id='2', name='In Progress'),
+        issue_type=IssueType(id='10001', name='Bug'),
+        project=Project(id='1', name='Project 1', key='P1'),
+    )
+    config_mock.return_value = config_for_testing
+    get_issue_mock.side_effect = [
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[issue])),
+        APIControllerResponse(result=JiraIssueSearchResponse(issues=[cloned_issue])),
+    ]
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    handler = CommandHandler()
+    # WHEN
+    result = await handler.clone_work_item('WI-1', clone_status=False, summary='Custom summary')
+    # THEN
+    get_issue_mock.assert_has_calls([call(issue_id_or_key='WI-1'), call(issue_id_or_key='WI-2')])
+    create_work_item_mock.assert_called_once_with(
+        {
+            'summary': 'Custom summary',
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'description': 'Description 1',
+        }
+    )
+    transition_issue_status_mock.assert_not_called()
+    assert result == {
+        'key': 'WI-2',
+        'work_item': JiraIssueSearchResponse(issues=[cloned_issue]),
+    }
