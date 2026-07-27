@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 import logging
 from typing import Any, Callable, cast
+from urllib.parse import urlsplit
 
 import httpx
 
 from jiratui.config import ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.exceptions import (
+    APIException,
     AuthorizationException,
     PermissionException,
     ResourceNotFoundException,
@@ -30,6 +32,29 @@ class JiraTUIBearerAuth(httpx.Auth):
 class SSLCertificateSettings:
     cert: str | tuple[str, str] | tuple[str, str, str] | None = None
     verify_ssl: str | bool = True
+
+
+READ_ONLY_ERROR_MESSAGE = 'Operation blocked because JiraTUI is running in read-only mode.'
+READ_ONLY_POST_PATHS = frozenset(
+    {'expression/evaluate', 'search', 'search/approximate-count', 'search/jql'}
+)
+
+
+def _ensure_read_only_request_allowed(read_only: bool, method: Callable, url: str) -> None:
+    if not read_only:
+        return
+
+    method_name = getattr(method, '__name__', '').lower()
+    if method_name in {'get', 'head', 'options'}:
+        return
+
+    path = urlsplit(url).path.strip('/')
+    if 'rest/api/' in path:
+        path = path.rsplit('rest/api/', maxsplit=1)[1].partition('/')[2]
+    if method_name == 'post' and path in READ_ONLY_POST_PATHS:
+        return
+
+    raise APIException(READ_ONLY_ERROR_MESSAGE)
 
 
 def _setup_ssl_certificates(configuration: ApplicationConfiguration) -> SSLCertificateSettings:
@@ -84,6 +109,7 @@ class JiraTUIAsyncHTTPClient:
             cert=ssl_certificate_settings.cert,
             timeout=None,
         )
+        self.read_only = getattr(configuration, 'read_only', False) is True
         self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), configuration.enable_logging)
 
     @staticmethod
@@ -139,6 +165,7 @@ class JiraTUIAsyncHTTPClient:
             ServiceInvalidResponseException: If the response cannot be parsed.
         """
 
+        _ensure_read_only_request_allowed(self.read_only, method, url)
         headers = self.set_headers(headers)
         full_url = self.get_resource_url(url)
 
@@ -229,6 +256,7 @@ class JiraClient:
             cert=ssl_certificate_settings.cert,
             timeout=None,
         )
+        self.read_only = getattr(configuration, 'read_only', False) is True
         self.logger = logging.getLogger(LOGGER_NAME)
 
     @staticmethod
@@ -251,6 +279,7 @@ class JiraClient:
         timeout: int = 55,
         **kwargs,
     ) -> dict | list | None:
+        _ensure_read_only_request_allowed(self.read_only, method, url)
         headers = self.set_headers(headers)
         url = self.get_resource_url(url)
 

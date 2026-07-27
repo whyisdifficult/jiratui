@@ -2,7 +2,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -94,6 +94,10 @@ class ApplicationConfiguration(BaseSettings):
     """Set this to False if your Jira instance run on-premises."""
     use_bearer_authentication: bool = False
     """Set this to `True` if your Jira instance uses Bearer authentication instead of Basic authentication."""
+    read_only: bool = Field(
+        default=False, validation_alias=AliasChoices('read_only', 'JIRA_TUI_READ_ONLY')
+    )
+    """Prevent JiraTUI from sending requests that mutate Jira resources."""
     jira_user_group_id: str | None = None
     """**[DEPRECATED]** The ID of the group that contains all (or most) of the Jira users in your Jira installation. This
     value is used as a fall back mechanism to fetch available users. This is only supported in the Jira Cloud

@@ -2,6 +2,7 @@ jira_api_username: 'foo@bar'
 jira_api_token: '12345'
 jira_api_base_url: 'https://<your-hostname>.atlassian.net'
 jira_base_url: 'https://<your-hostname>.atlassian.net'
+read_only: False
 jira_user_group_id: '12345'
 jira_account_id: '098765'
 search_results_per_page: 65

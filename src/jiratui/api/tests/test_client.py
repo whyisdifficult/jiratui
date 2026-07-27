@@ -2,8 +2,10 @@ import httpx
 import pytest
 import respx
 
-from jiratui.api.client import AsyncJiraClient
+from jiratui.api.client import AsyncJiraClient, JiraClient
+from jiratui.config import ApplicationConfiguration
 from jiratui.exceptions import (
+    APIException,
     AuthorizationException,
     PermissionException,
     ResourceNotFoundException,
@@ -15,6 +17,108 @@ from jiratui.utils.test_utilities import get_url_pattern
 @pytest.fixture
 def client(config_for_testing) -> AsyncJiraClient:
     return AsyncJiraClient('http://foo.bar', 'bart', '12345', config_for_testing)
+
+
+@pytest.fixture
+def read_only_client(config_for_testing) -> AsyncJiraClient:
+    config_for_testing.read_only = True
+    return AsyncJiraClient('http://foo.bar', 'bart', '12345', config_for_testing)
+
+
+@pytest.fixture
+def read_only_sync_client(config_for_testing) -> JiraClient:
+    config_for_testing.read_only = True
+    return JiraClient('http://foo.bar', 'bart', '12345', config_for_testing)
+
+
+@pytest.mark.parametrize(
+    ('method_name', 'url'),
+    [
+        ('post', 'issue'),
+        ('post', 'custom/search'),
+        ('put', 'issue/SP-1'),
+        ('patch', 'issue/SP-1'),
+        ('delete', 'issue/SP-1'),
+    ],
+)
+@pytest.mark.asyncio
+@respx.mock
+async def test_read_only_client_blocks_mutating_requests(read_only_client, method_name, url):
+    route = respx.route(method=method_name.upper(), url=get_url_pattern(url))
+
+    with pytest.raises(APIException, match='read-only mode'):
+        await read_only_client.make_request(getattr(httpx.AsyncClient, method_name), url)
+
+    assert route.called is False
+
+
+@respx.mock
+def test_read_only_sync_client_blocks_mutating_requests(read_only_sync_client):
+    route = respx.post(get_url_pattern('issue/SP-1/attachments'))
+
+    with pytest.raises(APIException, match='read-only mode'):
+        read_only_sync_client.make_request(httpx.post, 'issue/SP-1/attachments')
+
+    assert route.called is False
+
+
+@pytest.mark.parametrize(
+    'url',
+    ['search/jql', 'search', 'search/approximate-count', 'expression/evaluate'],
+)
+@pytest.mark.asyncio
+@respx.mock
+async def test_read_only_client_allows_read_post_requests(read_only_client, url):
+    route = respx.post(get_url_pattern(url)).mock(
+        return_value=httpx.Response(200, json={'issues': []})
+    )
+
+    response = await read_only_client.make_request(httpx.AsyncClient.post, url)
+
+    assert response == {'issues': []}
+    assert route.called is True
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_read_only_client_allows_absolute_search_url(read_only_client):
+    url = 'http://foo.bar/rest/api/3/search/jql'
+    route = respx.post(url).mock(return_value=httpx.Response(200, json={'issues': []}))
+
+    response = await read_only_client.make_request(httpx.AsyncClient.post, url)
+
+    assert response == {'issues': []}
+    assert route.called is True
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_read_only_client_allows_get_requests(read_only_client):
+    route = respx.get(get_url_pattern('issue/SP-1')).mock(
+        return_value=httpx.Response(200, json={'key': 'SP-1'})
+    )
+
+    response = await read_only_client.make_request(httpx.AsyncClient.get, 'issue/SP-1')
+
+    assert response == {'key': 'SP-1'}
+    assert route.called is True
+
+
+def test_configuration_accepts_read_only_environment_variable(tmp_path, monkeypatch):
+    config_file = tmp_path / 'config.yaml'
+    config_file.write_text(
+        '\n'.join(
+            [
+                'jira_api_username: user@example.test',
+                'jira_api_token: token',
+                'jira_api_base_url: https://example.atlassian.net',
+            ]
+        )
+    )
+    monkeypatch.setenv('JIRA_TUI_CONFIG_FILE', str(config_file))
+    monkeypatch.setenv('JIRA_TUI_READ_ONLY', 'true')
+
+    assert ApplicationConfiguration().read_only is True
 
 
 @pytest.mark.parametrize(
