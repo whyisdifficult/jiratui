@@ -52,6 +52,35 @@ async def test_read_only_client_blocks_mutating_requests(read_only_client, metho
     assert route.called is False
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_real_read_only_configuration_blocks_mutating_request(tmp_path, monkeypatch):
+    config_file = tmp_path / 'config.yaml'
+    config_file.write_text(
+        '\n'.join(
+            [
+                'jira_api_username: user@example.test',
+                'jira_api_token: token',
+                'jira_api_base_url: https://example.atlassian.net',
+                'read_only: true',
+            ]
+        )
+    )
+    monkeypatch.setenv('JIRA_TUI_CONFIG_FILE', str(config_file))
+    client = AsyncJiraClient(
+        'http://foo.bar',
+        'user@example.test',
+        'token',
+        ApplicationConfiguration(),
+    )
+    route = respx.post(get_url_pattern('issue'))
+
+    with pytest.raises(APIException, match='read-only mode'):
+        await client.make_request(httpx.AsyncClient.post, 'issue')
+
+    assert route.called is False
+
+
 @respx.mock
 def test_read_only_sync_client_blocks_mutating_requests(read_only_sync_client):
     route = respx.post(get_url_pattern('issue/SP-1/attachments'))
@@ -60,6 +89,18 @@ def test_read_only_sync_client_blocks_mutating_requests(read_only_sync_client):
         read_only_sync_client.make_request(httpx.post, 'issue/SP-1/attachments')
 
     assert route.called is False
+
+
+@respx.mock
+def test_read_only_sync_client_allows_get_requests(read_only_sync_client):
+    route = respx.get(get_url_pattern('issue/SP-1')).mock(
+        return_value=httpx.Response(200, json={'key': 'SP-1'})
+    )
+
+    response = read_only_sync_client.make_request(httpx.get, 'issue/SP-1')
+
+    assert response == {'key': 'SP-1'}
+    assert route.called is True
 
 
 @pytest.mark.parametrize(
@@ -102,23 +143,6 @@ async def test_read_only_client_allows_get_requests(read_only_client):
 
     assert response == {'key': 'SP-1'}
     assert route.called is True
-
-
-def test_configuration_accepts_read_only_environment_variable(tmp_path, monkeypatch):
-    config_file = tmp_path / 'config.yaml'
-    config_file.write_text(
-        '\n'.join(
-            [
-                'jira_api_username: user@example.test',
-                'jira_api_token: token',
-                'jira_api_base_url: https://example.atlassian.net',
-            ]
-        )
-    )
-    monkeypatch.setenv('JIRA_TUI_CONFIG_FILE', str(config_file))
-    monkeypatch.setenv('JIRA_TUI_READ_ONLY', 'true')
-
-    assert ApplicationConfiguration().read_only is True
 
 
 @pytest.mark.parametrize(

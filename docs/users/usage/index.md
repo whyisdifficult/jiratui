@@ -57,7 +57,16 @@ Options:
   -j, --jql-expression-id INTEGRER The ID of a JQL expression as defined in the config.
   -t, --theme TEXT                 The name of the theme to use.
   --search-on-startup              Trigger search automatically when the UI starts.
+  --read-only                      Prevent JiraTUI from changing Jira resources for this session.
   --focus-item-on-startup INTEGER  Focus and open the work item at the specified position on startup. Requires --search-on-startup.
+```
+
+#### Start a Read-Only Session
+
+Use `--read-only` to prevent JiraTUI from changing Jira resources for the current TUI session:
+
+```shell
+$ jiratui ui --read-only
 ```
 
 #### Trigger Search on Startup

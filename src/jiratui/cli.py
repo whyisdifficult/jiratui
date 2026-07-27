@@ -595,6 +595,12 @@ def completions(shell):
     help='Trigger search automatically when the UI starts.',
 )
 @click.option(
+    '--read-only',
+    is_flag=True,
+    default=False,
+    help='Prevent JiraTUI from changing Jira resources for this session.',
+)
+@click.option(
     '--focus-item-on-startup',
     '-f',
     default=None,
@@ -608,6 +614,7 @@ def ui(
     jql_expression_id: int | None = None,
     theme: str | None = None,
     search_on_startup: bool = False,
+    read_only: bool = False,
     focus_item_on_startup: int | None = None,
 ):
     """Launches the JiraTUI application."""
@@ -630,6 +637,8 @@ def ui(
         # Only override config file value if CLI flag is explicitly set to True
         if search_on_startup:
             settings.search_on_startup = search_on_startup
+        if read_only:
+            settings.read_only = read_only
     except FileNotFoundError as e:
         console.print(e)
         sys.exit(1)
