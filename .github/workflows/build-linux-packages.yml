@@ -1,7 +1,8 @@
 name: Build Linux Packages
 
 on:
-  workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -145,7 +146,6 @@ jobs:
 
       - name: List generated packages
         run: ls -lh *.deb *.rpm 2>/dev/null || true
-
       - name: Upload as artifact
         uses: actions/upload-artifact@v3
         with:
@@ -154,3 +154,19 @@ jobs:
             *.deb
             *.rpm
           retention-days: 30
+
+  upload-to-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: packages
+
+      - name: Upload packages to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: packages/**/*.{deb,rpm}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
