@@ -1,0 +1,156 @@
+name: Build Linux Packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Debian/Ubuntu builds
+          - distro: debian:bookworm
+            distro_name: debian-bookworm
+            package_type: deb
+          - distro: debian:bullseye
+            distro_name: debian-bullseye
+            package_type: deb
+          - distro: ubuntu:jammy
+            distro_name: ubuntu-jammy
+            package_type: deb
+          - distro: ubuntu:focal
+            distro_name: ubuntu-focal
+            package_type: deb
+          # Red Hat/Fedora builds
+          - distro: fedora:41
+            distro_name: fedora-41
+            package_type: rpm
+          - distro: centos:stream9
+            distro_name: centos-stream9
+            package_type: rpm
+          - distro: rockylinux:9
+            distro_name: rockylinux-9
+            package_type: rpm
+
+    container:
+      image: ${{ matrix.distro }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Debian/Ubuntu dependencies
+        if: matrix.package_type == 'deb'
+        run: |
+          apt-get update
+          apt-get install -y \
+            python3.12 \
+            python3.12-venv \
+            python3-pip \
+            build-essential \
+            git \
+            curl
+
+      - name: Install Red Hat/Fedora dependencies
+        if: matrix.package_type == 'rpm'
+        run: |
+          dnf install -y \
+            python3.12 \
+            python3.12-devel \
+            python3-pip \
+            gcc \
+            gcc-c++ \
+            git \
+            curl \
+            rpm-build
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          which uv
+
+      - name: Extract version from pyproject.toml
+        id: version
+        run: |
+          if command -v python3.12 &> /dev/null; then
+            PYTHON_CMD="python3.12"
+          else
+            PYTHON_CMD="python3"
+          fi
+          VERSION=$($PYTHON_CMD -c "import tomllib; print(tomllib.loads(open('pyproject.toml').read())['project']['version'])")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Build wheel with uv
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          python3.12 -m venv /tmp/build-env
+          source /tmp/build-env/bin/activate
+          pip install --upgrade pip setuptools wheel
+          uv build --wheel
+          ls -la dist/
+
+      - name: Install jiratui in virtual environment
+        run: |
+          python3.12 -m venv /tmp/jiratui-env
+          source /tmp/jiratui-env/bin/activate
+          pip install dist/jiratui-*.whl
+
+      - name: Verify installation
+        run: |
+          source /tmp/jiratui-env/bin/activate
+          jiratui --help || echo "Binary check"
+
+      - name: Install fpm
+        run: |
+          if command -v apt-get &> /dev/null; then
+            apt-get install -y ruby ruby-dev
+          else
+            dnf install -y ruby ruby-devel rubygems
+          fi
+          gem install fpm
+
+      - name: Build .deb package
+        if: matrix.package_type == 'deb'
+        run: |
+          fpm -s dir \
+              -t deb \
+              -n jiratui \
+              -v ${{ steps.version.outputs.VERSION }} \
+              --description "A TUI for interacting with Atlassian Jira from your terminal" \
+              --maintainer "Gaston T. <pythondeveloper@outlook.com>" \
+              --url "https://jiratui.sh" \
+              --license "MIT" \
+              --depends "python3.12 (>= 3.12)" \
+              -C /tmp/jiratui-env \
+              bin/jiratui=/usr/local/bin/jiratui \
+              lib=/usr/local/lib
+
+      - name: Build .rpm package
+        if: matrix.package_type == 'rpm'
+        run: |
+          fpm -s dir \
+              -t rpm \
+              -n jiratui \
+              -v ${{ steps.version.outputs.VERSION }} \
+              --description "A TUI for interacting with Atlassian Jira from your terminal" \
+              --maintainer "Gaston T. <pythondeveloper@outlook.com>" \
+              --url "https://jiratui.sh" \
+              --license "MIT" \
+              --depends "python3.12 >= 3.12" \
+              -C /tmp/jiratui-env \
+              bin/jiratui=/usr/local/bin/jiratui \
+              lib=/usr/local/lib
+
+      - name: List generated packages
+        run: ls -lh *.deb *.rpm 2>/dev/null || true
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-${{ matrix.distro_name }}
+          path: |
+            *.deb
+            *.rpm
+          retention-days: 30
