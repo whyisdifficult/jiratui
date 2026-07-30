@@ -137,7 +137,7 @@ class ServerInfoScreen(ModalScreen):
                     ),
                     (
                         Text('Account Type', justify='right', style='yellow'),
-                        Text(user_info.account_type, justify='left'),
+                        Text(str(user_info.account_type), justify='left'),
                     ),
                     (
                         Text('Active', justify='right', style='yellow'),
