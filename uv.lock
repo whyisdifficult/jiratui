@@ -721,7 +721,7 @@ wheels = [
 
 [[package]]
 name = "jiratui"
-version = "1.11.2"
+version = "1.12.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
