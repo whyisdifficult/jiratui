@@ -66,6 +66,7 @@ def app() -> JiraApp:
         jira_api_version=3,
         use_bearer_authentication=False,
         use_cert_authentication=False,
+        read_only=False,
         cloud=True,
         ignore_users_without_email=True,
         default_project_key_or_id=None,
