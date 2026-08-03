@@ -94,6 +94,9 @@ class ApplicationConfiguration(BaseSettings):
     """Set this to False if your Jira instance run on-premises."""
     use_bearer_authentication: bool = False
     """Set this to `True` if your Jira instance uses Bearer authentication instead of Basic authentication."""
+    use_cert_authentication: bool = False
+    """Set this to `True` if your Jira instance uses certificate-based authentication instead of Bearer authentication
+    or Basic authentication."""
     read_only: bool = False
     """Prevent JiraTUI from sending requests that mutate Jira resources."""
     jira_user_group_id: str | None = None
@@ -207,7 +210,7 @@ class ApplicationConfiguration(BaseSettings):
     """When this is `True` JiraTUI will use Jira ability to do full-text search not only in summary and description
     fields but in any text-based field, including comments. This may be slower. If this is False JiraTUI will only
     search items by summary and description fields."""
-    ssl: SSLConfiguration | None = Field(default_factory=SSLConfiguration)
+    ssl: SSLConfiguration | None = Field(default=None)
     """SSL configuration for client-side certificates and CA bundle."""
     search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
     """The default order for search results. Accepts values from [WorkItemsSearchOrderBy](#jiratui.models.WorkItemsSearchOrderBy) enum: `CREATED_ASC`,
@@ -281,20 +284,23 @@ class ApplicationConfiguration(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
-            conf_file = Path(jira_tui_config_file).resolve()
-        else:
-            conf_file = get_config_file()
-
-        if not conf_file.exists():
-            raise FileNotFoundError(f'Unable to find the config file you provided: {conf_file}')
-
+        conf_file = cls._get_config_file()
         return (
             YamlConfigSettingsSource(settings_cls, yaml_file=conf_file),
             env_settings,
             dotenv_settings,
             init_settings,
         )
+
+    @classmethod
+    def _get_config_file(cls) -> Path:
+        if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
+            conf_file = Path(jira_tui_config_file).resolve()
+        else:
+            conf_file = get_config_file()
+        if not conf_file.exists():
+            raise FileNotFoundError(f'Unable to find the config file you provided: {conf_file}')
+        return conf_file
 
 
 CONFIGURATION: ContextVar[ApplicationConfiguration] = ContextVar('configuration')

@@ -1,9 +1,12 @@
+from ssl import SSLContext
+from unittest.mock import Mock, patch
+
 import httpx
 import pytest
 import respx
 
-from jiratui.api.client import AsyncJiraClient, JiraClient
-from jiratui.config import ApplicationConfiguration
+from jiratui.api.client import AsyncJiraClient, JiraClient, _setup_ssl_certificates
+from jiratui.config import ApplicationConfiguration, SSLConfiguration
 from jiratui.exceptions import (
     APIException,
     AuthorizationException,
@@ -323,3 +326,56 @@ async def test_create_issue_without_reporter_field_succeeds(client):
         'key': 'TEST-1',
         'self': 'https://foo.bar/rest/api/3/issue/10000',
     }
+
+
+def test_setup_ssl_certificates_without_ssl_configuration(
+    config_for_testing: ApplicationConfiguration,
+):
+    # GIVEN
+    config_for_testing.ssl = None
+    # WHEN
+    result = _setup_ssl_certificates(config_for_testing)
+    # THEN
+    assert result is True
+
+
+def test_setup_ssl_certificates_with_ssl_configuration_no_verify(
+    config_for_testing: ApplicationConfiguration,
+):
+    # GIVEN
+    config_for_testing.ssl = SSLConfiguration()
+    config_for_testing.ssl.verify_ssl = False
+    # WHEN
+    result = _setup_ssl_certificates(config_for_testing)
+    # THEN
+    assert result is False
+
+
+@patch.object(SSLContext, 'load_cert_chain')
+def test_setup_ssl_certificates_with_ssl_configuration_without_certificate_file(
+    load_cert_chain_mock: Mock, config_for_testing: ApplicationConfiguration
+):
+    # GIVEN
+    config_for_testing.ssl = SSLConfiguration()
+    config_for_testing.ssl.verify_ssl = True
+    config_for_testing.ssl.certificate_file = None
+    # WHEN
+    result = _setup_ssl_certificates(config_for_testing)
+    # THEN
+    assert isinstance(result, SSLContext)
+    load_cert_chain_mock.assert_not_called()
+
+
+@patch.object(SSLContext, 'load_cert_chain')
+def test_setup_ssl_certificates_with_ssl_configuration_with_certificate_file(
+    load_cert_chain_mock: Mock, config_for_testing: ApplicationConfiguration
+):
+    # GIVEN
+    config_for_testing.ssl = SSLConfiguration()
+    config_for_testing.ssl.verify_ssl = True
+    config_for_testing.ssl.certificate_file = 'some/path'
+    # WHEN
+    result = _setup_ssl_certificates(config_for_testing)
+    # THEN
+    assert isinstance(result, SSLContext)
+    load_cert_chain_mock.assert_called_once()
