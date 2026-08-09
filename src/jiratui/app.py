@@ -50,7 +50,7 @@ class JiraApp(Actionable, App, inherit_bindings=False):  # type:ignore[call-arg]
 
     BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='ctrl+q',
+            key='ctrl+q,q',
             action='quit',
             description='\U000023fb',
             key_display='^q',
