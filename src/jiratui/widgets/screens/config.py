@@ -20,9 +20,8 @@ class ConfigFileScreen(ModalScreen):
         return self.query_one('#config-details', expect_type=DataTable)
 
     def compose(self) -> ComposeResult:
-        vertical = Vertical()
-        vertical.border_title = self.TITLE
-        with vertical:
+        with Vertical() as vertical:
+            vertical.border_title = self.TITLE
             yield DataTable(cursor_type='row', show_header=False, id='config-details')
             if CONFIGURATION.get().pre_defined_jql_expressions:
                 jql_expressions_textarea = TextArea.code_editor(

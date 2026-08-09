@@ -18,7 +18,7 @@ def mock_configuration():
 
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
-async def test_action_open_issue_in_browser(get_issue_mock: AsyncMock, mock_configuration, app):
+async def test_action_open_in_browser(get_issue_mock: AsyncMock, mock_configuration, app):
     # GIVEN
     get_issue_mock.return_value = APIControllerResponse(result=JiraIssueSearchResponse(issues=[]))
     mock_configuration.jira_base_url = 'http://foo.bar'
@@ -28,14 +28,14 @@ async def test_action_open_issue_in_browser(get_issue_mock: AsyncMock, mock_conf
         app.open_url = Mock()
         await app.push_screen(screen)
         await pilot.pause()
-        screen.action_open_issue_in_browser()
+        screen.action_open_in_browser()
         # THEN
         app.open_url.assert_called_once_with('http://foo.bar/browse/WI-1')
         get_issue_mock.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_action_open_issue_in_browser_without_work_item_key(mock_configuration, app):
+async def test_action_open_in_browser_without_work_item_key(mock_configuration, app):
     # GIVEN
     mock_configuration.jira_base_url = 'http://foo.bar'
     async with app.run_test() as pilot:
@@ -44,7 +44,7 @@ async def test_action_open_issue_in_browser_without_work_item_key(mock_configura
         app.open_url = Mock()
         await app.push_screen(screen)
         await pilot.pause()
-        screen.action_open_issue_in_browser()
+        screen.action_open_in_browser()
         # THEN
         app.open_url.assert_not_called()
 
@@ -148,7 +148,7 @@ async def test_action_search_work_item_dismiss_screen_with_key(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         await pilot.pause()
-        screen.action_search_work_item()
+        screen.action_search()
         # THEN
         get_issue_mock.assert_called_once()
         assert screen.dismiss.call_args[0][0] == 'WI-1'
@@ -168,7 +168,7 @@ async def test_action_search_work_item_dismiss_screen_without_key(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         await pilot.pause()
-        screen.action_search_work_item()
+        screen.action_search()
         # THEN
         get_issue_mock.assert_not_called()
         assert screen.dismiss.call_args[0] == ()

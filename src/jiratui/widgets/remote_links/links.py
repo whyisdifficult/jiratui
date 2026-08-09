@@ -8,12 +8,14 @@ from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import IssueRemoteLink
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.remote_links.add import AddRemoteLinkScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
-class IssueRemoteLinkCollapsible(Collapsible):
+class IssueRemoteLinkCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible to show a remote link associated to a work item.
 
     The widget posts the message `jiratui.widgets.remote_links.links.IssueRemoteLinkCollapsible.Deleted` when a link
@@ -23,13 +25,33 @@ class IssueRemoteLinkCollapsible(Collapsible):
     - [Use Case: Delete Web Link](#use-case-delete-web-link)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'delete_remote_link',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='d',
-            action='delete_remote_link',
-            description='Delete Link',
-            key_display='d',
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
         )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Remote Links'
 
@@ -66,7 +88,7 @@ class IssueRemoteLinkCollapsible(Collapsible):
             self.post_message(self.Deleted(self._work_item_key, self._link_id))
 
 
-class IssueRemoteLinksWidget(VerticalScroll):
+class IssueRemoteLinksWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for adding and updating the list of remote links (aka. web links) associated to a work item.
 
     This widget is responsible for the following:
@@ -82,13 +104,33 @@ class IssueRemoteLinksWidget(VerticalScroll):
     """
 
     HELP = 'See Web Links section in the help'
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'add_remote_link',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='n',
-            action='add_remote_link',
-            description='New Link',
-            key_display='n',
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
         )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     # we need to use always_active to support updates after deleting

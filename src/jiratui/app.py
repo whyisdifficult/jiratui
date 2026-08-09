@@ -10,36 +10,45 @@ from textual.binding import Binding
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraServerInfo
 from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.session import ApplicationSession
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.screens.config import ConfigFileScreen
 from jiratui.widgets.screens.quit import QuitScreen
 from jiratui.widgets.screens.server import ServerInfoScreen
 
 
-class JiraApp(App):
+class JiraApp(Actionable, App, inherit_bindings=False):  # type:ignore[call-arg]
     """Implements the application."""
 
     CSS_PATH = 'css/jt.tcss'
     """The path to the file with the TCSS (Textual CSS) definitions."""
-
     TITLE = 'JiraTUI'
-    BINDINGS = [
-        Binding(key='f1,ctrl+question_mark,ctrl+shift+slash', action='help', description='?'),
-        Binding(
-            key='f2',
-            action='server_info',
-            description='Server',
-            tooltip='Show details of the Jira server',
-        ),
-        Binding(
-            key='f3',
-            action='config_info',
-            description='Config',
-            tooltip='Show the settings in the configuration file',
-        ),
+    DEFAULT_THEME = 'textual-dark'
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'help',
+        'server_info',
+        'config_info',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
             key='ctrl+q',
             action='quit',
@@ -47,9 +56,18 @@ class JiraApp(App):
             key_display='^q',
             tooltip='Quit',
             show=True,
-        ),
+        )
+    ] + [
+        Binding(
+            key=action.keys[0],
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
-    DEFAULT_THEME = 'textual-dark'
 
     def __init__(
         self,
@@ -74,6 +92,7 @@ class JiraApp(App):
             override the value set in the config variable `theme`.
             focus_item_on_startup: the position of the work item to focus and open on startup. Requires search_on_startup to be enabled.
         """
+
         super().__init__()
         self.config = settings
         CONFIGURATION.set(settings)
@@ -131,7 +150,6 @@ class JiraApp(App):
 
     async def on_mount(self) -> None:
         self._set_application_title()
-
         await self.push_screen(
             MainScreen(
                 self.api,
@@ -145,6 +163,8 @@ class JiraApp(App):
 
     def on_unmount(self) -> None:
         self.__session.clear()
+
+    # Actions
 
     async def action_help(self) -> None:
         from jiratui.widgets.screens.help import HelpScreen

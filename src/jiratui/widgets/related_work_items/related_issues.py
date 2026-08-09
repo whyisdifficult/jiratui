@@ -12,8 +12,10 @@ from textual.widgets import Collapsible, Link, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import RelatedJiraIssue
 from jiratui.utils.styling import get_style_for_work_item_priority
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
@@ -28,7 +30,7 @@ class WorkItemRelatedItems:
     related_items: list[RelatedJiraIssue] | None = None
 
 
-class RelatedIssueCollapsible(Collapsible):
+class RelatedIssueCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible to show a work item related to another item.
 
     This widget is responsible for:
@@ -47,28 +49,35 @@ class RelatedIssueCollapsible(Collapsible):
     - [Architecture](#architecture-related-work-items-classes)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'view_work_item',
+        'unlink_work_item',
+        'open_go_to_screen',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='v',
-            action='view_work_item',
-            description='Quick View',
-            show=True,
-            key_display='v',
-        ),
-        Binding(
-            key='d',
-            action='unlink_work_item',
-            description='Unlink',
-            key_display='d',
-        ),
-        Binding(
-            key='f6',
-            action='open_go_to_screen',
-            description='Related',
-            show=True,
-            key_display='f6',
-            tooltip='View related work items',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Related Work Items'
 
@@ -159,7 +168,7 @@ class RelatedIssueCollapsible(Collapsible):
             self.post_message(SearchWorkItem(work_item_key))
 
 
-class RelatedIssuesWidget(VerticalScroll):
+class RelatedIssuesWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for displaying the work items related to a work item.
 
     This widget is responsible for:
@@ -175,13 +184,33 @@ class RelatedIssuesWidget(VerticalScroll):
     """
 
     HELP = 'See Related Work Items section in the help'
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'link_work_item',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='n',
-            action='link_work_item',
-            description='New Related',
-            key_display='n',
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
         )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     issues: Reactive[WorkItemRelatedItems | None] = reactive(None)

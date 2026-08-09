@@ -8,14 +8,17 @@ from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import Markdown, TextArea
 
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.utils.adf import convert_adf_to_markdown, convert_markdown_to_adf
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import BaseFieldWidget, BaseUpdateFieldWidget, FieldMode
 
 logger = logging.getLogger(__name__)
 
 
 class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
-    """Read-only Markdown widget that handles [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/)
+    """Read-only Markdown widget that handles
+    [Atlassian Document Format (ADF)](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/)
     conversion.
 
     This widget automatically converts ADF JSON to Markdown and renders it with formatting.
@@ -142,7 +145,7 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         return self.__title
 
 
-class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
+class ADFMarkdownTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified Markdown-based textarea widget for fields that support ADF and that supports CREATE and UPDATE modes.
 
     **Features**:
@@ -187,8 +190,33 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
     ```
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'edit_content',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
-        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     @dataclass
@@ -253,7 +281,7 @@ class ADFMarkdownTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget
             )
         self.add_class('create-work-item-description')
 
-    def action_edit_content(self):
+    async def action_edit_content(self):
         self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> dict | None:

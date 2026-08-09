@@ -83,7 +83,7 @@ You can check the installed version with
 
 ```shell
 jiratui version
-1.0.0
+1.12.0
 ```
 
 ## Settings
@@ -160,6 +160,18 @@ grant them to your user account.
 
 To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
 [Permissions and Scopes](docs/users/configuration/permissions.md).
+
+### Choosing the Keybindings Style
+
+Starting with version `1.13.0` you can choose which style of keybindings to use. The tool offers 2 options: `legacy`
+(default) or `standard`. The legacy style is the original and only keybinding set offered by the tool up to version
+`1.12.0`. The new `standard` keybinding set follows more standard keybindings for typical actions in a terminal.
+
+You can choose the `standard` style by setting the variable `key_bindings_style` in the config file.
+
+```shell
+key_bindings_style: 'standard'
+```
 
 ## Running the Application UI
 

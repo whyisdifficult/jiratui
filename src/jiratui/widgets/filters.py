@@ -1,9 +1,12 @@
 """This module contains the widgets used for the filters of the search functionality used in the main screen."""
 
 from textual import on
+from textual.binding import Binding
 from textual.reactive import Reactive, reactive
 from textual.widgets import Checkbox, Input, Select
 
+from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.screens.jql import JQLEditorScreen
 
@@ -191,17 +194,41 @@ class ActiveSprintCheckbox(Checkbox):
         return '#search-by-active-sprint'
 
 
-class JQLSearchWidget(Input):
-    """An input widget that holds a JQL expression."""
+class JQLSearchWidget(Actionable, Input):
+    """An input widget that holds a JQL expression.
+
+    This widget implements Actionable and defines bindings for editing a JQL expression.
+    """
 
     HELP = 'See Searching Using JQL Expressions section in the help'
 
-    BINDINGS = [
-        (
-            'ctrl+e',
-            'open_jql_editor',
-            'JQL Editor',
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'edit_jql',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
         )
+
+    BINDINGS = [
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     expression: Reactive[str | None] = reactive(None)
@@ -227,7 +254,7 @@ class JQLSearchWidget(Input):
             else:
                 self.value = self._clean_value(value)
 
-    async def action_open_jql_editor(self) -> None:
+    async def action_edit_jql(self) -> None:
         await self.app.push_screen(JQLEditorScreen(self.value), callback=self.update_input_value)
 
     def update_input_value(self, value: str) -> None:

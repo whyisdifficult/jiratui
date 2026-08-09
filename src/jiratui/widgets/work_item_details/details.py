@@ -67,7 +67,9 @@ from textual.widgets import LoadingIndicator, ProgressBar
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_parent_has_changed,
@@ -117,7 +119,7 @@ class StaticFieldsWidgets(ItemGrid):
     pass
 
 
-class IssueDetailsWidget(Vertical):
+class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:ignore[call-arg]
     """Implements a form to allow the user to view and edit some of the fields associated to a work item.
 
     The widget defines a form for viewing and updating some of the work item's fields. The form includes both static
@@ -154,8 +156,36 @@ class IssueDetailsWidget(Vertical):
     clear_form: Reactive[bool] = reactive(False, always_update=True)
     """Reactive variable to clear the fields in the form."""
 
-    BINDINGS = [
-        ('ctrl+s', 'save_work_item', 'Save'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'save_content',
+        'view_worklog',
+        'flag_work_item',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [
         Binding(
             key='x',
             action='focus_widget("x")',
@@ -173,16 +203,6 @@ class IssueDetailsWidget(Vertical):
             action='focus_widget("z")',
             description='Focus the Status widget',
             show=False,
-        ),
-        Binding(
-            key='ctrl+l, ctrl+t',
-            action='view_worklog',
-            description='Worklog',
-            show=True,
-            key_display='^l',
-        ),
-        Binding(
-            key='ctrl+f', action='flag_work_item', description='Flag', show=True, key_display='^f'
         ),
     ]
 
@@ -378,7 +398,6 @@ class IssueDetailsWidget(Vertical):
                     extra_classes='cols-2',
                 )
                 # set widgets in row 9 - cols 3
-                # yield WorkItemLabelsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()  # the container for all the widgets created dynamically
 
@@ -670,7 +689,7 @@ class IssueDetailsWidget(Vertical):
                         payload[dynamic_widget.jira_field_key] = value_for_update
         return payload
 
-    async def action_save_work_item(self) -> None:
+    async def action_save_content(self) -> None:
         """Updates the fields of a work item that have changed.
 
         Returns:

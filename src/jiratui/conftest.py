@@ -6,7 +6,6 @@ import pytest
 
 from jiratui.api.api import JiraAPI, JiraAPIv2, JiraDataCenterAPI, JiraSoftwareCloudAPI
 from jiratui.api_controller.controller import APIController
-from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import (
     Attachment,
@@ -162,7 +161,9 @@ def jira_api_controller_for_jira_dc() -> APIController:
 
 
 @pytest.fixture()
-def app() -> JiraApp:
+def app():
+    from jiratui.app import JiraApp
+
     config_mock = Mock(spec=ApplicationConfiguration)
     config_mock.configure_mock(
         jira_api_base_url='foo.bar',

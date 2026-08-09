@@ -14,6 +14,7 @@ from textual.worker import Worker
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import (
     IssueType,
     JiraBaseIssue,
@@ -24,6 +25,7 @@ from jiratui.models import (
 )
 from jiratui.utils.history import HistoryEntry, HistoryManager
 from jiratui.utils.logging import JiraTUILogger
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
 from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
@@ -71,10 +73,10 @@ class WorkItemSearchResult:
     response: JiraIssueSearchResponse | None = None
 
 
-class MainScreen(Screen):
+class MainScreen(Actionable, Screen):
     """The main screen of the application.
 
-    This is the main screen of the application. It is responsible for:
+    This screen is responsible for:
 
     - handling different types of work item search
     - handling events for focusing different widgets based on custom key-bindings
@@ -87,6 +89,9 @@ class MainScreen(Screen):
     - searching types of issues for the issue type input filter
     - composing the widgets in the UI
 
+    This screen is actionable, which means that it can handle different keybindings as selected by the user in the
+    configuration file.
+
     **See Also**:
     - [Use Case: Filter-based search](#use-case-filter-based-search)
     - [Use Case: Text-based search](#use-case-text-based-search)
@@ -94,168 +99,57 @@ class MainScreen(Screen):
     - [Use Case: Create work items](#use-case-create-work-item)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'focus_project_filter',
+        'focus_search_work_item_type_filter',
+        'focus_search_work_item_status_filter',
+        'focus_search_assignee_filter',
+        'focus_search_work_item_key_filter',
+        'focus_search_created_from_filter',
+        'focus_search_created_until_filter',
+        'focus_search_sort_filter',
+        'focus_search_sprint_filter',
+        'focus_search_jql',
+        'focus_search_results',
+        'focus_work_item_information_tab',
+        'focus_work_item_details_tab',
+        'focus_work_item_comments_tab',
+        'focus_work_item_related_tab',
+        'focus_work_item_attachments_tab',
+        'focus_work_item_links_tab',
+        'focus_work_item_subtasks_tab',
+        'copy_issue_key',
+        'copy_issue_url',
+        'search',
+        'find_by_text',
+        'create_work_item',
+        'show_recent_history',
+        'create_git_branch',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='/',
-            action='find_by_text',
-            description='Find',
-            key_display='/',
-            tooltip='Find items using full-text search',
-            show=True,
-        ),
-        Binding(
-            key='ctrl+r',
-            action='search',
-            description='Search',
-            tooltip='Search items by search criteria',
-        ),
-        Binding(
-            key='p',
-            action='focus_widget("p")',
-            description='Focus the project selection widget',
-            show=False,
-        ),
-        Binding(
-            key='t',
-            action='focus_widget("t")',
-            description='Focus the issue type selection widget',
-            show=False,
-        ),
-        Binding(
-            key='s',
-            action='focus_widget("s")',
-            description='Focus the status selection widget',
-            show=False,
-        ),
-        Binding(
-            key='a',
-            action='focus_widget("a")',
-            description='Focus the assignee selection widget',
-            show=False,
-        ),
-        Binding(
-            key='k',
-            action='focus_widget("k")',
-            description='Focus the "work item key" input widget',
-            show=False,
-        ),
-        Binding(
-            key='f',
-            action='focus_widget("f")',
-            description='Focus the "created from" input widget',
-            show=False,
-        ),
-        Binding(
-            key='u',
-            action='focus_widget("u")',
-            description='Focus the "created until" input widget',
-            show=False,
-        ),
-        Binding(
-            key='o',
-            action='focus_widget("o")',
-            description='Focus the "Order By" selection widget',
-            show=False,
-        ),
-        Binding(
-            key='v',
-            action='focus_widget("v")',
-            description='Focus the Active Sprint Checkbox',
-            show=False,
-        ),
-        Binding(
-            key='j',
-            action='focus_widget("j")',
-            description='Focus the JQL expression input widget',
-            show=False,
-        ),
-        Binding(
-            key='1',
-            action='focus_widget("1")',
-            description='Focus the Search Results widget',
-            show=False,
-        ),
-        Binding(
-            key='2',
-            action='focus_widget("2")',
-            description='Focus the Info tab widget',
-            show=False,
-        ),
-        Binding(
-            key='3',
-            action='focus_widget("3")',
-            description='Focus the Details tab widget',
-            show=False,
-        ),
-        Binding(
-            key='4',
-            action='focus_widget("4")',
-            description='Focus the Comments tab widget',
-            show=False,
-        ),
-        Binding(
-            key='5',
-            action='focus_widget("5")',
-            description='Focus the Related tab widget',
-            show=False,
-        ),
-        Binding(
-            key='6',
-            action='focus_widget("6")',
-            description='Focus the Attachments tab widget',
-            show=False,
-        ),
-        Binding(
-            key='7',
-            action='focus_widget("7")',
-            description='Focus the Links tab widget',
-            show=False,
-        ),
-        Binding(
-            key='8',
-            action='focus_widget("8")',
-            description='Focus the Subtasks tab widget',
-            show=False,
-        ),
-        Binding(
-            key='ctrl+n',
-            action='create_work_item',
-            description='New Item',
-            show=True,
-            key_display='^n',
-        ),
-        Binding(
-            key='ctrl+k',
-            action='copy_issue_key',
-            description='Copy Key',
-            show=True,
-            key_display='^k',
-            tooltip='Copy the work item key',
-        ),
-        Binding(
-            key='ctrl+j',
-            action='copy_issue_url',
-            description='Copy URL',
-            show=True,
-            key_display='^j',
-            tooltip='Copy the work item URL',
-        ),
-        Binding(
-            key='ctrl+g',
-            action='create_git_branch',
-            description='Git',
-            show=True,
-            key_display='^g',
-            tooltip='Creates a Git branch with the key of the work item',
-        ),
-        Binding(
-            key='f7',
-            action='show_recent_history',
-            description='Recent',
-            show=True,
-            key_display='f7',
-            tooltip='Show recently viewed items',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     def __init__(
@@ -285,27 +179,6 @@ class MainScreen(Screen):
         """The position of the work item to focus and open on startup. Requires search_on_startup to be enabled."""
         self.current_loaded_work_item_key: str | None = None
         """Track the currently loaded work item key to prevent redundant reloads."""
-        # maps keys to widget ids to enable quick navigation
-        self.keys_widget_ids_mapping: dict[str, str] = {
-            'p': '#jira-project-selector',
-            't': '#jira-issue-types-selector',
-            's': '#jira-issue-status-selector',
-            'a': '#search-filters-input-assignee',
-            'k': '#input_issue_key',
-            'f': '#input_date_from',
-            'u': '#input_date_until',
-            'o': '#issue-search-order-by-selector',
-            'v': '#active-sprint-checkbox',
-            'j': '#input_search_term',
-            '1': '#search_results',
-            '2': '#work_item_info_container',
-            '3': '#issue_details',
-            '4': '#issue_comments',
-            '5': '#related_issues',
-            '6': '#attachments',
-            '7': '#issue_remote_links',
-            '8': '#issue_subtasks',
-        }
         self.config = CONFIGURATION.get()
         self.work_item_tabs_titles: dict = {}
         if self.config.show_keybinding_hints:
@@ -495,7 +368,7 @@ class MainScreen(Screen):
                         title=self.work_item_tabs_titles.get('issue_subtasks', 'Subtasks')
                     ):
                         yield IssueChildWorkItemsWidget()
-        yield Footer(show_command_palette=False)
+        yield Footer(show_command_palette=False, compact=True)
 
     async def on_mount(self) -> None:
         """Mounts the widgets on the screen.
@@ -1022,6 +895,8 @@ class MainScreen(Screen):
             callback=self._close_recent_history_screen,
         )
 
+    # NEW - Actionable Logic
+
     async def action_search(self, search_term: str | None = None) -> None:
         """Handles the event  when the user presses the "search" button or "ctrl+r"."""
 
@@ -1060,19 +935,59 @@ class MainScreen(Screen):
             exclusive=True,
         )
 
-    def action_focus_widget(self, key: str) -> None:
-        """Focuses a widget based on the key pressed by the user.
+    async def action_focus_project_filter(self) -> None:
+        self.set_focus(self.project_selector)
 
-        Args:
-            key: the key the user pressed in the UI.
+    async def action_focus_search_work_item_type_filter(self) -> None:
+        self.set_focus(self.issue_type_selector)
 
-        Returns:
-            Nothing.
-        """
+    async def action_focus_search_work_item_status_filter(self) -> None:
+        self.set_focus(self.issue_status_selector)
 
-        if widget_id := self.keys_widget_ids_mapping.get(key):
-            if target_widget := self.query_one(widget_id):
-                self.set_focus(target_widget)
+    async def action_focus_search_assignee_filter(self) -> None:
+        self.set_focus(self.users_selector)
+
+    async def action_focus_search_work_item_key_filter(self) -> None:
+        self.set_focus(self.issue_key_input)
+
+    async def action_focus_search_created_from_filter(self) -> None:
+        self.set_focus(self.issue_date_from_input)
+
+    async def action_focus_search_created_until_filter(self) -> None:
+        self.set_focus(self.issue_date_until_input)
+
+    async def action_focus_search_sort_filter(self) -> None:
+        self.set_focus(self.order_by_widget)
+
+    async def action_focus_search_sprint_filter(self) -> None:
+        self.set_focus(self.active_sprint_checkbox)
+
+    async def action_focus_search_jql(self) -> None:
+        self.set_focus(self.jql_expression_input)
+
+    async def action_focus_search_results(self) -> None:
+        self.set_focus(self.search_results_table)
+
+    async def action_focus_work_item_information_tab(self) -> None:
+        self.set_focus(self.issue_info_container)
+
+    async def action_focus_work_item_details_tab(self) -> None:
+        self.set_focus(self.issue_details_widget)
+
+    async def action_focus_work_item_comments_tab(self) -> None:
+        self.set_focus(self.issue_comments_widget)
+
+    async def action_focus_work_item_related_tab(self) -> None:
+        self.set_focus(self.related_issues_widget)
+
+    async def action_focus_work_item_attachments_tab(self) -> None:
+        self.set_focus(self.issue_attachments_widget)
+
+    async def action_focus_work_item_links_tab(self) -> None:
+        self.set_focus(self.issue_remote_links_widget)
+
+    async def action_focus_work_item_subtasks_tab(self) -> None:
+        self.set_focus(self.issue_child_work_items_widget)
 
     def action_copy_issue_url(self) -> None:
         """Copy to the clipboard the URL of the item currently selected in the search results."""
@@ -1092,9 +1007,6 @@ class MainScreen(Screen):
         if (table := self.search_results_table) and table.current_work_item_key:
             self.run_worker(self._open_git_screen(table.current_work_item_key))
 
-    async def _open_git_screen(self, work_item_key: str) -> None:
-        await self.app.push_screen(GitScreen(work_item_key))
-
     async def action_create_work_item(self) -> None:
         """Handles the event to create a new work item."""
         await self.app.push_screen(
@@ -1104,6 +1016,23 @@ class MainScreen(Screen):
             ),
             callback=self.create_work_item,
         )
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action may run."""
+
+        table = self.search_results_table
+        if action == 'create_git_branch' and table and not table.current_work_item_key:
+            return False
+        elif action == 'copy_issue_key' and table and not table.current_work_item_key:
+            return False
+        elif action == 'copy_issue_url' and table and not table.current_work_item_key:
+            return False
+        return True
+
+    # END - Actionable Logic
+
+    async def _open_git_screen(self, work_item_key: str) -> None:
+        await self.app.push_screen(GitScreen(work_item_key))
 
     @on(IssueChildWorkItemsWidget.CreateSubtask)
     async def _create_work_item_subtask(
@@ -1265,7 +1194,14 @@ class MainScreen(Screen):
             )
             return
 
-        result: JiraIssueSearchResponse = response.result
+        result: JiraIssueSearchResponse | None = response.result
+        if not result or not result.issues:
+            self.issue_info_container.hide_loading()
+            self.notify(
+                'Unable to find the selected work item', title='Not Found', severity='error'
+            )
+            return
+
         work_item: JiraIssue = result.issues[0]
         # track the currently loaded work item
         self.current_loaded_work_item_key = work_item.key

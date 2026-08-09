@@ -15,13 +15,16 @@ from textual.widgets._data_table import RowDoesNotExist
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.screens.goto import GotToScreen
 
 
+# TODO move to screens module and/or merge with existing confirmation screen
 class ConfirmDeleteItemScreen(ModalScreen[bool]):
     """A modal screen that allows users to confirm deleting an item."""
 
@@ -135,7 +138,7 @@ class DataTableSearchInput(Input):
                 self.total = len(filtered)
 
 
-class IssuesSearchResultsTable(DataTable):
+class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """The widget that displays the results of a search.
 
     This widget provides a reactive attribute, `search_results`, that contains the issues that the table will
@@ -151,6 +154,8 @@ class IssuesSearchResultsTable(DataTable):
     notify other widgets so they can update the relevant widgets.
     ```
 
+    This widget is actionable and so it can handle different keybindings.
+
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
     - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
@@ -158,55 +163,50 @@ class IssuesSearchResultsTable(DataTable):
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)
 
-    BINDINGS = [
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'select_cursor',
+        'cursor_up',
+        'cursor_down',
+        # 'cursor_right',  # TODO we need to implement support for this because it fails as it is now
+        # 'cursor_left',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
+        'scroll_home',
+        'scroll_end',
+        'filter',
+        'previous_issues_page',
+        'next_issues_page',
+        'open_in_browser',
+        'delete_work_item',
+        'open_go_to_screen',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='.',
-            action='filter',
-            description='Filter',
-            tooltip='Filter the results of the current page',
-        ),
-        Binding('escape', 'hide', 'Hide search input', show=False),
-        Binding(
-            key='alt+left',
-            action='previous_issues_page',
-            description='\uf060',
-            show=True,
-            key_display='alt+left',
-            tooltip='Previous page',
-        ),
-        Binding(
-            key='alt+right',
-            action='next_issues_page',
-            description='\uf061',
-            show=True,
-            key_display='alt+right',
-            tooltip='Next page',
-        ),
-        Binding(
-            key='ctrl+o',
-            action='open_issue_in_browser',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open item in the browser',
-        ),
-        Binding(
-            key='d',
-            action='delete_work_item',
-            description='\uf014',
-            show=True,
-            key_display='d',
-            tooltip='Delete the work item currently highlighted',
-        ),
-        Binding(
-            key='f6',
-            action='open_go_to_screen',
-            description='Related',
-            show=True,
-            key_display='f6',
-            tooltip='View related work items',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'hide', 'Hide search input', show=False)]
 
     SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN = 30
 
@@ -307,7 +307,7 @@ class IssuesSearchResultsTable(DataTable):
         if event.row_key:
             self.current_work_item_id, self.current_work_item_key = event.row_key.value.split('#')
 
-    def action_open_issue_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self.current_work_item_key:
             self.notify('Opening Work Item in the browser...')

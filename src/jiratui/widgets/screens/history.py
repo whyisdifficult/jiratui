@@ -8,11 +8,13 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static
 
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.utils.history import HistoryManager
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 
 
-class HistoryWorkItemsTable(DataTable):
+class HistoryWorkItemsTable(Actionable, DataTable):
     """A [DataTable](textual.widgets.DataTable) that displays the entries in the recent history.
 
     This table is responsible for:
@@ -26,33 +28,36 @@ class HistoryWorkItemsTable(DataTable):
     - [Use Case](#use-case-recent-history)
     """
 
-    BINDINGS = [
-        ('escape', 'app.pop_screen', 'Close'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_in_browser',
+        'copy_issue_key',
+        'copy_issue_url',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='ctrl+o',
-            action='open_issue_in_browser',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open in browser',
-        ),
-        Binding(
-            key='ctrl+k',
-            action='copy_issue_key',
-            description='Copy Key',
-            show=True,
-            key_display='^k',
-            tooltip='Copy key',
-        ),
-        Binding(
-            key='ctrl+j',
-            action='copy_issue_url',
-            description='Copy URL',
-            show=True,
-            key_display='^j',
-            tooltip='Copy URL',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,7 +84,7 @@ class HistoryWorkItemsTable(DataTable):
         if event.row_key:
             self.__current_work_item_key = event.row_key.value.split(':')[-1]
 
-    def action_open_issue_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self.__current_work_item_key:
             self.notify('Opening Work Item in the browser...')
@@ -99,7 +104,7 @@ class HistoryWorkItemsTable(DataTable):
                 self.notify('Work item URL copied!')
 
 
-class HistoryScreen(ModalScreen[str]):
+class HistoryScreen(Actionable, ModalScreen[str]):
     """A modal screen that displays the recent history of work items viewed, created or updated.
 
     The screen is responsible for:
@@ -114,17 +119,35 @@ class HistoryScreen(ModalScreen[str]):
     """
 
     HELP = 'See View Recent Items section in the help'
-    BINDINGS = [
-        ('escape', 'app.pop_screen', 'Close'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'empty_recent_history',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='d',
-            action='empty_recent_history',
-            description='Empty History',
-            show=True,
-            key_display='d',
-            tooltip='Empty History',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
+
     TITLE = 'Recent History'
 
     def __init__(self, manager: HistoryManager):

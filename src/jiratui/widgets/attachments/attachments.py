@@ -17,12 +17,14 @@ from textual_image.widget import Image, SixelImage
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import Attachment
 from jiratui.utils.mime import (
     SupportedAttachmentVisualizationMimeTypes,
     can_view_attachment,
     is_image,
 )
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_attachment
 from jiratui.widgets.attachments.add import AddAttachmentScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
@@ -36,7 +38,7 @@ class WorkItemAttachments:
     attachments: list[Attachment] | None = None
 
 
-class AttachmentsDataTable(DataTable):
+class AttachmentsDataTable(Actionable, DataTable):
     """A [DataTable](#textual.widgets.DataTable) to list the files attached to a work item.
 
     The table is responsible for:
@@ -46,22 +48,34 @@ class AttachmentsDataTable(DataTable):
     handler to delete the attachment.
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_attachment',
+        'delete_attachment',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='d',
-            action='delete_attachment',
-            description='Delete',
-            key_display='d',
-            tooltip='Deletes the attachment',
-        ),
-        Binding(
-            key='ctrl+o',
-            action='open_attachment',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open file in the browser',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
 
@@ -169,7 +183,7 @@ class AttachmentsDataTable(DataTable):
             self.notify('Deleting attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
 
 
-class IssueAttachmentsWidget(VerticalScroll):
+class IssueAttachmentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for displaying the files attached to a work item.
 
     This widget is responsible for the following:
@@ -188,14 +202,34 @@ class IssueAttachmentsWidget(VerticalScroll):
     """
 
     HELP = 'See Attachments section in the help'
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'add_attachment',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='ctrl+u,n',
-            action='add_attachment',
-            description='Attach File',
-            key_display='n',
-            tooltip='Attach a new file to a work item',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     attachments: Reactive[WorkItemAttachments | None] = reactive(None)

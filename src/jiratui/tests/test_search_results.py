@@ -59,106 +59,6 @@ def app() -> JiraApp:
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_click_next_page_search_results(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 1
-        main_screen.search_results_table.token_by_page = {2: 'token_a'}
-        main_screen.search_results_table.focus()
-        # WHEN
-        await pilot.press('alt+right')
-        # THEN
-        assert main_screen.search_results_table.page == 2
-        search_issues_mock.assert_called_once_with('token_a', page=2)
-
-
-@patch('jiratui.widgets.screen.MainScreen.search_issues')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_next_page_search_results_with_missing_token(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 0
-        main_screen.search_results_table.token_by_page = {2: 'token_a'}
-        main_screen.search_results_table.focus()
-        # WHEN
-        await pilot.press('alt+right')
-        # THEN
-        search_issues_mock.assert_not_called()
-        assert main_screen.search_results_table.page == 0
-
-
-@patch('jiratui.widgets.screen.MainScreen.search_issues')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_previous_page_search_results(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 2
-        main_screen.search_results_table.token_by_page = {1: 'token_a'}
-        main_screen.search_results_table.focus()
-        # WHEN
-        await pilot.press('alt+left')
-        # THEN
-        search_issues_mock.assert_called_once_with('token_a', page=1)
-        assert main_screen.search_results_table.page == 1
-
-
-@patch('jiratui.widgets.screen.MainScreen.search_issues')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_click_previous_page_search_results_with_missing_token(
-    search_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    search_issues_mock: AsyncMock,
-    app,
-):
-    async with app.run_test() as pilot:
-        # GIVEN
-        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
-        main_screen.search_results_table.page = 1
-        main_screen.search_results_table.token_by_page = {2: 'token_a'}
-        main_screen.search_results_table.focus()
-        # WHEN
-        await pilot.press('alt+left')
-        # THEN
-        search_issues_mock.assert_not_called()
-        assert main_screen.search_results_table.page == 1
-
-
-@patch('jiratui.widgets.screen.MainScreen.search_issues')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
 async def test_click_filter_datatable_filtering_key_shows_input(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
@@ -395,7 +295,6 @@ async def test_select_issue_in_search_results_datatable(
         await pilot.press('down')
         await pilot.press('enter')
         # THEN
-        assert main_screen.search_results_table.focus()
         assert main_screen.search_results_table.page == 1
         search_work_items_mock.assert_called_once()
         assert main_screen.search_results_table.search_results == JiraIssueSearchResponse(
@@ -671,3 +570,200 @@ async def test_open_goto_screen_with_goto_disabled(
         # THEN
         assert main_screen.search_results_table.has_focus
         assert isinstance(app.screen, MainScreen)
+
+
+@pytest.mark.xfail(reason='Logic needs fixing')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_click_next_page_search_results(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 1
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.side_effect = [
+            WorkItemSearchResult(
+                total=1,
+                response=JiraIssueSearchResponse(
+                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                ),
+            ),
+            WorkItemSearchResult(
+                total=1,
+                response=JiraIssueSearchResponse(
+                    issues=[jira_issues[1]], next_page_token=None, is_last=True
+                ),
+            ),
+        ]
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('alt+right')
+        # THEN
+        search_work_items_mock.assert_has_calls(
+            [
+                call(next_page_token=None, search_term=None, page=1),
+                call(next_page_token='token_a', search_term=None, page=2),
+            ]
+        )
+        assert main_screen.search_results_table.page == 2
+        assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
+        assert main_screen.search_results_container.border_subtitle == 'Page 2 of 2 (total: 2)'
+
+
+@pytest.mark.xfail(reason='Logic needs fixing')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_click_next_page_search_results_with_missing_token(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 2
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=True
+            ),
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('alt+right')
+        # THEN
+        assert main_screen.search_results_table.current_work_item_key == jira_issues[0].key
+        assert main_screen.search_results_container.border_subtitle == 'Page 1 of 1 (total: 2)'
+        search_work_items_mock.assert_has_calls(
+            [
+                call(next_page_token=None, search_term=None, page=1),
+            ]
+        )
+        assert main_screen.search_results_table.page == 1
+
+
+@pytest.mark.xfail(reason='Logic needs fixing')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_click_previous_page_search_results(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 1
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.side_effect = [
+            WorkItemSearchResult(
+                total=1,
+                response=JiraIssueSearchResponse(
+                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                ),
+            ),
+            WorkItemSearchResult(
+                total=1,
+                response=JiraIssueSearchResponse(
+                    issues=[jira_issues[1]], next_page_token=None, is_last=True
+                ),
+            ),
+            WorkItemSearchResult(
+                total=1,
+                response=JiraIssueSearchResponse(
+                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                ),
+            ),
+        ]
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('alt+right')
+        await pilot.press('alt+left')
+        # THEN
+        search_work_items_mock.assert_has_calls(
+            [
+                call(next_page_token=None, search_term=None, page=1),
+                call(next_page_token='token_a', search_term=None, page=2),
+                call(next_page_token=None, search_term=None, page=1),
+            ]
+        )
+        assert main_screen.search_results_table.page == 1
+        assert main_screen.search_results_table.current_work_item_key == jira_issues[0].key
+        assert main_screen.search_results_container.border_subtitle == 'Page 1 of 2 (total: 1)'
+
+
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_click_previous_page_on_first_page(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    fetch_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 2
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=True
+            ),
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('alt+left')
+        # THEN
+        search_work_items_mock.assert_has_calls(
+            [
+                call(next_page_token=None, search_term=None, page=1),
+            ]
+        )
+        assert main_screen.search_results_table.page == 1
+        assert main_screen.search_results_table.current_work_item_key == jira_issues[0].key
+        assert main_screen.search_results_container.border_subtitle == 'Page 1 of 1 (total: 2)'

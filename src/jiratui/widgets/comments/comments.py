@@ -13,7 +13,9 @@ from textual.widgets import Collapsible, Link, Rule, Static
 
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
+from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import IssueComment
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
@@ -30,21 +32,40 @@ class WorkItemComments:
     comments: list[IssueComment] | None = None
 
 
-class CommentCollapsible(Collapsible):
+class CommentCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible to show a comment associated to a work item.
 
     **See Also**:
     - [Use Case: Delete Comment](#use-case-delete-comment)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'delete_comment',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='d',
-            action='delete_comment',
-            description='\uf014',
-            key_display='d',
-            tooltip='Delete comment',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     class Deleted(Message):
@@ -81,7 +102,7 @@ class CommentCollapsible(Collapsible):
             self.post_message(self.Deleted(self._work_item_key, self._comment_id))
 
 
-class IssueCommentsWidget(VerticalScroll):
+class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for displaying the comments of a work item.
 
     This widget is responsible for the following:
@@ -100,14 +121,33 @@ class IssueCommentsWidget(VerticalScroll):
     HELP = 'See Comments section in the help'
     comments: Reactive[WorkItemComments | None] = reactive(None)
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'add_comment',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='n',
-            action='add_comment',
-            description='New Comment',
-            key_display='n',
-            tooltip='Add new comment',
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
         )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     def __init__(self):

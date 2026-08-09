@@ -1204,7 +1204,7 @@ async def test_save_work_item_without_payload(
         issue_mock.return_value = jira_issue
         build_payload_for_update_mock.return_value = None
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_not_called()
 
@@ -1232,7 +1232,7 @@ async def test_save_work_item_without_payload_issue_not_require_transition(
         details_widget.issue_status_selector.set_options([('Done', '5')])
         details_widget.issue_status_selector.value = '5'
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_not_called()
         transition_issue_status_mock.assert_not_called()
@@ -1264,7 +1264,7 @@ async def test_save_work_item_without_payload_issue_requires_transition(
         details_widget.issue_status_selector.value = '5'
         transition_issue_status_mock.return_value = APIControllerResponse()
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_not_called()
         transition_issue_status_mock.assert_called_once_with('key-2', '5')
@@ -1297,7 +1297,7 @@ async def test_save_work_item_without_payload_issue_requires_transition_transiti
         details_widget.issue_status_selector.value = '5'
         transition_issue_status_mock.return_value = APIControllerResponse(success=False)
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_not_called()
         transition_issue_status_mock.assert_called_once_with('key-2', '5')
@@ -1330,7 +1330,7 @@ async def test_save_work_item_with_payload_issue_not_require_transition_updates_
         details_widget.issue_status_selector.value = '5'
         update_issue_mock.return_value = APIControllerResponse()
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_called_once_with(issue_mock, {'a': 1})
         transition_issue_status_mock.assert_not_called()
@@ -1363,7 +1363,7 @@ async def test_save_work_item_with_payload_issue_not_require_transition_fails_is
         details_widget.issue_status_selector.value = '5'
         update_issue_mock.return_value = APIControllerResponse(success=False)
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_called_once_with(issue_mock, {'a': 1})
         transition_issue_status_mock.assert_not_called()
@@ -1398,7 +1398,7 @@ async def test_save_work_item_with_payload_issue_not_require_transition_fails_wi
         details_widget.issue_status_selector.value = '5'
         update_issue_mock.side_effect = exception_type()
         # WHEN
-        await details_widget.action_save_work_item()
+        await details_widget.action_save_content()
         # THEN
         update_issue_mock.assert_called_once_with(issue_mock, {'a': 1})
         transition_issue_status_mock.assert_not_called()
