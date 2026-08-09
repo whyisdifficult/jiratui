@@ -2212,7 +2212,9 @@ async def test_update_issue_with_no_updates(
     assert result == APIControllerResponse(result=UpdateWorkItemResponse(success=True))
 
 
-@pytest.mark.parametrize('field_name', ['summary', 'duedate', 'priority', 'assignee_account_id'])
+@pytest.mark.parametrize(
+    'field_name', ['summary', 'duedate', 'priority', 'assignee_account_id', 'reporter']
+)
 @pytest.mark.asyncio
 async def test_update_issue_with_update_fields_without_meta_operations(
     field_name: str,
@@ -2237,6 +2239,7 @@ async def test_update_issue_with_update_fields_without_meta_operations(
         ('duedate', 'duedate'),
         ('priority', 'priority'),
         ('assignee_account_id', 'assignee'),
+        ('reporter', 'reporter'),
     ],
 )
 @pytest.mark.asyncio
@@ -2273,6 +2276,12 @@ async def test_update_issue_with_update_fields_no_update_allowed(
             'assignee',
             ['assignee_account_id'],
             {'update': {'assignee': [{'set': {'accountId': 'value'}}]}},
+        ),
+        (
+            'reporter',
+            'reporter',
+            ['reporter'],
+            {'update': {'reporter': [{'set': {'accountId': 'value'}}]}},
         ),
         ('parent', 'parent', ['parent'], {'fields': {'parent': {'key': 'value'}}}),
         ('labels', 'labels', ['labels'], {'update': {'labels': [{'set': 'value'}]}}),
@@ -2332,6 +2341,31 @@ async def test_update_issue_assignee_for_non_cloud_api(
     )
     assert result == APIControllerResponse(
         result=UpdateWorkItemResponse(success=True, updated_fields=['assignee_account_id'])
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'update_issue')
+async def test_update_issue_reporter_for_non_cloud_api(
+    update_issue_mock: Mock,
+    work_item: JiraIssue,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    jira_api_controller.config.cloud = False
+    work_item.edit_meta = {
+        'fields': {'reporter': {'operations': {'set': 'new value'}, 'key': 'reporter'}}
+    }
+    work_item.key = 'WI1'
+    update_issue_mock.return_value = {'fields': {'reporter': 'new value'}}
+    # WHEN
+    result = await jira_api_controller.update_issue(work_item, {'reporter': 'value'})
+    # THEN
+    update_issue_mock.assert_called_once_with(
+        work_item.key, {'update': {'reporter': [{'set': {'name': 'value'}}]}}
+    )
+    assert result == APIControllerResponse(
+        result=UpdateWorkItemResponse(success=True, updated_fields=['reporter'])
     )
 
 

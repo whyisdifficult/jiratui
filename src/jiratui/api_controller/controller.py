@@ -1693,6 +1693,27 @@ class APIController:
                     extra={'work_item_key': issue.key},
                 )
 
+        if JiraWorkItemFields.REPORTER.value in updates:
+            if meta_reporter := metadata_fields.get(JiraWorkItemFields.REPORTER.value, {}):
+                if 'set' not in meta_reporter.get('operations', {}):
+                    raise UpdateWorkItemException(
+                        'The field reporter can not be updated for the selected work item.',
+                        extra={'work_item_key': issue.key},
+                    )
+                if self.config.cloud:
+                    payload['update'][meta_reporter.get('key')] = [
+                        {'set': {'accountId': updates.get(JiraWorkItemFields.REPORTER.value)}}
+                    ]
+                else:
+                    payload['update'][meta_reporter.get('key')] = [
+                        {'set': {'name': updates.get(JiraWorkItemFields.REPORTER.value)}}
+                    ]
+            else:
+                raise UpdateWorkItemException(
+                    'The field reporter can not be updated for the selected work item.',
+                    extra={'work_item_key': issue.key},
+                )
+
         if JiraWorkItemFields.LABELS.value in updates:
             if meta_labels := metadata_fields.get(JiraWorkItemFields.LABELS.value, {}):
                 if 'set' in meta_labels.get('operations', {}):
@@ -1793,6 +1814,7 @@ class APIController:
                     JiraWorkItemFields.PRIORITY.value,
                     JiraWorkItemFields.PARENT.value,
                     'assignee_account_id',  # TODO use 'assignee' field id
+                    JiraWorkItemFields.REPORTER.value,
                     JiraWorkItemFields.LABELS.value,
                     JiraWorkItemFields.COMPONENTS.value,
                     JiraWorkItemFields.DESCRIPTION.value,
