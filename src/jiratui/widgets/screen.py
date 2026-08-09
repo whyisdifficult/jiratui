@@ -1020,13 +1020,13 @@ class MainScreen(Actionable, Screen):
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
 
-        table = self.search_results_table
-        if action == 'create_git_branch' and table and not table.current_work_item_key:
-            return False
-        elif action == 'copy_issue_key' and table and not table.current_work_item_key:
-            return False
-        elif action == 'copy_issue_url' and table and not table.current_work_item_key:
-            return False
+        if table := self.query_one_optional(IssuesSearchResultsTable):
+            if action == 'create_git_branch' and table and not table.current_work_item_key:
+                return False
+            elif action == 'copy_issue_key' and table and not table.current_work_item_key:
+                return False
+            elif action == 'copy_issue_url' and table and not table.current_work_item_key:
+                return False
         return True
 
     # END - Actionable Logic
