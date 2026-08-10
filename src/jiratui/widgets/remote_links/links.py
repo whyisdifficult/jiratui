@@ -7,8 +7,8 @@ from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Static
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import IssueRemoteLink
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.remote_links.add import AddRemoteLinkScreen

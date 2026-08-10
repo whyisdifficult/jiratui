@@ -26,9 +26,9 @@ from textual.widgets import (
     TextArea,
 )
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import AgileSprint, IssueType, JiraIssue, Project
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import CustomFieldType

@@ -1,3 +1,14 @@
+"""
+Running tests for this module:
+
+# to test the actions with the standard key bindings
+`JIRA_TUI_KEYBIND_STYLE=standard pytest src/jiratui/actions/tests/test_actions.py`
+# to test the actions with the legacy key bindings
+`JIRA_TUI_KEYBIND_STYLE=legacy pytest src/jiratui/actions/tests/test_actions.py`
+# or, run
+`make test`
+"""
+
 import os
 from typing import cast
 from unittest.mock import AsyncMock, Mock, patch
@@ -9,6 +20,7 @@ from textual.widgets import DataTable
 # set BEFORE any other imports that might depend on this. This allows us to test different key binding styles
 os.environ['JIRA_TUI_KEYBIND_STYLE'] = 'standard'
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import (
     Attachment,
@@ -75,27 +87,110 @@ from jiratui.widgets.work_item_subtasks.subtasks import (
 from jiratui.widgets.work_item_worklog.screens import WorkItemWorkLogScreen, WorkLogCollapsible
 
 
+@pytest.fixture
+def bindings() -> dict:
+    return get_application_key_bindings()
+
+
 @pytest.mark.parametrize(
     'key, widget',
     [
-        ('alt+p', ProjectSelectionInput),
-        ('alt+t', IssueTypeSelectionInput),
-        ('alt+s', IssueStatusSelectionInput),
-        ('alt+a', JiraUserInput),
-        ('alt+k', WorkItemInputWidget),
-        ('alt+f', IssueSearchCreatedFromWidget),
-        ('alt+u', IssueSearchCreatedUntilWidget),
-        ('alt+o', OrderByWidget),
-        ('alt+v', ActiveSprintCheckbox),
-        ('alt+j', JQLSearchWidget),
-        ('1', IssuesSearchResultsTable),
-        ('2', WorkItemInfoContainer),
-        ('3', IssueDetailsWidget),
-        ('4', IssueCommentsWidget),
-        ('5', RelatedIssuesWidget),
-        ('6', IssueAttachmentsWidget),
-        ('7', IssueRemoteLinksWidget),
-        ('8', IssueChildWorkItemsWidget),
+        (
+            get_application_key_bindings().get('focus_project_filter', {}).get('keys', [])[0],
+            ProjectSelectionInput,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_work_item_type_filter', {})
+            .get('keys', [])[0],
+            IssueTypeSelectionInput,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_work_item_status_filter', {})
+            .get('keys', [])[0],
+            IssueStatusSelectionInput,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_assignee_filter', {})
+            .get('keys', [])[0],
+            JiraUserInput,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_work_item_key_filter', {})
+            .get('keys', [])[0],
+            WorkItemInputWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_created_from_filter', {})
+            .get('keys', [])[0],
+            IssueSearchCreatedFromWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_search_created_until_filter', {})
+            .get('keys', [])[0],
+            IssueSearchCreatedUntilWidget,
+        ),
+        (
+            get_application_key_bindings().get('focus_search_sort_filter', {}).get('keys', [])[0],
+            OrderByWidget,
+        ),
+        (
+            get_application_key_bindings().get('focus_search_sprint_filter', {}).get('keys', [])[0],
+            ActiveSprintCheckbox,
+        ),
+        (
+            get_application_key_bindings().get('focus_search_jql', {}).get('keys', [])[0],
+            JQLSearchWidget,
+        ),
+        (
+            get_application_key_bindings().get('focus_search_results', {}).get('keys', [])[0],
+            IssuesSearchResultsTable,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_information_tab', {})
+            .get('keys', [])[0],
+            WorkItemInfoContainer,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_details_tab', {})
+            .get('keys', [])[0],
+            IssueDetailsWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_comments_tab', {})
+            .get('keys', [])[0],
+            IssueCommentsWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_related_tab', {})
+            .get('keys', [])[0],
+            RelatedIssuesWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_attachments_tab', {})
+            .get('keys', [])[0],
+            IssueAttachmentsWidget,
+        ),
+        (
+            get_application_key_bindings().get('focus_work_item_links_tab', {}).get('keys', [])[0],
+            IssueRemoteLinksWidget,
+        ),
+        (
+            get_application_key_bindings()
+            .get('focus_work_item_subtasks_tab', {})
+            .get('keys', [])[0],
+            IssueChildWorkItemsWidget,
+        ),
     ],
 )
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -114,10 +209,19 @@ async def test_quick_access_keys_with_standard_keybindings_style(
 @pytest.mark.parametrize(
     'key, expected_screen',
     [
-        ('f1', HelpScreen),
-        ('f2', ServerInfoScreen),
-        ('f3', ConfigFileScreen),
-        ('f4', HistoryScreen),
+        (get_application_key_bindings().get('help', {}).get('keys', [])[0], HelpScreen),
+        (
+            get_application_key_bindings().get('server_info', {}).get('keys', [])[0],
+            ServerInfoScreen,
+        ),
+        (
+            get_application_key_bindings().get('config_info', {}).get('keys', [])[0],
+            ConfigFileScreen,
+        ),
+        (
+            get_application_key_bindings().get('show_recent_history', {}).get('keys', [])[0],
+            HistoryScreen,
+        ),
     ],
 )
 @patch.object(ConfigFileScreen, '_get_data')
@@ -152,13 +256,14 @@ async def test_key_to_perform_search_from_main_screen(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_search_mock: AsyncMock,
+    bindings: dict,
     app,
 ):
     # GIVEN
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
         # WHEN
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         # THEN
         action_search_mock.assert_awaited_once()
 
@@ -173,13 +278,14 @@ async def test_key_to_perform_full_text_search_from_main_screen(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_find_by_text_mock: AsyncMock,
+    bindings: dict,
     app,
 ):
     # GIVEN
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
         # WHEN
-        await pilot.press('ctrl+f')
+        await pilot.press(bindings.get('find_by_text', {}).get('keys', [])[0])
         # THEN
         action_find_by_text_mock.assert_awaited_once()
 
@@ -195,6 +301,7 @@ async def test_key_to_open_git_screen(
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -211,9 +318,9 @@ async def test_key_to_open_git_screen(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('f6')
+        await pilot.press(bindings.get('create_git_branch', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         assert isinstance(app.screen, GitScreen)
@@ -230,6 +337,7 @@ async def test_key_to_open_goto_screen(
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -257,14 +365,14 @@ async def test_key_to_open_goto_screen(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('f5')
+        await pilot.press(bindings.get('open_go_to_screen', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         search_work_items_mock.assert_awaited_once()
@@ -276,12 +384,13 @@ async def test_key_to_open_goto_screen(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_goto_screen_key_to_view_related_item(
+async def test_action_view_work_item_to_view_related_item(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -309,14 +418,14 @@ async def test_goto_screen_key_to_view_related_item(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('v')
+        await pilot.press(bindings.get('view_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         search_work_items_mock.assert_awaited_once()
@@ -328,12 +437,13 @@ async def test_goto_screen_key_to_view_related_item(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_goto_screen_key_to_delete_related_item(
+async def test_acton_unlink_work_item_to_delete_related_item(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -361,14 +471,14 @@ async def test_goto_screen_key_to_delete_related_item(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('unlink_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         search_work_items_mock.assert_awaited_once()
@@ -380,12 +490,13 @@ async def test_goto_screen_key_to_delete_related_item(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_goto_screen_key_to_add_related_item(
+async def test_action_link_work_item_to_add_related_item(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -413,14 +524,14 @@ async def test_goto_screen_key_to_add_related_item(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('a')
+        await pilot.press(bindings.get('link_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         search_work_items_mock.assert_awaited_once()
@@ -433,13 +544,14 @@ async def test_goto_screen_key_to_add_related_item(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_copy_item_url_from_main_screen(
+async def test_action_copy_issue_url_from_main_screen(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_copy_issue_url_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -457,9 +569,9 @@ async def test_key_to_copy_item_url_from_main_screen(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('ctrl+c')
+        await pilot.press(bindings.get('copy_issue_url', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_copy_issue_url_mock.assert_called_once()
@@ -471,13 +583,14 @@ async def test_key_to_copy_item_url_from_main_screen(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_copy_item_key_from_main_screen(
+async def test_action_copy_issue_key_from_main_screen(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_copy_issue_key_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -495,9 +608,9 @@ async def test_key_to_copy_item_key_from_main_screen(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('y')
+        await pilot.press(bindings.get('copy_issue_key', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_copy_issue_key_mock.assert_called_once()
@@ -516,6 +629,7 @@ async def test_key_to_delete_item_from_search_results(
     search_work_items_mock: AsyncMock,
     action_delete_work_item_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -531,9 +645,9 @@ async def test_key_to_delete_item_from_search_results(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('x')
+        await pilot.press(bindings.get('delete_work_item', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_delete_work_item_mock.assert_called_once()
@@ -545,13 +659,14 @@ async def test_key_to_delete_item_from_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_open_item_in_browser_from_search_results(
+async def test_action_open_in_browser_from_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_open_in_browser_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -569,9 +684,9 @@ async def test_key_to_open_item_in_browser_from_search_results(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('o')
+        await pilot.press(bindings.get('open_in_browser', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_open_in_browser_mock.assert_called_once()
@@ -583,13 +698,14 @@ async def test_key_to_open_item_in_browser_from_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_go_to_next_page_from_search_results(
+async def test_action_next_issues_page_from_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_next_issues_page_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -608,9 +724,9 @@ async def test_key_to_go_to_next_page_from_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press(']')
+        await pilot.press(bindings.get('next_issues_page', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_next_issues_page_mock.assert_called_once()
@@ -622,13 +738,14 @@ async def test_key_to_go_to_next_page_from_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_go_to_previous_page_from_search_results(
+async def test_action_previous_issues_page_from_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_previous_issues_page_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -647,9 +764,9 @@ async def test_key_to_go_to_previous_page_from_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('[')
+        await pilot.press(bindings.get('previous_issues_page', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_previous_issues_page_mock.assert_called_once()
@@ -661,13 +778,14 @@ async def test_key_to_go_to_previous_page_from_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_filter_results_from_search_results(
+async def test_action_filter_results_from_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_filter_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -686,9 +804,9 @@ async def test_key_to_filter_results_from_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('f')
+        await pilot.press(bindings.get('filter', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_filter_mock.assert_called_once()
@@ -700,13 +818,14 @@ async def test_key_to_filter_results_from_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_select_item_from_search_results(
+async def test_action_select_cursor_to_select_item_from_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_select_cursor_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -724,22 +843,28 @@ async def test_key_to_select_item_from_search_results(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('enter')
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_select_cursor_mock.assert_called_once()
 
 
-@pytest.mark.parametrize('key', ['k', 'up'])
+@pytest.mark.parametrize(
+    'key',
+    [
+        get_application_key_bindings().get('cursor_up', {}).get('keys', [])[0],
+        get_application_key_bindings().get('cursor_up', {}).get('keys', [])[1],
+    ],
+)
 @patch.object(DataTable, 'action_cursor_up')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_move_row_up_in_search_results(
+async def test_action_cursor_up_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
@@ -747,6 +872,7 @@ async def test_key_to_move_row_up_in_search_results(
     action_cursor_up_mock: Mock,
     jira_issues,
     key: str,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -765,7 +891,7 @@ async def test_key_to_move_row_up_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(key)
         # THEN
@@ -773,14 +899,20 @@ async def test_key_to_move_row_up_in_search_results(
         action_cursor_up_mock.assert_called_once()
 
 
-@pytest.mark.parametrize('key', ['j', 'down'])
+@pytest.mark.parametrize(
+    'key',
+    [
+        get_application_key_bindings().get('cursor_down', {}).get('keys', [])[0],
+        get_application_key_bindings().get('cursor_down', {}).get('keys', [])[1],
+    ],
+)
 @patch.object(DataTable, 'action_cursor_down')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_move_row_down_in_search_results(
+async def test_action_cursor_down_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
@@ -788,6 +920,7 @@ async def test_key_to_move_row_down_in_search_results(
     action_cursor_down_mock: Mock,
     jira_issues,
     key: str,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -806,7 +939,7 @@ async def test_key_to_move_row_down_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(key)
         # THEN
@@ -814,14 +947,20 @@ async def test_key_to_move_row_down_in_search_results(
         action_cursor_down_mock.assert_called_once()
 
 
-@pytest.mark.parametrize('key', ['pageup', 'ctrl+b'])
+@pytest.mark.parametrize(
+    'key',
+    [
+        get_application_key_bindings().get('page_up', {}).get('keys', [])[0],
+        get_application_key_bindings().get('page_up', {}).get('keys', [])[1],
+    ],
+)
 @patch.object(DataTable, 'action_page_up')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_move_page_up_in_search_results(
+async def test_action_page_up_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
@@ -829,6 +968,7 @@ async def test_key_to_move_page_up_in_search_results(
     action_page_up_mock: Mock,
     jira_issues,
     key: str,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -847,7 +987,7 @@ async def test_key_to_move_page_up_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(key)
         # THEN
@@ -861,13 +1001,14 @@ async def test_key_to_move_page_up_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_move_page_down_in_search_results(
+async def test_action_page_down_in_search_results(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_page_down_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -886,9 +1027,9 @@ async def test_key_to_move_page_down_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('pagedown')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_page_down_mock.assert_called_once()
@@ -900,13 +1041,14 @@ async def test_key_to_move_page_down_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_scroll_top_in_search_results(
+async def test_action_scroll_top_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_scroll_top_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -925,9 +1067,9 @@ async def test_key_to_scroll_top_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('ctrl+home')
+        await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_scroll_top_mock.assert_called_once()
@@ -939,13 +1081,14 @@ async def test_key_to_scroll_top_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_scroll_bottom_in_search_results(
+async def test_action_scroll_bottom_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_scroll_bottom_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -964,9 +1107,9 @@ async def test_key_to_scroll_bottom_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('ctrl+end')
+        await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_scroll_bottom_mock.assert_called_once()
@@ -978,13 +1121,14 @@ async def test_key_to_scroll_bottom_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_scroll_home_in_search_results(
+async def test_action_scroll_home_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_scroll_home_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1003,9 +1147,9 @@ async def test_key_to_scroll_home_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('home')
+        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_scroll_home_mock.assert_called_once()
@@ -1017,13 +1161,14 @@ async def test_key_to_scroll_home_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_scroll_end_in_search_results(
+async def test_action_scroll_end_in_search_results(
     search_projects_mock,
     fetch_issue_types_mock,
     fetch_statuses_mock,
     search_work_items_mock: AsyncMock,
     action_scroll_end_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1042,9 +1187,9 @@ async def test_key_to_scroll_end_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('end')
+        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
         # THEN
         search_work_items_mock.assert_awaited_once()
         action_scroll_end_mock.assert_called_once()
@@ -1066,6 +1211,7 @@ async def test_key_to_move_cursor_right_in_search_results(
     action_cursor_right_mock: Mock,
     jira_issues,
     key: str,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1084,7 +1230,7 @@ async def test_key_to_move_cursor_right_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(key)
         # THEN
@@ -1108,6 +1254,7 @@ async def test_key_to_move_cursor_left_in_search_results(
     action_cursor_left_mock: Mock,
     jira_issues,
     key: str,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1126,7 +1273,7 @@ async def test_key_to_move_cursor_left_in_search_results(
     app.config.pre_defined_jql_expressions = None
     app.open_url = Mock()
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(key)
         # THEN
@@ -1139,17 +1286,18 @@ async def test_key_to_move_cursor_left_in_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_open_create_item_screen_from_main_screen(
+async def test_action_create_work_item_from_main_screen(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     create_work_item_mock: AsyncMock,
+    bindings: dict,
     app,
 ):
     # GIVEN
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('ctrl+n')
+        await pilot.press(bindings.get('create_work_item', {}).get('keys', [])[0])
         # THEN
         create_work_item_mock.assert_called_once()
 
@@ -1159,11 +1307,12 @@ async def test_key_open_create_item_screen_from_main_screen(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_save_content_from_add_work_item_screen(
+async def test_action_save_content_from_add_work_item_screen(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_save_content_mock: Mock,
+    bindings: dict,
     app,
 ):
     # test action save_content from the screen that creates new work items
@@ -1171,7 +1320,7 @@ async def test_key_save_content_from_add_work_item_screen(
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
         app.push_screen(AddWorkItemScreen())
-        await pilot.press('ctrl+s')
+        await pilot.press(bindings.get('save_content', {}).get('keys', [])[0])
         # THEN
         action_save_content_mock.assert_called_once()
 
@@ -1182,13 +1331,14 @@ async def test_key_save_content_from_add_work_item_screen(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_add_comment(
+async def test_action_add_comment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_add_comment_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1214,14 +1364,14 @@ async def test_key_to_add_comment(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_comments_widget.comments = WorkItemComments(
             work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
         )
-        await pilot.press('4')
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('a')
+        await pilot.press(bindings.get('add_comment', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_add_comment_mock.assert_called_once()
@@ -1233,13 +1383,14 @@ async def test_key_to_add_comment(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_delete_comment(
+async def test_action_delete_comment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_delete_comment_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1265,14 +1416,14 @@ async def test_key_to_delete_comment(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_comments_widget.comments = WorkItemComments(
             work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
         )
-        await pilot.press('4')
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('delete_comment', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_delete_comment_mock.assert_awaited_once()
@@ -1284,13 +1435,14 @@ async def test_key_to_delete_comment(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_add_attachment(
+async def test_action_add_attachment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_add_attachment_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1318,14 +1470,14 @@ async def test_key_to_add_attachment(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
             work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
         )
-        await pilot.press('6')
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('a')
+        await pilot.press(bindings.get('add_attachment', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_add_attachment_mock.assert_called_once()
@@ -1337,13 +1489,14 @@ async def test_key_to_add_attachment(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_delete_attachment(
+async def test_action_delete_attachment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_delete_attachment_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1371,14 +1524,14 @@ async def test_key_to_delete_attachment(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
             work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
         )
-        await pilot.press('6')
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('delete_attachment', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_delete_attachment_mock.assert_awaited_once()
@@ -1390,13 +1543,14 @@ async def test_key_to_delete_attachment(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_open_attachment(
+async def test_action_open_attachment(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_open_attachment_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1424,14 +1578,14 @@ async def test_key_to_open_attachment(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
             work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
         )
-        await pilot.press('6')
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('o')
+        await pilot.press(bindings.get('open_attachment', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_open_attachment_mock.assert_awaited_once()
@@ -1443,13 +1597,14 @@ async def test_key_to_open_attachment(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_link_work_items_from_related_issues_tab(
+async def test_action_link_work_item_from_related_issues_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_link_work_item_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1477,14 +1632,14 @@ async def test_key_to_link_work_items_from_related_issues_tab(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('a')
+        await pilot.press(bindings.get('link_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_link_work_item_mock.assert_awaited_once()
@@ -1496,13 +1651,14 @@ async def test_key_to_link_work_items_from_related_issues_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_view_work_item_from_related_issues_tab(
+async def test_action_view_work_item_from_related_issues_tab(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_view_work_item_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1530,14 +1686,14 @@ async def test_key_to_view_work_item_from_related_issues_tab(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('v')
+        await pilot.press(bindings.get('view_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_view_work_item_mock.assert_awaited_once()
@@ -1549,13 +1705,14 @@ async def test_key_to_view_work_item_from_related_issues_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_unlink_work_item_from_related_issues_tab(
+async def test_action_unlink_work_item_from_related_issues_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_unlink_work_item_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1583,14 +1740,14 @@ async def test_key_to_unlink_work_item_from_related_issues_tab(
     ]
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.related_issues_widget.issues = WorkItemRelatedItems(
             work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
         )
-        await pilot.press('5')
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('unlink_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_unlink_work_item_mock.assert_awaited_once()
@@ -1603,7 +1760,7 @@ async def test_key_to_unlink_work_item_from_related_issues_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_add_web_link_from_links_tab(
+async def test_action_add_remote_link_from_links_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -1611,6 +1768,7 @@ async def test_key_to_add_web_link_from_links_tab(
     action_add_remote_link_mock: AsyncMock,
     get_issue_remote_links_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1644,12 +1802,12 @@ async def test_key_to_add_web_link_from_links_tab(
         ]
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
-        await pilot.press('7')
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('a')
+        await pilot.press(bindings.get('add_remote_link', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_add_remote_link_mock.assert_awaited_once()
@@ -1662,7 +1820,7 @@ async def test_key_to_add_web_link_from_links_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_delete_web_link_from_links_tab(
+async def test_action_delete_remote_link_from_links_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -1670,6 +1828,7 @@ async def test_key_to_delete_web_link_from_links_tab(
     action_delete_remote_link_mock: AsyncMock,
     get_issue_remote_links_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1703,12 +1862,12 @@ async def test_key_to_delete_web_link_from_links_tab(
         ]
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
-        await pilot.press('7')
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('delete_remote_link', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_delete_remote_link_mock.assert_awaited_once()
@@ -1720,13 +1879,14 @@ async def test_key_to_delete_web_link_from_links_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_open_worklog_screen_from_details_tab(
+async def test_action_view_worklog_from_details_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_view_worklog_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1745,11 +1905,11 @@ async def test_key_to_open_worklog_screen_from_details_tab(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('w')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('view_worklog', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_view_worklog_mock.assert_called_once()
@@ -1761,13 +1921,14 @@ async def test_key_to_open_worklog_screen_from_details_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_log_work_from_details_tab(
+async def test_action_log_work_from_details_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_log_work_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1786,12 +1947,12 @@ async def test_key_to_log_work_from_details_tab(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('w')
-        await pilot.press('l')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('view_worklog', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('log_work', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         assert isinstance(app.screen, WorkItemWorkLogScreen)
@@ -1805,7 +1966,7 @@ async def test_key_to_log_work_from_details_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_delete_worklog_entry(
+async def test_action_delete_worklog_entry(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -1814,6 +1975,7 @@ async def test_key_to_delete_worklog_entry(
     action_delete_worklog_mock: AsyncMock,
     jira_issues,
     jira_worklogs,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1835,14 +1997,14 @@ async def test_key_to_delete_worklog_entry(
         result=PaginatedJiraWorklog(logs=jira_worklogs, max_results=10, start_at=0, total=2)
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('w')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('view_worklog', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
-        await pilot.press('x')
+        await pilot.press(bindings.get('delete_worklog', {}).get('keys', [])[0])
         # THEN
         assert isinstance(app.screen, WorkItemWorkLogScreen)
         action_delete_worklog_mock.assert_awaited_once()
@@ -1855,7 +2017,7 @@ async def test_key_to_delete_worklog_entry(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_open_in_browser_worklog_entry(
+async def test_action_open_in_browser_worklog_entry(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -1864,6 +2026,7 @@ async def test_key_to_open_in_browser_worklog_entry(
     action_open_in_browser_mock: AsyncMock,
     jira_issues,
     jira_worklogs,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1885,14 +2048,14 @@ async def test_key_to_open_in_browser_worklog_entry(
         result=PaginatedJiraWorklog(logs=jira_worklogs, max_results=10, start_at=0, total=2)
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('w')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('view_worklog', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
-        await pilot.press('o')
+        await pilot.press(bindings.get('open_in_browser', {}).get('keys', [])[0])
         # THEN
         assert isinstance(app.screen, WorkItemWorkLogScreen)
         action_open_in_browser_mock.assert_awaited_once()
@@ -1905,7 +2068,7 @@ async def test_key_to_open_in_browser_worklog_entry(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_edit_worklog_entry(
+async def test_action_edit_worklog_entry(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -1914,6 +2077,7 @@ async def test_key_to_edit_worklog_entry(
     action_edit_worklog_entry_mock: AsyncMock,
     jira_issues,
     jira_worklogs,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1935,14 +2099,14 @@ async def test_key_to_edit_worklog_entry(
         result=PaginatedJiraWorklog(logs=jira_worklogs, max_results=10, start_at=0, total=2)
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('w')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('view_worklog', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
-        await pilot.press('e')
+        await pilot.press(bindings.get('edit_worklog_entry', {}).get('keys', [])[0])
         # THEN
         assert isinstance(app.screen, WorkItemWorkLogScreen)
         action_edit_worklog_entry_mock.assert_awaited_once()
@@ -1954,13 +2118,14 @@ async def test_key_to_edit_worklog_entry(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_flag_work_item_from_details_tab(
+async def test_action_flag_work_item_from_details_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_flag_work_item_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -1979,11 +2144,11 @@ async def test_key_to_flag_work_item_from_details_tab(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('*')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('flag_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_flag_work_item_mock.assert_called_once()
@@ -1995,13 +2160,14 @@ async def test_key_to_flag_work_item_from_details_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_to_save_work_item_from_details_tab(
+async def test_action_save_work_item_from_details_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_save_content_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2020,11 +2186,11 @@ async def test_key_to_save_work_item_from_details_tab(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_details_widget.issue = jira_issues[1]
-        await pilot.press('3')
-        await pilot.press('ctrl+s')
+        await pilot.press(bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('save_content', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_save_content_mock.assert_called_once()
@@ -2036,13 +2202,14 @@ async def test_key_to_save_work_item_from_details_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_view_text_content_from_info_tab(
+async def test_action_view_content_from_info_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_view_content_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2069,14 +2236,14 @@ async def test_key_view_text_content_from_info_tab(
         }
     }
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_info_container.issue = jira_issues[1]
-        await pilot.press('2')
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('v')
+        await pilot.press(bindings.get('view_content', {}).get('keys', [])[0])
         # THEN
         action_view_content_mock.assert_called_once()
 
@@ -2087,13 +2254,14 @@ async def test_key_view_text_content_from_info_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_edit_text_content_from_info_tab(
+async def test_action_edit_content_from_info_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_edit_content_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2120,14 +2288,14 @@ async def test_key_edit_text_content_from_info_tab(
         }
     }
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_info_container.issue = jira_issues[1]
-        await pilot.press('2')
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('e')
+        await pilot.press(bindings.get('edit_content', {}).get('keys', [])[0])
         # THEN
         action_edit_content_mock.assert_called_once()
 
@@ -2137,12 +2305,13 @@ async def test_key_edit_text_content_from_info_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_edit_text_content_open_edit_screen_from_info_tab(
+async def test_action_edit_content_open_edit_screen_from_info_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2171,14 +2340,14 @@ async def test_key_edit_text_content_open_edit_screen_from_info_tab(
         }
     }
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_info_container.issue = jira_issues[1]
-        await pilot.press('2')
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('e')
+        await pilot.press(bindings.get('edit_content', {}).get('keys', [])[0])
         # THEN
         assert isinstance(app.screen, EditTextContentScreen)
 
@@ -2189,13 +2358,14 @@ async def test_key_edit_text_content_open_edit_screen_from_info_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_save_text_content_in_edit_screen_from_info_tab(
+async def test_action_save_content_in_edit_screen_from_info_tab(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_save_content_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # test the action save_content on the screen that edits text content
@@ -2225,15 +2395,15 @@ async def test_key_save_text_content_in_edit_screen_from_info_tab(
         }
     }
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_info_container.issue = jira_issues[1]
-        await pilot.press('2')
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('e')
-        await pilot.press('ctrl+s')
+        await pilot.press(bindings.get('edit_content', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('save_content', {}).get('keys', [])[0])
         # THEN
         action_save_content_mock.assert_called_once()
 
@@ -2244,13 +2414,14 @@ async def test_key_save_text_content_in_edit_screen_from_info_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_copy_text_content_from_info_tab(
+async def test_action_copy_content_from_info_tab(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_copy_content_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2277,14 +2448,14 @@ async def test_key_copy_text_content_from_info_tab(
         }
     }
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_info_container.issue = jira_issues[1]
-        await pilot.press('2')
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('c')
+        await pilot.press(bindings.get('copy_content', {}).get('keys', [])[0])
         # THEN
         action_copy_content_mock.assert_called_once()
 
@@ -2300,6 +2471,7 @@ async def test_key_to_search_work_items_fro_main_screen(
     fetch_statuses_mock: AsyncMock,
     action_search_mock: AsyncMock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # GIVEN
@@ -2307,14 +2479,14 @@ async def test_key_to_search_work_items_fro_main_screen(
     app.config.search_results_style_work_item_status = False
     app.config.search_results_style_work_item_type = False
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         # THEN
         action_search_mock.assert_awaited_once()
 
 
 @patch.object(HistoryScreen, 'action_empty_recent_history')
 @pytest.mark.asyncio
-async def test_key_to_empty_recent_history(empty_recent_history_mock: Mock, app):
+async def test_action_empty_recent_history(empty_recent_history_mock: Mock, bindings: dict, app):
     # testing action empty_recent_history
     # GIVEN
     app.config.search_results_truncate_work_item_summary = 10
@@ -2322,7 +2494,7 @@ async def test_key_to_empty_recent_history(empty_recent_history_mock: Mock, app)
     app.config.search_results_style_work_item_type = False
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('x')
+        await pilot.press(bindings.get('empty_recent_history', {}).get('keys', [])[0])
         # THEN
         empty_recent_history_mock.assert_called_once()
 
@@ -2338,6 +2510,7 @@ async def test_key_to_edit_jql_opening_modal_screen(
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     action_edit_jql_mock: AsyncMock,
+    bindings: dict,
     app,
 ):
     # test the action action_edit_jql
@@ -2359,13 +2532,14 @@ async def test_key_to_edit_jql_opening_modal_screen(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_for_action_create_work_item_subtask_from_subtasks_tab(
+async def test_action_create_work_item_subtask_from_subtasks_tab(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_create_work_item_subtask_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # tests the action create_work_item_subtask to open the screen to add a new work item from the Subtasks tab; a
@@ -2384,11 +2558,11 @@ async def test_key_for_action_create_work_item_subtask_from_subtasks_tab(
         end=1,
     )
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
-        await pilot.press('enter')
-        await pilot.press('8')
-        await pilot.press('a')
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('create_work_item_subtask', {}).get('keys', [])[0])
         # THEN
         action_create_work_item_subtask_mock.assert_called_once()
 
@@ -2399,13 +2573,14 @@ async def test_key_for_action_create_work_item_subtask_from_subtasks_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_open_quick_view_screen_from_selected_subtasks_in_subtasks_tab(
+async def test_action_view_work_item_from_selected_subtasks_in_subtasks_tab(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_view_work_item_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # test the action that opens the quick view screen when the user selects a subtasks in the subtasks tab
@@ -2425,16 +2600,16 @@ async def test_key_open_quick_view_screen_from_selected_subtasks_in_subtasks_tab
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_child_work_items_widget.issues = WorkItemSubtasks(
             work_item_key=jira_issues[1].key,
             project_key=jira_issues[1].project.key,
             issues=[jira_issues[0]],
         )
-        await pilot.press('8')
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('v')
+        await pilot.press(bindings.get('view_work_item', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_view_work_item_mock.assert_called_once()
@@ -2446,13 +2621,14 @@ async def test_key_open_quick_view_screen_from_selected_subtasks_in_subtasks_tab
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_key_open_related_screen_for_selected_subtask_from_subtasks_tab(
+async def test_action_open_go_to_screen_with_selected_subtask_from_subtasks_tab(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
     action_open_go_to_screen_mock: Mock,
     jira_issues,
+    bindings: dict,
     app,
 ):
     # test the action that opens the screen to view related tasks for a selected subtask
@@ -2472,16 +2648,16 @@ async def test_key_open_related_screen_for_selected_subtask_from_subtasks_tab(
     )
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
-        await pilot.press('/')
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         app.screen.issue_child_work_items_widget.issues = WorkItemSubtasks(
             work_item_key=jira_issues[1].key,
             project_key=jira_issues[1].project.key,
             issues=[jira_issues[0]],
         )
-        await pilot.press('8')
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
         await pilot.press('tab')
-        await pilot.press('f5')
+        await pilot.press(bindings.get('open_go_to_screen', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         # THEN
         action_open_go_to_screen_mock.assert_called_once()

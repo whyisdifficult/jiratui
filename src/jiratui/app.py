@@ -7,10 +7,10 @@ from pythonjsonlogger.json import JsonFormatter
 from textual.app import App, InvalidThemeError
 from textual.binding import Binding
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraServerInfo
 from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.session import ApplicationSession

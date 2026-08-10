@@ -10,9 +10,9 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Static
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import RelatedJiraIssue
 from jiratui.utils.styling import get_style_for_work_item_priority
 from jiratui.utils.ui_actions import Actionable, UIAction

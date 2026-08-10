@@ -10,8 +10,8 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static, TabbedContent, TabPane
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraWorkItemFields
 from jiratui.utils.styling import (
     get_style_for_work_item_priority,

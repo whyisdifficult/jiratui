@@ -10,8 +10,8 @@ from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static
 from textual.worker import Worker
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, RelatedJiraIssue
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue

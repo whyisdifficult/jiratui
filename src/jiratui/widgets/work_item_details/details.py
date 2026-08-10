@@ -64,10 +64,10 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import LoadingIndicator, ProgressBar
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.work_item_updates import (

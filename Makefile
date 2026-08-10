@@ -41,12 +41,13 @@ lint-fix:
 
 .PHONY: test
 test:
-	JIRA_TUI_KEYBIND_STYLE=standard uv run --no-sync pytest src/jiratui/keybindings/tests/
-	JIRA_TUI_KEYBIND_STYLE=legacy uv run --no-sync pytest --ignore src/jiratui/keybindings/tests/ src/jiratui
+	JIRA_TUI_KEYBIND_STYLE=standard uv run --no-sync pytest src/jiratui/actions/tests/test_actions.py
+	JIRA_TUI_KEYBIND_STYLE=legacy uv run --no-sync pytest src/jiratui/actions/tests/test_actions.py
+	JIRA_TUI_KEYBIND_STYLE=legacy uv run --no-sync pytest --ignore src/jiratui/actions/tests/test_actions.py src/jiratui
 
 .PHONY: coverage
 coverage:
-	JIRA_TUI_KEYBIND_STYLE=legacy pytest --ignore src/jiratui/keybindings/tests/ --cov=src/jiratui --cov-report term-missing:skip-covered src/jiratui/
+	JIRA_TUI_KEYBIND_STYLE=legacy pytest --ignore src/jiratui/actions/tests/ --cov=src/jiratui --cov-report term-missing:skip-covered src/jiratui/
 
 .PHONY: docs-live
 docs-live:

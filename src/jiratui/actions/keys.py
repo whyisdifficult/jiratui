@@ -3,8 +3,8 @@ from pathlib import Path
 
 import yaml
 
+from jiratui.actions.constants import KEY_BINDINGS_LEGACY, KEY_BINDINGS_STANDARD
 from jiratui.files import get_config_file
-from jiratui.keybindings.constants import KEY_BINDINGS_LEGACY, KEY_BINDINGS_STANDARD
 
 
 # TODO move to separate module and reuse with the ine in Config.py
@@ -37,7 +37,7 @@ def _get_keybindings_style() -> str:
 
 
 def load_keybinding_style_into_environment() -> str:
-    """Loads from the configuration file the keybindings style selected by the user and stores it in the environment
+    """Loads from the configuration file the actions style selected by the user and stores it in the environment
     variable `JIRA_TUI_KEYBIND_STYLE`.
 
     Returns:
@@ -50,11 +50,11 @@ def load_keybinding_style_into_environment() -> str:
 
 
 def get_application_key_bindings() -> dict:
-    """Retrieves the applicable keybindings configuration based on the style selected by the user in the configuration
+    """Retrieves the applicable actions configuration based on the style selected by the user in the configuration
     file.
 
     Returns:
-        A dict with the keybindings.
+        A dict with the actions.
     """
 
     style: str = _get_keybindings_style()

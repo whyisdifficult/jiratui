@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import Markdown, TextArea
 
-from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.adf import convert_adf_to_markdown, convert_markdown_to_adf
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import BaseFieldWidget, BaseUpdateFieldWidget, FieldMode

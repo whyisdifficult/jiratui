@@ -11,10 +11,10 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, LoadingIndicator, Select, TabbedContent, TabPane
 from textual.worker import Worker
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import (
     IssueType,
     JiraBaseIssue,
@@ -89,7 +89,7 @@ class MainScreen(Actionable, Screen):
     - searching types of issues for the issue type input filter
     - composing the widgets in the UI
 
-    This screen is actionable, which means that it can handle different keybindings as selected by the user in the
+    This screen is actionable, which means that it can handle different actions as selected by the user in the
     configuration file.
 
     **See Also**:

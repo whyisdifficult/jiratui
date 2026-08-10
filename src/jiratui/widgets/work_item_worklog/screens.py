@@ -23,8 +23,8 @@ from textual.widgets import (
     Static,
 )
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import (
     JiraIssue,
     JiraIssueSearchResponse,

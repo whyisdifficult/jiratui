@@ -15,9 +15,9 @@ from textual.widget import Widget
 from textual.widgets import DataTable, LoadingIndicator, Markdown, Static, TextArea
 from textual_image.widget import Image, SixelImage
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import Attachment
 from jiratui.utils.mime import (
     SupportedAttachmentVisualizationMimeTypes,

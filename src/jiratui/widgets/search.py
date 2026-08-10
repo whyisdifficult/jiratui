@@ -13,9 +13,9 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Rule, Static
 from textual.widgets._data_table import RowDoesNotExist
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -154,7 +154,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
     notify other widgets so they can update the relevant widgets.
     ```
 
-    This widget is actionable and so it can handle different keybindings.
+    This widget is actionable and so it can handle different actions.
 
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)

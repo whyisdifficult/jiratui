@@ -81,7 +81,7 @@ from textual.validation import Number, ValidationResult
 from textual.widgets import Input, MaskedInput, Select, SelectionList, Static, TextArea
 from textual.widgets.selection_list import Selection
 
-from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.commons.base import (

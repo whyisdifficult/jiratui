@@ -5,7 +5,7 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, MarkdownViewer, Static, TextArea
 
-from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 
 

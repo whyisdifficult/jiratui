@@ -3,7 +3,7 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.widgets import Static, TabbedContent, TabPane
 
-from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget

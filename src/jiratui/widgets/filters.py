@@ -5,7 +5,7 @@ from textual.binding import Binding
 from textual.reactive import Reactive, reactive
 from textual.widgets import Checkbox, Input, Select
 
-from jiratui.keybindings.keys import get_application_key_bindings
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.screens.jql import JQLEditorScreen

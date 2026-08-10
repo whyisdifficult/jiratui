@@ -8,8 +8,8 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Rule, Static
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.config import CONFIGURATION
-from jiratui.keybindings.keys import get_application_key_bindings
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.ui_actions import Actionable, UIAction
