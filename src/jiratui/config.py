@@ -97,6 +97,8 @@ class ApplicationConfiguration(BaseSettings):
     use_cert_authentication: bool = False
     """Set this to `True` if your Jira instance uses certificate-based authentication instead of Bearer authentication
     or Basic authentication."""
+    read_only: bool = False
+    """Prevent JiraTUI from sending requests that mutate Jira resources."""
     jira_user_group_id: str | None = None
     """**[DEPRECATED]** The ID of the group that contains all (or most) of the Jira users in your Jira installation. This
     value is used as a fall back mechanism to fetch available users. This is only supported in the Jira Cloud
