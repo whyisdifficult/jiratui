@@ -737,7 +737,7 @@ KEY_BINDINGS_STANDARD = {
     },
     # Content Editing
     'edit_content': {
-        'keys': ['e'],
+        'keys': ['ctrl+e'],
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit the (text) content of a resource',
@@ -780,7 +780,7 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'Delete worklog entry',
     },
     'edit_worklog_entry': {
-        'keys': ['e'],
+        'keys': ['ctrl+e'],
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit worklog entry',
