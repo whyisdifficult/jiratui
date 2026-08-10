@@ -36,8 +36,6 @@ from jiratui.widgets.commons.widgets import (
 from jiratui.widgets.screen import WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.fields import (
-    IssueDetailsPrioritySelection,
-    IssueDetailsStatusSelection,
     IssueSprintField,
     WorkItemDetailsDueDate,
 )
@@ -1127,27 +1125,6 @@ async def test_build_payload_for_update_update_additional_fields_enabled_non_num
             payload = details_widget._build_payload_for_update()
             # THEN
             assert payload == {'field_a': expected_value}
-
-
-@pytest.mark.parametrize(
-    'key, widget',
-    [
-        ('x', JiraUserInput),
-        ('y', IssueDetailsPrioritySelection),
-        ('z', IssueDetailsStatusSelection),
-    ],
-)
-@pytest.mark.asyncio
-async def test_action_focus_widget(key: str, widget, app: JiraApp):
-    # GIVEN
-    async with app.run_test() as pilot:
-        details_widget = IssueDetailsWidget()
-        await app.mount(details_widget)
-        await pilot.pause()
-        # WHEN
-        details_widget.action_focus_widget(key)
-        # THEN
-        assert isinstance(app.screen.focused, widget)
 
 
 @patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))

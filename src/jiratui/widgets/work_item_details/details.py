@@ -185,25 +185,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         )
         for action in ACTIONS
         if isinstance(action.action, str)
-    ] + [
-        Binding(
-            key='x',
-            action='focus_widget("x")',
-            description='Focus the Assignee widget',
-            show=False,
-        ),
-        Binding(
-            key='y',
-            action='focus_widget("y")',
-            description='Focus the Priority widget',
-            show=False,
-        ),
-        Binding(
-            key='z',
-            action='focus_widget("z")',
-            description='Focus the Status widget',
-            show=False,
-        ),
     ]
 
     @dataclass
@@ -346,7 +327,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 yield JiraUserInput(
                     id='edit-work-item-input-assignee',
                     jira_field_key='assignee_account_id',
-                    border_subtitle='(x)',
                     border_title='Assignee',
                 ).add_class(*['cols-3', 'create-update-users-field-widget'])
                 # set widgets in row 3
@@ -423,27 +403,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         return await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
             issue_key=self._work_item_key, query=query
         )
-
-    def action_focus_widget(self, key: str) -> None:
-        """Focuses a widget depending on the key pressed.
-
-        This will only focus the following widgets:
-        - assignee_selector (key `x`)
-        - priority_selector (key `y`)
-        - issue_status_selector (key `z`)
-
-        Args:
-            key: the key that was pressed.
-
-        Returns:
-            `None`.
-        """
-        if key == 'x':
-            self.screen.set_focus(self.assignee_selector)
-        elif key == 'y':
-            self.screen.set_focus(self.priority_selector)
-        elif key == 'z':
-            self.screen.set_focus(self.issue_status_selector)
 
     def action_flag_work_item(self) -> None:
         """Opens a modal screen to let the user add/remove a flag with an optional comment/note."""
