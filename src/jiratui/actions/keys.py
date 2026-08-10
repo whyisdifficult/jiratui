@@ -25,8 +25,10 @@ def _load_keybindings_style_from_configuration_file() -> str:
         return 'legacy'
     else:
         with open(config_file, 'r') as f:
-            yaml_data = yaml.safe_load(f)
-            style = yaml_data.get('key_bindings_style')
+            if yaml_data := yaml.safe_load(f):
+                style = yaml_data.get('key_bindings_style') or 'legacy'
+            else:
+                style = 'legacy'
     return style
 
 
