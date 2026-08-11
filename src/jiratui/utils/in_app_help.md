@@ -18,9 +18,9 @@ context.
 
 | Keys           | Description                                            | Context                                                                 |
 |----------------|--------------------------------------------------------|-------------------------------------------------------------------------|
-| `tab`          | Focus next element                                     |         |
-| `^q`           | Closes the app                                         |         |
-| `q`            | Closes the app                                         |         |
+| `tab`          | Focus next element                                     |                                                                         |
+| `^q`           | Closes the app                                         |                                                                         |
+| `q`            | Closes the app                                         |                                                                         |
 | `f1`           | Open the help                                          | Main Screen                                                             |
 | `f2`           | View details of your Jira server                       | Main Screen                                                             |
 | `f3`           | View the configuration file                            | Main Screen                                                             |
@@ -73,7 +73,8 @@ context.
 | `x`            | Delete a web link from a work item                     | Links Tab                                                               |
 | `a`            | Add a subtask to a work item                           | Subtasks Tab                                                            |
 | `v`            | View details of a work item                            | Related Tab, Subtasks Tab                                               |
-| `^e`           | Edit the (text) content of a resource                  | Info Tab                                                                |
+| `^e`           | Open text editor                                       | Create work item ecreen                                                 |
+| `e`            | Edit the (text) content of a resource                  | Info Tab                                                                |
 | `v`            | View the text content of a resource                    | Info Tab                                                                |
 | `c`            | Copy the text content of a resource                    | Info Tab                                                                |
 | `^e`           | Edit JQL expressions                                   | JQL Search Filter                                                       |
@@ -91,78 +92,79 @@ context.
 
 ## Legacy Style
 
-| Keys | Description                                              | Context |
-|-----|----------------------------------------------------------|---------|
-| `tab` | Focus next element                                       |         |
-| `^q` | Closes the app                                           |         |
+| Keys                    | Description                                              | Context |
+|-------------------------|----------------------------------------------------------|---------|
+| `tab`                   | Focus next element                                       |         |
+| `^q`                    | Closes the app                                           |         |
 | `f1`, `^?`, `^+shift+\` | Open the help                                            |         |
-| `f2` | View details of your Jira server                         |         |
-| `f3` | View the configuration file                              |         |
-| `p` | Focuses the project dropdown                             |         |
-| `t` | Focuses the work item types dropdown                     |         |
-| `s` | Focuses the work item statuses dropdown                  |         |
-| `a` | Focuses the assignee dropdown                            |         |
-| `k` | Focuses the work item key search input                   |         |
-| `f` | Focuses the created-from search input                    |         |
-| `u` | Focuses the created-until search input                   |         |
-| `o` | Focuses the sorting search input                         |         |
-| `v` | Focuses the active-sprint search input                   |         |
-| `j` | Focuses the JQL search input                             |         |
-| `^r` | Search work items                                        |         |
-| `/` | Perform a full-text search of work items                 |         |
-| `1` | Focuses the search results table                         |         |
-| `2` | Focuses the work item information tab                    |         |
-| `3` | Focuses the work item details tab                        |         |
-| `4` | Focuses the work item comments tab                       |         |
-| `5` | Focuses the related work items tab                       |         |
-| `6` | Focuses the attachments tab                              |         |
-| `7` | Focuses the web links tab                                |         |
-| `8` | Focuses the work item subtasks tab                       |         |
-| `^n` | Creates a new work item                                  |         |
-| `f7` | Shows the recent history                                 |         |
-| `^k` | Copy the work item key                                   |         |
-| `^j` | Copy the work item URL                                   |         |
-| `^g` | Creates a Git branch for a work item                     |         |
-| `.` | Filter work items in the search results table            |         |
-| `alt+left` | Go to the previous page                                  |         |
-| `alt+right` | Go to the next page                                      |         |
-| `d` | Deletes a resource                                       |         |
-| `f6` | View items related to the selected work item             |         |
-| `enter` | Select the item under the cursor                         |         |
-| `up` | Move up                                                  |         |
-| `down` | Move down                                                |         |
-| `right` | Move to the right                                        |         |
-| `left` | Move to the left                                         |         |
-| `pageup` | Move 1 page up                                           |         |
-| `pagedown` | Move 1 page down                                         |         |
-| `^home` | Scroll to the top                                        |         |
-| `^end` | Scroll to the bottom                                     |         |
-| `home` | Scroll to the beginning                                  |         |
-| `end` | Scroll to the end                                        |         |
-| `n` | Add a comment                                            |         |
-| `d` | Delete a comment                                         |         |
-| `n` | Create a link between work items                         |         |
-| `v` | View details of a work item                              |         |
-| `d` | Delete a link between work items                         |         |
-| `n` | Add a web link to a work item                            |         |
-| `d` | Delete a web link from a work item                       |         |
-| `n` | Add a subtask to a work item                             |         |
-| `^e` | Edit the (text) content of a resource                    |         |
-| `^l` | View the worklog of a work item                          |         |
-| `^t` | [DEPRECATED] Log work for a work item. Use `^l` instead. |         |
-| `^f` | Flag a work item                                         |         |
-| `n` | Log work done for a work item                            |         |
-| `^o` | Open resource in the browser                             |         |
-| `d` | Delete worklog entry                                     |         |
-| `^e` | Edit worklog entry                                       |         |
-| `d` | Empty recent history                                     |         |
-| `v` | View the text content of a resource                      |         |
-| `c` | Copy the text content of a resource                      |         |
-| `^s` | Save the text content of a resource                      |         |
-| `^e` | Edit JQL expressions                                     |         |
-| `^u`, `n` | Attach a file to a work item                             |         |
-| `^o` | Open attachment                                          |         |
-| `d` | Delete attachment                                        |         |
+| `f2`                    | View details of your Jira server                         |         |
+| `f3`                    | View the configuration file                              |         |
+| `p`                     | Focuses the project dropdown                             |         |
+| `t`                     | Focuses the work item types dropdown                     |         |
+| `s`                     | Focuses the work item statuses dropdown                  |         |
+| `a`                     | Focuses the assignee dropdown                            |         |
+| `k`                     | Focuses the work item key search input                   |         |
+| `f`                     | Focuses the created-from search input                    |         |
+| `u`                     | Focuses the created-until search input                   |         |
+| `o`                     | Focuses the sorting search input                         |         |
+| `v`                     | Focuses the active-sprint search input                   |         |
+| `j`                     | Focuses the JQL search input                             |         |
+| `^r`                    | Search work items                                        |         |
+| `/`                     | Perform a full-text search of work items                 |         |
+| `1`                     | Focuses the search results table                         |         |
+| `2`                     | Focuses the work item information tab                    |         |
+| `3`                     | Focuses the work item details tab                        |         |
+| `4`                     | Focuses the work item comments tab                       |         |
+| `5`                     | Focuses the related work items tab                       |         |
+| `6`                     | Focuses the attachments tab                              |         |
+| `7`                     | Focuses the web links tab                                |         |
+| `8`                     | Focuses the work item subtasks tab                       |         |
+| `^n`                    | Creates a new work item                                  |         |
+| `f7`                    | Shows the recent history                                 |         |
+| `^k`                    | Copy the work item key                                   |         |
+| `^j`                    | Copy the work item URL                                   |         |
+| `^g`                    | Creates a Git branch for a work item                     |         |
+| `.`                     | Filter work items in the search results table            |         |
+| `alt+left`              | Go to the previous page                                  |         |
+| `alt+right`             | Go to the next page                                      |         |
+| `d`                     | Deletes a resource                                       |         |
+| `f6`                    | View items related to the selected work item             |         |
+| `enter`                 | Select the item under the cursor                         |         |
+| `up`                    | Move up                                                  |         |
+| `down`                  | Move down                                                |         |
+| `right`                 | Move to the right                                        |         |
+| `left`                  | Move to the left                                         |         |
+| `pageup`                | Move 1 page up                                           |         |
+| `pagedown`              | Move 1 page down                                         |         |
+| `^home`                 | Scroll to the top                                        |         |
+| `^end`                  | Scroll to the bottom                                     |         |
+| `home`                  | Scroll to the beginning                                  |         |
+| `end`                   | Scroll to the end                                        |         |
+| `n`                     | Add a comment                                            |         |
+| `d`                     | Delete a comment                                         |         |
+| `n`                     | Create a link between work items                         |         |
+| `v`                     | View details of a work item                              |         |
+| `d`                     | Delete a link between work items                         |         |
+| `n`                     | Add a web link to a work item                            |         |
+| `d`                     | Delete a web link from a work item                       |         |
+| `n`                     | Add a subtask to a work item                             |         |
+| `^e`                    | Open text editor                                         |
+| `^e`                    | Edit the (text) content of a resource                    |         |
+| `^l`                    | View the worklog of a work item                          |         |
+| `^t`                    | [DEPRECATED] Log work for a work item. Use `^l` instead. |         |
+| `^f`                    | Flag a work item                                         |         |
+| `n`                     | Log work done for a work item                            |         |
+| `^o`                    | Open resource in the browser                             |         |
+| `d`                     | Delete worklog entry                                     |         |
+| `^e`                    | Edit worklog entry                                       |         |
+| `d`                     | Empty recent history                                     |         |
+| `v`                     | View the text content of a resource                      |         |
+| `c`                     | Copy the text content of a resource                      |         |
+| `^s`                    | Save the text content of a resource                      |         |
+| `^e`                    | Edit JQL expressions                                     |         |
+| `^u`, `n`               | Attach a file to a work item                             |         |
+| `^o`                    | Open attachment                                          |         |
+| `d`                     | Delete attachment                                        |         |
 
 
 # Searching Work Items
