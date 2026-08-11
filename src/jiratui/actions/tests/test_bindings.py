@@ -36,7 +36,7 @@ def test_standard_action_focus_search_work_item_key_filter():
 
 
 def test_standard_action_focus_search_created_from_filter():
-    assert KEY_BINDINGS_STANDARD.get('focus_search_created_from_filter').get('keys') == ['alt+f']
+    assert KEY_BINDINGS_STANDARD.get('focus_search_created_from_filter').get('keys') == ['alt+c']
 
 
 def test_standard_action_focus_search_created_until_filter():
@@ -160,19 +160,19 @@ def test_standard_action_cursor_left():
 
 
 def test_standard_action_page_up():
-    assert set(KEY_BINDINGS_STANDARD.get('page_up').get('keys')) == {'pageup', 'ctrl+b'}
+    assert set(KEY_BINDINGS_STANDARD.get('page_up').get('keys')) == {'ctrl+u'}
 
 
 def test_standard_action_page_down():
-    assert KEY_BINDINGS_STANDARD.get('page_down').get('keys') == ['pagedown']
+    assert KEY_BINDINGS_STANDARD.get('page_down').get('keys') == ['ctrl+d']
 
 
 def test_standard_action_scroll_top():
-    assert KEY_BINDINGS_STANDARD.get('scroll_top').get('keys') == ['ctrl+home']
+    assert KEY_BINDINGS_STANDARD.get('scroll_top').get('keys') == ['g']
 
 
 def test_standard_action_scroll_bottom():
-    assert KEY_BINDINGS_STANDARD.get('scroll_bottom').get('keys') == ['ctrl+end']
+    assert KEY_BINDINGS_STANDARD.get('scroll_bottom').get('keys') == ['G']
 
 
 def test_standard_action_scroll_home():

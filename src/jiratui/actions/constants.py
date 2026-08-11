@@ -1,3 +1,11 @@
+"""
+Important: keep the following points in mind when adding new keybindings:
+- A ctrl+h binding is silently dead. `alt+h` works fine. See this for
+reference: https://github.com/whyisdifficult/jiratui/pull/327#issuecomment-5251489215
+- `alt+f` will not work, similar to `alt+b`, because they are `ctrl+right` and `ctrl+left`, respectively
+(not sure why). See this for reference: https://github.com/whyisdifficult/jiratui/pull/327#issuecomment-5253519049
+"""
+
 KEY_BINDINGS_LEGACY = {
     'help': {
         'keys': ['f1', 'ctrl+question_mark', 'ctrl+shift+slash'],
@@ -460,7 +468,7 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'Focuses the work item key search input',
     },
     'focus_search_created_from_filter': {
-        'keys': ['alt+f'],
+        'keys': ['alt+c'],
         'show': False,
         'description': 'Focuses the created-from search input',
         'tooltip': 'Focuses the created-from search input',
@@ -654,25 +662,25 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'Move to the left',
     },
     'page_up': {
-        'keys': ['pageup', 'ctrl+b'],
+        'keys': ['ctrl+u'],
         'show': False,
         'description': 'Move 1 page up',
         'tooltip': 'Move 1 page up',
     },
     'page_down': {
-        'keys': ['pagedown'],
+        'keys': ['ctrl+d'],
         'show': False,
         'description': 'Move 1 page down',
         'tooltip': 'Move 1 page down',
     },
     'scroll_top': {
-        'keys': ['ctrl+home'],
+        'keys': ['g'],
         'show': False,
         'description': 'Scroll to the top',
         'tooltip': 'Scroll to the top',
     },
     'scroll_bottom': {
-        'keys': ['ctrl+end'],
+        'keys': ['G'],
         'show': False,
         'description': 'Scroll to the bottom',
         'tooltip': 'Scroll to the bottom',
