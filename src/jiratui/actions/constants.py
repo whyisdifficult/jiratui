@@ -274,6 +274,18 @@ KEY_BINDINGS_LEGACY = {
         'description': 'Scroll to the end',
         'tooltip': 'Scroll to the end',
     },
+    'scroll_up': {
+        'keys': ['up'],
+        'show': False,
+        'description': 'Scroll up the page',
+        'tooltip': 'Scroll up the page',
+    },
+    'scroll_down': {
+        'keys': ['down'],
+        'show': False,
+        'description': 'Scroll down the page',
+        'tooltip': 'Scroll down the page',
+    },
     # datatable bindings - end
     'add_comment': {
         'keys': ['n'],
@@ -696,6 +708,18 @@ KEY_BINDINGS_STANDARD = {
         'show': False,
         'description': 'Scroll to the end',
         'tooltip': 'Scroll to the end',
+    },
+    'scroll_up': {
+        'keys': ['up', 'k'],
+        'show': False,
+        'description': 'Scroll up the page',
+        'tooltip': 'Scroll up the page',
+    },
+    'scroll_down': {
+        'keys': ['down', 'j'],
+        'show': False,
+        'description': 'Scroll down the page',
+        'tooltip': 'Scroll down the page',
     },
     # Comments
     'add_comment': {

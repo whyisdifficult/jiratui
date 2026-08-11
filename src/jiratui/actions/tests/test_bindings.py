@@ -183,6 +183,14 @@ def test_standard_action_scroll_end():
     assert KEY_BINDINGS_STANDARD.get('scroll_end').get('keys') == ['end']
 
 
+def test_standard_action_scroll_up():
+    assert set(KEY_BINDINGS_STANDARD.get('scroll_up').get('keys')) == {'up', 'k'}
+
+
+def test_standard_action_scroll_down():
+    assert set(KEY_BINDINGS_STANDARD.get('scroll_down').get('keys')) == {'down', 'j'}
+
+
 def test_standard_action_add_comment():
     assert KEY_BINDINGS_STANDARD.get('add_comment').get('keys') == ['a']
 
@@ -453,6 +461,14 @@ def test_legacy_action_scroll_home():
 
 def test_legacy_action_scroll_end():
     assert KEY_BINDINGS_LEGACY.get('scroll_end').get('keys') == ['end']
+
+
+def test_legacy_action_scroll_up():
+    assert KEY_BINDINGS_LEGACY.get('scroll_up').get('keys') == ['up']
+
+
+def test_legacy_action_scroll_down():
+    assert KEY_BINDINGS_LEGACY.get('scroll_down').get('keys') == ['down']
 
 
 def test_legacy_action_add_comment():

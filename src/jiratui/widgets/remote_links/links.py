@@ -30,6 +30,12 @@ class IssueRemoteLinkCollapsible(Actionable, Collapsible, inherit_bindings=False
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
         'delete_remote_link',
+        'page_up',
+        'page_down',
+        'scroll_home',
+        'scroll_end',
+        'scroll_up',
+        'scroll_down',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
@@ -109,6 +115,12 @@ class IssueRemoteLinksWidget(Actionable, VerticalScroll, inherit_bindings=False)
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
         'add_remote_link',
+        'page_up',
+        'page_down',
+        'scroll_home',
+        'scroll_end',
+        'scroll_up',
+        'scroll_down',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(

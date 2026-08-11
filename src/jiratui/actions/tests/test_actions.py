@@ -13,6 +13,7 @@ from typing import cast
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
+from textual.widget import Widget
 from textual.widgets import DataTable
 
 from jiratui.actions.keys import get_application_key_bindings
@@ -1474,6 +1475,320 @@ async def test_action_add_comment(
         action_add_comment_mock.assert_called_once()
 
 
+@patch.object(Widget, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_up_mock.assert_called()
+
+
+@patch.object(Widget, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_down_mock.assert_called()
+
+
+@patch.object(Widget, 'action_scroll_home')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_home_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_home_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_home_mock.assert_called()
+
+
+@patch.object(Widget, 'action_scroll_end')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_end_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_end_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_end_mock.assert_called()
+
+
+@patch.object(Widget, 'action_scroll_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_up_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_up_mock.assert_called()
+
+
+@patch.object(Widget, 'action_scroll_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_down_in_comments_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body='I will study',
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_down_mock.assert_called()
+
+
 @patch.object(CommentCollapsible, 'action_delete_comment')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -1850,6 +2165,330 @@ async def test_action_unlink_work_item_from_related_issues_tab(
         action_unlink_work_item_mock.assert_awaited_once()
 
 
+@patch.object(Widget, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_home')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_home_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_home_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_home_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_end')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_end_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_end_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_end_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_up_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_up_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_down_in_related_issues_tab(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].related_issues = [
+        RelatedJiraIssue(
+            id='3',
+            key='WI-3',
+            summary='Issue 3',
+            status=IssueStatus(id='1', name='Open'),
+            issue_type=IssueType(id='1', name='Task'),
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.related_issues_widget.issues = WorkItemRelatedItems(
+            work_item_key=jira_issues[1].key, related_items=jira_issues[1].related_issues
+        )
+        await pilot.press(bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_down_mock.assert_called_once()
+
+
 @patch.object(APIController, 'get_issue_remote_links')
 @patch.object(IssueRemoteLinksWidget, 'action_add_remote_link')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -1908,6 +2547,370 @@ async def test_action_add_remote_link_from_links_tab(
         await app.workers.wait_for_complete()
         # THEN
         action_add_remote_link_mock.assert_awaited_once()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_up_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_up_mock.assert_called()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_down_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_down_mock.assert_called()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_scroll_home')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_home_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_home_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_home_mock.assert_called()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_scroll_end')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_end_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_end_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_end_mock.assert_called()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_scroll_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_up_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_up_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_up_mock.assert_called()
+
+
+@patch.object(APIController, 'get_issue_remote_links')
+@patch.object(Widget, 'action_scroll_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_down_from_remote_links_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_down_mock: AsyncMock,
+    get_issue_remote_links_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    get_issue_remote_links_mock.return_value = APIControllerResponse(
+        result=[
+            IssueRemoteLink(
+                id='1',
+                global_id='1',
+                relationship='relates to',
+                title='Link 1',
+                summary='Link',
+                url='http://foo.bar',
+                application_name='Application 1',
+                status_title='Ok',
+                status_resolved=None,
+            )
+        ]
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_remote_links_widget.issue_key = jira_issues[1].key
+        await pilot.press(bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_down_mock.assert_called()
 
 
 @patch.object(APIController, 'get_issue_remote_links')
@@ -2758,3 +3761,251 @@ async def test_action_open_go_to_screen_with_selected_subtask_from_subtasks_tab(
         await app.workers.wait_for_complete()
         # THEN
         action_open_go_to_screen_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_home')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_home_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_home_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_home_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_end')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_end_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_end_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_end_mock.assert_called_once()
+
+
+@patch.object(Widget, 'action_scroll_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_up_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_up', {}).get('keys', [])[-1])
+        # THEN
+        action_scroll_up_mock.assert_called()
+
+
+@patch.object(Widget, 'action_scroll_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_down_in_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # tests the action page_up to open the screen to add a new work item from the Subtasks tab; a
+    # work item must be selected in the results tab
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[-1])
+        # THEN
+        action_scroll_down_mock.assert_called()

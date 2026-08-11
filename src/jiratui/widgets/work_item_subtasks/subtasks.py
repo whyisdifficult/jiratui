@@ -130,6 +130,12 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
         'create_work_item_subtask',
+        'page_up',
+        'page_down',
+        'scroll_home',
+        'scroll_end',
+        'scroll_up',
+        'scroll_down',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(

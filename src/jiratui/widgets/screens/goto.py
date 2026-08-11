@@ -86,7 +86,7 @@ class GoToItemsTable(Actionable, DataTable):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Stores the key of the currently-highlighted item."""
-        if event.row_key:
+        if event.row_key and event.row_key.value:
             self.__current_work_item_key = event.row_key.value.split(':')[-1]
 
     def action_open_in_browser(self) -> None:
