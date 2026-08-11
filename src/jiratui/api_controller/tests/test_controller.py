@@ -158,7 +158,7 @@ async def test_search_projects(search_projects_mock: Mock, jira_api_controller: 
     response = await jira_api_controller.search_projects('query1')
     # THEN
     assert response == APIControllerResponse(
-        success=True, result=[Project(id='123', name='a', key='1')], error='some error'
+        success=False, result=[Project(id='123', name='a', key='1')], error='some error'
     )
     search_projects_mock.assert_has_calls(
         [
@@ -206,7 +206,7 @@ async def test_search_projects_all_requests_raise_error(
     # WHEN
     response = await jira_api_controller.search_projects('query1')
     # THEN
-    assert response == APIControllerResponse(success=True, result=[], error='some error 1')
+    assert response == APIControllerResponse(success=False, result=[], error='some error 1')
     search_projects_mock.assert_has_calls(
         [
             call(offset=0, limit=100, query='query1', order_by=None, keys=None),
@@ -263,7 +263,7 @@ async def test_list_active_users_in_group(
     response = await jira_api_controller.list_all_active_users_in_group('1')
     # THEN
     assert response == APIControllerResponse(
-        success=True,
+        success=False,
         result=[JiraUser(account_id='123', email='a@a.com', display_name='john', active=True)],
         error='some error',
     )

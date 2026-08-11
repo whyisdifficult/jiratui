@@ -216,6 +216,36 @@ async def test_fetch_projects(
         ]
 
 
+@patch('jiratui.widgets.screen.APIController.search_projects')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@pytest.mark.asyncio
+async def test_fetch_projects_notifies_the_user_when_the_request_fails(
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_projects_mock: AsyncMock,
+    app,
+):
+    """A failed request must not look like "you have no projects"."""
+
+    # GIVEN a request that fails, e.g. because the TLS handshake could not be completed
+    search_projects_mock.return_value = APIControllerResponse(
+        success=False, result=[], error='ConnectError: certificate verify failed'
+    )
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        notify_mock = MagicMock()
+        main_screen.notify = notify_mock  # type:ignore[method-assign]
+        # WHEN
+        await main_screen.fetch_projects()
+        # THEN the dropdown is empty and the user is told why
+        assert main_screen.project_selector._options == [('', Select.NULL)]
+        notify_mock.assert_called_once_with(
+            'Failed to fetch the list of projects: ConnectError: certificate verify failed',
+            severity='error',
+        )
+
+
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch.object(APIController, 'search_projects')
