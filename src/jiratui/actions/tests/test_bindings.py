@@ -216,7 +216,11 @@ def test_standard_action_create_work_item_subtask():
 
 
 def test_standard_action_edit_content():
-    assert KEY_BINDINGS_STANDARD.get('edit_content').get('keys') == ['ctrl+e']
+    assert KEY_BINDINGS_STANDARD.get('edit_content').get('keys') == ['e']
+
+
+def test_standard_action_open_text_editor():
+    assert KEY_BINDINGS_STANDARD.get('open_text_editor').get('keys') == ['ctrl+e']
 
 
 def test_standard_action_view_content():
@@ -244,7 +248,7 @@ def test_standard_action_delete_worklog():
 
 
 def test_standard_action_edit_worklog_entry():
-    assert KEY_BINDINGS_STANDARD.get('edit_worklog_entry').get('keys') == ['ctrl+e']
+    assert KEY_BINDINGS_STANDARD.get('edit_worklog_entry').get('keys') == ['e']
 
 
 def test_standard_action_flag_work_item():
@@ -485,6 +489,10 @@ def test_legacy_action_create_work_item_subtask():
 
 def test_legacy_action_edit_content():
     assert KEY_BINDINGS_LEGACY.get('edit_content').get('keys') == ['ctrl+e']
+
+
+def test_legacy_action_open_text_editor():
+    assert KEY_BINDINGS_LEGACY.get('open_text_editor').get('keys') == ['ctrl+e']
 
 
 def test_legacy_action_view_worklog():

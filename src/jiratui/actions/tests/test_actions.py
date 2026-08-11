@@ -9,16 +9,11 @@ Running tests for this module:
 `make test`
 """
 
-import os
 from typing import cast
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
 from textual.widgets import DataTable
-
-# IMPORTANT!
-# set BEFORE any other imports that might depend on this. This allows us to test different key binding styles
-os.environ['JIRA_TUI_KEYBIND_STYLE'] = 'standard'
 
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -44,8 +39,10 @@ from jiratui.widgets.comments.comments import (
     IssueCommentsWidget,
     WorkItemComments,
 )
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
-from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
+from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget
+from jiratui.widgets.create_work_item.screen import AddWorkItemScreen, TextAreaTabbedContent
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
     IssueSearchCreatedFromWidget,
@@ -855,7 +852,7 @@ async def test_action_select_cursor_to_select_item_from_search_results(
     'key',
     [
         get_application_key_bindings().get('cursor_up', {}).get('keys', [])[0],
-        get_application_key_bindings().get('cursor_up', {}).get('keys', [])[1],
+        get_application_key_bindings().get('cursor_up', {}).get('keys', [])[-1],
     ],
 )
 @patch.object(DataTable, 'action_cursor_up')
@@ -903,7 +900,7 @@ async def test_action_cursor_up_in_search_results(
     'key',
     [
         get_application_key_bindings().get('cursor_down', {}).get('keys', [])[0],
-        get_application_key_bindings().get('cursor_down', {}).get('keys', [])[1],
+        get_application_key_bindings().get('cursor_down', {}).get('keys', [])[-1],
     ],
 )
 @patch.object(DataTable, 'action_cursor_down')
@@ -951,7 +948,7 @@ async def test_action_cursor_down_in_search_results(
     'key',
     [
         get_application_key_bindings().get('page_up', {}).get('keys', [])[0],
-        get_application_key_bindings().get('page_up', {}).get('keys', [])[1],
+        get_application_key_bindings().get('page_up', {}).get('keys', [])[-1],
     ],
 )
 @patch.object(DataTable, 'action_page_up')
@@ -1323,6 +1320,106 @@ async def test_action_save_content_from_add_work_item_screen(
         await pilot.press(bindings.get('save_content', {}).get('keys', [])[0])
         # THEN
         action_save_content_mock.assert_called_once()
+
+
+@patch.object(TextAreaTabbedContent, 'action_open_text_editor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_open_text_editor_from_add_work_item_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_open_text_editor_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # test action save_content from the screen that creates new work items
+    # GIVEN
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        app.push_screen(AddWorkItemScreen())
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press(bindings.get('open_text_editor', {}).get('keys', [])[0])
+        # THEN
+        action_open_text_editor_mock.assert_called_once()
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(ADFMarkdownTextAreaWidget, 'action_open_text_editor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_open_text_editor_with_adf_support_enabled_from_add_work_item_screen_focused_on_textarea(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_open_text_editor_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # test action save_content from the screen that creates new work items
+    # GIVEN
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        app.push_screen(AddWorkItemScreen())
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press(bindings.get('open_text_editor', {}).get('keys', [])[0])
+        # THEN
+        action_open_text_editor_mock.assert_called_once()
+
+
+@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(PlainTextTextAreaWidget, 'action_open_text_editor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_open_text_editor_without_adf_support_enabled_from_add_work_item_screen_focused_on_textarea(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_open_text_editor_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # test action save_content from the screen that creates new work items
+    # GIVEN
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        app.push_screen(AddWorkItemScreen())
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press(bindings.get('open_text_editor', {}).get('keys', [])[0])
+        # THEN
+        action_open_text_editor_mock.assert_called_once()
 
 
 @patch.object(IssueCommentsWidget, 'action_add_comment')

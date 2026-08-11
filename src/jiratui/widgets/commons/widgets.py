@@ -1427,7 +1427,7 @@ class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateF
     # set up the key-bindings based on the configuration selected by the user
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
-        'edit_content',
+        'open_text_editor',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
@@ -1501,7 +1501,7 @@ class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateF
             )
         self.add_class('create-work-item-description')
 
-    def action_edit_content(self):
+    def action_open_text_editor(self):
         self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> str | None:

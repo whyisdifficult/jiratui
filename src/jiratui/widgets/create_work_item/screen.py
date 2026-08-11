@@ -81,7 +81,7 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
     # set up the key-bindings based on the configuration selected by the user
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
-        'edit_content',
+        'open_text_editor',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
@@ -144,13 +144,11 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
     def edit_plain_text_content(self, event: PlainTextTextAreaWidget.EditContent) -> None:
         self._edit_text_content(event.content)
 
-    def action_edit_content(self) -> None:
-        """Handle '^e' key press in this widget."""
+    def action_open_text_editor(self) -> None:
         widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
             self._get_textarea_widget()
         )
         if widget is not None:
-            self.notify(f'Trying to update content of the textarea widget: {widget.id}')
             self._edit_text_content(widget.text)
 
     def _open_as_temporary_file(self, command: str, content: str) -> str:

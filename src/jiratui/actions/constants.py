@@ -321,6 +321,12 @@ KEY_BINDINGS_LEGACY = {
         'description': '\u270e',
         'tooltip': 'Edit the (text) content of a resource',
     },
+    'open_text_editor': {
+        'keys': ['ctrl+e'],
+        'show': True,
+        'description': '\u270e',
+        'tooltip': 'Open external editor',
+    },
     'view_worklog': {
         'keys': ['ctrl+l', 'ctrl+t'],
         'show': True,
@@ -737,10 +743,16 @@ KEY_BINDINGS_STANDARD = {
     },
     # Content Editing
     'edit_content': {
-        'keys': ['ctrl+e'],
+        'keys': ['e'],
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit the (text) content of a resource',
+    },
+    'open_text_editor': {
+        'keys': ['ctrl+e'],
+        'show': True,
+        'description': '\u270e',
+        'tooltip': 'Open text editor',
     },
     'view_content': {
         'keys': ['v'],
@@ -780,7 +792,7 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'Delete worklog entry',
     },
     'edit_worklog_entry': {
-        'keys': ['ctrl+e'],
+        'keys': ['e'],
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit worklog entry',
