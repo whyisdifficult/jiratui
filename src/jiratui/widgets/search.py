@@ -409,25 +409,25 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         if action == 'next_issues_page':
             if self.token_by_page.get(self.page + 1):
                 return True
-            if self.page > 0:
-                return True
             return False
         return True
 
     async def action_previous_issues_page(self):
         if self.page > 1:
-            next_page_token = self.token_by_page.get(self.page - 1)
+            # if there is no token then the 1st page wil be retrieved; otherwise the page with the given token is
+            # fetched
+            previous_page_token = self.token_by_page.get(self.page - 1)
             self.page -= 1
             screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            await screen.search_issues(next_page_token, page=self.page)
+            await screen.search_issues(previous_page_token, page=self.page)
             self.refresh_bindings()
 
     async def action_next_issues_page(self):
-        next_page_token = self.token_by_page.get(self.page + 1)
-        self.page += 1
-        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-        await screen.search_issues(next_page_token, page=self.page)
-        self.refresh_bindings()
+        if next_page_token := self.token_by_page.get(self.page + 1):
+            self.page += 1
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            await screen.search_issues(next_page_token, page=self.page)
+            self.refresh_bindings()
 
     def action_open_go_to_screen(self) -> None:
         """Opens a modal screen to show the work items related to the work item selected by the user in the search

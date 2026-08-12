@@ -572,7 +572,6 @@ async def test_open_goto_screen_with_goto_disabled(
         assert isinstance(app.screen, MainScreen)
 
 
-@pytest.mark.xfail(reason='Logic needs fixing')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -580,7 +579,7 @@ async def test_open_goto_screen_with_goto_disabled(
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_next_page_search_results(
-    search_projects_mock: AsyncMock,
+    fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
@@ -596,16 +595,14 @@ async def test_click_next_page_search_results(
         # GIVEN
         search_work_items_mock.side_effect = [
             WorkItemSearchResult(
-                total=1,
+                total=2,
                 response=JiraIssueSearchResponse(
-                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                    issues=[jira_issues[0]], next_page_token='token_a'
                 ),
             ),
             WorkItemSearchResult(
-                total=1,
-                response=JiraIssueSearchResponse(
-                    issues=[jira_issues[1]], next_page_token=None, is_last=True
-                ),
+                total=2,
+                response=JiraIssueSearchResponse(issues=[jira_issues[1]], is_last=True),
             ),
         ]
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
@@ -624,7 +621,6 @@ async def test_click_next_page_search_results(
         assert main_screen.search_results_container.border_subtitle == 'Page 2 of 2 (total: 2)'
 
 
-@pytest.mark.xfail(reason='Logic needs fixing')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -632,7 +628,7 @@ async def test_click_next_page_search_results(
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_click_next_page_search_results_with_missing_token(
-    search_projects_mock: AsyncMock,
+    fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
     search_work_items_mock: AsyncMock,
@@ -667,7 +663,6 @@ async def test_click_next_page_search_results_with_missing_token(
         assert main_screen.search_results_table.page == 1
 
 
-@pytest.mark.xfail(reason='Logic needs fixing')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -691,21 +686,18 @@ async def test_click_previous_page_search_results(
         # GIVEN
         search_work_items_mock.side_effect = [
             WorkItemSearchResult(
-                total=1,
+                total=2,
                 response=JiraIssueSearchResponse(
-                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                    issues=[jira_issues[0]], next_page_token='token_a', is_last=False
                 ),
             ),
             WorkItemSearchResult(
-                total=1,
-                response=JiraIssueSearchResponse(
-                    issues=[jira_issues[1]], next_page_token=None, is_last=True
-                ),
+                total=2, response=JiraIssueSearchResponse(issues=[jira_issues[1]], is_last=True)
             ),
             WorkItemSearchResult(
-                total=1,
+                total=2,
                 response=JiraIssueSearchResponse(
-                    issues=[jira_issues[0]], next_page_token='token_a', is_last=None
+                    issues=[jira_issues[0]], next_page_token='token_a', is_last=False
                 ),
             ),
         ]
@@ -724,7 +716,7 @@ async def test_click_previous_page_search_results(
         )
         assert main_screen.search_results_table.page == 1
         assert main_screen.search_results_table.current_work_item_key == jira_issues[0].key
-        assert main_screen.search_results_container.border_subtitle == 'Page 1 of 2 (total: 1)'
+        assert main_screen.search_results_container.border_subtitle == 'Page 1 of 2 (total: 2)'
 
 
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue')
