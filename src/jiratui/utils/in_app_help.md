@@ -6,7 +6,7 @@ configure the tool or more details on how the tool works you can refer to the of
 
 # Navigating the UI
 
-Starting with `v1.3.0`, JiraTUI allows you to choose the style of keybindings you want to use. You can do so by setting
+Starting with `v1.13.0`, JiraTUI allows you to choose the style of keybindings you want to use. You can do so by setting
 the variable `key_bindings_style` in the configuration file. The default value is `legacy`. The other option is
 `standard`.
 
@@ -18,9 +18,9 @@ context.
 
 | Keys         | Description                                            | Context                                                                 |
 |--------------|--------------------------------------------------------|-------------------------------------------------------------------------|
-| `tab`        | Focus next element                                     |                                                                         |
-| `^q`         | Closes the app                                         |                                                                         |
-| `q`          | Closes the app                                         |                                                                         |
+| `tab`        | Focus next element                                     | Anywhere                                                          |
+| `^q`         | Closes the app                                         | Main Screen                                                             |
+| `q`          | Closes the app                                         | Main Screen                                                             |
 | `f1`         | Open the help                                          | Main Screen                                                             |
 | `f2`         | View details of your Jira server                       | Main Screen                                                             |
 | `f3`         | View the configuration file                            | Main Screen                                                             |
@@ -60,11 +60,11 @@ context.
 | `right`, `l` | Move to the right                                      | Search results table                                                    |
 | `left`, `h`  | Move to the left                                       | Search results table                                                    |
 | `^u`         | Move 1 page up                                         | Search results table, Scrollable content                                |
-| `^d`         | Move 1 page down                                       | Search results table, Scrollable content                                                  |
+| `^d`         | Move 1 page down                                       | Search results table, Scrollable content                                |
 | `g`          | Scroll to the top                                      | Search results table, Scrollable content                                |
 | `G`          | Scroll to the bottom                                   | Search results table, Scrollable content                                |
-| `home`       | Scroll to the beginning                                | Search results table                                                    |
-| `end`        | Scroll to the end                                      | Search results table                                                    |
+| `g`          | Scroll to the beginning                                | Search results table                                                    |
+| `G`          | Scroll to the end                                      | Search results table                                                    |
 | `up`, `k`    | Scroll up                                              | Scrollable content                                                      |
 | `down`, `j`  | Scroll down                                            | Scrollable content                                                      |
 | `a`          | Add a comment                                          | Comments Tab                                                            |

@@ -15,6 +15,7 @@ configured in the config file via the variable `key_bindings_style`. By [@whyisd
 ### Bug Fixes
 
 - Fix logic that updates a work item to allow updating the reporter. By [@DriesOlbrechts](https://github.com/DriesOlbrechts) in https://github.com/whyisdifficult/jiratui/pull/322
+- Fix bug in pagination logic within the search results table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
 
 ### Minor Improvements
 
