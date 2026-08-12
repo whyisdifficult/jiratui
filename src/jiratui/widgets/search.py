@@ -21,7 +21,7 @@ from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 
 
 # TODO move to screens module and/or merge with existing confirmation screen
@@ -441,7 +441,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
         if CONFIGURATION.get().enable_goto and self.current_work_item_key:
             self.app.push_screen(
-                GotToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
+                GoToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.current_work_item_key:

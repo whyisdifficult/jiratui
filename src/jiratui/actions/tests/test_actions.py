@@ -66,7 +66,7 @@ from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.config import ConfigFileScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.git import GitScreen
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.help import HelpScreen
 from jiratui.widgets.screens.history import HistoryScreen
 from jiratui.widgets.screens.jql import JQLEditorScreen
@@ -374,7 +374,7 @@ async def test_key_to_open_goto_screen(
         await app.workers.wait_for_complete()
         # THEN
         search_work_items_mock.assert_awaited_once()
-        assert isinstance(app.screen, GotToScreen)
+        assert isinstance(app.screen, GoToScreen)
 
 
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
@@ -4548,7 +4548,7 @@ async def test_action_cursor_up_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
         # THEN
@@ -4576,7 +4576,7 @@ async def test_action_cursor_down_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
         # THEN
@@ -4604,7 +4604,7 @@ async def test_action_page_up_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
         # THEN
@@ -4632,7 +4632,7 @@ async def test_action_page_down_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
         # THEN
@@ -4660,7 +4660,7 @@ async def test_action_scroll_top_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
         # THEN
@@ -4688,7 +4688,7 @@ async def test_action_scroll_bottom_in_goto_screen(
         result=JiraIssueSearchResponse(issues=jira_issues)
     )
     async with app.run_test() as pilot:
-        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
         await pilot.press('tab')
         await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
         # THEN

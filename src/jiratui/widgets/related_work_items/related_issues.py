@@ -20,7 +20,7 @@ from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -154,7 +154,7 @@ class RelatedIssueCollapsible(Actionable, Collapsible, inherit_bindings=False): 
 
         if CONFIGURATION.get().enable_goto and self.work_item_key:
             self.app.push_screen(
-                GotToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
+                GoToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.work_item_key:

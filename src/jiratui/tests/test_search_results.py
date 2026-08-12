@@ -9,7 +9,7 @@ from jiratui.app import JiraApp
 from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, WorkItemsSearchOrderBy
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.search import (
     ConfirmDeleteItemScreen,
     IssuesSearchResultsTable,
@@ -532,7 +532,7 @@ async def test_open_goto_screen_with_goto_enabled(
         await pilot.press('f6')
         # THEN
         assert main_screen.search_results_table.has_focus
-        assert isinstance(app.screen, GotToScreen)
+        assert isinstance(app.screen, GoToScreen)
 
 
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')

@@ -115,8 +115,7 @@ class GoToItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ign
                 self.notify('Work item URL copied!')
 
 
-# TODO rename
-class GotToScreen(ModalScreen[str]):
+class GoToScreen(ModalScreen[str]):
     """A modal screen that display work items related to another work item.
 
     The screen is responsible for:
