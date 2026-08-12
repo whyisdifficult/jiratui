@@ -14,6 +14,10 @@ configured in the config file via the variable `key_bindings_style`. By [@whyisd
 
 ### Bug Fixes
 
+- `APIController.search_projects()` and `APIController.list_all_active_users_in_group()` returned `success=True` when
+a request raised an exception, so callers could not tell a failure apart from an empty result. The main screen relies
+on `success` to notify the user, which meant that a failure to fetch the projects, e.g. a TLS error, left the projects
+dropdown silently empty. By [@devHaitham481](https://github.com/devHaitham481) in https://github.com/whyisdifficult/jiratui/pull/328
 - Fix logic that updates a work item to allow updating the reporter. By [@DriesOlbrechts](https://github.com/DriesOlbrechts) in https://github.com/whyisdifficult/jiratui/pull/322
 - Fix bug in pagination logic within the search results table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
 

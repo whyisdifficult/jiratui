@@ -282,7 +282,7 @@ class APIController:
 
         This method implements pagination in order to retrieve all the projects that satisfy the search criteria in a
         single operation. If an exception occurs while fetching any of the pages then the method will return the list
-        of projects found so far with an additional error message.
+        of projects found so far with `success=False` and an additional error message.
 
         Args:
             query: filter the results using a literal string. Projects with a matching key or name are returned
@@ -293,7 +293,8 @@ class APIController:
 
         Returns:
             An instance of `APIControllerResponse` with the list of `Project` instances. If an error occurs an
-            instance of `APIControllerResponse` with the `error` message.
+            instance of `APIControllerResponse` with `success=False`, the projects found so far and the `error`
+            message.
         """
 
         projects: list[Project] = []
@@ -322,7 +323,7 @@ class APIController:
                     },
                 )
                 return APIControllerResponse(
-                    result=projects, error=exception_details.get('message')
+                    success=False, result=projects, error=exception_details.get('message')
                 )
             else:
                 for project in response.get('values', []):
@@ -479,7 +480,7 @@ class APIController:
         """Retrieves all the active users in a group.
 
         If an exception occurs while fetching any of the pages then the method will return the list of users found so
-        far with an additional error message.
+        far with `success=False` and an additional error message.
 
         Args:
             group_id: the ID of the Jira users group.
@@ -511,6 +512,7 @@ class APIController:
                     },
                 )
                 return APIControllerResponse(
+                    success=False,
                     result=sorted(users, key=lambda x: x.display_name or x.email or x.account_id),
                     error=exception_details.get('message'),
                 )
