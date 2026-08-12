@@ -31,9 +31,8 @@ class HelpScreen(ModalScreen):
     def _get_in_app_help_filename() -> str:
         filename = inspect.getfile(HelpScreen)
         directory = os.path.dirname(filename)
-        directories = directory.split('/')[:-1]
-        directories.append('utils/in_app_help.md')
-        return '/'.join(directories)
+        directories = directory.rsplit('jiratui', 1)[0].rstrip('/')
+        return '/'.join([directories, 'jiratui/utils/in_app_help.md'])
 
     async def on_mount(self):
         viewer = self.query_one(MarkdownViewer)

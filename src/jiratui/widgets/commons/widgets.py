@@ -81,6 +81,8 @@ from textual.validation import Number, ValidationResult
 from textual.widgets import Input, MaskedInput, Select, SelectionList, Static, TextArea
 from textual.widgets.selection_list import Selection
 
+from jiratui.actions.keys import get_application_key_bindings
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.commons.base import (
     BaseFieldWidget,
@@ -1385,7 +1387,7 @@ class MultiUserPickerWidget(Input):
             self.cursor_position = len(self.value)
 
 
-class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
+class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified textarea widget for non-ADF fields that supports CREATE and UPDATE modes.
 
     **Features**:
@@ -1421,8 +1423,33 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     ```
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_text_editor',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
-        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     @dataclass
@@ -1474,7 +1501,7 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
             )
         self.add_class('create-work-item-description')
 
-    def action_edit_content(self):
+    def action_open_text_editor(self):
         self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> str | None:

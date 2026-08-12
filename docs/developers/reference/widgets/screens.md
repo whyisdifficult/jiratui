@@ -113,6 +113,6 @@
 ```{autodoc2-object} jiratui.widgets.screens.history.HistoryScreen
 ```
 
-## GotToScreen
-```{autodoc2-object} jiratui.widgets.screens.goto.GotToScreen
+## GoToScreen
+```{autodoc2-object} jiratui.widgets.screens.goto.GoToScreen
 ```

@@ -10,6 +10,7 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static, TabbedContent, TabPane
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorkItemFields
 from jiratui.utils.styling import (
@@ -17,6 +18,7 @@ from jiratui.utils.styling import (
     get_style_for_work_item_status,
     get_style_for_work_item_type,
 )
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
@@ -55,7 +57,7 @@ class QuickViewDetails(DataTable):
                 self.post_message(self.WorkItemSelected(key))
 
 
-class WorkItemQuickViewScreen(ModalScreen[str]):
+class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
     """A modal screen that displays the details of a work item in read-only mode.
 
     This screen can be dismissed with an optional string. The string represents the key of a work item that we want to
@@ -75,41 +77,38 @@ class WorkItemQuickViewScreen(ModalScreen[str]):
     - [Architecture](#architecture-work-item-subtasks-classes)
     """
 
-    BINDINGS = [
-        ('escape', 'app.pop_screen', 'Close'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_in_browser',
+        'copy_issue_key',
+        'copy_issue_url',
+        'search',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='ctrl+o',
-            action='open_issue_in_browser',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open in browser',
-        ),
-        Binding(
-            key='ctrl+k',
-            action='copy_issue_key',
-            description='Copy Key',
-            show=True,
-            key_display='^k',
-            tooltip='Copy key',
-        ),
-        Binding(
-            key='ctrl+j',
-            action='copy_issue_url',
-            description='Copy URL',
-            show=True,
-            key_display='^j',
-            tooltip='Copy URL',
-        ),
-        Binding(
-            key='ctrl+r',
-            action='search_work_item',
-            description='Search Work Item',
-            show=True,
-            key_display='^r',
-            tooltip='Search and Fetch Work Item',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
+
     TITLE = 'Work Item Details'
 
     def __init__(self, work_item_key: str):
@@ -298,7 +297,7 @@ class WorkItemQuickViewScreen(ModalScreen[str]):
                             )
                         )
 
-    def action_open_issue_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self._work_item_key:
             self.notify('Opening Work Item in the browser...')
@@ -317,7 +316,7 @@ class WorkItemQuickViewScreen(ModalScreen[str]):
                 self.app.copy_to_clipboard(url)
                 self.notify('Work item URL copied!')
 
-    def action_search_work_item(self) -> None:
+    def action_search(self) -> None:
         """Dismisses the screen with the key of the work item being displayed."""
         if self._work_item_key:
             self.dismiss(self._work_item_key)

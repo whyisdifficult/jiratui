@@ -2,11 +2,51 @@ import json
 
 from rich.text import Text
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, TextArea
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.config import CONFIGURATION
+from jiratui.utils.ui_actions import Actionable, UIAction
+
+
+class ConfigTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'select_cursor',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ]
 
 
 class ConfigFileScreen(ModalScreen):
@@ -16,14 +56,13 @@ class ConfigFileScreen(ModalScreen):
     TITLE = 'JiraTUI Configuration'
 
     @property
-    def datatable_config_info(self) -> DataTable:
-        return self.query_one('#config-details', expect_type=DataTable)
+    def datatable_config_info(self) -> ConfigTable:
+        return self.query_one('#config-details', expect_type=ConfigTable)
 
     def compose(self) -> ComposeResult:
-        vertical = Vertical()
-        vertical.border_title = self.TITLE
-        with vertical:
-            yield DataTable(cursor_type='row', show_header=False, id='config-details')
+        with Vertical() as vertical:
+            vertical.border_title = self.TITLE
+            yield ConfigTable(cursor_type='row', show_header=False, id='config-details')
             if CONFIGURATION.get().pre_defined_jql_expressions:
                 jql_expressions_textarea = TextArea.code_editor(
                     language='json',

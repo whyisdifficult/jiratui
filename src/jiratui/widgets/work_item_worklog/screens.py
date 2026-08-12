@@ -23,6 +23,7 @@ from textual.widgets import (
     Static,
 )
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import (
     JiraIssue,
@@ -31,6 +32,7 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     TimeTracking,
 )
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_work_log
 from jiratui.widgets.work_item_worklog.widgets import (
     LogDateTimeInput,
@@ -61,43 +63,53 @@ class LogWorkScreenResult:
     worklog_id: str | None = None  # required when editing a og entry
 
 
-class WorkLogCollapsible(Collapsible):
+class WorkLogCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible widget to display information of a worklog and to handle opening the worklog details in the
     browser and deleting work logs.
 
     This widget is responsible for:
     - posting a message [LogEntryDeleted](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.LogEntryDeleted)
-    when a worklog entry is deleted after the user presses `d`.
+    when a worklog entry is deleted after the user presses the key for the action `delete_worklog`.
     - opening the screen [LogWorkScreen](#jiratui.widgets.work_item_worklog.screens.LogWorkScreen) to allow the user to
-    update a worklog entry after the user presses `^e`.
+    update a worklog entry after the user presses the ley for the action `edit_worklog_entry`.
     - posting a message [UpdateLogEntry](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.UpdateLogEntry)
     when the user wants to update a worklog entry. The handler will take care of making the update.
-    - opening a worklog entry's URL in the browser when the user presses `^o`.
+    - opening a worklog entry's URL in the browser when the user presses the key for the action `open_in_browser`.
 
     **See Also**
     - [Use Case: Manage Worklog](#use-case-worklog)
     - [Architecture](#architecture-worklogs)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'delete_worklog',
+        'open_in_browser',
+        'edit_worklog_entry',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='ctrl+o',
-            action='open_in_browser',
-            description='Browse',
-            show=True,
-        ),
-        Binding(
-            key='d',
-            action='delete_worklog',
-            description='Delete',
-            show=True,
-        ),
-        Binding(
-            key='ctrl+e',
-            action='edit_worklog_entry',
-            description='Edit',
-            show=True,
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     @dataclass
@@ -131,19 +143,19 @@ class WorkLogCollapsible(Collapsible):
         self._worklog_description = kwargs.pop('worklog_description', '') or ''
         super().__init__(*args, **kwargs)
 
-    def action_open_in_browser(self) -> None:
+    async def action_open_in_browser(self) -> None:
         """Opens the worklog in the default browser."""
 
         if self._url:
             self.app.open_url(self._url)
 
-    def action_delete_worklog(self) -> None:
+    async def action_delete_worklog(self) -> None:
         """Posts a message to request deleting a work log entry."""
 
         if self._worklog_id:
             self.post_message(self.LogEntryDeleted(self._worklog_id))
 
-    def action_edit_worklog_entry(self) -> None:
+    async def action_edit_worklog_entry(self) -> None:
         """Opens a [LogWorkScreen](#jiratui.widgets.work_item_worklog.screens.WorkLogCollapsible.LogWorkScreen) to
         allow the user to update a log entry.
 
@@ -173,14 +185,14 @@ class WorkLogCollapsible(Collapsible):
                     work_item_key=self._work_item_key,
                     worklog_id=self._worklog_id,
                     time_spent=data.time_spent,
-                    time_remaining=data.time_remaining,
+                    time_remaining=data.time_remaining or '',
                     started=data.started,
                     description=data.description,
                 )
             )
 
 
-class WorkItemWorkLogScreen(Screen[dict]):
+class WorkItemWorkLogScreen(Actionable, Screen[dict]):
     """A screen that displays the work logs of a work item.
 
     This screen is responsible for:
@@ -205,15 +217,35 @@ class WorkItemWorkLogScreen(Screen[dict]):
     """
 
     HELP = 'See Worklogs section in the help'
-    BINDINGS = [
-        ('escape', 'close_screen', 'Close'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'log_work',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='n',
-            action='log_work',
-            description='Log Work',
-            show=True,
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'close_screen', 'Close')]
+
     TITLE = 'Worklog'
 
     def __init__(self, work_item_key: str, time_tracking: TimeTracking | None = None):

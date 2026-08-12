@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for keybindings styles. The app now supports a `legacy` style (default) or a `standard` style. This can be
+configured in the config file via the variable `key_bindings_style`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
+
 ### Bug Fixes
 
 - `APIController.search_projects()` and `APIController.list_all_active_users_in_group()` returned `success=True` when
 a request raised an exception, so callers could not tell a failure apart from an empty result. The main screen relies
 on `success` to notify the user, which meant that a failure to fetch the projects, e.g. a TLS error, left the projects
-dropdown silently empty.
+dropdown silently empty. By [@devHaitham481](https://github.com/devHaitham481) in https://github.com/whyisdifficult/jiratui/pull/328
+- Fix logic that updates a work item to allow updating the reporter. By [@DriesOlbrechts](https://github.com/DriesOlbrechts) in https://github.com/whyisdifficult/jiratui/pull/322
+- Fix bug in pagination logic within the search results table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
+
+### Minor Improvements
+
+- Bump `gitpython` to version `3.1.58`; in https://github.com/whyisdifficult/jiratui/pull/325
+- Bump `aiohttp` to version `3.14.3`; in https://github.com/whyisdifficult/jiratui/pull/325
 
 ## [1.12.0] 2026-08-01
 
@@ -30,7 +42,7 @@ dropdown silently empty.
 
 ### Minor Improvements
 
-- Bump `gitpython` to version `3.1.54`. https://github.com/whyisdifficult/jiratui/pull/309
+- Bump `gitpython` to version `3.1.54`; in https://github.com/whyisdifficult/jiratui/pull/309
 
 ## [1.11.1] 2026-07-24
 

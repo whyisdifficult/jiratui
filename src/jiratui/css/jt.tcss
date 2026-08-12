@@ -114,6 +114,9 @@ IssueRemoteLinksWidget {
 
 IssueAttachmentsWidget {
     hatch: right $success 20%;
+}
+
+AttachmentsDataTable {
     scrollbar-size-vertical: 1;
 }
 
@@ -442,12 +445,12 @@ HistoryScreen > VerticalScroll {
 
 /* Go-To Screen */
 
-GotToScreen {
+GoToScreen {
     align: center middle;
     background: $background 80%;
 }
 
-GotToScreen > VerticalScroll {
+GoToScreen > VerticalScroll {
     width: 60%;
     height: 70%;
     border: round $foreground;
@@ -919,7 +922,7 @@ ServerInfoScreen {
 }
 
 ServerInfoScreen > VerticalScroll {
-    width: 60%;
+    width: 80%;
     height: 100%;
     border: round $foreground;
     padding: 0 1;

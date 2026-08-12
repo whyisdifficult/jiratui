@@ -5,7 +5,7 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
 from jiratui.models import IssueStatus, IssueType, JiraIssueSearchResponse, RelatedJiraIssue
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 
 
 @pytest.fixture()
@@ -23,7 +23,7 @@ async def test_goto_screen_item_not_found(get_issue_mock: AsyncMock, app):
     get_issue_mock.return_value = APIControllerResponse(success=False)
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         # THEN
         get_issue_mock.assert_called_once_with(issue_id_or_key='key-2')
@@ -38,8 +38,8 @@ async def test_goto_screen_item_not_found(get_issue_mock: AsyncMock, app):
         assert screen.table_basic_details.border_title == 'key-2'
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_item_found_with_related_tasks_parent_and_subtasks(
@@ -67,7 +67,7 @@ async def test_goto_screen_item_found_with_related_tasks_parent_and_subtasks(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -84,8 +84,8 @@ async def test_goto_screen_item_found_with_related_tasks_parent_and_subtasks(
         assert screen.table_basic_details.display is True
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_parent_table(
@@ -103,7 +103,7 @@ async def test_goto_screen_fill_in_parent_table(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -112,8 +112,8 @@ async def test_goto_screen_fill_in_parent_table(
         assert screen.table_parent.display is True
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_parent_table_without_parent(
@@ -131,7 +131,7 @@ async def test_goto_screen_fill_in_parent_table_without_parent(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -140,8 +140,8 @@ async def test_goto_screen_fill_in_parent_table_without_parent(
         assert screen.table_parent.display is False
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_subtasks_table(
@@ -159,7 +159,7 @@ async def test_goto_screen_fill_in_subtasks_table(
     get_parent_mock.return_value = None
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -168,8 +168,8 @@ async def test_goto_screen_fill_in_subtasks_table(
         assert screen.table_subtasks.display is True
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_subtasks_table_without_subtasks(
@@ -187,7 +187,7 @@ async def test_goto_screen_fill_in_subtasks_table_without_subtasks(
     get_parent_mock.return_value = None
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -196,8 +196,8 @@ async def test_goto_screen_fill_in_subtasks_table_without_subtasks(
         assert screen.table_subtasks.display is False
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_related_work_items_table(
@@ -215,7 +215,7 @@ async def test_goto_screen_fill_in_related_work_items_table(
     get_parent_mock.return_value = None
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -234,8 +234,8 @@ async def test_goto_screen_fill_in_related_work_items_table(
         assert screen.table_subtasks.display is True
 
 
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_fill_in_related_work_items_table_without_tasks(
@@ -253,7 +253,7 @@ async def test_goto_screen_fill_in_related_work_items_table_without_tasks(
     get_parent_mock.return_value = None
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         # THEN
@@ -275,7 +275,7 @@ async def test_goto_screen_get_subtasks(
     )
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         result = await screen._get_subtasks()
@@ -302,7 +302,7 @@ async def test_goto_screen_get_subtasks_no_tasks_found(
     search_issues_mock.return_value = search_issues_result
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         result = await screen._get_subtasks()
@@ -320,7 +320,7 @@ async def test_goto_screen_get_parent(get_issue_mock: AsyncMock, jira_issues, ap
     ]
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         result = await screen._get_parent('key-1')
@@ -351,7 +351,7 @@ async def test_goto_screen_get_parent_no_tasks_found(
     ]
     async with app.run_test():
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         result = await screen._get_parent('key-1')
@@ -363,8 +363,8 @@ async def test_goto_screen_get_parent_no_tasks_found(
 
 
 @patch.object(JiraApp, 'copy_to_clipboard')
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_copy_key(
@@ -393,7 +393,7 @@ async def test_goto_screen_copy_key(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test() as pilot:
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         await pilot.press('tab')
@@ -405,8 +405,8 @@ async def test_goto_screen_copy_key(
 
 @patch('jiratui.widgets.screens.goto.build_external_url_for_issue')
 @patch.object(JiraApp, 'copy_to_clipboard')
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_copy_url(
@@ -439,7 +439,7 @@ async def test_goto_screen_copy_url(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test() as pilot:
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         await pilot.press('tab')
@@ -451,8 +451,8 @@ async def test_goto_screen_copy_url(
 
 @patch('jiratui.widgets.screens.goto.build_external_url_for_issue')
 @patch.object(JiraApp, 'copy_to_clipboard')
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_copy_url_without_url(
@@ -485,7 +485,7 @@ async def test_goto_screen_copy_url_without_url(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test() as pilot:
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         await pilot.press('tab')
@@ -497,8 +497,8 @@ async def test_goto_screen_copy_url_without_url(
 
 @patch('jiratui.widgets.screens.goto.build_external_url_for_issue')
 @patch.object(JiraApp, 'open_url')
-@patch.object(GotToScreen, '_get_parent')
-@patch.object(GotToScreen, '_get_subtasks')
+@patch.object(GoToScreen, '_get_parent')
+@patch.object(GoToScreen, '_get_subtasks')
 @patch.object(APIController, 'get_issue')
 @pytest.mark.asyncio
 async def test_goto_screen_open_url(
@@ -531,7 +531,7 @@ async def test_goto_screen_open_url(
     get_parent_mock.return_value = jira_issues[1]
     async with app.run_test() as pilot:
         # WHEN
-        screen = GotToScreen('key-2', APIController())
+        screen = GoToScreen('key-2', APIController())
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         await pilot.press('tab')

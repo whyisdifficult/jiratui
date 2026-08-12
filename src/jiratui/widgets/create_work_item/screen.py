@@ -26,9 +26,11 @@ from textual.widgets import (
     TextArea,
 )
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import AgileSprint, IssueType, JiraIssue, Project
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import (
@@ -72,11 +74,36 @@ class TextAreaTabPane(TabPane):
         return self.__widget
 
 
-class TextAreaTabbedContent(TabbedContent):
+class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # type:ignore[call-arg]
     """Custom TabbedContent with a key binding for editing content."""
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_text_editor',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
-        Binding('ctrl+e', 'edit_content', 'Edit', show=True, key_display='^e'),
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     def __init__(self, *args, **kwargs):
@@ -117,13 +144,11 @@ class TextAreaTabbedContent(TabbedContent):
     def edit_plain_text_content(self, event: PlainTextTextAreaWidget.EditContent) -> None:
         self._edit_text_content(event.content)
 
-    def action_edit_content(self) -> None:
-        """Handle '^e' key press in this widget."""
+    def action_open_text_editor(self) -> None:
         widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
             self._get_textarea_widget()
         )
         if widget is not None:
-            self.notify(f'Trying to update content of the textarea widget: {widget.id}')
             self._edit_text_content(widget.text)
 
     def _open_as_temporary_file(self, command: str, content: str) -> str:
@@ -152,7 +177,7 @@ class TextAreaTabbedContent(TabbedContent):
         return new_content
 
 
-class AddWorkItemScreen(Screen[dict[str, Any]]):
+class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     """A modal screen for creating work items.
 
     The screen is pushed from the main screen of the application. It is responsible for:
@@ -183,10 +208,34 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
     - [Architecture](#architecture-create-work-item-classes)
     """
 
-    BINDINGS = [
-        Binding('ctrl+s', 'save_work_item', 'Save', show=True, key_display='^s'),
-        Binding('escape', 'app.pop_screen', 'Close'),
-    ]
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'save_content',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
     TITLE = 'New Work Item'
     HELP = 'See Creating Work Items section in the help'
@@ -816,7 +865,7 @@ class AddWorkItemScreen(Screen[dict[str, Any]]):
         # default: pass value as-is
         return value
 
-    def action_save_work_item(self) -> None:
+    def action_save_content(self) -> None:
         self.handle_save()
 
     @on(Button.Pressed, '#add-work-item-button-save')

@@ -7,7 +7,7 @@ from typing import cast
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, VerticalScroll
+from textual.containers import Center, Vertical, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
@@ -15,6 +15,7 @@ from textual.widget import Widget
 from textual.widgets import DataTable, LoadingIndicator, Markdown, Static, TextArea
 from textual_image.widget import Image, SixelImage
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import Attachment
@@ -23,6 +24,7 @@ from jiratui.utils.mime import (
     can_view_attachment,
     is_image,
 )
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_attachment
 from jiratui.widgets.attachments.add import AddAttachmentScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
@@ -36,32 +38,51 @@ class WorkItemAttachments:
     attachments: list[Attachment] | None = None
 
 
-class AttachmentsDataTable(DataTable):
+class AttachmentsDataTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A [DataTable](#textual.widgets.DataTable) to list the files attached to a work item.
 
     The table is responsible for:
-    - Opening the file in the browser when the user presses `^o`.
-    - Opening a confirmation screen user presses `d` to delete an attachment and, posting the message
-    [AttachmentsDataTable.Deleted](#jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted) to request a
-    handler to delete the attachment.
+    - Opening the file in the browser when the user presses the key for the action `open_attachment`.
+    - Opening a confirmation screen user presses the key for the action `delete_attachment` to delete an attachment
+    and, posting the message [AttachmentsDataTable.Deleted](#jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted)
+    to request a handler to delete the attachment.
     """
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_attachment',
+        'delete_attachment',
+        'select_cursor',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
 
     BINDINGS = [
         Binding(
-            key='d',
-            action='delete_attachment',
-            description='Delete',
-            key_display='d',
-            tooltip='Deletes the attachment',
-        ),
-        Binding(
-            key='ctrl+o',
-            action='open_attachment',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open file in the browser',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
     NOTIFICATIONS_DEFAULT_TITLE = 'Work Item Attachments'
 
@@ -169,7 +190,7 @@ class AttachmentsDataTable(DataTable):
             self.notify('Deleting attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
 
 
-class IssueAttachmentsWidget(VerticalScroll):
+class IssueAttachmentsWidget(Actionable, Vertical, inherit_bindings=False, can_focus=True):  # type:ignore[call-arg]
     """A container for displaying the files attached to a work item.
 
     This widget is responsible for the following:
@@ -188,14 +209,34 @@ class IssueAttachmentsWidget(VerticalScroll):
     """
 
     HELP = 'See Attachments section in the help'
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'add_attachment',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='ctrl+u,n',
-            action='add_attachment',
-            description='Attach File',
-            key_display='n',
-            tooltip='Attach a new file to a work item',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     attachments: Reactive[WorkItemAttachments | None] = reactive(None)
