@@ -176,7 +176,7 @@ JiraTUI supports a few ways to search work items.
 ## Search using filters
 
 You can use the filters at the top of the app to setup the criteria you want to use for searching work items. Once
-you select the desired values simply click `ctrl+r` or, click the `Search` button.
+you select the desired values simply click the key that corresponds to the action `search`.
 
 The maximum number of results that the app will retrieve and show is controlled by the setting
 `search_results_per_page`. The default value is 30. If the search criteria yields work items the app will display them
@@ -220,7 +220,7 @@ If defined, only work items that were created until this date (inclusive) will b
 
 If no `Created From` and `Created Until` search criteria are defined then the tool will fetch work items created
 within the last 15 days. The number of days can be specified by the configuration variable
-`search_issues_default_day_interval`
+`search_issues_default_day_interval`.
 
 ### Search by Active Sprint
 
@@ -230,7 +230,7 @@ sprint.
 ## Searching using full-text search
 
 In addition to searching using the filters above, JiraTUI allows you to search items using full-text
-search. This type of search has 2 modes: standard and advanced.
+search. This type of search has 2 modes: **Standard Full-text Search** and **Advanced Full-text Search**.
 
 - **Standard Full-text Search**: this modes searches items using the items' summary and description fields. This uses
 queries of the form `summary ~ "search term" OR description ~ "search term"`.
@@ -251,15 +251,16 @@ https://support.atlassian.com/jira-software-cloud/docs/search-for-work-items-usi
 **Important**: Full-text search is only available when you connect to the Jira Cloud Platform. This feature is not
 available when you connect to Jira Data Center (aka. server, on-premises).
 
-To activate full-text search press `/`. Enter the search term in the pop-up and hit `enter`.
+To activate full-text search press the key for the action `find_by_text`. Enter the search term in the pop-up and
+hit `enter`.
 
 ## Searching Using JQL Expressions
 
-Another way to search work items in JiraTUI is by crafting your own [JQL query](). You can do so using the JQL Query
+Another way to search work items in JiraTUI is by crafting your own [JQL query](https://support.atlassian.com/jira-service-management-cloud/docs/use-advanced-search-with-jira-query-language-jql/). You can do so using the JQL Query
 input field. In addition, you can also define your own JQL query expressions and save them in the config file using the
 setting `pre_defined_jql_expressions`. This is a YAML dictionary of expressions. When you focus on the JQL Query input
-field (`j`) and press `ctrl+e` the JQL Editor opens. Here you can write a complex query or, choose one from the
-dropdown.
+field (by pressing the key for the action `focus_search_jql`) and press the key for the action `edit_jql` the JQL
+Editor opens. Here you can write a complex query or, choose one from the dropdown.
 
 **Examples**
 
@@ -275,11 +276,12 @@ or searching by the user's email address:
 assignee = "john@smith.com"
 ```
 
-# Filtering results
+# Filtering Search Results
 
 Search results can be filtered as well. In order to do this simply focus on the results table by pressing `1` and then
-press `.`. This opens up an input field where you can enter the term you want to use to filter the results further.
-Items are filtered by their `summary` field. Keep in mind that the filtering only applies to the current page.
+press the key for the action `filter`. This opens up an input field where you can enter the term you want to use to
+filter the results further. Items are filtered by their `summary` field. Keep in mind that the filtering only applies
+to the current page.
 
 This feature is controlled by the setting `search_results_page_filtering_enabled`. The minimum length of the search
 term is controlled by the setting `search_results_page_filtering_minimum_term_length`; the default is 3.
@@ -328,15 +330,16 @@ key in addition to being filtered by their name/email address.
 
 # Creating Git Branches
 
-If you want to create a Git branch for a work item you can do so by selecting the work item int he search results and
-then pressing `^g`. This will open a pop-up screen and will allow you to specify the target repository and the name of
-the branch. The list of available repositories is controlled by the configuration variable `git_repositories`.
+If you want to create a Git branch for a work item you can do so by selecting the work item in the search results and
+then pressing the key for the action `create_git_branch`. This will open a pop-up screen and will allow you to specify
+the target repository and the name of the branch. The list of available repositories is controlled by the configuration
+variable `git_repositories`.
 
 # Creating Work Items
 
-To create a work item you can press `ctrl+n`. This will open up a modal screen with a form to provide the necessary
-fields to create the work item. Fields marked with `(*)` are required. If the item is created successfully a message
-will pop up in the app indicating the work item key.
+To create a work item you can press the key for the action `create_work_item`. This will open up a modal screen with a
+form to provide the necessary fields to create the work item. Fields marked with `(*)` are required. If the item is
+created successfully a message will pop up in the app indicating the work item key.
 
 The form includes a fixed set of fields and, a set of fields that are dynamically created depending on the project and
 type of work item that you want to create. These fields are always present in the form:
@@ -393,10 +396,11 @@ the variable `enable_updating_additional_fields: True` in the config file. For m
 [Enable Updating Additional Fields](https://jiratui.readthedocs.io/en/latest/users/configuration/configuration.html#enable-updating-additional-fields)
 in the official documentation page.
 
-In order to update a field simply focus on it, change its value and then press `^s` to save the changes.
+In order to update a field simply focus on it, change its value and then press the key that corresponds to the action
+`save_content` to save the changes.
 
 Some of the fields require a modal to pop up to allow the user to select values for the field. These fields include a
-tip that reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
+tip that reads _"press enter to update"_. This is the case for custom fields of type `multicheckboxes`.
 
 **Updating the parent of an issue**
 
@@ -404,7 +408,7 @@ Jira arranges the type sof issues into a hierarchy. This hierarchy is used to de
 another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
 Subtask do accept parents.
 
-Jiratui disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
+JiraTUI disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
 
 **Updating priorities**
 
@@ -419,26 +423,27 @@ field then the probable reason is that your Jira project does not support this f
 ## Comments
 
 This contains the comments associated to the selected work item. Comments can be deleted by focusing on them and then
-pressing `d`. Comments can be added by pressing `n`.
+pressing the key for the action `delete_comment`. Comments can be added by pressing the key for the action `add_comment`.
 
 ## Related Work Items
 
 This will display a summary of all the work items related to the item currently selected.
 
-Pressing `n` allows the user to add new related work items while focusing on a related item and then pressing `d` will
-delete the item.
+Pressing the key for the action `link_work_item` allows the user to add new related work items while focusing on a
+related item and then pressing the key for the action `unlink_work_item` will delete the item.
 
-To view the details of a related item simply focus on the item and then press `v`.
+To view the details of a related item simply focus on the item and then press the key for the action `view_work_item`.
 
 ## Attachments
 
 This will display a list of files attached to the selected work item.
 
-To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
-attached file you want to delete and then press `d`. For some files the application provides a shortcut to view the
-content of the file directly in the terminal; this includes some types of images. When the user selects the attachment
-and presses `enter` (or clicks on the attachment row) the app will attempt to download the file display its content in
-the terminal. In addition, after selecting/highlighting an attachment the user can press `^o` to open the file in the
+To upload a file press the key for the action `add_attachment` and provide the details in the pop-up that opens. To
+delete an attachment focus on the attached file you want to delete and then press the key for the action
+`delete_attachment`. For some files the application provides a shortcut to view the content of the file directly in the
+terminal; this includes some types of images. When the user selects the attachment and presses `enter` (or clicks on
+the attachment row) the app will attempt to download the file display its content in the terminal. In addition, after
+selecting/highlighting an attachment the user can press the key for the action `open_attachment` to open the file in the
 browser.
 
 **Important**: Uploading large files may cause the UI to be unresponsive temporarily. This will depend on the size of
@@ -452,8 +457,9 @@ the file.
 
 This will display a list of URLs associated to the selected work item. files attached to the selected work item.
 
-To add a new link simply press `n` and provide the details in the pop-up that opens. To delete a link simply focus on
-the title of the collapsible whose link you want to delete and then press `d`.
+To add a new link simply press the key for the action `add_remote_link` and provide the details in the pop-up that
+opens. To delete a link simply focus on the title of the collapsible whose link you want to delete and then press the
+key for the action `delete_remote_link`.
 
 ## Subtasks
 
@@ -462,43 +468,42 @@ another work item `B` if the parent of `A` is `B`.
 
 ## Worklogs
 
-The "Details" tab also allows you to log work for a given work item. To do so you can press `^l` to open a pop-up screen
-that will show you the time tracking information of the selected item together with the log entries. In this new screen
-you can do the following:
+The "Details" tab also allows you to log work for a given work item. To do so you can press the key for the action
+`view_worklog` to open a pop-up screen that will show you the time tracking information of the selected item together
+with the log entries. In this new screen you can do the following:
 
-- press `n` to add a new entry.
+- press the key for the action `log_work` to add a new entry.
 - press `tab` to select an entry and then
-  - press `^e` to update it.
-  - press `d` to delete it.
-  - press `^o` to open the entry in the browser.
+  - press the key for the action `edit_worklog_entry` to update it.
+  - press the key for the action `delete_worklog` to delete it.
+  - press the key for the action `open_in_browser` to open the entry in the browser.
 
 ## Flagging Work Items
 
-You can add/remove a flag to a work item by pressing `^f` while in the details tab. When you add a flag to an item you
-can add an optional message to let your team know why the task is (not) flagged.
+You can add/remove a flag to a work item by pressing the key for the action `flag_work_item` while in the details
+tab. When you add a flag to an item you can add an optional message to let your team know why the task is (not) flagged.
 
 # Deleting Work Items
 
-To delete a work item you can select an item from the search results pane on the left and then click `d`. This will
-open a modal screen that will let you confirm the deletion.
+To delete a work item you can select an item from the search results pane on the left and then press the key for the
+action `delete_work_item`. This will open a modal screen that will let you confirm the deletion.
 
 **Important**: if an item has subtasks all of them will also be deleted.
-
 
 # View Related Items
 
 After you perform a search and select an item from the search results you can view the items related to the selected
-work item. To do this press `f6`.
+work item. To do this press the key for the action `open_go_to_screen`.
 
-Pressing `f6` will open a modal screen that will list all the related items. These can be subtasks, a parent task, or
+This will open a modal screen that will list all the related items. These can be subtasks, a parent task, or
 tasks related via another relationship, e.g. "causes".
 
 In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
 can do the following:
 
-- press `^o` to open the item in the browser.
-- press `^k` to copy the item's key to the clipboard.
-- press `^j` to copy the item's URL to the clipboard.
+- press the key for the action `open_in_browser` to open the item in the browser.
+- press the key for the action `copy_issue_key` to copy the item's key to the clipboard.
+- press the key for the action `copy_issue_url` to copy the item's URL to the clipboard.
 
 In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
 fetch the details of the select item. This gives you a quick way to navigate through related items.
@@ -507,18 +512,18 @@ fetch the details of the select item. This gives you a quick way to navigate thr
 
 Every time you select an item from the search results by pressing `enter` JiraTUI will remember the item in the current
 application's session. The same happens when you add or update an item. To view the list of recently added/updated/viewed
-items you can press `f7`.
+items you can press the key for the action `show_recent_history`.
 
 Doing so will open a modal screen that will display a list of items.
 
 In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
 can do the following:
 
-- press `^o` to open the item in the browser.
-- press `^k` to copy the item's key to the clipboard.
-- press `^j` to copy the item's URL to the clipboard.
+- press the key for the action `open_in_browser` to open the item in the browser.
+- press the key for the action `copy_issue_key` to copy the item's key to the clipboard.
+- press the key for the action `copy_issue_url` to copy the item's URL to the clipboard.
 
 In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
 fetch the details of the select item. This gives you a quick way to navigate through related items.
 
-Last, you can empty the list of recent items by pressing `d`.
+Last, you can empty the list of recent items by pressing the key for the action `empty_recent_history`.
