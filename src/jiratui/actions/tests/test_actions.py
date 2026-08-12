@@ -29,7 +29,7 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     RelatedJiraIssue,
 )
-from jiratui.utils.history import HistoryManager
+from jiratui.utils.history import HistoryEntry, HistoryManager
 from jiratui.widgets.attachments.attachments import (
     AttachmentsDataTable,
     IssueAttachmentsWidget,
@@ -1113,86 +1113,6 @@ async def test_action_scroll_bottom_in_search_results(
         action_scroll_bottom_mock.assert_called_once()
 
 
-@patch.object(DataTable, 'action_scroll_home')
-@patch('jiratui.widgets.screen.MainScreen._search_work_items')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_action_scroll_home_in_search_results(
-    search_projects_mock,
-    fetch_issue_types_mock,
-    fetch_statuses_mock,
-    search_work_items_mock: AsyncMock,
-    action_scroll_home_mock: Mock,
-    jira_issues,
-    bindings: dict,
-    app,
-):
-    # GIVEN
-    app.config.search_results_truncate_work_item_summary = 10
-    app.config.search_results_style_work_item_status = False
-    app.config.search_results_style_work_item_type = False
-    app.config.search_results_per_page = 10
-    app.config.git_repositories = None
-    app.config.jira_base_url = 'foo.bar'
-    search_work_items_mock.return_value = WorkItemSearchResult(
-        response=JiraIssueSearchResponse(issues=jira_issues),
-        total=1,
-        start=1,
-        end=1,
-    )
-    app.config.pre_defined_jql_expressions = None
-    app.open_url = Mock()
-    async with app.run_test() as pilot:
-        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
-        await app.workers.wait_for_complete()
-        await pilot.press(bindings.get('scroll_home', {}).get('keys', [])[0])
-        # THEN
-        search_work_items_mock.assert_awaited_once()
-        action_scroll_home_mock.assert_called_once()
-
-
-@patch.object(DataTable, 'action_scroll_end')
-@patch('jiratui.widgets.screen.MainScreen._search_work_items')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_action_scroll_end_in_search_results(
-    search_projects_mock,
-    fetch_issue_types_mock,
-    fetch_statuses_mock,
-    search_work_items_mock: AsyncMock,
-    action_scroll_end_mock: Mock,
-    jira_issues,
-    bindings: dict,
-    app,
-):
-    # GIVEN
-    app.config.search_results_truncate_work_item_summary = 10
-    app.config.search_results_style_work_item_status = False
-    app.config.search_results_style_work_item_type = False
-    app.config.search_results_per_page = 10
-    app.config.git_repositories = None
-    app.config.jira_base_url = 'foo.bar'
-    search_work_items_mock.return_value = WorkItemSearchResult(
-        response=JiraIssueSearchResponse(issues=jira_issues),
-        total=1,
-        start=1,
-        end=1,
-    )
-    app.config.pre_defined_jql_expressions = None
-    app.open_url = Mock()
-    async with app.run_test() as pilot:
-        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
-        await app.workers.wait_for_complete()
-        await pilot.press(bindings.get('scroll_end', {}).get('keys', [])[0])
-        # THEN
-        search_work_items_mock.assert_awaited_once()
-        action_scroll_end_mock.assert_called_once()
-
-
 @pytest.mark.xfail(reason='We need to implement this logic')
 @pytest.mark.parametrize('key', ['l', 'right'])
 @patch.object(DataTable, 'action_cursor_right')
@@ -2001,6 +1921,416 @@ async def test_action_open_attachment(
         await app.workers.wait_for_complete()
         # THEN
         action_open_attachment_mock.assert_awaited_once()
+
+
+@patch.object(AttachmentsDataTable, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(AttachmentsDataTable, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(AttachmentsDataTable, 'action_cursor_up')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_up_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_cursor_up_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_cursor_up_mock.assert_called()
+
+
+@patch.object(AttachmentsDataTable, 'action_cursor_down')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_down_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_cursor_down_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[-1])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_cursor_down_mock.assert_called()
+
+
+@patch.object(AttachmentsDataTable, 'action_scroll_top')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_top_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_top_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_top_mock.assert_called_once()
+
+
+@patch.object(AttachmentsDataTable, 'action_scroll_bottom')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_bottom_in_attachments_table(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_scroll_bottom_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].attachments = [
+        Attachment(
+            id='1',
+            filename='file1.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='2',
+            filename='file2.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+        Attachment(
+            id='3',
+            filename='file3.txt',
+            size=10,
+            mime_type='text/plain',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+        ),
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_attachments_widget.attachments = WorkItemAttachments(
+            work_item_key=jira_issues[1].key, attachments=jira_issues[1].attachments
+        )
+        await pilot.press(bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_scroll_bottom_mock.assert_called_once()
 
 
 @patch.object(RelatedIssuesWidget, 'action_link_work_item')
@@ -4009,3 +4339,541 @@ async def test_action_scroll_down_in_subtasks_tab(
         await pilot.press(bindings.get('scroll_down', {}).get('keys', [])[-1])
         # THEN
         action_scroll_down_mock.assert_called()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_cursor_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_up_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_up_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_up_mock.assert_called_once()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_cursor_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_down_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_down_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_down_mock.assert_called_once()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_scroll_top')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_top_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_top_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_top_mock.assert_called_once()
+
+
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_scroll_bottom')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_bottom_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_bottom_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_bottom_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_cursor_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_up_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_up_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_up_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_cursor_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_down_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_down_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_down_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_scroll_top')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_top_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_top_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_top_mock.assert_called_once()
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_scroll_bottom')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_bottom_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_bottom_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GotToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_bottom_mock.assert_called_once()
+
+
+##
+##
+##
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_cursor_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_up_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_up_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_up_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_cursor_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_cursor_down_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_cursor_down_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
+        # THEN
+        action_cursor_down_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_page_up')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_up_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_up_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
+        # THEN
+        action_page_up_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_page_down')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_page_down_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_page_down_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
+        # THEN
+        action_page_down_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_scroll_top')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_top_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_top_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_top_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_scroll_bottom')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_scroll_bottom_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_scroll_bottom_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
+        # THEN
+        action_scroll_bottom_mock.assert_called_once()

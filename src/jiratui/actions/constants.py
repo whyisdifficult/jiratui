@@ -698,13 +698,13 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'Scroll to the bottom',
     },
     'scroll_home': {
-        'keys': ['home'],
+        'keys': ['g'],
         'show': False,
         'description': 'Scroll to the beginning',
         'tooltip': 'Scroll to the beginning',
     },
     'scroll_end': {
-        'keys': ['end'],
+        'keys': ['G'],
         'show': False,
         'description': 'Scroll to the end',
         'tooltip': 'Scroll to the end',

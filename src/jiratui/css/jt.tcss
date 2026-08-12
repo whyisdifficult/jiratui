@@ -114,6 +114,9 @@ IssueRemoteLinksWidget {
 
 IssueAttachmentsWidget {
     hatch: right $success 20%;
+}
+
+AttachmentsDataTable {
     scrollbar-size-vertical: 1;
 }
 

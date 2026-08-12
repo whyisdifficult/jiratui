@@ -176,11 +176,11 @@ def test_standard_action_scroll_bottom():
 
 
 def test_standard_action_scroll_home():
-    assert KEY_BINDINGS_STANDARD.get('scroll_home').get('keys') == ['home']
+    assert KEY_BINDINGS_STANDARD.get('scroll_home').get('keys') == ['g']
 
 
 def test_standard_action_scroll_end():
-    assert KEY_BINDINGS_STANDARD.get('scroll_end').get('keys') == ['end']
+    assert KEY_BINDINGS_STANDARD.get('scroll_end').get('keys') == ['G']
 
 
 def test_standard_action_scroll_up():

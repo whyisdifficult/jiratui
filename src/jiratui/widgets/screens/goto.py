@@ -17,7 +17,7 @@ from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 
 
-class GoToItemsTable(Actionable, DataTable):
+class GoToItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A Textual's [DataTable](#textual.widgets.DataTable) to shows work items.
 
     The table is responsible for:
@@ -38,6 +38,12 @@ class GoToItemsTable(Actionable, DataTable):
         'open_in_browser',
         'copy_issue_key',
         'copy_issue_url',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
@@ -109,6 +115,7 @@ class GoToItemsTable(Actionable, DataTable):
                 self.notify('Work item URL copied!')
 
 
+# TODO rename
 class GotToScreen(ModalScreen[str]):
     """A modal screen that display work items related to another work item.
 

@@ -14,7 +14,7 @@ from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 
 
-class HistoryWorkItemsTable(Actionable, DataTable):
+class HistoryWorkItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A [DataTable](textual.widgets.DataTable) that displays the entries in the recent history.
 
     This table is responsible for:
@@ -35,6 +35,12 @@ class HistoryWorkItemsTable(Actionable, DataTable):
         'open_in_browser',
         'copy_issue_key',
         'copy_issue_url',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(

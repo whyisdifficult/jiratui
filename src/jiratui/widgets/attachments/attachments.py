@@ -7,7 +7,7 @@ from typing import cast
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, VerticalScroll
+from textual.containers import Center, Vertical, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.screen import ModalScreen
@@ -38,14 +38,14 @@ class WorkItemAttachments:
     attachments: list[Attachment] | None = None
 
 
-class AttachmentsDataTable(Actionable, DataTable):
+class AttachmentsDataTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A [DataTable](#textual.widgets.DataTable) to list the files attached to a work item.
 
     The table is responsible for:
-    - Opening the file in the browser when the user presses `^o`.
-    - Opening a confirmation screen user presses `d` to delete an attachment and, posting the message
-    [AttachmentsDataTable.Deleted](#jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted) to request a
-    handler to delete the attachment.
+    - Opening the file in the browser when the user presses the key for the action `open_attachment`.
+    - Opening a confirmation screen user presses the key for the action `delete_attachment` to delete an attachment
+    and, posting the message [AttachmentsDataTable.Deleted](#jiratui.widgets.attachments.attachments.AttachmentsDataTable.Deleted)
+    to request a handler to delete the attachment.
     """
 
     ACTIONS: list[UIAction] = []
@@ -54,6 +54,12 @@ class AttachmentsDataTable(Actionable, DataTable):
     for supported_action_id in [
         'open_attachment',
         'delete_attachment',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
@@ -183,7 +189,7 @@ class AttachmentsDataTable(Actionable, DataTable):
             self.notify('Deleting attachment...', title=self.NOTIFICATIONS_DEFAULT_TITLE)
 
 
-class IssueAttachmentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
+class IssueAttachmentsWidget(Actionable, Vertical, inherit_bindings=False, can_focus=True):  # type:ignore[call-arg]
     """A container for displaying the files attached to a work item.
 
     This widget is responsible for the following:

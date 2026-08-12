@@ -23,8 +23,6 @@ class ConfigTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore
         'page_down',
         'scroll_top',
         'scroll_bottom',
-        'scroll_home',
-        'scroll_end',
     ]:
         data = key_bindings.get(supported_action_id, {})
         ACTIONS.append(
