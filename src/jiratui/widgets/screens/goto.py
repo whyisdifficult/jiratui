@@ -10,12 +10,14 @@ from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static
 from textual.worker import Worker
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, RelatedJiraIssue
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 
 
-class GoToItemsTable(DataTable):
+class GoToItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A Textual's [DataTable](#textual.widgets.DataTable) to shows work items.
 
     The table is responsible for:
@@ -29,33 +31,43 @@ class GoToItemsTable(DataTable):
     - [Architecture](#architecture-goto-screen)
     """
 
-    BINDINGS = [
-        ('escape', 'app.pop_screen', 'Close'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'open_in_browser',
+        'copy_issue_key',
+        'copy_issue_url',
+        'select_cursor',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='ctrl+o',
-            action='open_issue_in_browser',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open in browser',
-        ),
-        Binding(
-            key='ctrl+k',
-            action='copy_issue_key',
-            description='Copy Key',
-            show=True,
-            key_display='^k',
-            tooltip='Copy key',
-        ),
-        Binding(
-            key='ctrl+j',
-            action='copy_issue_url',
-            description='Copy URL',
-            show=True,
-            key_display='^j',
-            tooltip='Copy URL',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
     @dataclass
     class WorkItemSelected(Message):
@@ -81,10 +93,10 @@ class GoToItemsTable(DataTable):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Stores the key of the currently-highlighted item."""
-        if event.row_key:
+        if event.row_key and event.row_key.value:
             self.__current_work_item_key = event.row_key.value.split(':')[-1]
 
-    def action_open_issue_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self.__current_work_item_key:
             self.notify('Opening Work Item in the browser...')
@@ -104,7 +116,7 @@ class GoToItemsTable(DataTable):
                 self.notify('Work item URL copied!')
 
 
-class GotToScreen(ModalScreen[str]):
+class GoToScreen(ModalScreen[str]):
     """A modal screen that display work items related to another work item.
 
     The screen is responsible for:
@@ -125,8 +137,8 @@ class GotToScreen(ModalScreen[str]):
     BINDINGS = [
         ('escape', 'app.pop_screen', 'Close'),
     ]
-    TITLE = 'See Related Work Items section in the help'
-    HELP = 'View Related Items'
+    TITLE = 'View Related Items'
+    HELP = 'See Related Work Items section in the help'
 
     def __init__(self, work_item_key: str, controller: APIController):
         super().__init__()

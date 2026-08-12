@@ -22,7 +22,7 @@ from jiratui.widgets.related_work_items.related_issues import (
 )
 from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -714,7 +714,7 @@ async def test_open_goto_screen_with_goto_enabled(mock_configuration, app):
         await pilot.press('tab')
         await pilot.press('f6')
         # THEN
-        assert isinstance(app.screen, GotToScreen)
+        assert isinstance(app.screen, GoToScreen)
 
 
 @pytest.mark.asyncio

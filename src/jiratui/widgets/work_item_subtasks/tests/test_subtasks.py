@@ -5,7 +5,7 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.widgets.screen import MainScreen
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.work_item_subtasks.subtasks import (
     ChildWorkItemCollapsible,
@@ -114,7 +114,7 @@ async def test_open_goto_screen_with_goto_enabled(
         await pilot.press('tab')
         await pilot.press('f6')
         # THEN
-        assert isinstance(app.screen, GotToScreen)
+        assert isinstance(app.screen, GoToScreen)
 
 
 @pytest.mark.asyncio

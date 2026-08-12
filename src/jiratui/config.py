@@ -268,6 +268,8 @@ class ApplicationConfiguration(BaseSettings):
     enable_goto: bool = True
     """Enables/Disable the feature that allows users to open a modal screen to go to (aka. search and fetch) items
     related to the currently-selected item."""
+    key_bindings_style: str = 'legacy'
+    """Choices are: legacy (default) or standard"""
 
     model_config = SettingsConfigDict(
         extra='allow',

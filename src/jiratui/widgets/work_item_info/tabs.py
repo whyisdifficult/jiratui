@@ -3,20 +3,45 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.widgets import Static, TabbedContent, TabPane
 
+from jiratui.actions.keys import get_application_key_bindings
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
 
 
-class InfoTabbedContent(TabbedContent):
+class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # type:ignore[call-arg]
     """Custom TabbedContent with key bindings for editing, viewing and copying the content of the currently active
     pane/tab."""
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'edit_content',
+        'view_content',
+        'copy_content',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='ctrl+e', action='edit_content', description='Edit', show=True, key_display='^e'
-        ),
-        Binding(key='v', action='view_content', description='View', key_display='v'),
-        Binding(key='c', action='copy_content', description='Copy', key_display='c'),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     class DisplayContent(Message):

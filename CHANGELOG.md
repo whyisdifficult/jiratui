@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Support for keybindings styles. The app now supports a `legacy` style (default) or a `standard` style. This can be
+configured in the config file via the variable `key_bindings_style`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
+
+### Bug Fixes
+
+- Fix logic that updates a work item to allow updating the reporter. By [@DriesOlbrechts](https://github.com/DriesOlbrechts) in https://github.com/whyisdifficult/jiratui/pull/322
+- Fix bug in pagination logic within the search results table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
+
+### Minor Improvements
+
+- Bump `gitpython` to version `3.1.58`; in https://github.com/whyisdifficult/jiratui/pull/325
+- Bump `aiohttp` to version `3.14.3`; in https://github.com/whyisdifficult/jiratui/pull/325
+
 ## [1.12.0] 2026-08-01
 
 ### Added
@@ -21,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Minor Improvements
 
-- Bump `gitpython` to version `3.1.54`. https://github.com/whyisdifficult/jiratui/pull/309
+- Bump `gitpython` to version `3.1.54`; in https://github.com/whyisdifficult/jiratui/pull/309
 
 ## [1.11.1] 2026-07-24
 

@@ -8,12 +8,14 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Rule, Static
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
@@ -24,7 +26,7 @@ class WorkItemSubtasks:
     issues: list[JiraIssue] | None = None
 
 
-class ChildWorkItemCollapsible(Collapsible):
+class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible to show the work items that are children of another work item.
 
     This widget is responsible for:
@@ -40,22 +42,31 @@ class ChildWorkItemCollapsible(Collapsible):
     - [Use Case: Open Go-To Screen](#use-case-subtasks-goto-screen)
     """
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in ['view_work_item', 'open_go_to_screen']:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
         Binding(
-            key='v',
-            action='view_work_item',
-            description='Quick View',
-            show=True,
-            key_display='v',
-        ),
-        Binding(
-            key='f6',
-            action='open_go_to_screen',
-            description='Related',
-            show=True,
-            key_display='f6',
-            tooltip='View related work items',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     def __init__(self, *args, **kwargs):
@@ -84,7 +95,7 @@ class ChildWorkItemCollapsible(Collapsible):
 
         if CONFIGURATION.get().enable_goto and self.work_item_key:
             self.app.push_screen(
-                GotToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
+                GoToScreen(self.work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.work_item_key:
@@ -102,7 +113,7 @@ class ChildWorkItemCollapsible(Collapsible):
             self.post_message(SearchWorkItem(work_item_key))
 
 
-class IssueChildWorkItemsWidget(VerticalScroll):
+class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for displaying the subtasks of a work item.
 
     This class defines a key binding to open a modal screen to allow users to create a new work item as a subtask of
@@ -112,19 +123,44 @@ class IssueChildWorkItemsWidget(VerticalScroll):
     - [Architecture](#architecture-work-item-subtasks-classes)
     """
 
-    HELP = 'See Subtasks section in the help'
     issues: Reactive[WorkItemSubtasks | None] = reactive(None, always_update=True)
 
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'create_work_item_subtask',
+        'page_up',
+        'page_down',
+        'scroll_home',
+        'scroll_end',
+        'scroll_up',
+        'scroll_down',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
     BINDINGS = [
-        # override the binding to be able to inject the current work item as a prent of the subtask
         Binding(
-            key='ctrl+n',
-            action='create_work_item_subtask',
-            description='New Subtask',
-            show=True,
-            key_display='^n',
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
+
+    HELP = 'See Subtasks section in the help'
 
     class CreateSubtask(Message):
         """Posted when the user wants to add a subtask to the work item.

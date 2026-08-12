@@ -32,7 +32,7 @@ lint:
 	ruff format . --diff
 	ruff check .
 	uv run mypy --version
-	uv run mypy --cache-dir /dev/null --junit-xml /tmp/artifacts/mypy.xml src
+	uv run mypy --cache-dir /dev/null --junit-xml /tmp/artifacts/mypy.xml --check-untyped-defs src
 
 .PHONY: lint-fix
 lint-fix:
@@ -41,11 +41,13 @@ lint-fix:
 
 .PHONY: test
 test:
-	uv run --no-sync pytest src/jiratui
+	JIRA_TUI_KEYBIND_STYLE=standard uv run --no-sync pytest src/jiratui/actions/tests/test_actions.py
+	JIRA_TUI_KEYBIND_STYLE=legacy uv run --no-sync pytest src/jiratui/actions/tests/test_actions.py
+	JIRA_TUI_KEYBIND_STYLE=legacy uv run --no-sync pytest --ignore src/jiratui/actions/tests/test_actions.py src/jiratui
 
 .PHONY: coverage
 coverage:
-	pytest --cov=src/jiratui --cov-report term-missing:skip-covered src/jiratui/
+	JIRA_TUI_KEYBIND_STYLE=legacy pytest --ignore src/jiratui/actions/tests/ --cov=src/jiratui --cov-report term-missing:skip-covered src/jiratui/
 
 .PHONY: docs-live
 docs-live:

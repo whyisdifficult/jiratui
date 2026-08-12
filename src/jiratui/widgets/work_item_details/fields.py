@@ -20,7 +20,7 @@ class IssueDetailsStatusSelection(IssueStatusSelectionInput):
 
     def __init__(self, statuses: list):
         super().__init__(statuses, classes='update-work-item-generic-selector')
-        self.border_subtitle = '(z)'
+        self.border_subtitle = None
         self.jira_field_key = 'status'
         """The key to used by Jira to identify this field in the edit-metadata."""
 
@@ -43,7 +43,6 @@ class IssueDetailsPrioritySelection(Select):
             compact=True,
         )
         self.border_title = 'Priority'
-        self.border_subtitle = '(y)'
         self.jira_field_key = 'priority'
         """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled: bool = True

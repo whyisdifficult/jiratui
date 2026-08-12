@@ -6,79 +6,168 @@ configure the tool or more details on how the tool works you can refer to the of
 
 # Navigating the UI
 
-You can move around in the UI with the `tab` key or, by using your mouse. However, if you want to move faster you can
-jump to some of the components by pressing a single key. Some components in UI indicate between parenthesis the key that
-you can use to jump to them. For example, to quickly jump to the Project dropdown you can simply click `p`. If the focus
-is currently on a component you need to press `esc` to move the focus out and then the key you desired. The following
-table summaries the hot-keys and the component they activate.
+Starting with `v1.13.0`, JiraTUI allows you to choose the style of keybindings you want to use. You can do so by setting
+the variable `key_bindings_style` in the configuration file. The default value is `legacy`. The other option is
+`standard`.
 
-| Key | Component                                         |
-|-----|---------------------------------------------------|
-| `p` | Activates the Project dropdown                    |
-| `t` | Activates the Issue Type dropdown                 |
-| `s` | Activates the Status dropdown                     |
-| `a` | Activates the Assignee dropdown                   |
-| `k` | Activates the Work Item Key input                 |
-| `f` | Activates the Created From input                  |
-| `u` | Activates the Created Until input                 |
-| `o` | Activates the Sort dropdown                       |
-| `v` | Activates the Active Sprint checkbox              |
-| `j` | Activates the JQL Query input                     |
-| `1` | Activates the Work Items search result table/pane |
-| `2` | Activates the Info tab                            |
-| `3` | Activates the Details tab                         |
-| `4` | Activates the Comments tab                        |
-| `5` | Activates the Related tab                         |
-| `6` | Activates the Attachments tab                     |
-| `7` | Activates the Links tab                           |
-| `8` | Activates the Subtasks tab                        |
+The `legacy` style uses the keybindings implemented in the app since the beginning. The `standard` style uses
+keybindings that are usually found in other terminal-based applications. The following tables describe them and their
+context.
 
-When you select a work item from the Work Items search results pane and click `enter` the information of the work item
-is loaded into the tabs on the right-hand side. Depending on the tab that is active certain hot-keys are enabled:
+## Standard Style
 
-| Key         | Active Tab/Component  | Action                                                                     |
-|-------------|-----------------------|----------------------------------------------------------------------------|
-| `^s`        | Details               | Saves change to a work item                                                |
-| `^k`        | Details               | Copies the key of the work item currently selected                         |
-| `^j`        | Details               | Copies the URL of the work item currently selected                         |
-| `^l`        | Details               | View the work log                                                          |
-| `^t`        | Details               | [DEPRECATED] Log work for a work item. Use `^l` instead.                   |
-| `^f`        | Details               | Add/Remove flag to work items                                              |
-| `d`         | Worklogs              | Delete a work log                                                          |
-| `^o`        | Worklogs              | Open worklog in the browser                                                |
-| `n`         | Comments              | Add a new comment to the work item                                         |
-| `n`         | Related               | Add a new related item to the work item                                    |
-| `enter`     | Related               | View the related item                                                      |
-| `d`         | Related               | Deletes the related item                                                   |
-| `^o`        | Related               | Opens file in the browser                                                  |
-| `^u`        | Attachments           | Attach file to the work item                                               |
-| `d`         | Attachments           | Deletes an attachment                                                      |
-| `v`         | Attachments           | View the content of the attached file                                      |
-| `n`         | Links                 | Link item to the work item                                                 |
-| `d`         | Links                 | Deletes a link                                                             |
-| `^n`        | Subtasks              | Create a new subtask of the work item                                      |
-| `.`         | Search Results        | Enables filtering of results in the results table                          |
-| `alt+right` | Search Results        | Retrieves the next page of results                                         |
-| `alt+left`  | Search Results        | Retrieves the previous page of results. This is only enabled when page > 1 |
-| `^k`        | Search Results        | Copies the key of the work item currently selected                         |
-| `^j`        | Search Results        | Copies the URL of the work item currently selected                         |
-| `^e`        | JQL Query field       | Opens the JQL Query Editor                                                 |
-| `d`         | Search Results        | Deletes a work item                                                        |
+| Keys         | Description                                            | Context                                                                 |
+|--------------|--------------------------------------------------------|-------------------------------------------------------------------------|
+| `tab`        | Focus next element                                     | Anywhere                                                          |
+| `^q`         | Closes the app                                         | Main Screen                                                             |
+| `q`          | Closes the app                                         | Main Screen                                                             |
+| `f1`         | Open the help                                          | Main Screen                                                             |
+| `f2`         | View details of your Jira server                       | Main Screen                                                             |
+| `f3`         | View the configuration file                            | Main Screen                                                             |
+| `f4`         | Shows the recent history                               | Main Screen                                                             |
+| `f5`         | View items related to the currently selected work item | Main Screen                                                             |
+| `f6`         | Creates a Git branch for a work item                   | Main Screen                                                             |
+| `alt+p`      | Focuses the project dropdown                           | Main Screen                                                             |
+| `alt+t`      | Focuses the work item types dropdown                   | Main Screen                                                             |
+| `alt+s`      | Focuses the work item statuses dropdown                | Main Screen                                                             |
+| `alt+a`      | Focuses the assignee dropdown                          | Main Screen                                                             |
+| `alt+k`      | Focuses the work item key search input                 | Main Screen                                                             |
+| `alt+c`      | Focuses the created-from search input                  | Main Screen                                                             |
+| `alt+u`      | Focuses the created-until search input                 | Main Screen                                                             |
+| `alt+o`      | Focuses the sorting search input                       | Main Screen                                                             |
+| `alt+v`      | Focuses the active-sprint search input                 | Main Screen                                                             |
+| `alt+j`      | Focuses the JQL search input                           | Main Screen                                                             |
+| `/`          | Search work items                                      | Main Screen                                                             |
+| `^f`         | Perform a full-text search of work items               | Main Screen                                                             |
+| `1`          | Focuses the search results table                       | Main Screen                                                             |
+| `2`          | Focuses the work item information tab                  | Main Screen                                                             |
+| `3`          | Focuses the work item details tab                      | Main Screen                                                             |
+| `4`          | Focuses the work item comments tab                     | Main Screen                                                             |
+| `5`          | Focuses the related work items tab                     | Main Screen                                                             |
+| `6`          | Focuses the attachments tab                            | Main Screen                                                             |
+| `7`          | Focuses the web links tab                              | Main Screen                                                             |
+| `8`          | Focuses the work item subtasks tab                     | Main Screen                                                             |
+| `^n`         | Creates a new work item                                | Main Screen                                                             |
+| `y`          | Copy the work item key                                 | Main Screen                                                             |
+| `^c`         | Copy the work item URL                                 | Main Screen                                                             |
+| `f`          | Filter work items in the search results table          | Search Results Table                                                    |
+| `[`          | Go to the previous page                                | Search Results Table                                                    |
+| `]`          | Go to the next page                                    | Search Results Table                                                    |
+| `x`          | Deletes a resource                                     | Search Results Table                                                    |
+| `enter`      | Select the item under the cursor                       | Search results table                                                    |
+| `up`, `k`    | Move up                                                | Search results table                                                    |
+| `down`, `j`  | Move down                                              | Search results table                                                    |
+| `right`, `l` | Move to the right                                      | Search results table                                                    |
+| `left`, `h`  | Move to the left                                       | Search results table                                                    |
+| `^u`         | Move 1 page up                                         | Search results table, Scrollable content                                |
+| `^d`         | Move 1 page down                                       | Search results table, Scrollable content                                |
+| `g`          | Scroll to the top                                      | Search results table, Scrollable content                                |
+| `G`          | Scroll to the bottom                                   | Search results table, Scrollable content                                |
+| `g`          | Scroll to the beginning                                | Search results table                                                    |
+| `G`          | Scroll to the end                                      | Search results table                                                    |
+| `up`, `k`    | Scroll up                                              | Scrollable content                                                      |
+| `down`, `j`  | Scroll down                                            | Scrollable content                                                      |
+| `a`          | Add a comment                                          | Comments Tab                                                            |
+| `x`          | Delete a comment                                       | Comments Tab                                                            |
+| `a`          | Create a link between work items                       | Links Tab                                                               |
+| `x`          | Delete a link between work items                       | Links Tab                                                               |
+| `a`          | Add a web link to a work item                          | Links Tab                                                               |
+| `x`          | Delete a web link from a work item                     | Links Tab                                                               |
+| `a`          | Add a subtask to a work item                           | Subtasks Tab                                                            |
+| `v`          | View details of a work item                            | Related Tab, Subtasks Tab                                               |
+| `^e`         | Open text editor                                       | Create work item ecreen                                                 |
+| `e`          | Edit the (text) content of a resource                  | Info Tab                                                                |
+| `v`          | View the text content of a resource                    | Info Tab                                                                |
+| `c`          | Copy the text content of a resource                    | Info Tab                                                                |
+| `^e`         | Edit JQL expressions                                   | JQL Search Filter                                                       |
+| `w`          | View the worklog of a work item                        | Details Tab                                                             |
+| `^s`         | Save the text content of a resource                    | Details Tab, Create/Update Screens                                      |
+| `l`          | Log work done for a work item                          | Worklog Screen                                                          |
+| `x`          | Delete worklog entry                                   | Worklog Screen                                                          |
+| `^e`         | Edit worklog entry                                     | Worklog Screen                                                          |
+| `*`          | Flag a work item                                       | Details Screen                                                          |
+| `a`          | Attach a file to a work item                           | Attachments Tab                                                         |
+| `o`          | Open attachment                                        | Attachments Tab                                                         |
+| `x`          | Delete attachment                                      | Attachments Tab                                                         |
+| `x`          | Empty recent history                                   | Recent History Screen                                                   |
+| `o`          | Open resource in the browser                           | Search results table, Worklog, Recent history screen, Quick view screen |
 
-Besides the hot-keys above the following are always available.
+## Legacy Style
 
-| Key      | Action                                                                                         |
-|----------|------------------------------------------------------------------------------------------------|
-| `^r`     | Searches work items (this is the same as clicking the "Search" button)                         |
-| `/`      | Enables full-text search                                                                       |
-| `^n`     | Creates a new work item                                                                        |
-| `f1`     | Shows this help                                                                                |
-| `f2`     | Shows server information                                                                       |
-| `f3`     | Shows the currently loaded settings                                                            |
-| `^k`     | Copy to the clipboard the key of the item currently selected/highlighted in the search results |
-| `^j`     | Copy to the clipboard the URL of the item currently selected/highlighted in the search results |
+| Keys                    | Description                                              | Context |
+|-------------------------|----------------------------------------------------------|---------|
+| `tab`                   | Focus next element                                       |         |
+| `^q`                    | Closes the app                                           |         |
+| `f1`, `^?`, `^+shift+\` | Open the help                                            |         |
+| `f2`                    | View details of your Jira server                         |         |
+| `f3`                    | View the configuration file                              |         |
+| `p`                     | Focuses the project dropdown                             |         |
+| `t`                     | Focuses the work item types dropdown                     |         |
+| `s`                     | Focuses the work item statuses dropdown                  |         |
+| `a`                     | Focuses the assignee dropdown                            |         |
+| `k`                     | Focuses the work item key search input                   |         |
+| `f`                     | Focuses the created-from search input                    |         |
+| `u`                     | Focuses the created-until search input                   |         |
+| `o`                     | Focuses the sorting search input                         |         |
+| `v`                     | Focuses the active-sprint search input                   |         |
+| `j`                     | Focuses the JQL search input                             |         |
+| `^r`                    | Search work items                                        |         |
+| `/`                     | Perform a full-text search of work items                 |         |
+| `1`                     | Focuses the search results table                         |         |
+| `2`                     | Focuses the work item information tab                    |         |
+| `3`                     | Focuses the work item details tab                        |         |
+| `4`                     | Focuses the work item comments tab                       |         |
+| `5`                     | Focuses the related work items tab                       |         |
+| `6`                     | Focuses the attachments tab                              |         |
+| `7`                     | Focuses the web links tab                                |         |
+| `8`                     | Focuses the work item subtasks tab                       |         |
+| `^n`                    | Creates a new work item                                  |         |
+| `f7`                    | Shows the recent history                                 |         |
+| `^k`                    | Copy the work item key                                   |         |
+| `^j`                    | Copy the work item URL                                   |         |
+| `^g`                    | Creates a Git branch for a work item                     |         |
+| `.`                     | Filter work items in the search results table            |         |
+| `alt+left`              | Go to the previous page                                  |         |
+| `alt+right`             | Go to the next page                                      |         |
+| `d`                     | Deletes a resource                                       |         |
+| `f6`                    | View items related to the selected work item             |         |
+| `enter`                 | Select the item under the cursor                         |         |
+| `up`                    | Move up                                                  |         |
+| `down`                  | Move down                                                |         |
+| `right`                 | Move to the right                                        |         |
+| `left`                  | Move to the left                                         |         |
+| `pageup`                | Move 1 page up                                           |         |
+| `pagedown`              | Move 1 page down                                         |         |
+| `^home`                 | Scroll to the top                                        |         |
+| `^end`                  | Scroll to the bottom                                     |         |
+| `home`                  | Scroll to the beginning                                  |         |
+| `end`                   | Scroll to the end                                        |         |
+| `n`                     | Add a comment                                            |         |
+| `d`                     | Delete a comment                                         |         |
+| `n`                     | Create a link between work items                         |         |
+| `v`                     | View details of a work item                              |         |
+| `d`                     | Delete a link between work items                         |         |
+| `n`                     | Add a web link to a work item                            |         |
+| `d`                     | Delete a web link from a work item                       |         |
+| `n`                     | Add a subtask to a work item                             |         |
+| `^e`                    | Open text editor                                         |
+| `^e`                    | Edit the (text) content of a resource                    |         |
+| `^l`                    | View the worklog of a work item                          |         |
+| `^t`                    | [DEPRECATED] Log work for a work item. Use `^l` instead. |         |
+| `^f`                    | Flag a work item                                         |         |
+| `n`                     | Log work done for a work item                            |         |
+| `^o`                    | Open resource in the browser                             |         |
+| `d`                     | Delete worklog entry                                     |         |
+| `^e`                    | Edit worklog entry                                       |         |
+| `d`                     | Empty recent history                                     |         |
+| `v`                     | View the text content of a resource                      |         |
+| `c`                     | Copy the text content of a resource                      |         |
+| `^s`                    | Save the text content of a resource                      |         |
+| `^e`                    | Edit JQL expressions                                     |         |
+| `^u`, `n`               | Attach a file to a work item                             |         |
+| `^o`                    | Open attachment                                          |         |
+| `d`                     | Delete attachment                                        |         |
 
-All these bindings above are always displayed at the bottom of the app depending on the component you are focus on.
 
 # Searching Work Items
 
@@ -87,7 +176,7 @@ JiraTUI supports a few ways to search work items.
 ## Search using filters
 
 You can use the filters at the top of the app to setup the criteria you want to use for searching work items. Once
-you select the desired values simply click `ctrl+r` or, click the `Search` button.
+you select the desired values simply click the key that corresponds to the action `search`.
 
 The maximum number of results that the app will retrieve and show is controlled by the setting
 `search_results_per_page`. The default value is 30. If the search criteria yields work items the app will display them
@@ -131,7 +220,7 @@ If defined, only work items that were created until this date (inclusive) will b
 
 If no `Created From` and `Created Until` search criteria are defined then the tool will fetch work items created
 within the last 15 days. The number of days can be specified by the configuration variable
-`search_issues_default_day_interval`
+`search_issues_default_day_interval`.
 
 ### Search by Active Sprint
 
@@ -141,7 +230,7 @@ sprint.
 ## Searching using full-text search
 
 In addition to searching using the filters above, JiraTUI allows you to search items using full-text
-search. This type of search has 2 modes: standard and advanced.
+search. This type of search has 2 modes: **Standard Full-text Search** and **Advanced Full-text Search**.
 
 - **Standard Full-text Search**: this modes searches items using the items' summary and description fields. This uses
 queries of the form `summary ~ "search term" OR description ~ "search term"`.
@@ -162,15 +251,16 @@ https://support.atlassian.com/jira-software-cloud/docs/search-for-work-items-usi
 **Important**: Full-text search is only available when you connect to the Jira Cloud Platform. This feature is not
 available when you connect to Jira Data Center (aka. server, on-premises).
 
-To activate full-text search press `/`. Enter the search term in the pop-up and hit `enter`.
+To activate full-text search press the key for the action `find_by_text`. Enter the search term in the pop-up and
+hit `enter`.
 
 ## Searching Using JQL Expressions
 
-Another way to search work items in JiraTUI is by crafting your own [JQL query](). You can do so using the JQL Query
+Another way to search work items in JiraTUI is by crafting your own [JQL query](https://support.atlassian.com/jira-service-management-cloud/docs/use-advanced-search-with-jira-query-language-jql/). You can do so using the JQL Query
 input field. In addition, you can also define your own JQL query expressions and save them in the config file using the
 setting `pre_defined_jql_expressions`. This is a YAML dictionary of expressions. When you focus on the JQL Query input
-field (`j`) and press `ctrl+e` the JQL Editor opens. Here you can write a complex query or, choose one from the
-dropdown.
+field (by pressing the key for the action `focus_search_jql`) and press the key for the action `edit_jql` the JQL
+Editor opens. Here you can write a complex query or, choose one from the dropdown.
 
 **Examples**
 
@@ -186,11 +276,12 @@ or searching by the user's email address:
 assignee = "john@smith.com"
 ```
 
-# Filtering results
+# Filtering Search Results
 
 Search results can be filtered as well. In order to do this simply focus on the results table by pressing `1` and then
-press `.`. This opens up an input field where you can enter the term you want to use to filter the results further.
-Items are filtered by their `summary` field. Keep in mind that the filtering only applies to the current page.
+press the key for the action `filter`. This opens up an input field where you can enter the term you want to use to
+filter the results further. Items are filtered by their `summary` field. Keep in mind that the filtering only applies
+to the current page.
 
 This feature is controlled by the setting `search_results_page_filtering_enabled`. The minimum length of the search
 term is controlled by the setting `search_results_page_filtering_minimum_term_length`; the default is 3.
@@ -239,15 +330,16 @@ key in addition to being filtered by their name/email address.
 
 # Creating Git Branches
 
-If you want to create a Git branch for a work item you can do so by selecting the work item int he search results and
-then pressing `^g`. This will open a pop-up screen and will allow you to specify the target repository and the name of
-the branch. The list of available repositories is controlled by the configuration variable `git_repositories`.
+If you want to create a Git branch for a work item you can do so by selecting the work item in the search results and
+then pressing the key for the action `create_git_branch`. This will open a pop-up screen and will allow you to specify
+the target repository and the name of the branch. The list of available repositories is controlled by the configuration
+variable `git_repositories`.
 
 # Creating Work Items
 
-To create a work item you can press `ctrl+n`. This will open up a modal screen with a form to provide the necessary
-fields to create the work item. Fields marked with `(*)` are required. If the item is created successfully a message
-will pop up in the app indicating the work item key.
+To create a work item you can press the key for the action `create_work_item`. This will open up a modal screen with a
+form to provide the necessary fields to create the work item. Fields marked with `(*)` are required. If the item is
+created successfully a message will pop up in the app indicating the work item key.
 
 The form includes a fixed set of fields and, a set of fields that are dynamically created depending on the project and
 type of work item that you want to create. These fields are always present in the form:
@@ -304,10 +396,11 @@ the variable `enable_updating_additional_fields: True` in the config file. For m
 [Enable Updating Additional Fields](https://jiratui.readthedocs.io/en/latest/users/configuration/configuration.html#enable-updating-additional-fields)
 in the official documentation page.
 
-In order to update a field simply focus on it, change its value and then press `^s` to save the changes.
+In order to update a field simply focus on it, change its value and then press the key that corresponds to the action
+`save_content` to save the changes.
 
 Some of the fields require a modal to pop up to allow the user to select values for the field. These fields include a
-tip that reads "press enter to update". This is the case for custom fields of type `multicheckboxes`.
+tip that reads _"press enter to update"_. This is the case for custom fields of type `multicheckboxes`.
 
 **Updating the parent of an issue**
 
@@ -315,7 +408,7 @@ Jira arranges the type sof issues into a hierarchy. This hierarchy is used to de
 another issue as a parent. For example, an Epic can not have a parent issue. Issues of type Story, Task, Bug and
 Subtask do accept parents.
 
-Jiratui disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
+JiraTUI disables the parent field of an issue when its type does not allow parents to be set; e.g. for Epics.
 
 **Updating priorities**
 
@@ -330,26 +423,27 @@ field then the probable reason is that your Jira project does not support this f
 ## Comments
 
 This contains the comments associated to the selected work item. Comments can be deleted by focusing on them and then
-pressing `d`. Comments can be added by pressing `n`.
+pressing the key for the action `delete_comment`. Comments can be added by pressing the key for the action `add_comment`.
 
 ## Related Work Items
 
 This will display a summary of all the work items related to the item currently selected.
 
-Pressing `n` allows the user to add new related work items while focusing on a related item and then pressing `d` will
-delete the item.
+Pressing the key for the action `link_work_item` allows the user to add new related work items while focusing on a
+related item and then pressing the key for the action `unlink_work_item` will delete the item.
 
-To view the details of a related item simply focus on the item and then press `v`.
+To view the details of a related item simply focus on the item and then press the key for the action `view_work_item`.
 
 ## Attachments
 
 This will display a list of files attached to the selected work item.
 
-To upload a file press `^u` and provide the details in the pop-up that opens. To delete an attachment focus on the
-attached file you want to delete and then press `d`. For some files the application provides a shortcut to view the
-content of the file directly in the terminal; this includes some types of images. When the user selects the attachment
-and presses `enter` (or clicks on the attachment row) the app will attempt to download the file display its content in
-the terminal. In addition, after selecting/highlighting an attachment the user can press `^o` to open the file in the
+To upload a file press the key for the action `add_attachment` and provide the details in the pop-up that opens. To
+delete an attachment focus on the attached file you want to delete and then press the key for the action
+`delete_attachment`. For some files the application provides a shortcut to view the content of the file directly in the
+terminal; this includes some types of images. When the user selects the attachment and presses `enter` (or clicks on
+the attachment row) the app will attempt to download the file display its content in the terminal. In addition, after
+selecting/highlighting an attachment the user can press the key for the action `open_attachment` to open the file in the
 browser.
 
 **Important**: Uploading large files may cause the UI to be unresponsive temporarily. This will depend on the size of
@@ -363,8 +457,9 @@ the file.
 
 This will display a list of URLs associated to the selected work item. files attached to the selected work item.
 
-To add a new link simply press `n` and provide the details in the pop-up that opens. To delete a link simply focus on
-the title of the collapsible whose link you want to delete and then press `d`.
+To add a new link simply press the key for the action `add_remote_link` and provide the details in the pop-up that
+opens. To delete a link simply focus on the title of the collapsible whose link you want to delete and then press the
+key for the action `delete_remote_link`.
 
 ## Subtasks
 
@@ -373,43 +468,42 @@ another work item `B` if the parent of `A` is `B`.
 
 ## Worklogs
 
-The "Details" tab also allows you to log work for a given work item. To do so you can press `^l` to open a pop-up screen
-that will show you the time tracking information of the selected item together with the log entries. In this new screen
-you can do the following:
+The "Details" tab also allows you to log work for a given work item. To do so you can press the key for the action
+`view_worklog` to open a pop-up screen that will show you the time tracking information of the selected item together
+with the log entries. In this new screen you can do the following:
 
-- press `n` to add a new entry.
+- press the key for the action `log_work` to add a new entry.
 - press `tab` to select an entry and then
-  - press `^e` to update it.
-  - press `d` to delete it.
-  - press `^o` to open the entry in the browser.
+  - press the key for the action `edit_worklog_entry` to update it.
+  - press the key for the action `delete_worklog` to delete it.
+  - press the key for the action `open_in_browser` to open the entry in the browser.
 
 ## Flagging Work Items
 
-You can add/remove a flag to a work item by pressing `^f` while in the details tab. When you add a flag to an item you
-can add an optional message to let your team know why the task is (not) flagged.
+You can add/remove a flag to a work item by pressing the key for the action `flag_work_item` while in the details
+tab. When you add a flag to an item you can add an optional message to let your team know why the task is (not) flagged.
 
 # Deleting Work Items
 
-To delete a work item you can select an item from the search results pane on the left and then click `d`. This will
-open a modal screen that will let you confirm the deletion.
+To delete a work item you can select an item from the search results pane on the left and then press the key for the
+action `delete_work_item`. This will open a modal screen that will let you confirm the deletion.
 
 **Important**: if an item has subtasks all of them will also be deleted.
-
 
 # View Related Items
 
 After you perform a search and select an item from the search results you can view the items related to the selected
-work item. To do this press `f6`.
+work item. To do this press the key for the action `open_go_to_screen`.
 
-Pressing `f6` will open a modal screen that will list all the related items. These can be subtasks, a parent task, or
+This will open a modal screen that will list all the related items. These can be subtasks, a parent task, or
 tasks related via another relationship, e.g. "causes".
 
 In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
 can do the following:
 
-- press `^o` to open the item in the browser.
-- press `^k` to copy the item's key to the clipboard.
-- press `^j` to copy the item's URL to the clipboard.
+- press the key for the action `open_in_browser` to open the item in the browser.
+- press the key for the action `copy_issue_key` to copy the item's key to the clipboard.
+- press the key for the action `copy_issue_url` to copy the item's URL to the clipboard.
 
 In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
 fetch the details of the select item. This gives you a quick way to navigate through related items.
@@ -418,18 +512,18 @@ fetch the details of the select item. This gives you a quick way to navigate thr
 
 Every time you select an item from the search results by pressing `enter` JiraTUI will remember the item in the current
 application's session. The same happens when you add or update an item. To view the list of recently added/updated/viewed
-items you can press `f7`.
+items you can press the key for the action `show_recent_history`.
 
 Doing so will open a modal screen that will display a list of items.
 
 In the new screen you can press `tab` to move around to different items. After highlighting an item from the tables you
 can do the following:
 
-- press `^o` to open the item in the browser.
-- press `^k` to copy the item's key to the clipboard.
-- press `^j` to copy the item's URL to the clipboard.
+- press the key for the action `open_in_browser` to open the item in the browser.
+- press the key for the action `copy_issue_key` to copy the item's key to the clipboard.
+- press the key for the action `copy_issue_url` to copy the item's URL to the clipboard.
 
 In addition to this, if you select an item from the tables by pressing `enter` on it JiraTUI will close the screen and
 fetch the details of the select item. This gives you a quick way to navigate through related items.
 
-Last, you can empty the list of recent items by pressing `d`.
+Last, you can empty the list of recent items by pressing the key for the action `empty_recent_history`.

@@ -13,15 +13,18 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Rule, Static
 from textual.widgets._data_table import RowDoesNotExist
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
-from jiratui.widgets.screens.goto import GotToScreen
+from jiratui.widgets.screens.goto import GoToScreen
 
 
+# TODO move to screens module and/or merge with existing confirmation screen
 class ConfirmDeleteItemScreen(ModalScreen[bool]):
     """A modal screen that allows users to confirm deleting an item."""
 
@@ -135,7 +138,7 @@ class DataTableSearchInput(Input):
                 self.total = len(filtered)
 
 
-class IssuesSearchResultsTable(DataTable):
+class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """The widget that displays the results of a search.
 
     This widget provides a reactive attribute, `search_results`, that contains the issues that the table will
@@ -151,6 +154,8 @@ class IssuesSearchResultsTable(DataTable):
     notify other widgets so they can update the relevant widgets.
     ```
 
+    This widget is actionable and so it can handle different actions.
+
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
     - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
@@ -158,55 +163,46 @@ class IssuesSearchResultsTable(DataTable):
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)
 
-    BINDINGS = [
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'select_cursor',
+        'cursor_up',
+        'cursor_down',
+        'page_up',
+        'page_down',
+        'scroll_top',
+        'scroll_bottom',
+        'filter',
+        'previous_issues_page',
+        'next_issues_page',
+        'open_in_browser',
+        'delete_work_item',
+        'open_go_to_screen',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='.',
-            action='filter',
-            description='Filter',
-            tooltip='Filter the results of the current page',
-        ),
-        Binding('escape', 'hide', 'Hide search input', show=False),
-        Binding(
-            key='alt+left',
-            action='previous_issues_page',
-            description='\uf060',
-            show=True,
-            key_display='alt+left',
-            tooltip='Previous page',
-        ),
-        Binding(
-            key='alt+right',
-            action='next_issues_page',
-            description='\uf061',
-            show=True,
-            key_display='alt+right',
-            tooltip='Next page',
-        ),
-        Binding(
-            key='ctrl+o',
-            action='open_issue_in_browser',
-            description='Browse',
-            show=True,
-            key_display='^o',
-            tooltip='Open item in the browser',
-        ),
-        Binding(
-            key='d',
-            action='delete_work_item',
-            description='\uf014',
-            show=True,
-            key_display='d',
-            tooltip='Delete the work item currently highlighted',
-        ),
-        Binding(
-            key='f6',
-            action='open_go_to_screen',
-            description='Related',
-            show=True,
-            key_display='f6',
-            tooltip='View related work items',
-        ),
-    ]
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'hide', 'Hide search input', show=False)]
 
     SMALLEST_MAXIMUM_WIDTH_FOR_SUMMARY_COLUMN = 30
 
@@ -307,7 +303,7 @@ class IssuesSearchResultsTable(DataTable):
         if event.row_key:
             self.current_work_item_id, self.current_work_item_key = event.row_key.value.split('#')
 
-    def action_open_issue_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self.current_work_item_key:
             self.notify('Opening Work Item in the browser...')
@@ -413,25 +409,25 @@ class IssuesSearchResultsTable(DataTable):
         if action == 'next_issues_page':
             if self.token_by_page.get(self.page + 1):
                 return True
-            if self.page > 0:
-                return True
             return False
         return True
 
     async def action_previous_issues_page(self):
         if self.page > 1:
-            next_page_token = self.token_by_page.get(self.page - 1)
+            # if there is no token then the 1st page wil be retrieved; otherwise the page with the given token is
+            # fetched
+            previous_page_token = self.token_by_page.get(self.page - 1)
             self.page -= 1
             screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-            await screen.search_issues(next_page_token, page=self.page)
+            await screen.search_issues(previous_page_token, page=self.page)
             self.refresh_bindings()
 
     async def action_next_issues_page(self):
-        next_page_token = self.token_by_page.get(self.page + 1)
-        self.page += 1
-        screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
-        await screen.search_issues(next_page_token, page=self.page)
-        self.refresh_bindings()
+        if next_page_token := self.token_by_page.get(self.page + 1):
+            self.page += 1
+            screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
+            await screen.search_issues(next_page_token, page=self.page)
+            self.refresh_bindings()
 
     def action_open_go_to_screen(self) -> None:
         """Opens a modal screen to show the work items related to the work item selected by the user in the search
@@ -445,7 +441,7 @@ class IssuesSearchResultsTable(DataTable):
 
         if CONFIGURATION.get().enable_goto and self.current_work_item_key:
             self.app.push_screen(
-                GotToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
+                GoToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
             )
         elif not self.current_work_item_key:

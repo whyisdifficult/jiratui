@@ -64,10 +64,12 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import LoadingIndicator, ProgressBar
 
+from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
+from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
     work_item_parent_has_changed,
@@ -117,7 +119,7 @@ class StaticFieldsWidgets(ItemGrid):
     pass
 
 
-class IssueDetailsWidget(Vertical):
+class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:ignore[call-arg]
     """Implements a form to allow the user to view and edit some of the fields associated to a work item.
 
     The widget defines a form for viewing and updating some of the work item's fields. The form includes both static
@@ -154,36 +156,35 @@ class IssueDetailsWidget(Vertical):
     clear_form: Reactive[bool] = reactive(False, always_update=True)
     """Reactive variable to clear the fields in the form."""
 
-    BINDINGS = [
-        ('ctrl+s', 'save_work_item', 'Save'),
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'save_content',
+        'view_worklog',
+        'flag_work_item',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
-            key='x',
-            action='focus_widget("x")',
-            description='Focus the Assignee widget',
-            show=False,
-        ),
-        Binding(
-            key='y',
-            action='focus_widget("y")',
-            description='Focus the Priority widget',
-            show=False,
-        ),
-        Binding(
-            key='z',
-            action='focus_widget("z")',
-            description='Focus the Status widget',
-            show=False,
-        ),
-        Binding(
-            key='ctrl+l, ctrl+t',
-            action='view_worklog',
-            description='Worklog',
-            show=True,
-            key_display='^l',
-        ),
-        Binding(
-            key='ctrl+f', action='flag_work_item', description='Flag', show=True, key_display='^f'
-        ),
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
     ]
 
     @dataclass
@@ -326,7 +327,6 @@ class IssueDetailsWidget(Vertical):
                 yield JiraUserInput(
                     id='edit-work-item-input-assignee',
                     jira_field_key='assignee_account_id',
-                    border_subtitle='(x)',
                     border_title='Assignee',
                 ).add_class(*['cols-3', 'create-update-users-field-widget'])
                 # set widgets in row 3
@@ -378,7 +378,6 @@ class IssueDetailsWidget(Vertical):
                     extra_classes='cols-2',
                 )
                 # set widgets in row 9 - cols 3
-                # yield WorkItemLabelsField()
                 yield HorizontalGroup(id='time-tracking-container', classes='cols-3')
             yield DynamicFieldsWidgets()  # the container for all the widgets created dynamically
 
@@ -404,27 +403,6 @@ class IssueDetailsWidget(Vertical):
         return await self.app.api.search_users_assignable_to_issue(  # type:ignore[attr-defined]
             issue_key=self._work_item_key, query=query
         )
-
-    def action_focus_widget(self, key: str) -> None:
-        """Focuses a widget depending on the key pressed.
-
-        This will only focus the following widgets:
-        - assignee_selector (key `x`)
-        - priority_selector (key `y`)
-        - issue_status_selector (key `z`)
-
-        Args:
-            key: the key that was pressed.
-
-        Returns:
-            `None`.
-        """
-        if key == 'x':
-            self.screen.set_focus(self.assignee_selector)
-        elif key == 'y':
-            self.screen.set_focus(self.priority_selector)
-        elif key == 'z':
-            self.screen.set_focus(self.issue_status_selector)
 
     def action_flag_work_item(self) -> None:
         """Opens a modal screen to let the user add/remove a flag with an optional comment/note."""
@@ -670,7 +648,7 @@ class IssueDetailsWidget(Vertical):
                         payload[dynamic_widget.jira_field_key] = value_for_update
         return payload
 
-    async def action_save_work_item(self) -> None:
+    async def action_save_content(self) -> None:
         """Updates the fields of a work item that have changed.
 
         Returns:

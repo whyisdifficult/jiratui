@@ -5,14 +5,41 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, MarkdownViewer, Static, TextArea
 
+from jiratui.actions.keys import get_application_key_bindings
+from jiratui.utils.ui_actions import Actionable, UIAction
 
-class EditTextContentScreen(Screen[dict]):
+
+class EditTextContentScreen(Actionable, Screen[dict]):
     """A modal screen that displays a TextArea editor to allow users to edit Plain Text/Markdown content."""
 
-    BINDINGS = [
-        Binding('escape', 'app.pop_screen', 'Close'),
-        Binding('ctrl+s', 'save_content', 'Save', show=True, key_display='^s'),
-    ]
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict = get_application_key_bindings()
+    for supported_action_id in [
+        'save_content',
+    ]:
+        data = key_bindings.get(supported_action_id, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
     def __init__(self, content: str, jira_field_key: str, title: str | None = None):
         super().__init__()
