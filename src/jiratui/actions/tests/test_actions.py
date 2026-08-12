@@ -805,9 +805,10 @@ async def test_action_filter_results_from_search_results(
         await pilot.press(bindings.get('search', {}).get('keys', [])[0])
         await app.workers.wait_for_complete()
         await pilot.press(bindings.get('filter', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('filter', {}).get('keys', [])[-1])
         # THEN
         search_work_items_mock.assert_awaited_once()
-        action_filter_mock.assert_called_once()
+        action_filter_mock.assert_called()
 
 
 @patch.object(DataTable, 'action_select_cursor')
@@ -4527,6 +4528,37 @@ async def test_action_scroll_bottom_in_config_screen(
         action_scroll_bottom_mock.assert_called_once()
 
 
+@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(DataTable, 'action_select_cursor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_select_cursor_in_config_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_select_cursor_mock: Mock,
+    get_data_mock: Mock,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    get_data_mock.return_value = {
+        'field_1': '21',
+        'field_2': '2',
+        'field_3': '3',
+    }
+    app.config.pre_defined_jql_expressions = None
+    app.config.ssl = None
+    async with app.run_test() as pilot:
+        app.push_screen(ConfigFileScreen())
+        await pilot.press('tab')
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        # THEN
+        action_select_cursor_mock.assert_called_once()
+
+
 @patch.object(APIController, 'get_issue')
 @patch.object(DataTable, 'action_cursor_up')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -4695,9 +4727,32 @@ async def test_action_scroll_bottom_in_goto_screen(
         action_scroll_bottom_mock.assert_called_once()
 
 
-##
-##
-##
+@patch.object(APIController, 'get_issue')
+@patch.object(DataTable, 'action_select_cursor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_select_cursor_in_goto_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_select_cursor_mock: Mock,
+    get_issue_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=jira_issues)
+    )
+    async with app.run_test() as pilot:
+        app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        # THEN
+        action_select_cursor_mock.assert_called_once()
 
 
 @patch.object(HistoryManager, 'get_history')
@@ -4877,3 +4932,33 @@ async def test_action_scroll_bottom_in_history_screen(
         await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
         # THEN
         action_scroll_bottom_mock.assert_called_once()
+
+
+@patch.object(HistoryManager, 'get_history')
+@patch.object(DataTable, 'action_select_cursor')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_select_cursor_in_history_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    action_select_cursor_mock: Mock,
+    get_history_mock: Mock,
+    bindings: dict,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_history_mock.return_value = [
+        HistoryEntry(key='WI-1', item_type='Task', status='Done', summary='Work to do 1'),
+        HistoryEntry(key='WI-2', item_type='Task', status='Done', summary='Work to do 2'),
+        HistoryEntry(key='WI-3', item_type='Task', status='Done', summary='Work to do 3'),
+    ]
+    async with app.run_test() as pilot:
+        app.push_screen(HistoryScreen(HistoryManager()))
+        await pilot.press('tab')
+        await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
+        # THEN
+        action_select_cursor_mock.assert_called_once()

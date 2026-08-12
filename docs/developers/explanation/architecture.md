@@ -1445,14 +1445,14 @@ C4Component
         }
 
         namespace widgets.screens.goto {
-            class GotToScreen
+            class GoToScreen
             class GoToItemsTable
         }
 
-        GotToScreen o--> Static
-        GotToScreen o--> VerticalScroll
-        GotToScreen o--> Rule
-        GotToScreen o--> Footer
-        GotToScreen "1" o--> "1..4" GoToItemsTable
+        GoToScreen o--> Static
+        GoToScreen o--> VerticalScroll
+        GoToScreen o--> Rule
+        GoToScreen o--> Footer
+        GoToScreen "1" o--> "1..4" GoToItemsTable
 ```
 ````

@@ -619,7 +619,7 @@ KEY_BINDINGS_STANDARD = {
     },
     # Search Results Actions
     'filter': {
-        'keys': ['f'],
+        'keys': ['f', '.'],
         'show': True,
         'description': 'Filter',
         'tooltip': 'Filter work items in the search results table',

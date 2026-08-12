@@ -17,6 +17,7 @@ class ConfigTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore
     # set up the key-bindings based on the configuration selected by the user
     key_bindings: dict = get_application_key_bindings()
     for supported_action_id in [
+        'select_cursor',
         'cursor_up',
         'cursor_down',
         'page_up',

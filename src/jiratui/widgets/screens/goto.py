@@ -38,6 +38,7 @@ class GoToItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ign
         'open_in_browser',
         'copy_issue_key',
         'copy_issue_url',
+        'select_cursor',
         'cursor_up',
         'cursor_down',
         'page_up',

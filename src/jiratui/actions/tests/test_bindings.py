@@ -124,7 +124,7 @@ def test_standard_action_create_git_branch():
 
 
 def test_standard_action_filter():
-    assert KEY_BINDINGS_STANDARD.get('filter').get('keys') == ['f']
+    assert set(KEY_BINDINGS_STANDARD.get('filter').get('keys')) == {'f', '.'}
 
 
 def test_standard_action_previous_issues_page():

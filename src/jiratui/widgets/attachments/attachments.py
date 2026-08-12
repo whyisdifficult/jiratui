@@ -54,6 +54,7 @@ class AttachmentsDataTable(Actionable, DataTable, inherit_bindings=False):  # ty
     for supported_action_id in [
         'open_attachment',
         'delete_attachment',
+        'select_cursor',
         'cursor_up',
         'cursor_down',
         'page_up',
