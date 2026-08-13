@@ -1127,7 +1127,7 @@ async def test_build_payload_for_update_update_additional_fields_enabled_non_num
             assert payload == {'field_a': expected_value}
 
 
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_clear_form_with_support_for_sprint_selection(app: JiraApp):
     # GIVEN
@@ -1395,7 +1395,7 @@ async def test_watch_issue(jira_issue, app: JiraApp):
         assert result is None
 
 
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch.object(IssueDetailsWidget, '_setup_time_tracking')
 @patch.object(IssueDetailsWidget, '_add_dynamic_widgets')
 @patch.object(IssueDetailsWidget, '_determine_issue_flagged_status')
@@ -1570,7 +1570,7 @@ async def test_add_dynamic_widgets(
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_with_support_for_sprint_selection_without_current_sprint(
@@ -1612,7 +1612,7 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_without_cur
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_current_sprint_selected(
@@ -1658,7 +1658,7 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_curren
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_current_sprint_in_past_selected(
@@ -1705,7 +1705,7 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_with_curren
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_found(
@@ -1742,7 +1742,7 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_found_using_original_value(
@@ -1780,7 +1780,7 @@ async def test_add_dynamic_widgets_with_support_for_sprint_selection_no_sprints_
 
 
 @patch.object(IssueDetailsWidget, '_fetch_sprints_in_project')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=False))
 @patch('jiratui.widgets.work_item_details.details.create_dynamic_widgets_for_updating_work_item')
 @pytest.mark.asyncio
 async def test_add_dynamic_widgets_without_support_for_sprint_selection(
@@ -1812,7 +1812,7 @@ async def test_add_dynamic_widgets_without_support_for_sprint_selection(
         assert isinstance(children[1], MultiUserPickerAutoComplete)
 
 
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_static_widgets_css_classes_with_support_for_sprint_selection(
     jira_issue, app: JiraApp
@@ -2072,9 +2072,9 @@ async def test_fetch_sprints_in_project_with_sprints_in_session_fetching_succeed
 
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @patch.object(
-    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
+    IssueDetailsWidget, '_enable_updating_additional_fields', PropertyMock(return_value=True)
 )
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_set_issue_without_support_for_sprint_selection_with_current_sprint(
     uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp
@@ -2111,9 +2111,9 @@ async def test_set_issue_without_support_for_sprint_selection_with_current_sprin
 
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @patch.object(
-    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
+    IssueDetailsWidget, '_enable_updating_additional_fields', PropertyMock(return_value=True)
 )
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=False))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_set_issue_without_support_for_sprint_selection_without_current_sprint(
     uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp
@@ -2155,10 +2155,10 @@ async def test_set_issue_without_support_for_sprint_selection_without_current_sp
 
 
 @patch.object(
-    IssueDetailsWidget, 'support_updating_additional_fields', PropertyMock(return_value=True)
+    IssueDetailsWidget, '_enable_updating_additional_fields', PropertyMock(return_value=True)
 )
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
-@patch.object(IssueDetailsWidget, 'support_sprint_selection', PropertyMock(return_value=True))
+@patch.object(IssueDetailsWidget, '_support_sprint_selection', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_set_issue_with_support_for_sprint_selection(
     uses_cloud_api_mock: Mock, jira_issue: JiraIssue, app: JiraApp

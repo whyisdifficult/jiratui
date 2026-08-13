@@ -77,7 +77,11 @@ from jiratui.utils.work_item_updates import (
     work_item_reporter_has_changed,
 )
 from jiratui.widgets.base import ReadOnlyTextField
-from jiratui.widgets.commons.base import LabelsAutoComplete, MultiUserPickerAutoComplete
+from jiratui.widgets.commons.base import (
+    LabelsAutoComplete,
+    MultiUserPickerAutoComplete,
+    WorkItemKeyAutoComplete,
+)
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
@@ -294,12 +298,20 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         return self.query_one('#issue-details-form', expect_type=VerticalScroll)
 
     @property
-    def support_sprint_selection(self) -> bool:
+    def _support_sprint_selection(self) -> bool:
         return CONFIGURATION.get().cloud
 
     @property
-    def support_updating_additional_fields(self) -> bool:
+    def _use_advanced_full_text_search(self) -> bool:
+        return CONFIGURATION.get().enable_advanced_full_text_search
+
+    @property
+    def _enable_updating_additional_fields(self) -> bool:
         return CONFIGURATION.get().enable_updating_additional_fields
+
+    @property
+    def _update_additional_fields_ignore_ids(self) -> list[str] | None:
+        return CONFIGURATION.get().update_additional_fields_ignore_ids
 
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
@@ -382,8 +394,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             yield DynamicFieldsWidgets()  # the container for all the widgets created dynamically
 
     def on_mount(self) -> None:
-        """Initializes the autocomplete fields after mounting."""
-
         assignee_autocomplete = UsersAutoComplete(
             self.assignee_selector,
             self.app.api,  # type:ignore[attr-defined]
@@ -395,7 +405,39 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             self.app.api,  # type:ignore[attr-defined]
             id='details-reporter-autocomplete',
         ).add_class(*['cols-3'])
-        self.mount_all([assignee_autocomplete, reporter_autocomplete])
+        work_item_parent_key_autocomplete = WorkItemKeyAutoComplete(
+            self.issue_parent_field,
+            self.app.api,  # type:ignore[attr-defined]
+            work_items_search_function=self._search_work_item_parent_options,
+        ).add_class(*['cols-3'])
+        self.mount_all(
+            [assignee_autocomplete, reporter_autocomplete, work_item_parent_key_autocomplete]
+        )
+
+    async def _search_work_item_parent_options(self, query: str) -> list[JiraIssue] | None:
+        """Searches and retrieves work items to fill in the autocomplete suggestions for parent key.
+
+        See Also: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
+
+        Args:
+            query: the search term to find work items.
+
+        Returns:
+            A list of `JiraIssue` instances of None if it fails to search work items.
+        """
+
+        if query:
+            jql_query = f'summary ~ "{query}" OR description ~ "{query}" OR workItemKey ~ "{query}"'
+            if self._use_advanced_full_text_search:
+                jql_query = f'text ~ "{query}" OR workItemKey ~ "{query}"'
+            if self.issue.project.key:
+                jql_query = f'({jql_query}) AND (spaceJira = "{self.issue.project.key}")'
+            response: APIControllerResponse = await self.app.api.search_issues(  # type:ignore[attr-defined]
+                jql_query=jql_query, fields=['id', 'key', 'summary']
+            )
+            if response.success and response.result is not None:
+                return response.result.issues
+        return None
 
     async def _search_and_filter_assignees(self, query: str) -> APIControllerResponse:
         # searches and filters users that can be assignees of the work item being edited
@@ -620,7 +662,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 return None
 
         # process dynamically-generated field widgets; e.g. additional system fields and custom fields
-        if CONFIGURATION.get().enable_updating_additional_fields:
+        if self._enable_updating_additional_fields:
             # process the "dynamic" fields, which include custom and system fields
             for dynamic_widget in self.dynamic_fields_widgets_container.children:
                 if (
@@ -954,7 +996,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         # check if the work item has been flagged; and show a label at the top with a message for the user
         self.run_worker(self._determine_issue_flagged_status(work_item))
 
-        if self.support_updating_additional_fields:
+        if self._enable_updating_additional_fields:
             # add dynamic widgets to support updating custom fields and other system fields
             self.run_worker(self._add_dynamic_widgets(work_item))
 
@@ -975,7 +1017,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         """
 
         # get filter configuration to ignore fields from the dynamic form
-        ignore_filter_ids = CONFIGURATION.get().update_additional_fields_ignore_ids
+        ignore_filter_ids = self._update_additional_fields_ignore_ids
         await self.dynamic_fields_widgets_container.remove_children()
         dynamic_widgets: list[Widget]
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
@@ -1012,7 +1054,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 await self.dynamic_fields_widgets_container.mount(
                     LabelsAutoComplete(target=widget, api_controller=self.app.api)  # type:ignore
                 )
-            if sprint_selection_widgets and self.support_sprint_selection:
+            if sprint_selection_widgets and self._support_sprint_selection:
                 await self._setup_sprint_selection_widgets(work_item.project.key)
 
     async def _setup_sprint_selection_widgets(self, project_key: str) -> None:

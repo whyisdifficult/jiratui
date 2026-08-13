@@ -1055,7 +1055,7 @@ class WorkItemKeyAutoComplete(AutoComplete):
             self._search_work_items(search_string)
         return self._cached_suggestions
 
-    @work(group='create_subtask', exclusive=True)
+    @work(group='work_item_candidate_search', exclusive=True)
     async def _search_work_items(self, query: str) -> None:
         """Searches work items asynchronously.
 
