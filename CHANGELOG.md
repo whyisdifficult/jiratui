@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for keybindings styles. The app now supports a `legacy` style (default) or a `standard` style. This can be
 configured in the config file via the variable `key_bindings_style`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
-- Support autocomplete for selecting parent key in the details tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/328
+- Support autocomplete for selecting parent key in the details tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/329
 
 ### Bug Fixes
 
