@@ -120,10 +120,6 @@ class IssueParentField(Input):
         if event.value is not None:
             self.value = event.value.strip()
 
-    def on_input_changed(self, event: Input.Changed) -> None:
-        if event.value:
-            self.value = event.value.strip()
-
     def _update_required_status(self, required: bool) -> None:
         if required:
             self.border_subtitle = '(*)'
