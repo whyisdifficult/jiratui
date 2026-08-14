@@ -6,7 +6,7 @@ from textual.widgets import Input, Label, Select
 
 from jiratui.widgets.base import ReadOnlyField
 from jiratui.widgets.commons import FieldMode
-from jiratui.widgets.commons.widgets import DateInputWidget
+from jiratui.widgets.commons.widgets import DateInputWidget, TextInputWidget
 from jiratui.widgets.filters import IssueStatusSelectionInput
 
 
@@ -90,43 +90,45 @@ class IssueKeyField(ReadOnlyField):
         self.add_class(*['create-update-field-widget', 'work-item-key'])
 
 
-class IssueParentField(Input):
-    """A widget to display and update the parent field of a work item.
-
-    This widget is part of widgets defined statically in the form that allows users to update a work item.
-    """
+class IssueParentField(TextInputWidget):
+    """A widget to display and update the parent field of a work item."""
 
     update_enabled: Reactive[bool | None] = reactive(True)
-    jira_field_is_required: Reactive[bool | None] = reactive(True)
+    is_required: Reactive[bool | None] = reactive(False)
 
     def __init__(self):
-        super().__init__()
-        self.border_title = 'Parent'
+        super().__init__(
+            mode=FieldMode.UPDATE,
+            field_id='parent',
+            jira_field_key='parent',
+            title='Parent Key',
+            required=False,
+            placeholder='Enter Key...',
+            original_value=None,
+            field_supports_update=False,
+        )
+        self.compact = True
         self.add_class(*['create-update-field-widget', 'work-item-key'])
-        self.jira_field_key = 'parent'
-        """The id used by Jira to identify this field in the edit-metadata."""
         self.update_is_enabled = True
-        """Indicates whether the work item allows editing/updating this field."""
+        self.tooltip = 'The Key of the parent work item'
+        self.field_supports_update = 1
 
     def watch_update_enabled(self, enabled: bool = True) -> None:
         self.update_is_enabled = enabled
         self.disabled = not enabled
 
-    def watch_jira_field_is_required(self, required: bool) -> None:
-        self._update_required_status(required)
-
-    @on(Input.Blurred)
-    def clean_value(self, event: Input.Blurred) -> None:
-        if event.value is not None:
-            self.value = event.value.strip()
-
-    def _update_required_status(self, required: bool) -> None:
+    def watch_is_required(self, required: bool) -> None:
         if required:
             self.border_subtitle = '(*)'
             self.add_class('required')
         else:
             self.border_subtitle = None
             self.remove_class('required')
+
+    @on(Input.Blurred)
+    def clean_value(self, event: Input.Blurred) -> None:
+        if event.value is not None:
+            self.value = event.value.strip().replace(' ', '')
 
 
 class IssueSummaryField(Input):

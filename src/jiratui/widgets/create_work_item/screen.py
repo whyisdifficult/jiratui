@@ -893,8 +893,8 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
             if self.project_selector.selection:
                 data[self.project_selector.jira_field_key] = self.project_selector.selection
 
-            if self.parent_key_field.value:
-                data[self.parent_key_field.jira_field_key] = self.parent_key_field.value
+            if parent_key_value := self.parent_key_field.get_value_for_create():
+                data[self.parent_key_field.jira_field_key] = parent_key_value
 
             if self.issue_type_selector.selection:
                 data[self.issue_type_selector.jira_field_key] = self.issue_type_selector.selection

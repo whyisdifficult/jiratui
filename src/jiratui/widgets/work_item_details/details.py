@@ -427,11 +427,13 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         """
 
         if query:
-            jql_query = f'summary ~ "{query}" OR description ~ "{query}" OR workItemKey ~ "{query}"'
+            jql_query = (
+                f'(summary ~ "{query}" OR description ~ "{query}" OR workItemKey ~ "{query}")'
+            )
             if self._use_advanced_full_text_search:
-                jql_query = f'text ~ "{query}" OR workItemKey ~ "{query}"'
-            if self.issue.project.key:
-                jql_query = f'({jql_query}) AND (spaceJira = "{self.issue.project.key}")'
+                jql_query = f'(text ~ "{query}" OR workItemKey ~ "{query}")'
+            # exclude the source work item and restrict by project
+            jql_query = f'{jql_query} AND (spaceJira = "{self.issue.project.key}") AND workItemKey != "{self.issue.key}"'
             response: APIControllerResponse = await self.app.api.search_issues(  # type:ignore[attr-defined]
                 jql_query=jql_query, fields=['id', 'key', 'summary']
             )
@@ -631,10 +633,10 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
 
         if self.issue_parent_field.update_enabled:
             if work_item_parent_has_changed(
-                self.issue.parent_issue_key, self.issue_parent_field.value
+                self.issue.parent_issue_key, self.issue_parent_field.get_value_for_update()
             ):
                 payload[self.issue_parent_field.jira_field_key] = (
-                    self.issue_parent_field.value or None
+                    self.issue_parent_field.get_value_for_update() or None
                 )
 
         if self.assignee_selector.update_enabled:
@@ -977,7 +979,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         self.issue_parent_field.update_enabled = editable_fields.get(
             self.issue_parent_field.jira_field_key
         )
-        self.issue_parent_field.jira_field_is_required = required_fields.get(
+        self.issue_parent_field.is_required = required_fields.get(
             self.issue_parent_field.jira_field_key
         )
         self.issue_summary_field.value = work_item.summary

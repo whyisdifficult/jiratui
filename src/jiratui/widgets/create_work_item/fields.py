@@ -4,6 +4,7 @@ from textual import on
 from textual.widgets import Input
 
 from jiratui.widgets.commons.base import FieldMode, IssueTypeSelectionWidget, ProjectSelectionWidget
+from jiratui.widgets.commons.widgets import TextInputWidget
 from jiratui.widgets.filters import IssueStatusSelectionInput
 
 
@@ -56,23 +57,21 @@ class SummaryField(Input):
             self.value = event.value.strip()
 
 
-class ParentKeyField(Input):
-    """An Input widget for setting the key of an issue that acts as a parent to the issue we want to create."""
-
+class ParentKeyField(TextInputWidget):
     def __init__(self, value: str | None = None):
         super().__init__(
-            placeholder='ABC-12345',
-            tooltip='The Key of the parent work item',
-            value=value.strip() if value is not None else None,
+            mode=FieldMode.CREATE,
+            field_id='parent_key',
+            jira_field_key='parent_key',
+            title='Parent Key',
+            required=False,
+            placeholder='Enter Key...',
         )
+        self.value = value.strip() if value is not None else ''
         self.compact = True
-        self.border_title = 'Parent Key'
-        self._jira_field_key = 'parent_key'
         self.add_class(*['create-update-field-widget', 'parent-key'])
-
-    @property
-    def jira_field_key(self) -> str | None:
-        return self._jira_field_key
+        self.tooltip = 'The Key of the parent work item'
+        self.field_supports_update = 1
 
     @on(Input.Blurred)
     def clean_value(self, event: Input.Blurred) -> None:
