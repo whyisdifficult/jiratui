@@ -99,7 +99,7 @@ class ConfigurationScreen(Screen):
             yield Static(BANNER).add_class('heading').add_class('banner')
             yield (
                 Static(
-                    'https://jiratui.sh | https://jiratui.readthedocs.org | https://github.com/whyisdifficult/jiratui',
+                    'https://jiratui.sh | https://jiratui.readthedocs.io | https://github.com/whyisdifficult/jiratui',
                 )
                 .add_class('heading')
                 .add_class('margin-bottom')
