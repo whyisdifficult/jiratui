@@ -89,7 +89,32 @@ jiratui version
 ## Settings
 
 Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
-file.
+file. For this you have 2 options.
+
+- Using the CLI command `jiratui configure` to launch an app that will guide through the process of generating a
+configuration file with the minimal settings you need for a first launch. This is only supported in
+JiraTUI `>= v1.13.0`.
+- Authoring the config file manually.
+
+### Using the Configuration Manager
+
+Simply run the following command to start up the configuration manager app.
+
+```shell
+jiratui configure
+```
+
+You can pass an optional parameter `-o` (`--output-file`) with the location where you want to save the configuration
+file. If you do not provide this parameter the application wil save the resulting file in the standard location. See
+below for details.
+
+```shell
+jiratui configure -o /Users/Downloads/file.yaml
+```
+
+The application launches and guides you through the process.
+
+### Authoring the Config File Manually
 
 The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
 config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
@@ -104,7 +129,7 @@ file in the following way:
 `JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
 config file as described below.
 
-### Setting API Credentials
+#### Setting API Credentials
 
 You must provide the following values to connect to your Jira instance API:
 
@@ -122,7 +147,7 @@ jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 
 **Tip**: The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 
-### Choosing the Jira Platform
+#### Choosing the Jira Platform
 
 Jira is available via the [Jira Cloud Platform's API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about)
 and via the [Jira Data Center's API (aka. Jira on-premises)](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted).
@@ -136,7 +161,7 @@ following:
 cloud: False
 ```
 
-### Choosing the API version
+#### Choosing the API version
 
 By default, JiraTUI uses the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
 This is good when your Jira instance runs in the cloud. However, Jira also offers an on-premises installation mode and
@@ -152,7 +177,7 @@ jira_api_version: 2
 **Important**: when `cloud: False` JiraTUI will use the correct version for the API and ignore the value of
 `jira_api_version`. In other words, `jira_api_version` is only applicable when `cloud: True`.
 
-### Setting Up Permissions and Scopes for your User
+#### Setting Up Permissions and Scopes for your User
 
 JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
 permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
@@ -161,7 +186,7 @@ grant them to your user account.
 To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
 [Permissions and Scopes](docs/users/configuration/permissions.md).
 
-### Choosing the Keybindings Style
+#### Choosing the Keybindings Style
 
 Starting with version `1.13.0` you can choose which style of keybindings to use. The tool offers 2 options: `legacy`
 (default) or `standard`. The legacy style is the original and only keybinding set offered by the tool up to version
