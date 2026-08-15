@@ -2,7 +2,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -16,7 +16,7 @@ from jiratui.constants import (
     ISSUE_SEARCH_DEFAULT_MAX_RESULTS,
 )
 from jiratui.files import get_config_file
-from jiratui.models import BaseModel, WorkItemsSearchOrderBy
+from jiratui.models import WorkItemsSearchOrderBy
 
 
 class SSLConfiguration(BaseModel):

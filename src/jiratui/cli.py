@@ -26,6 +26,7 @@ from jiratui.commands.render import (
     ThemesRenderer,
 )
 from jiratui.config import ApplicationConfiguration
+from jiratui.configuration_app import JiraTUIConfigurationApp
 from jiratui.exceptions import CLIException
 from jiratui.files import get_config_file
 
@@ -73,6 +74,9 @@ def themes():
     renderer.render(console, list(BUILTIN_THEMES.keys()))
 
 
+# -- CONFIGURATION --
+
+
 @cli.command('config', help='Shows the location of the configuration file.')
 def config():
     if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
@@ -81,6 +85,17 @@ def config():
     else:
         conf_file = get_config_file()
         console.print(f'Using: {conf_file}')
+
+
+@cli.command('configure', help='Generates the configuration file.')
+@click.option(
+    '--output-file',
+    '-o',
+    type=str,
+    help='The path to the file where the configuration will be saved.',
+)
+def configure(output_file: str | None = None) -> None:
+    JiraTUIConfigurationApp(output_file=output_file).run()
 
 
 # -- WORK ITEMS --
