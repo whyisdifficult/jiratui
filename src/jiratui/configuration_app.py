@@ -299,9 +299,9 @@ class ConfigurationScreen(Screen):
     @on(Select.Changed, '#theme')
     def toggle_theme(self, event: Select.Changed) -> None:
         if event.value and event.value != Select.NULL:
-            self.app.theme = event.value
+            self.app.theme = event.value  # type:ignore[assignment]
         else:
-            self.app.theme = self.app.DEFAULT_THEME
+            self.app.theme = self.app.DEFAULT_THEME  # type:ignore[attr-defined]
 
     @on(Checkbox.Changed, '#use_cert_authentication')
     def toggle_use_bearer_authentication(self, event: Checkbox.Changed) -> None:
@@ -390,7 +390,7 @@ class ConfigurationScreen(Screen):
             self.__controller = APIController(
                 ConfigAppConfiguration(
                     jira_api_username=jira_api_username,
-                    jira_api_token=jira_api_token,
+                    jira_api_token=jira_api_token,  # type:ignore[arg-type]
                     jira_api_base_url=jira_api_base_url,
                 )
             )
@@ -497,7 +497,7 @@ class ConfigurationScreen(Screen):
         # build the config
         config = ConfigAppConfiguration(
             jira_api_username=self.jira_api_username_widget.value,
-            jira_api_token=self.jira_api_token_widget.value,
+            jira_api_token=self.jira_api_token_widget.value,  # type:ignore[arg-type]
             jira_api_base_url=self.jira_api_base_url_widget.value,
             cloud=self.query_one('#cloud', expect_type=Checkbox).value,
             use_bearer_authentication=self.query_one(
