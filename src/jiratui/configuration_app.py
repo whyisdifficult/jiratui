@@ -386,6 +386,8 @@ class ConfigurationScreen(Screen):
                 buton_test_message_widget.remove_class('success-message')
                 buton_test_message_widget.add_class('error-message')
                 buton_test_message_widget.content = f'Connection failed: {response.error}'
+            await self.__controller.api.client.close_async_client()
+            await self.__controller.api.async_http_client.close_async_client()
         else:
             self.notify(
                 message='Missing required API URL and/or Username and/or Token',

@@ -58,6 +58,11 @@ def users():
     pass
 
 
+@cli.group(help='Use it to manage the configuration file.')
+def configure():
+    pass
+
+
 @cli.command('version', help='Shows the version of the tool.')
 def version():
     from importlib.metadata import version
@@ -87,14 +92,14 @@ def config():
         console.print(f'Using: {conf_file}')
 
 
-@cli.command('configure', help='Generates the configuration file.')
+@configure.command('create', help='Generates the configuration file.')
 @click.option(
     '--output-file',
     '-o',
     type=str,
     help='The path to the file where the configuration will be saved.',
 )
-def configure(output_file: str | None = None) -> None:
+def configure_create(output_file: str | None = None) -> None:
     JiraTUIConfigurationApp(output_file=output_file).run()
 
 
@@ -626,6 +631,15 @@ def ui(
     focus_item_on_startup: int | None = None,
 ):
     """Launches the JiraTUI application."""
+
+    # check that the config file exists
+    try:
+        check_config_file()
+    except FileNotFoundError as e:
+        console.print(str(e))
+        console.print('You can create a configuration file using: jiratui configure')
+        sys.exit(1)
+
     if theme and theme not in BUILTIN_THEMES:
         console.print('The name of the theme you provided is not supported.')
         console.print('To see the list of supported themes run: jiratui themes')
@@ -640,13 +654,13 @@ def ui(
             console.print('--focus-item-on-startup must be a positive integer (1 or greater).')
             sys.exit(1)
 
+    # get the configuration settings
     try:
         settings = ApplicationConfiguration()  # type: ignore[call-arg] # noqa
-        # Only override config file value if CLI flag is explicitly set to True
-        if search_on_startup:
-            settings.search_on_startup = search_on_startup
     except FileNotFoundError as e:
+        # this should not happen because we check above
         console.print(e)
+        console.print('You can create a configuration file using: jiratui configure')
         sys.exit(1)
     except ValidationError as e:
         console.print('Configuration validation error. Make sure your config file is correct.')
@@ -656,6 +670,11 @@ def ui(
             else:
                 console.print(f'Configuration error: {_e.get("msg")}')
         sys.exit(1)
+    else:
+        # Only override config file value if CLI flag is explicitly set to True
+        if search_on_startup:
+            settings.search_on_startup = search_on_startup
+
     JiraApp(
         settings,
         project_key=project_key,
@@ -665,6 +684,15 @@ def ui(
         user_theme=theme,
         focus_item_on_startup=focus_item_on_startup,
     ).run()
+
+
+def check_config_file() -> None:
+    if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
+        conf_file: Path = Path(jira_tui_config_file).resolve()
+    else:
+        conf_file = get_config_file()
+    if not conf_file.exists():
+        raise FileNotFoundError(f'The configuration file does not exist: {conf_file}')
 
 
 # -- USERS --
