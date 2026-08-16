@@ -89,7 +89,7 @@ ConfigurationScreen > VerticalScroll {
     border: round $secondary-lighten-3;
     padding: 0 1;
 }
-.configuration-container-grid {
+.configuration-container-grid-file-save {
     grid-size: 3 1;
     grid-columns: 60% 20%;
     margin-top: 1;
@@ -100,6 +100,11 @@ ConfigurationScreen > VerticalScroll {
 .configuration-container-grid-test {
     grid-size: 2 1;
     grid-columns: 30%;
+    margin-top: 1;
+}
+.configuration-container-grid-optional-settings {
+    grid-size: 2 2;
+    grid-columns: 50%;
     margin-top: 1;
 }
 .error-message {
@@ -117,4 +122,14 @@ ConfigurationScreen > VerticalScroll {
 }
 .banner {
     margin-top: 0;
+}
+.configuration-button {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+Vertical > Button {
+    align: center top;
 }

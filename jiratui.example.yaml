@@ -1,26 +1,72 @@
-jira_api_username: 'foo@bar'
+# connections settings
+jira_api_username: bart
 jira_api_token: '12345'
-jira_api_base_url: 'https://<your-hostname>.atlassian.net'
-jira_base_url: 'https://<your-hostname>.atlassian.net'
-jira_user_group_id: '12345'
-jira_account_id: '098765'
-search_results_per_page: 65
+jira_api_base_url: https://<my-organization>.atlassian.net
+jira_api_version: 3
+cloud: true
+use_bearer_authentication: false
+use_cert_authentication: false
+ssl:
+  verify_ssl: true
+  ca_bundle: null
+  certificate_file: null
+  key_file: null
+  password: null
+
+# application settings
+jira_base_url: https://<my-organization>.atlassian.net
+jira_account_id: null
+search_results_per_page: 50
 search_issues_default_day_interval: 15
-show_issue_web_links: True
-default_project_key_or_id: 'MY-PROJECT-KEY'
-ignore_users_without_email: True
-custom_field_id_sprint: 'customfield_<MY-PROJECT-SPRINT-FIELD-ID>'
+show_issue_web_links: true
+ignore_users_without_email: true
+default_project_key_or_id: null
+fetch_single_project: false
+active_sprint_on_startup: false
+fetch_attachments_on_delete: true
+fetch_comments_on_delete: true
 pre_defined_jql_expressions:
   1:
-    label: "Work in the current sprint"
+    label: 'Work in the current sprint'
     expression: 'sprint in openSprints()'
-jql_expression_id_for_work_items_search: 1
+jql_expression_id_for_work_items_search: null
+search_results_truncate_work_item_summary: null
+cli_search_results_truncate_work_item_summary: 20
+search_results_style_work_item_status: true
+search_results_style_work_item_type: true
+on_start_up_only_fetch_projects: true
+tui_title: null
+tui_custom_title: null
+tui_title_include_jira_server_title: true
+enable_logging: false
+log_file: null
+log_level: WARNING
+attachments_source_directory: /
+confirm_before_quit: false
+theme: textual-dark
+search_results_page_filtering_enabled: true
+search_results_page_filtering_minimum_term_length: 3
+full_text_search_minimum_term_length: 3
+enable_advanced_full_text_search: true
+search_results_default_order: 'created desc'
+git_repositories:
+  1:
+    name: 'My Cool Project'
+    path: '/projects/my-cool-project/.git'
+search_on_startup: false
+enable_updating_additional_fields: false
+update_additional_fields_ignore_ids: null
+enable_creating_additional_fields: false
+create_additional_fields_ignore_ids: null
+enable_images_support: true
 styling:
-  work_item_status_colors:
-    closed: green
-    development: blue
-    blocked: '#FF0000'
-    in_review: yellow
-  work_item_type_colors:
-    epic: dark_orange
-    story: '#FF8888'
+  work_item_status_colors: null
+  work_item_type_colors: null
+  work_item_priority_colors: null
+enable_updating_rich_text: true
+text_editor: null
+show_keybinding_hints: false
+view_work_item_after_creation: false
+enable_recent_history: true
+enable_goto: true
+key_bindings_style: legacy

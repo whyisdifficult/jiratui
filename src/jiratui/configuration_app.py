@@ -115,25 +115,31 @@ class ConfigurationScreen(Screen):
                 jira_settings.border_title = 'Minimal Settings'
                 with Vertical(classes='configuration-container-api-settings') as api_settings:
                     api_settings.border_title = 'API'
-                    yield ConfigurationInputWidget(
+                    api_base_url_widget = ConfigurationInputWidget(
                         id='jira_api_base_url',
                         placeholder='https://...',
                         classes='configuration-input required',
                         title='Jira Instance Base URL',
                     )
-                    yield ConfigurationInputWidget(
+                    api_base_url_widget.border_subtitle = '(*)'
+                    yield api_base_url_widget
+                    api_username_widget = ConfigurationInputWidget(
                         id='jira_api_username',
                         placeholder='Enter your Jira username',
                         title='Jira API Username',
                         classes='configuration-input required',
                     )
-                    yield ConfigurationInputWidget(
+                    api_username_widget.border_subtitle = '(*)'
+                    yield api_username_widget
+                    api_token_widget = ConfigurationInputWidget(
                         id='jira_api_token',
                         password=True,
                         placeholder='Enter your API token',
                         title='Jira API Token',
                         classes='configuration-input required',
                     )
+                    api_token_widget.border_subtitle = '(*)'
+                    yield api_token_widget
                     yield Checkbox(
                         id='cloud',
                         label='Use Jira Cloud',
@@ -219,33 +225,40 @@ class ConfigurationScreen(Screen):
                         title='Key File Password',
                     )
                     with ItemGrid(classes='configuration-container-grid-test'):
-                        yield Button('Test', id='button_test', disabled=True)
+                        yield Button(
+                            'Test',
+                            id='button_test',
+                            variant='success',
+                            classes='configuration-button',
+                            disabled=True,
+                        )
                         yield Static('', id='buton_test_message', classes='error')
-            yield ConfigurationInputWidget(
-                id='jira_account_id',
-                placeholder='E.g. 123456-4ca2-8885-343dff03be',
-                classes='configuration-input',
-                title='Your Jira User Account Id',
-            )
-            yield Static(
-                'The ID of the Jira user using the application. This is useful if you want the user selection dropdown widgets to automatically select your user from the options. It is also used as the default reporter of any new work item that is created in the application',
-                classes='configuration-tip',
-                shrink=True,
-            )
-            theme_selection = Select(
-                id='theme',
-                options=[(t, t) for t in BUILTIN_THEMES.keys()],
-                compact=True,
-                classes='configuration-selector',
-            )
-            theme_selection.border_title = 'Theme'
-            yield theme_selection
-            yield Static(
-                'If you don not choose a theme the default theme "textual-dark" will be used.',
-                classes='configuration-tip',
-                shrink=True,
-            )
-            with ItemGrid(classes='configuration-container-grid'):
+            with ItemGrid(classes='configuration-container-grid-optional-settings'):
+                yield ConfigurationInputWidget(
+                    id='jira_account_id',
+                    placeholder='E.g. 123456-4ca2-8885-343dff03be',
+                    classes='configuration-input',
+                    title='Your Jira User Account Id',
+                )
+                theme_selection = Select(
+                    id='theme',
+                    options=[(t, t) for t in BUILTIN_THEMES.keys()],
+                    compact=True,
+                    classes='configuration-selector',
+                )
+                theme_selection.border_title = 'Theme'
+                yield theme_selection
+                yield Static(
+                    'The ID of the Jira user using the application. This is useful if you want the user selection dropdown widgets to automatically select your user from the options. It is also used as the default reporter of any new work item that is created in the application',
+                    classes='configuration-tip',
+                    shrink=True,
+                )
+                yield Static(
+                    'If you don not choose a theme the default theme "textual-dark" will be used.',
+                    classes='configuration-tip',
+                    shrink=True,
+                )
+            with ItemGrid(classes='configuration-container-grid-file-save'):
                 with Vertical():
                     yield ConfigurationInputWidget(
                         id='configuration_file_path',
@@ -259,9 +272,14 @@ class ConfigurationScreen(Screen):
                         classes='configuration-warning',
                         shrink=True,
                     ).add_class('invisible')
-                yield Button(
-                    'Save', id='button_save', classes='configuration-button', disabled=True
-                )
+                with Vertical():
+                    yield Button(
+                        'Save',
+                        id='button_save',
+                        classes='configuration-button',
+                        variant='success',
+                        disabled=True,
+                    )
             yield Static()
 
     def on_mount(self):

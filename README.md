@@ -8,17 +8,16 @@
 [![AUR package](https://repology.org/badge/version-for-repo/aur/jiratui.svg)](https://repology.org/project/jiratui/versions)
 ![Static Badge](https://img.shields.io/badge/OS-Linux%20MacOS%20Windows-orange)
 
-A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
+A **Text User Interface (TUI)** for interacting with Atlassian's Jira directly from your shell.
 
 ![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
 
 ## Introduction
 
-JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/)
-frameworks.
+JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/) frameworks.
 
-It supports the [Jira Cloud Platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
-Starting with [v1.1.0](https://github.com/whyisdifficult/jiratui/tree/v1.1.0) JiraTUI supports [Jira Cloud Platform REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/)
+JiraTUI can connect to a cloud-based Jira installation as well as to an on-premises (aka. DC) instance. It supports
+the [Jira Cloud Platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/). Starting with [v1.1.0](https://github.com/whyisdifficult/jiratui/tree/v1.1.0) JiraTUI supports [Jira Cloud Platform REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/)
 as well.
 
 ## Installation
@@ -70,20 +69,23 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  comments  Use it to add, list or delete comments associated to work items.
-  config    Shows the location of the configuration file.
-  issues    Use it to search, update or delete work items.
-  ui        Launches the Jira TUI application.
-  users     Use it to search users and user groups.
-  version   Shows the version of the tool.
-  themes    List the available built-in themes.
+  comments    Use it to add, list or delete comments associated to work items.
+  completions Generate shell completion script.
+  config      Shows the location of the configuration file.
+  configure   Use it to manage the configuration file.
+  issues      Use it to search, update or delete work items.
+  projects    Use it to manage information related to projects.
+  themes      List the available built-in themes.
+  ui          Launches the Jira TUI application.
+  users       Use it to search users and user groups.
+  version     Shows the version of the tool.
 ```
 
 You can check the installed version with
 
 ```shell
 jiratui version
-1.12.0
+1.13.0
 ```
 
 ## Settings
@@ -91,7 +93,7 @@ jiratui version
 Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
 file. For this you have 2 options.
 
-- Using the CLI command `jiratui configure` to launch an app that will guide through the process of generating a
+- Using the CLI command `jiratui configure create` to launch an app that will guide through the process of generating a
 configuration file with the minimal settings you need for a first launch. This is only supported in
 JiraTUI `>= v1.13.0`.
 - Authoring the config file manually.
@@ -101,7 +103,7 @@ JiraTUI `>= v1.13.0`.
 Simply run the following command to start up the configuration manager app.
 
 ```shell
-jiratui configure
+jiratui configure create
 ```
 
 You can pass an optional parameter `-o` (`--output-file`) with the location where you want to save the configuration
@@ -109,10 +111,12 @@ file. If you do not provide this parameter the application wil save the resultin
 below for details.
 
 ```shell
-jiratui configure -o /Users/Downloads/file.yaml
+jiratui configure create -o /Users/Downloads/file.yaml
 ```
 
 The application launches and guides you through the process.
+
+![The initial screen of JiraTUI](jtsite/assets/img/gallery/configuration-manager.png "JiraTUI initial screen")
 
 ### Authoring the Config File Manually
 
@@ -268,4 +272,4 @@ tools. These have become the must-have tools for my development workflow.
 
 Last but not least to my colleagues [Tomasz](https://github.com/trojkat),
 [Ilyes](https://github.com/ilyeshammadi) and [Giorgos](https://github.com/giorgosT) for their
-support, encouragement and for reminding me how cool is to work from your terminal (something I have forgotten).
+support, encouragement and for reminding me how cool is to work from your terminal (something I had forgotten).
