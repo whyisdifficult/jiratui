@@ -26,7 +26,13 @@ jiratui configure create -o /Users/Downloads/file.yaml
 
 The application launches and guides you through the process.
 
-![The initial screen of JiraTUI](jtsite/assets/img/gallery/configuration-manager.png "JiraTUI initial screen")
+```{figure} /_static/assets/images/configuration-manager.png
+:align: center
+
+The screen of the configuration manager
+```
+
+
 
 ## Authoring the Config File Manually
 
