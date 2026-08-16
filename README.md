@@ -165,7 +165,7 @@ following:
 cloud: False
 ```
 
-#### Choosing the API version
+#### Choosing the API Version
 
 By default, JiraTUI uses the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
 This is good when your Jira instance runs in the cloud. However, Jira also offers an on-premises installation mode and
