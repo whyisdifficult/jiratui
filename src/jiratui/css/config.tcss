@@ -1,0 +1,135 @@
+/* CSS definitions for the configuration manager application */
+
+ConfigurationScreen > VerticalScroll {
+    & .heading {
+        width: 1fr;
+        text-align: center;
+        content-align: center top;
+        align: center top;
+    }
+}
+.configuration-vertical-scroll {
+    scrollbar-size-vertical: 1;
+}
+.configuration-input {
+    box_sizing: content-box;
+    height: 1;
+    width: 90%;
+    border: round $secondary-lighten-3;
+    margin: 0 0;
+    padding: 0 1;
+    background: $background;
+    &.required {
+        border: round $accent-lighten-1;
+    }
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+    &.-invalid {
+        border: round $error 50%;
+    }
+    &.-invalid:focus {
+        border: round $error;
+    }
+}
+.configuration-container-api-settings {
+    border: round $secondary;
+    background: transparent;
+    height: auto;
+}
+.configuration-container-ssl-settings {
+    border: round $secondary;
+    background: transparent;
+    height: auto;
+}
+.configuration-container-jira-settings {
+    border: round $secondary;
+    background: transparent;
+}
+.configuration-container-optional-settings {
+    border: round $secondary;
+    background: transparent;
+}
+.configuration-container {
+    background: transparent;
+    margin: 1 0;
+}
+.configuration-checkbox {
+    box_sizing: content-box;
+    height: 1;
+    border: round $secondary-lighten-3;
+    width: auto;
+    margin: 0 0;
+    padding: 0 0;
+    background: $background;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+    &.-on > .toggle--button {
+        background: $success;
+        color: $accent;
+    }
+}
+.configuration-tip {
+    color: $text-muted;
+    margin: 0 0;
+    padding: 0 1 0 1;
+}
+.configuration-warning {
+    color: $accent;
+    margin: 0 0;
+    padding: 0 1 0 1;
+    visibility: visible;
+    &.invisible {
+        visibility: hidden;
+    }
+}
+.configuration-selector {
+    width: auto;
+    border: round $secondary-lighten-3;
+    padding: 0 1;
+}
+.configuration-container-grid-file-save {
+    grid-size: 3 1;
+    grid-columns: 60% 20%;
+    margin-top: 1;
+    & > Vertical {
+        height: auto;
+    }
+}
+.configuration-container-grid-test {
+    grid-size: 2 1;
+    grid-columns: 30%;
+    margin-top: 1;
+}
+.configuration-container-grid-optional-settings {
+    grid-size: 2 2;
+    grid-columns: 50%;
+    margin-top: 1;
+}
+.error-message {
+    color: $accent;
+}
+.success-message {
+    color: $success;
+}
+.heading {
+    color: $text-muted;
+    margin-top: 1;
+}
+.margin-bottom {
+    margin-bottom: 1;
+}
+.banner {
+    margin-top: 0;
+}
+.configuration-button {
+    width: 20%;
+    padding: 0 0;
+    box_sizing: content-box;
+    border-top: blank $surface-lighten-1;
+    border-bottom: blank $surface-lighten-1;
+}
+Vertical > Button {
+    align: center top;
+}

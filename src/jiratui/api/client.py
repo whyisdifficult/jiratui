@@ -76,7 +76,7 @@ class JiraTUIAsyncHTTPClient:
         elif configuration.use_cert_authentication:
             self.authentication = None
         else:
-            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
+            self.authentication = httpx.BasicAuth(api_username, api_token)
         self.client: httpx.AsyncClient = httpx.AsyncClient(
             verify=ssl_certificate_settings, timeout=None
         )
@@ -223,7 +223,7 @@ class JiraClient:
         elif configuration.use_cert_authentication:
             self.authentication = None
         else:
-            self.authentication = httpx.BasicAuth(api_username, api_token.strip())
+            self.authentication = httpx.BasicAuth(api_username, api_token)
         self.client: httpx.Client = httpx.Client(verify=ssl_certificate_settings, timeout=None)
         self.logger = logging.getLogger(LOGGER_NAME)
 

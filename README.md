@@ -8,17 +8,16 @@
 [![AUR package](https://repology.org/badge/version-for-repo/aur/jiratui.svg)](https://repology.org/project/jiratui/versions)
 ![Static Badge](https://img.shields.io/badge/OS-Linux%20MacOS%20Windows-orange)
 
-A **Text User Interface (TUI)** for interacting with Atlassian Jira directly from your shell.
+A **Text User Interface (TUI)** for interacting with Atlassian's Jira directly from your shell.
 
 ![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
 
 ## Introduction
 
-JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/)
-frameworks.
+JiraTUI is built using the [Textual](https://textual.textualize.io/) and [Rich](https://rich.readthedocs.io/en/latest/) frameworks.
 
-It supports the [Jira Cloud Platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
-Starting with [v1.1.0](https://github.com/whyisdifficult/jiratui/tree/v1.1.0) JiraTUI supports [Jira Cloud Platform REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/)
+JiraTUI can connect to a cloud-based Jira installation as well as to an on-premises (aka. DC) instance. It supports
+the [Jira Cloud Platform REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/). Starting with [v1.1.0](https://github.com/whyisdifficult/jiratui/tree/v1.1.0) JiraTUI supports [Jira Cloud Platform REST API v2](https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/)
 as well.
 
 ## Installation
@@ -70,26 +69,56 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  comments  Use it to add, list or delete comments associated to work items.
-  config    Shows the location of the configuration file.
-  issues    Use it to search, update or delete work items.
-  ui        Launches the Jira TUI application.
-  users     Use it to search users and user groups.
-  version   Shows the version of the tool.
-  themes    List the available built-in themes.
+  comments    Use it to add, list or delete comments associated to work items.
+  completions Generate shell completion script.
+  config      Shows the location of the configuration file.
+  configure   Use it to manage the configuration file.
+  issues      Use it to search, update or delete work items.
+  projects    Use it to manage information related to projects.
+  themes      List the available built-in themes.
+  ui          Launches the Jira TUI application.
+  users       Use it to search users and user groups.
+  version     Shows the version of the tool.
 ```
 
 You can check the installed version with
 
 ```shell
 jiratui version
-1.12.0
+1.13.0
 ```
 
 ## Settings
 
 Before using the application you need to provide the basic configuration. All the settings can be provided in a `yaml`
-file.
+file. For this you have 2 options.
+
+- Using the CLI command `jiratui configure create` to launch an app that will guide through the process of generating a
+configuration file with the minimal settings you need for a first launch. This is only supported in
+JiraTUI `>= v1.13.0`.
+- Authoring the config file manually.
+
+### Using the Configuration Manager
+
+Simply run the following command to start up the configuration manager app.
+
+```shell
+jiratui configure create
+```
+
+You can pass an optional parameter `-o` (`--output-file`) with the location where you want to save the configuration
+file. If you do not provide this parameter the application wil save the resulting file in the standard location. See
+below for details.
+
+```shell
+jiratui configure create -o /Users/Downloads/file.yaml
+```
+
+The application launches and guides you through the process.
+
+![The initial screen of JiraTUI](jtsite/assets/img/gallery/configuration-manager.png "JiraTUI Configuration Manager")
+
+### Authoring the Config File Manually
 
 The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
 config (and log) files. The default name of the config file is `config.yaml`. You can override the location of the
@@ -104,7 +133,7 @@ file in the following way:
 `JIRA_TUI_ENV_FILE` to define the `.env` file with configuration settings. Instead, all settings must be defined in the
 config file as described below.
 
-### Setting API Credentials
+#### Setting API Credentials
 
 You must provide the following values to connect to your Jira instance API:
 
@@ -122,7 +151,7 @@ jira_api_base_url: 'https://<your-jira-instance-hostname>.atlassian.net'
 
 **Tip**: The application provides a sample config file called `jiratui.example.yaml` that you can use to define yours.
 
-### Choosing the Jira Platform
+#### Choosing the Jira Platform
 
 Jira is available via the [Jira Cloud Platform's API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about)
 and via the [Jira Data Center's API (aka. Jira on-premises)](https://developer.atlassian.com/server/jira/platform/rest/v11001/intro/#gettingstarted).
@@ -136,7 +165,7 @@ following:
 cloud: False
 ```
 
-### Choosing the API version
+#### Choosing the API Version
 
 By default, JiraTUI uses the [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/).
 This is good when your Jira instance runs in the cloud. However, Jira also offers an on-premises installation mode and
@@ -152,7 +181,7 @@ jira_api_version: 2
 **Important**: when `cloud: False` JiraTUI will use the correct version for the API and ignore the value of
 `jira_api_version`. In other words, `jira_api_version` is only applicable when `cloud: True`.
 
-### Setting Up Permissions and Scopes for your User
+#### Setting Up Permissions and Scopes for your User
 
 JiraTUI requires that your Jira user account has specific permissions configured before you can use the tool. These
 permissions (called "scopes" in Jira) are not set by JiraTUI. Instead, your organization's Jira administrator must
@@ -161,7 +190,7 @@ grant them to your user account.
 To find out what are the minimal set of permissions your user needs to use JiraTUI refer to
 [Permissions and Scopes](docs/users/configuration/permissions.md).
 
-### Choosing the Keybindings Style
+#### Choosing the Keybindings Style
 
 Starting with version `1.13.0` you can choose which style of keybindings to use. The tool offers 2 options: `legacy`
 (default) or `standard`. The legacy style is the original and only keybinding set offered by the tool up to version
@@ -243,4 +272,4 @@ tools. These have become the must-have tools for my development workflow.
 
 Last but not least to my colleagues [Tomasz](https://github.com/trojkat),
 [Ilyes](https://github.com/ilyeshammadi) and [Giorgos](https://github.com/giorgosT) for their
-support, encouragement and for reminding me how cool is to work from your terminal (something I have forgotten).
+support, encouragement and for reminding me how cool is to work from your terminal (something I had forgotten).
