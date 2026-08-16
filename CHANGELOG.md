@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 configured in the config file via the variable `key_bindings_style`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/327
 - Support autocomplete for selecting parent key in the details tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/329
 - Add a new CLI command `configure` to generate a configuration file with the minimum required settings for a first launch. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Fix parent-key autocomplete to skip child work item when updating work item details. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/330
 
 ### Bug Fixes
 

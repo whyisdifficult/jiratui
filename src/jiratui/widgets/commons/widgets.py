@@ -221,14 +221,30 @@ class DateInputWidget(DateInput, BaseFieldWidget, BaseUpdateFieldWidget):
         return super().validate(value)
 
     def get_value_for_update(self) -> str | None:
-        """
-        Returns the value formatted for Jira API updates (UPDATE mode).
+        """Returns the value formatted for Jira API updates (UPDATE mode).
 
         Returns:
             A date value in ISO format (YYYY-MM-DD), or None if empty or invalid
         """
         if self.mode != FieldMode.UPDATE:
             raise ValueError('get_value_for_update() only valid in UPDATE mode')
+
+        if self.value and self.value.strip():
+            try:
+                # Parse and return as ISO date string
+                return str(isoparse(self.value).date())
+            except ValueError:
+                return None
+        return None
+
+    def get_value_for_create(self) -> str | None:
+        """Returns the value formatted for Jira API create (CREATE mode).
+
+        Returns:
+            A date value in ISO format (YYYY-MM-DD), or None if empty or invalid
+        """
+        if self.mode != FieldMode.CREATE:
+            raise ValueError('get_value_for_update() only valid in CREATE mode')
 
         if self.value and self.value.strip():
             try:
@@ -486,6 +502,18 @@ class TextInputWidget(Input, BaseFieldWidget, BaseUpdateFieldWidget):
             The string value
         """
         if self.mode != FieldMode.UPDATE:
+            raise ValueError('get_value_for_update() only valid in UPDATE mode')
+
+        return self.value
+
+    def get_value_for_create(self) -> str:
+        """Returns the value formatted for Jira API create operation (CREATE mode).
+
+        Returns:
+            The string value
+        """
+
+        if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_update() only valid in UPDATE mode')
 
         return self.value
