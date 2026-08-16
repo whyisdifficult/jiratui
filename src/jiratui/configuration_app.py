@@ -522,7 +522,7 @@ class ConfigurationScreen(Screen):
 
 
 class JiraTUIConfigurationApp(App):
-    CSS_PATH = 'css/config_app.tcss'
+    CSS_PATH = 'css/config.tcss'
     """The path to the file with the TCSS (Textual CSS) definitions."""
     TITLE = 'JiraTUI Configuration Manager'
     DEFAULT_THEME = 'textual-dark'

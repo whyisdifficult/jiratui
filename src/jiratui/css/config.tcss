@@ -1,3 +1,5 @@
+/* CSS definitions for the configuration manager application */
+
 ConfigurationScreen > VerticalScroll {
     & .heading {
         width: 1fr;
@@ -6,11 +8,9 @@ ConfigurationScreen > VerticalScroll {
         align: center top;
     }
 }
-
 .configuration-vertical-scroll {
     scrollbar-size-vertical: 1;
 }
-
 .configuration-input {
     box_sizing: content-box;
     height: 1;
@@ -70,13 +70,11 @@ ConfigurationScreen > VerticalScroll {
         color: $accent;
     }
 }
-
 .configuration-tip {
     color: $text-muted;
     margin: 0 0;
     padding: 0 1 0 1;
 }
-
 .configuration-warning {
     color: $accent;
     margin: 0 0;
@@ -86,14 +84,11 @@ ConfigurationScreen > VerticalScroll {
         visibility: hidden;
     }
 }
-
 .configuration-selector {
     width: auto;
     border: round $secondary-lighten-3;
     padding: 0 1;
 }
-
-
 .configuration-container-grid {
     grid-size: 3 1;
     grid-columns: 60% 20%;
@@ -102,7 +97,6 @@ ConfigurationScreen > VerticalScroll {
         height: auto;
     }
 }
-
 .configuration-container-grid-test {
     grid-size: 2 1;
     grid-columns: 30%;
@@ -114,12 +108,10 @@ ConfigurationScreen > VerticalScroll {
 .success-message {
     color: $success;
 }
-
 .heading {
     color: $text-muted;
     margin-top: 1;
 }
-
 .margin-bottom {
     margin-bottom: 1;
 }
