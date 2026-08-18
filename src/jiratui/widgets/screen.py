@@ -11,6 +11,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, LoadingIndicator, Select, TabbedContent, TabPane
 from textual.worker import Worker
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -101,38 +102,38 @@ class MainScreen(Actionable, Screen):
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'focus_project_filter',
-        'focus_search_work_item_type_filter',
-        'focus_search_work_item_status_filter',
-        'focus_search_assignee_filter',
-        'focus_search_work_item_key_filter',
-        'focus_search_created_from_filter',
-        'focus_search_created_until_filter',
-        'focus_search_sort_filter',
-        'focus_search_sprint_filter',
-        'focus_search_jql',
-        'focus_search_results',
-        'focus_work_item_information_tab',
-        'focus_work_item_details_tab',
-        'focus_work_item_comments_tab',
-        'focus_work_item_related_tab',
-        'focus_work_item_attachments_tab',
-        'focus_work_item_links_tab',
-        'focus_work_item_subtasks_tab',
-        'copy_issue_key',
-        'copy_issue_url',
-        'search',
-        'find_by_text',
-        'create_work_item',
-        'show_recent_history',
-        'create_git_branch',
+        SupportedActions.FOCUS_PROJECT_FILTER,
+        SupportedActions.FOCUS_SEARCH_WORK_ITEM_TYPE_FILTER,
+        SupportedActions.FOCUS_SEARCH_WORK_ITEM_STATUS_FILTER,
+        SupportedActions.FOCUS_SEARCH_ASSIGNEE_FILTER,
+        SupportedActions.FOCUS_SEARCH_WORK_ITEM_KEY_FILTER,
+        SupportedActions.FOCUS_SEARCH_CREATED_FROM_FILTER,
+        SupportedActions.FOCUS_SEARCH_CREATED_UNTIL_FILTER,
+        SupportedActions.FOCUS_SEARCH_SORT_FILTER,
+        SupportedActions.FOCUS_SEARCH_SPRINT_FILTER,
+        SupportedActions.FOCUS_SEARCH_JQL,
+        SupportedActions.FOCUS_SEARCH_RESULTS,
+        SupportedActions.FOCUS_WORK_ITEM_INFORMATION_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_DETAILS_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_COMMENTS_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_RELATED_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_ATTACHMENTS_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_LINKS_TAB,
+        SupportedActions.FOCUS_WORK_ITEM_SUBTASKS_TAB,
+        SupportedActions.COPY_ISSUE_KEY,
+        SupportedActions.COPY_ISSUE_URL,
+        SupportedActions.SEARCH,
+        SupportedActions.FIND_BY_TEXT,
+        SupportedActions.CREATE_WORK_ITEM,
+        SupportedActions.SHOW_RECENT_HISTORY,
+        SupportedActions.CREATE_GIT_BRANCH,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

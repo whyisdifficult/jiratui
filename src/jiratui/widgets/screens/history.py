@@ -8,6 +8,7 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import DataTable, Footer, Rule, Static
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.history import HistoryManager
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -30,23 +31,23 @@ class HistoryWorkItemsTable(Actionable, DataTable, inherit_bindings=False):  # t
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'open_in_browser',
-        'copy_issue_key',
-        'copy_issue_url',
-        'select_cursor',
-        'cursor_up',
-        'cursor_down',
-        'page_up',
-        'page_down',
-        'scroll_top',
-        'scroll_bottom',
+        SupportedActions.OPEN_IN_BROWSER,
+        SupportedActions.COPY_ISSUE_KEY,
+        SupportedActions.COPY_ISSUE_URL,
+        SupportedActions.SELECT_CURSOR,
+        SupportedActions.CURSOR_UP,
+        SupportedActions.CURSOR_DOWN,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_TOP,
+        SupportedActions.SCROLL_BOTTOM,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),
@@ -128,14 +129,14 @@ class HistoryScreen(Actionable, ModalScreen[str]):
     HELP = 'See View Recent Items section in the help'
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'empty_recent_history',
+        SupportedActions.EMPTY_RECENT_HISTORY,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

@@ -8,6 +8,7 @@ from textual.binding import Binding
 from textual.message import Message
 from textual.widgets import Markdown, TextArea
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.adf import convert_adf_to_markdown, convert_markdown_to_adf
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -192,14 +193,14 @@ class ADFMarkdownTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdat
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'open_text_editor',
+        SupportedActions.OPEN_TEXT_EDITOR,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

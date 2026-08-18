@@ -5,6 +5,7 @@ from textual.containers import ItemGrid, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, MarkdownViewer, Static, TextArea
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 
@@ -14,14 +15,14 @@ class EditTextContentScreen(Actionable, Screen[dict]):
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'save_content',
+        SupportedActions.SAVE_CONTENT,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

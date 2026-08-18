@@ -5,6 +5,7 @@ from textual.binding import Binding
 from textual.reactive import Reactive, reactive
 from textual.widgets import Checkbox, Input, Select
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
@@ -204,14 +205,14 @@ class JQLSearchWidget(Actionable, Input):
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'edit_jql',
+        SupportedActions.EDIT_JQL,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),
