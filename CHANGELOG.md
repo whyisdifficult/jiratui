@@ -28,6 +28,7 @@ dropdown silently empty. By [@devHaitham481](https://github.com/devHaitham481) i
 
 - Bump `gitpython` to version `3.1.58`; in https://github.com/whyisdifficult/jiratui/pull/325
 - Bump `aiohttp` to version `3.14.3`; in https://github.com/whyisdifficult/jiratui/pull/325
+- Introduce and use a `SupportedActions` `Enum` class for all available actions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/333
 
 ## [1.12.0] 2026-08-01
 
