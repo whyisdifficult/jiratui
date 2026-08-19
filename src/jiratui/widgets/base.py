@@ -13,7 +13,6 @@ class DateInput(MaskedInput):
     TOOLTIP = ''
     ID: str | None = None
     CLASSES = 'create-update-field-widget,input-date'
-    BORDER_SUBTITLE = ''
 
     def __init__(self, widget_id: str | None = None, valid_empty: bool = True):
         super().__init__(
@@ -25,12 +24,10 @@ class DateInput(MaskedInput):
         )
         self.add_class(*[value.strip() for value in self.CLASSES.split(',')])
         self.border_title = self.LABEL
-        if self.BORDER_SUBTITLE:
-            self.border_subtitle = self.BORDER_SUBTITLE
         if not self.valid_empty:
             self.add_class('required')
             if self.border_subtitle:
-                self.border_subtitle = f'{self.border_subtitle} (*)'
+                self.border_subtitle: str = f'{self.border_subtitle} (*)'
             else:
                 self.border_subtitle = '(*)'
 
