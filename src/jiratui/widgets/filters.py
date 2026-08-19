@@ -20,7 +20,7 @@ class ProjectSelectionInput(Select):
     projects: Reactive[dict | None] = reactive(None, always_update=True)
     """A dictionary with 2 keys: projects: list and selection: str | None"""
 
-    def __init__(self, projects: list):
+    def __init__(self, projects: list, border_subtitle: str | None = None):
         super().__init__(
             options=projects,
             prompt='Select a project',
@@ -31,7 +31,7 @@ class ProjectSelectionInput(Select):
             classes='dropdown',
         )
         self.border_title = 'Project'
-        self.border_subtitle = '(p)'
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -54,7 +54,7 @@ class IssueTypeSelectionInput(Select):
 
     HELP = 'See Search by Work Item Type section in the help'
 
-    def __init__(self, types: list):
+    def __init__(self, types: list, border_subtitle: str | None = None):
         super().__init__(
             options=types,
             prompt='Select issue type',
@@ -65,7 +65,7 @@ class IssueTypeSelectionInput(Select):
             classes='dropdown',
         )
         self.border_title = 'Issue Type'
-        self.border_subtitle = '(t)'
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -80,7 +80,7 @@ class IssueStatusSelectionInput(Select):
 
     statuses: Reactive[list[tuple[str, str]] | None] = reactive(None, always_update=True)
 
-    def __init__(self, statuses: list, **kwargs):
+    def __init__(self, statuses: list, border_subtitle: str | None = None, **kwargs):
         classes = kwargs.pop('classes', None)
         super().__init__(
             options=statuses,
@@ -92,7 +92,7 @@ class IssueStatusSelectionInput(Select):
             classes=classes or 'dropdown',
         )
         self.border_title = 'Status'
-        self.border_subtitle = '(s)'
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -109,7 +109,7 @@ class WorkItemInputWidget(Input):
 
     HELP = 'See Search by Work Item Key section in the help'
 
-    def __init__(self, value: str | None = None):
+    def __init__(self, value: str | None = None, border_subtitle: str | None = None):
         super().__init__(
             id='input_issue_key',
             classes='work-item-key',
@@ -119,7 +119,7 @@ class WorkItemInputWidget(Input):
             value=value,
         )
         self.border_title = 'Work Item Key'
-        self.border_subtitle = '(k)'
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -138,7 +138,19 @@ class IssueSearchCreatedFromWidget(DateInput):
     LABEL = 'Created From'
     TOOLTIP = 'Search issues created after this date (inclusive)'
     ID = 'input_date_from'
-    BORDER_SUBTITLE = '(f)'
+
+    def __init__(
+        self,
+        widget_id: str | None = None,
+        valid_empty: bool = True,
+        border_subtitle: str | None = None,
+    ):
+        super().__init__(widget_id=widget_id, valid_empty=valid_empty)
+        if border_subtitle:
+            if self.border_subtitle:
+                self.border_subtitle = f'{border_subtitle} {self.border_subtitle}'
+            else:
+                self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -152,7 +164,19 @@ class IssueSearchCreatedUntilWidget(DateInput):
     LABEL = 'Created Until'
     TOOLTIP = 'Search issues created until this date (inclusive)'
     ID = 'input_date_until'
-    BORDER_SUBTITLE = '(u)'
+
+    def __init__(
+        self,
+        widget_id: str | None = None,
+        valid_empty: bool = True,
+        border_subtitle: str | None = None,
+    ):
+        super().__init__(widget_id=widget_id, valid_empty=valid_empty)
+        if border_subtitle:
+            if self.border_subtitle:
+                self.border_subtitle = f'{border_subtitle} {self.border_subtitle}'
+            else:
+                self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -162,7 +186,9 @@ class IssueSearchCreatedUntilWidget(DateInput):
 class OrderByWidget(Select):
     """A Select widget to display different alternatives to sort search results."""
 
-    def __init__(self, options: list, initial_value: str | None = None):
+    def __init__(
+        self, options: list, initial_value: str | None = None, border_subtitle: str | None = None
+    ):
         super().__init__(
             options=options,
             prompt='Sort By',
@@ -170,10 +196,10 @@ class OrderByWidget(Select):
             type_to_search=False,
             compact=True,
             classes='dropdown',
-            value=initial_value,
+            value=initial_value or Select.NULL,
         )
         self.border_title = 'Sort'
-        self.border_subtitle = '(o)'
+        self.border_subtitle = border_subtitle
 
 
 class ActiveSprintCheckbox(Checkbox):
@@ -181,14 +207,14 @@ class ActiveSprintCheckbox(Checkbox):
 
     HELP = 'See Search by Active Sprint section in the help'
 
-    def __init__(self, value: bool = False):
+    def __init__(self, value: bool = False, border_subtitle: str | None = None):
         super().__init__(
             id='active-sprint-checkbox',
             label='Active Sprint',
             value=value,
+            classes='input-checkbox',
         )
-        self.border_subtitle = '(v)'
-        self.add_class('input-checkbox')
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:
@@ -234,7 +260,7 @@ class JQLSearchWidget(Actionable, Input):
 
     expression: Reactive[str | None] = reactive(None)
 
-    def __init__(self):
+    def __init__(self, border_subtitle: str | None = None):
         super().__init__(
             id='input_search_term',
             placeholder='Type in a JQL expression to search issues...',
@@ -242,7 +268,7 @@ class JQLSearchWidget(Actionable, Input):
             type='text',
         )
         self.border_title = 'JQL Query'
-        self.border_subtitle = '(j)'
+        self.border_subtitle = border_subtitle
 
     @property
     def help_anchor(self) -> str:

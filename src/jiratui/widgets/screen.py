@@ -181,17 +181,18 @@ class MainScreen(Actionable, Screen):
         self.current_loaded_work_item_key: str | None = None
         """Track the currently loaded work item key to prevent redundant reloads."""
         self.config = CONFIGURATION.get()
+        self.current_key_bindings: dict[str, dict] = get_application_key_bindings()
         self.work_item_tabs_titles: dict = {}
         if self.config.show_keybinding_hints:
             self.work_item_tabs_titles = {
-                'search_results_container': 'Work Items (1)',
-                'work_item_info_container': 'Info (2)',
-                'issue_details': 'Details (3)',
-                'issue_comments': 'Comments (4)',
-                'related_issues': 'Related (5)',
-                'attachments': 'Attachments (6)',
-                'issue_remote_links': 'Links (7)',
-                'issue_subtasks': 'Subtasks (8)',
+                'search_results_container': f'Work Items ({self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_RESULTS.value, {}).get("keys", [])[0]})',
+                'work_item_info_container': f'Info ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_INFORMATION_TAB.value, {}).get("keys", [])[0]})',
+                'issue_details': f'Details ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_DETAILS_TAB.value, {}).get("keys", [])[0]})',
+                'issue_comments': f'Comments ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_COMMENTS_TAB.value, {}).get("keys", [])[0]})',
+                'related_issues': f'Related ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_RELATED_TAB.value, {}).get("keys", [])[0]})',
+                'attachments': f'Attachments ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_ATTACHMENTS_TAB.value, {}).get("keys", [])[0]})',
+                'issue_remote_links': f'Links ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_LINKS_TAB.value, {}).get("keys", [])[0]})',
+                'issue_subtasks': f'Subtasks ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_SUBTASKS_TAB.value, {}).get("keys", [])[0]})',
             }
         self.__recent_history_manager = HistoryManager()
         self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.config.enable_logging)
@@ -308,24 +309,86 @@ class MainScreen(Actionable, Screen):
             yield Header(id='app-header', icon='*')
         with Vertical(id='main-container'):
             with HorizontalGroup():
-                yield ProjectSelectionInput(projects=[])
-                yield IssueTypeSelectionInput(types=[])
-                yield IssueStatusSelectionInput(statuses=[])
+                yield ProjectSelectionInput(
+                    projects=[],
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_PROJECT_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
+                yield IssueTypeSelectionInput(
+                    types=[],
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_TYPE_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
+                yield IssueStatusSelectionInput(
+                    statuses=[],
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_STATUS_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
                 yield JiraUserInput(
                     id='search-filters-input-assignee',
-                    border_subtitle='(a)',
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_ASSIGNEE_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
                     border_title='Assignee',
                 )
             with ItemGrid(classes='bottom-search-bar'):
-                yield WorkItemInputWidget(value=self.initial_work_item_key)
-                yield IssueSearchCreatedFromWidget()
-                yield IssueSearchCreatedUntilWidget()
+                yield WorkItemInputWidget(
+                    value=self.initial_work_item_key,
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_KEY_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
+                yield IssueSearchCreatedFromWidget(
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_CREATED_FROM_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
+                yield IssueSearchCreatedUntilWidget(
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_CREATED_UNTIL_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
                 yield OrderByWidget(
                     WorkItemsSearchOrderBy.to_choices(),
                     initial_value=self.config.search_results_default_order.value,
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_SORT_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
                 )
-                yield ActiveSprintCheckbox(value=self.config.active_sprint_on_startup)
-                yield JQLSearchWidget()
+                yield ActiveSprintCheckbox(
+                    value=self.config.active_sprint_on_startup,
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_SPRINT_FILTER.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
+                yield JQLSearchWidget(
+                    border_subtitle=(
+                        f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_JQL.value, {}).get("keys", [])[0]}'
+                        if self.config.show_keybinding_hints
+                        else None
+                    ),
+                )
                 yield Button(
                     'Search',
                     id='run-button',
