@@ -7,6 +7,7 @@ from pythonjsonlogger.json import JsonFormatter
 from textual.app import App, InvalidThemeError
 from textual.binding import Binding
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
@@ -31,16 +32,16 @@ class JiraApp(Actionable, App, inherit_bindings=False):  # type:ignore[call-arg]
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'help',
-        'server_info',
-        'config_info',
+        SupportedActions.HELP,
+        SupportedActions.SERVER_INFO,
+        SupportedActions.CONFIG_INFO,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

@@ -3,6 +3,7 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.widgets import Static, TabbedContent, TabPane
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
@@ -15,16 +16,16 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'edit_content',
-        'view_content',
-        'copy_content',
+        SupportedActions.EDIT_CONTENT,
+        SupportedActions.VIEW_CONTENT,
+        SupportedActions.COPY_CONTENT,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

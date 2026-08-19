@@ -13,6 +13,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Rule, Static
 from textual.widgets._data_table import RowDoesNotExist
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
@@ -165,26 +166,26 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'select_cursor',
-        'cursor_up',
-        'cursor_down',
-        'page_up',
-        'page_down',
-        'scroll_top',
-        'scroll_bottom',
-        'filter',
-        'previous_issues_page',
-        'next_issues_page',
-        'open_in_browser',
-        'delete_work_item',
-        'open_go_to_screen',
+        SupportedActions.SELECT_CURSOR,
+        SupportedActions.CURSOR_UP,
+        SupportedActions.CURSOR_DOWN,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_TOP,
+        SupportedActions.SCROLL_BOTTOM,
+        SupportedActions.FILTER,
+        SupportedActions.PREVIOUS_ISSUES_PAGE,
+        SupportedActions.NEXT_ISSUES_PAGE,
+        SupportedActions.OPEN_IN_BROWSER,
+        SupportedActions.DELETE_WORK_ITEM,
+        SupportedActions.OPEN_GO_TO_SCREEN,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

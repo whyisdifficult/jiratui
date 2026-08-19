@@ -7,6 +7,7 @@ from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Collapsible, Link, Static
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueRemoteLink
@@ -27,20 +28,20 @@ class IssueRemoteLinkCollapsible(Actionable, Collapsible, inherit_bindings=False
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'delete_remote_link',
-        'page_up',
-        'page_down',
-        'scroll_home',
-        'scroll_end',
-        'scroll_up',
-        'scroll_down',
+        SupportedActions.DELETE_REMOTE_LINK,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_HOME,
+        SupportedActions.SCROLL_END,
+        SupportedActions.SCROLL_UP,
+        SupportedActions.SCROLL_DOWN,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),
@@ -112,20 +113,20 @@ class IssueRemoteLinksWidget(Actionable, VerticalScroll, inherit_bindings=False)
     HELP = 'See Web Links section in the help'
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'add_remote_link',
-        'page_up',
-        'page_down',
-        'scroll_home',
-        'scroll_end',
-        'scroll_up',
-        'scroll_down',
+        SupportedActions.ADD_REMOTE_LINK,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_HOME,
+        SupportedActions.SCROLL_END,
+        SupportedActions.SCROLL_UP,
+        SupportedActions.SCROLL_DOWN,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

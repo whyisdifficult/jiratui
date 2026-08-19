@@ -81,6 +81,7 @@ from textual.validation import Number, ValidationResult
 from textual.widgets import Input, MaskedInput, Select, SelectionList, Static, TextArea
 from textual.widgets.selection_list import Selection
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
@@ -1453,14 +1454,14 @@ class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateF
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'open_text_editor',
+        SupportedActions.OPEN_TEXT_EDITOR,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

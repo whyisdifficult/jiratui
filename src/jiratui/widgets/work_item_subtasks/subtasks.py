@@ -8,6 +8,7 @@ from textual.reactive import Reactive, reactive
 from textual.widget import Widget
 from textual.widgets import Collapsible, Link, Rule, Static
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
@@ -44,12 +45,15 @@ class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
-    for supported_action_id in ['view_work_item', 'open_go_to_screen']:
-        data = key_bindings.get(supported_action_id, {})
+    key_bindings: dict[str, dict] = get_application_key_bindings()
+    for supported_action_id in [
+        SupportedActions.VIEW_WORK_ITEM,
+        SupportedActions.OPEN_GO_TO_SCREEN,
+    ]:
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),
@@ -127,20 +131,20 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'create_work_item_subtask',
-        'page_up',
-        'page_down',
-        'scroll_home',
-        'scroll_end',
-        'scroll_up',
-        'scroll_down',
+        SupportedActions.CREATE_WORK_ITEM_SUBTASK,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_HOME,
+        SupportedActions.SCROLL_END,
+        SupportedActions.SCROLL_UP,
+        SupportedActions.SCROLL_DOWN,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

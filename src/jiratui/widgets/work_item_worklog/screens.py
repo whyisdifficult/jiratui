@@ -23,6 +23,7 @@ from textual.widgets import (
     Static,
 )
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import (
@@ -83,16 +84,16 @@ class WorkLogCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'delete_worklog',
-        'open_in_browser',
-        'edit_worklog_entry',
+        SupportedActions.DELETE_WORKLOG,
+        SupportedActions.OPEN_IN_BROWSER,
+        SupportedActions.EDIT_WORKLOG_ENTRY,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),
@@ -219,14 +220,14 @@ class WorkItemWorkLogScreen(Actionable, Screen[dict]):
     HELP = 'See Worklogs section in the help'
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict = get_application_key_bindings()
+    key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
-        'log_work',
+        SupportedActions.LOG_WORK,
     ]:
-        data = key_bindings.get(supported_action_id, {})
+        data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
             UIAction(
-                action=supported_action_id,
+                action=supported_action_id.value,
                 keys=data.get('keys', []),
                 show=data.get('show', False),
                 description=data.get('description'),

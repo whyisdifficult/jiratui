@@ -51,7 +51,7 @@ def load_keybinding_style_into_environment() -> str:
     return style
 
 
-def get_application_key_bindings() -> dict:
+def get_application_key_bindings() -> dict[str, dict]:
     """Retrieves the applicable actions configuration based on the style selected by the user in the configuration
     file.
 
