@@ -10,6 +10,7 @@ from jiratui.config import ApplicationConfiguration
 from jiratui.models import JiraIssue, JiraIssueSearchResponse, WorkItemsSearchOrderBy
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.goto import GoToScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import (
     ConfirmationScreen,
     IssuesSearchResultsTable,
@@ -496,6 +497,84 @@ async def test_delete_issue_modal_screen_click_delete_currently_selected_item(
         update_border_subtitle_mock.assert_has_calls([call(), call()])
         assert main_screen.current_loaded_work_item_key is None
         assert main_screen.issue_details_widget.issue is None
+
+
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_quick_view_screen_with_item_selected(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.enable_goto = True
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('down')
+        await pilot.press('v')
+        # THEN
+        assert main_screen.search_results_table.has_focus
+        assert isinstance(app.screen, WorkItemQuickViewScreen)
+
+
+@patch('jiratui.widgets.search.build_external_url_for_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_in_browser_selected_item(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    build_external_url_for_issue_mock: Mock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.enable_goto = True
+    build_external_url_for_issue_mock.return_value = 'foo.bar'
+    async with app.run_test() as pilot:
+        # GIVEN
+        app.open_url = AsyncMock()
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('down')
+        await pilot.press('ctrl+o')
+        # THEN
+        assert main_screen.search_results_table.has_focus
+        app.open_url.assert_awaited_once_with('foo.bar')
 
 
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
