@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable
 
+from textual.actions import SkipAction
 from textual.events import Key
 
 
@@ -38,9 +39,13 @@ class Actionable:
                     if not callable(func):
                         continue
 
-                result: Any | Awaitable = func()
-                if isawaitable(result):
-                    await result
+                try:
+                    result: Any | Awaitable = func()
+                except SkipAction:
+                    pass
+                else:
+                    if isawaitable(result):
+                        await result
 
                 event.prevent_default().stop()
         return

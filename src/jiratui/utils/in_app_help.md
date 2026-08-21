@@ -38,6 +38,7 @@ context.
 | `alt+v`      | Focuses the active-sprint search input                 | Main Screen                                                             |
 | `alt+j`      | Focuses the JQL search input                           | Main Screen                                                             |
 | `/`          | Search work items                                      | Main Screen                                                             |
+| `ctrl+r`     | Search work items                                      | Main Screen                                                             |
 | `^f`         | Perform a full-text search of work items               | Main Screen                                                             |
 | `1`          | Focuses the search results table                       | Main Screen                                                             |
 | `2`          | Focuses the work item information tab                  | Main Screen                                                             |

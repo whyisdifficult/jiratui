@@ -14,6 +14,7 @@ configured in the config file via the variable `key_bindings_style`. By [@whyisd
 - Support autocomplete for selecting parent key in the details tab. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/329
 - Add a new CLI command `configure create` to generate a configuration file with the minimum required settings for a first launch. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/331
 - Fix parent-key autocomplete to skip child work item when updating work item details. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/330
+- Add ability to delete subtasks. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/335
 
 ### Bug Fixes
 

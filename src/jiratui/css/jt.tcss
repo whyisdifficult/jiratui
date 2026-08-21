@@ -98,7 +98,7 @@
 
 /* Tab Pane - Subtasks */
 
-IssueChildWorkItemsWidget {
+SubtasksWidget {
     hatch: right $success 20%;
     scrollbar-size-vertical: 1;
 }
@@ -366,42 +366,6 @@ QuitScreen > Grid {
 
 #button-cancel {
     width: 100%;
-}
-
-/* Delete Work Item Screen */
-
-ConfirmDeleteItemScreen {
-    align: center middle;
-    background: $background 80%;
-}
-ConfirmDeleteItemScreen > Vertical {
-    width: 60%;
-    height: auto;
-    border: round $foreground;
-    padding: 0 1;
-    & > Static {
-        margin-top: 1;
-    }
-}
-#delete-work-item-button {
-    width: 20%;
-    padding: 0 0;
-    box_sizing: content-box;
-    border-top: blank $surface-lighten-1;
-    border-bottom: blank $surface-lighten-1;
-}
-#delete-work-item-button-cancel {
-    width: 20%;
-    padding: 0 0;
-    box_sizing: content-box;
-    border-top: blank $surface-lighten-1;
-    border-bottom: blank $surface-lighten-1;
-}
-
-.delete-work-item-grid-buttons {
-    grid-size: 4 1;
-    grid-columns: 25% 25%;
-    align: center middle;
 }
 
 /* Work Item (read-only) Details Screen */
@@ -814,16 +778,13 @@ ConfirmationScreen {
 }
 
 ConfirmationScreen > Vertical {
-    width: 40%;
-    height: 30%;
+    width: 50%;
+    height: 35%;
     border: round $foreground;
-    padding: 0 1;
-    & > Static {
-        margin-top: 1;
-    }
+    padding: 0 1 0 1;
 }
 
-#confirmation-button-accept {
+.confirmation-button-accept {
     width: 20%;
     padding: 0 0;
     box_sizing: content-box;
@@ -831,7 +792,7 @@ ConfirmationScreen > Vertical {
     border-bottom: blank $surface-lighten-1;
 }
 
-#confirmation-button-cancel {
+.confirmation-button-cancel {
     width: 20%;
     padding: 0 0;
     box_sizing: content-box;
@@ -845,9 +806,17 @@ ConfirmationScreen > Vertical {
     align: center middle;
 }
 
-#confirmation-question {
+.confirmation-question-label {
     column-span: 2;
-    height: 1fr;
+    margin-top: 2;
+    width: 1fr;
+    content-align: center middle;
+}
+
+.confirmation-warning-message {
+    column-span: 2;
+    margin-top: 1;
+    margin-bottom: 2;
     width: 1fr;
     content-align: center middle;
 }
@@ -961,7 +930,7 @@ ConfigFileScreen > Vertical > DataTable {
 
 /* Subtasks */
 
-ChildWorkItemCollapsible {
+SubtaskCollapsible {
     border: round $accent;
     background: transparent;
     padding-bottom: 0;

@@ -44,7 +44,7 @@ from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContai
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_subtasks.subtasks import (
-    IssueChildWorkItemsWidget,
+    SubtasksWidget,
 )
 
 
@@ -118,7 +118,7 @@ def app() -> JiraApp:
         ('5', RelatedIssuesWidget),
         ('6', IssueAttachmentsWidget),
         ('7', IssueRemoteLinksWidget),
-        ('8', IssueChildWorkItemsWidget),
+        ('8', SubtasksWidget),
     ],
 )
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -815,7 +815,7 @@ async def test_create_work_item_subtask(
     async with app.run_test() as pilot:
         # WHEN
         app.screen.post_message(
-            IssueChildWorkItemsWidget.CreateSubtask(project_key='PR1', parent_work_item_key='key-1')
+            SubtasksWidget.CreateSubtask(project_key='PR1', parent_work_item_key='key-1')
         )
         await pilot.pause()
         # THEN

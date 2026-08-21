@@ -30,11 +30,6 @@
 ```{autodoc2-object} jiratui.widgets.screens.help.HelpScreen
 ```
 
-## ConfirmDeleteItemScreen
-
-```{autodoc2-object} jiratui.widgets.search.ConfirmDeleteItemScreen
-```
-
 ## JQLEditorScreen
 
 ```{autodoc2-object} jiratui.widgets.screens.jql.JQLEditorScreen

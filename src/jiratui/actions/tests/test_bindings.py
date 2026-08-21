@@ -74,7 +74,10 @@ def test_standard_action_focus_search_jql():
 
 
 def test_standard_action_search():
-    assert KEY_BINDINGS_STANDARD.get(SupportedActions.SEARCH.value).get('keys') == ['/']
+    assert set(KEY_BINDINGS_STANDARD.get(SupportedActions.SEARCH.value).get('keys')) == {
+        '/',
+        'ctrl+r',
+    }
 
 
 def test_standard_action_find_by_text():
