@@ -61,7 +61,7 @@ from jiratui.widgets.search import (
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_subtasks.subtasks import (
-    IssueChildWorkItemsWidget,
+    SubtasksWidget,
     WorkItemSubtasks,
 )
 
@@ -254,8 +254,8 @@ class MainScreen(Actionable, Screen):
         return self.query_one(IssueRemoteLinksWidget)
 
     @property
-    def issue_child_work_items_widget(self) -> IssueChildWorkItemsWidget:
-        return self.query_one(IssueChildWorkItemsWidget)
+    def issue_child_work_items_widget(self) -> SubtasksWidget:
+        return self.query_one(SubtasksWidget)
 
     @property
     def issue_attachments_widget(self) -> IssueAttachmentsWidget:
@@ -431,7 +431,7 @@ class MainScreen(Actionable, Screen):
                     with TabPane(
                         title=self.work_item_tabs_titles.get('issue_subtasks', 'Subtasks')
                     ):
-                        yield IssueChildWorkItemsWidget()
+                        yield SubtasksWidget()
         yield Footer(show_command_palette=False, compact=True)
 
     async def on_mount(self) -> None:
@@ -1098,10 +1098,8 @@ class MainScreen(Actionable, Screen):
     async def _open_git_screen(self, work_item_key: str) -> None:
         await self.app.push_screen(GitScreen(work_item_key))
 
-    @on(IssueChildWorkItemsWidget.CreateSubtask)
-    async def _create_work_item_subtask(
-        self, message: IssueChildWorkItemsWidget.CreateSubtask
-    ) -> None:
+    @on(SubtasksWidget.CreateSubtask)
+    async def _create_work_item_subtask(self, message: SubtasksWidget.CreateSubtask) -> None:
         await self.app.push_screen(
             AddWorkItemScreen(
                 project_key=message.project_key,

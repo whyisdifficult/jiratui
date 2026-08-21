@@ -78,8 +78,8 @@ from jiratui.widgets.work_item_info.info import WorkItemInfoContainer
 from jiratui.widgets.work_item_info.screens import EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent
 from jiratui.widgets.work_item_subtasks.subtasks import (
-    ChildWorkItemCollapsible,
-    IssueChildWorkItemsWidget,
+    SubtaskCollapsible,
+    SubtasksWidget,
     WorkItemSubtasks,
 )
 from jiratui.widgets.work_item_worklog.screens import WorkItemWorkLogScreen, WorkLogCollapsible
@@ -187,7 +187,7 @@ def bindings() -> dict:
             get_application_key_bindings()
             .get('focus_work_item_subtasks_tab', {})
             .get('keys', [])[0],
-            IssueChildWorkItemsWidget,
+            SubtasksWidget,
         ),
     ],
 )
@@ -3957,7 +3957,7 @@ async def test_key_to_edit_jql_opening_modal_screen(
         assert isinstance(app.screen, JQLEditorScreen)
 
 
-@patch.object(IssueChildWorkItemsWidget, 'action_create_work_item_subtask')
+@patch.object(SubtasksWidget, 'action_create_work_item_subtask')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -3998,7 +3998,7 @@ async def test_action_create_work_item_subtask_from_subtasks_tab(
         action_create_work_item_subtask_mock.assert_called_once()
 
 
-@patch.object(ChildWorkItemCollapsible, 'action_view_work_item')
+@patch.object(SubtaskCollapsible, 'action_view_work_item')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4046,7 +4046,7 @@ async def test_action_view_work_item_from_selected_subtasks_in_subtasks_tab(
         action_view_work_item_mock.assert_called_once()
 
 
-@patch.object(ChildWorkItemCollapsible, 'action_open_go_to_screen')
+@patch.object(SubtaskCollapsible, 'action_open_go_to_screen')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4094,7 +4094,7 @@ async def test_action_open_go_to_screen_with_selected_subtask_from_subtasks_tab(
         action_open_go_to_screen_mock.assert_called_once()
 
 
-@patch.object(ChildWorkItemCollapsible, 'action_delete_work_item')
+@patch.object(SubtaskCollapsible, 'action_delete_work_item')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')

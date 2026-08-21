@@ -98,7 +98,7 @@
 
 /* Tab Pane - Subtasks */
 
-IssueChildWorkItemsWidget {
+SubtasksWidget {
     hatch: right $success 20%;
     scrollbar-size-vertical: 1;
 }
@@ -966,7 +966,7 @@ ConfigFileScreen > Vertical > DataTable {
 
 /* Subtasks */
 
-ChildWorkItemCollapsible {
+SubtaskCollapsible {
     border: round $accent;
     background: transparent;
     padding-bottom: 0;

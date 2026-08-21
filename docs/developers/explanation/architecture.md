@@ -125,7 +125,7 @@ C4Component
         Component(relatedissueswidget, "Related Issues Widget", "Textual Widget")
         Component(issueattachmentswidget, "Issue Attachments Widget", "Textual Widget")
         Component(issueremotelinkswidget, "Issue Remote Links Widget", "Textual Widget")
-        Component(issuechildworkitemswidget, "Issue Child Work Items Widget", "Textual Widget")
+        Component(SubtasksWidget, "Issue Child Work Items Widget", "Textual Widget")
         Component(issue_details_widget, "Issue Details Widget", "Textual Widget")
 
         Rel(main_screen, project_selection_input, "Uses", "")
@@ -134,7 +134,7 @@ C4Component
         Rel(main_screen, jirauserinput, "Uses", "")
         Rel(main_screen, searchresultscontainer, "Uses", "")
         Rel(main_screen, workiteminfocontainer, "Uses", "")
-        Rel(main_screen, issuechildworkitemswidget, "Uses", "")
+        Rel(main_screen, SubtasksWidget, "Uses", "")
         Rel(main_screen, issueremotelinkswidget, "Uses", "")
         Rel(main_screen, issueattachmentswidget, "Uses", "")
         Rel(main_screen, relatedissueswidget, "Uses", "")
@@ -342,7 +342,7 @@ C4Component
             <<jiratui.widgets.remote_links.links>>
         }
 
-        class IssueChildWorkItemsWidget {
+        class SubtasksWidget {
             <<jiratui.widgets.work_item_subtasks>>
         }
 
@@ -392,7 +392,7 @@ C4Component
         MainScreen --> IssueCommentsWidget : contains
         MainScreen --> RelatedIssuesWidget : contains
         MainScreen --> IssueRemoteLinksWidget : contains
-        MainScreen --> IssueChildWorkItemsWidget : contains
+        MainScreen --> SubtasksWidget : contains
         MainScreen --> IssueAttachmentsWidget : contains
         MainScreen --> UsersAutoComplete : mounts
         MainScreen --> APIControllerResponse : uses
@@ -1164,8 +1164,8 @@ C4Component
     ---
     classDiagram
         namespace jiratui.widgets.work_item_subtasks.subtasks {
-            class ChildWorkItemCollapsible
-            class IssueChildWorkItemsWidget
+            class SubtaskCollapsible
+            class SubtasksWidget
             class CreateSubtask
         }
 
@@ -1177,11 +1177,11 @@ C4Component
             class WorkItemQuickViewScreen
         }
 
-        Collapsible <|-- ChildWorkItemCollapsible
-        VerticalScroll <|-- IssueChildWorkItemsWidget
-        IssueChildWorkItemsWidget o-- ChildWorkItemCollapsible
-        ChildWorkItemCollapsible --> WorkItemQuickViewScreen: opens
-        IssueChildWorkItemsWidget o-- CreateSubtask
+        Collapsible <|-- SubtaskCollapsible
+        VerticalScroll <|-- SubtasksWidget
+        SubtasksWidget o-- SubtaskCollapsible
+        SubtaskCollapsible --> WorkItemQuickViewScreen: opens
+        SubtasksWidget o-- CreateSubtask
 ```
 ````
 

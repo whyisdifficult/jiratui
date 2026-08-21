@@ -30,7 +30,7 @@ class WorkItemSubtasks:
     issues: list[JiraIssue] | None = None
 
 
-class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
+class SubtaskCollapsible(Actionable, Collapsible, inherit_bindings=False):  # type:ignore[call-arg]
     """A collapsible to show the work items that are children of another work item.
 
     This widget is responsible for:
@@ -140,7 +140,7 @@ class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):
             self.post_message(SearchWorkItem(work_item_key))
 
 
-class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
+class SubtasksWidget(Actionable, VerticalScroll, inherit_bindings=False):  # type:ignore[call-arg]
     """A container for displaying the subtasks of a work item.
 
     This class defines a key binding to open a modal screen to allow users to create a new work item as a subtask of
@@ -224,8 +224,8 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
                 severity='warning',
             )
 
-    @on(ChildWorkItemCollapsible.WorkItemDeleted)
-    async def delete_work_item(self, event: ChildWorkItemCollapsible.WorkItemDeleted) -> None:
+    @on(SubtaskCollapsible.WorkItemDeleted)
+    async def delete_work_item(self, event: SubtaskCollapsible.WorkItemDeleted) -> None:
         if event.work_item_key:
             response: APIControllerResponse = await self.app.api.delete_work_item(  # type:ignore[attr-defined]
                 event.work_item_key
@@ -261,7 +261,7 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
         """
 
         # reset the widget's data
-        self.remove_children(ChildWorkItemCollapsible)
+        self.remove_children(SubtaskCollapsible)
         self._work_item_key = None
         self._work_item_project_key = None
 
@@ -270,7 +270,7 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
 
         self._work_item_key = work_item_subtasks.work_item_key
         self._work_item_project_key = work_item_subtasks.project_key
-        rows: list[ChildWorkItemCollapsible] = self._build_collapsible_subtasks_widgets(
+        rows: list[SubtaskCollapsible] = self._build_collapsible_subtasks_widgets(
             work_item_subtasks.issues
         )
         self.mount_all(rows)
@@ -278,8 +278,8 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
     @staticmethod
     def _build_collapsible_subtasks_widgets(
         items: list[JiraIssue] | None = None,
-    ) -> list[ChildWorkItemCollapsible]:
-        rows: list[ChildWorkItemCollapsible] = []
+    ) -> list[SubtaskCollapsible]:
+        rows: list[SubtaskCollapsible] = []
         for issue in items or []:
             children: list[Widget] = [
                 Static(Text(f'Type: {issue.issue_type.name}')),
@@ -294,7 +294,7 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
                     )
                 )
 
-            collapsible = ChildWorkItemCollapsible(
+            collapsible = SubtaskCollapsible(
                 *children,
                 title=Text(issue.cleaned_summary(max_length=70)),
                 work_item_key=issue.key,
