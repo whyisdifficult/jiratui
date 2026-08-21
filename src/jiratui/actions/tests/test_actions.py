@@ -4094,6 +4094,54 @@ async def test_action_open_go_to_screen_with_selected_subtask_from_subtasks_tab(
         action_open_go_to_screen_mock.assert_called_once()
 
 
+@patch.object(ChildWorkItemCollapsible, 'action_delete_work_item')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_delete_work_item_with_selected_subtask_from_subtasks_tab(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_delete_work_item_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # test the action that opens the screen to view related tasks for a selected subtask
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_child_work_items_widget.issues = WorkItemSubtasks(
+            work_item_key=jira_issues[1].key,
+            project_key=jira_issues[1].project.key,
+            issues=[jira_issues[0]],
+        )
+        await pilot.press(bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('delete_work_item', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_delete_work_item_mock.assert_called_once()
+
+
 @patch.object(Widget, 'action_page_up')
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')

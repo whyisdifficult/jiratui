@@ -11,7 +11,7 @@ from jiratui.models import JiraIssue, JiraIssueSearchResponse, WorkItemsSearchOr
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.search import (
-    ConfirmDeleteItemScreen,
+    ConfirmationScreen,
     IssuesSearchResultsTable,
     SearchResultsContainer,
 )
@@ -344,7 +344,7 @@ async def test_open_delete_issue_modal_screen(
             issues=jira_issues, next_page_token=None, is_last=None
         )
         assert main_screen.search_results_table.current_work_item_key == jira_issues[1].key
-        assert isinstance(app.screen, ConfirmDeleteItemScreen)
+        assert isinstance(app.screen, ConfirmationScreen)
 
 
 @patch.object(SearchResultsContainer, '_update_border_subtitle')

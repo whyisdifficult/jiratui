@@ -5,6 +5,7 @@ import pytest
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.widgets.screen import MainScreen
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.work_item_subtasks.subtasks import (
@@ -144,7 +145,7 @@ async def test_open_goto_screen_with_goto_disabled(
 @patch.object(APIController, 'get_issue')
 @patch.object(ChildWorkItemCollapsible, '_close_goto_screen')
 @pytest.mark.asyncio
-async def test_dismiss_goto_screen_with_key(
+async def test_select_item_in_goto_screen(
     close_goto_screen_mock: Mock,
     get_issue_mock: AsyncMock,
     mock_configuration,
@@ -161,7 +162,7 @@ async def test_dismiss_goto_screen_with_key(
         # WHEN
         widget = IssueChildWorkItemsWidget()
         await app.screen.mount(widget)
-        await app.workers.wait_for_complete()
+        await pilot.pause()
         widget.issues = WorkItemSubtasks(
             work_item_key=jira_issues[0].key,
             project_key='P1',
@@ -175,3 +176,106 @@ async def test_dismiss_goto_screen_with_key(
         # THEN
         assert isinstance(app.screen, MainScreen)
         close_goto_screen_mock.assert_called_once_with('key-1')
+
+
+@patch.object(APIController, 'delete_work_item')
+@pytest.mark.asyncio
+async def test_delete_subtask(
+    delete_work_item_mock: AsyncMock, mock_configuration, jira_issues, app
+):
+    # GIVEN
+    delete_work_item_mock.return_value = APIControllerResponse(success=True)
+    async with app.run_test() as pilot:
+        mock_configuration.jira_base_url = 'http://foo.bar'
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues,
+        )
+        assert len(widget.query_children(ChildWorkItemCollapsible)) == 2
+        # WHEN
+        await widget.delete_work_item(ChildWorkItemCollapsible.WorkItemDeleted(jira_issues[0].key))
+        await pilot.pause()
+        # THEN
+        delete_work_item_mock.assert_awaited_once_with(jira_issues[0].key)
+        assert len(widget.query(ChildWorkItemCollapsible)) == 1
+
+
+@patch.object(APIController, 'delete_work_item')
+@pytest.mark.asyncio
+async def test_delete_remaining_subtask(
+    delete_work_item_mock: AsyncMock, mock_configuration, jira_issues, app
+):
+    # GIVEN
+    delete_work_item_mock.return_value = APIControllerResponse(success=True)
+    async with app.run_test() as pilot:
+        mock_configuration.jira_base_url = 'http://foo.bar'
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues[:1],
+        )
+        assert len(widget.query_children(ChildWorkItemCollapsible)) == 1
+        # WHEN
+        await widget.delete_work_item(ChildWorkItemCollapsible.WorkItemDeleted(jira_issues[0].key))
+        await pilot.pause()
+        # THEN
+        delete_work_item_mock.assert_awaited_once_with(jira_issues[0].key)
+        assert len(widget.query(ChildWorkItemCollapsible)) == 0
+
+
+@patch.object(APIController, 'delete_work_item')
+@pytest.mark.asyncio
+async def test_delete_subtask_fails(
+    delete_work_item_mock: AsyncMock, mock_configuration, jira_issues, app
+):
+    # GIVEN
+    delete_work_item_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test() as pilot:
+        mock_configuration.jira_base_url = 'http://foo.bar'
+        widget = IssueChildWorkItemsWidget()
+        await app.screen.mount(widget)
+        widget.issues = WorkItemSubtasks(
+            work_item_key='WI-1',
+            project_key='P1',
+            issues=jira_issues,
+        )
+        assert len(widget.query_children(ChildWorkItemCollapsible)) == 2
+        # WHEN
+        await widget.delete_work_item(ChildWorkItemCollapsible.WorkItemDeleted(jira_issues[0].key))
+        await pilot.pause()
+        # THEN
+        delete_work_item_mock.assert_awaited_once_with(jira_issues[0].key)
+        assert len(widget.query(ChildWorkItemCollapsible)) == 2
+
+
+@pytest.mark.asyncio
+async def test_delete_request_opens_confirmation_screen(mock_configuration, jira_issues, app):
+    # GIVEN
+    async with app.run_test():
+        mock_configuration.jira_base_url = 'http://foo.bar'
+        widget = ChildWorkItemCollapsible(work_item_key='WI-1')
+        await app.screen.mount(widget)
+        # WHEN
+        await widget.action_delete_work_item()
+        # THEN
+        assert isinstance(app.screen, ConfirmationScreen)
+
+
+@pytest.mark.asyncio
+async def test_delete_request_does_not_confirmation_screen_with_missing_key(
+    mock_configuration, jira_issues, app
+):
+    # GIVEN
+    async with app.run_test():
+        mock_configuration.jira_base_url = 'http://foo.bar'
+        widget = ChildWorkItemCollapsible(work_item_key='')
+        await app.screen.mount(widget)
+        # WHEN
+        await widget.action_delete_work_item()
+        # THEN
+        assert isinstance(app.screen, MainScreen)

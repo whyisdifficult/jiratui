@@ -592,7 +592,7 @@ KEY_BINDINGS_STANDARD = {
     },
     # Search Actions
     SupportedActions.SEARCH.value: {
-        'keys': ['/'],
+        'keys': ['/', 'ctrl+r'],
         'show': True,
         'description': '\uf002',
         'tooltip': 'Search work items',

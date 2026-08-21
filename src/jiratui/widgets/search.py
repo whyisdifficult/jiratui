@@ -4,13 +4,11 @@ from typing import cast
 
 from rich.text import Text
 from textual import on
-from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, ItemGrid, Vertical
+from textual.containers import Container
 from textual.message import Message
 from textual.reactive import Reactive, reactive
-from textual.screen import ModalScreen
-from textual.widgets import Button, DataTable, Input, Rule, Static
+from textual.widgets import DataTable, Input
 from textual.widgets._data_table import RowDoesNotExist
 
 from jiratui.actions.constants import SupportedActions
@@ -22,42 +20,8 @@ from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GoToScreen
-
-
-# TODO move to screens module and/or merge with existing confirmation screen
-class ConfirmDeleteItemScreen(ModalScreen[bool]):
-    """A modal screen that allows users to confirm deleting an item."""
-
-    BINDINGS = [('escape', 'app.pop_screen', 'Close Screen')]
-
-    def __init__(self, work_item_key: str):
-        super().__init__()
-        self._work_item_key = work_item_key
-
-    def compose(self) -> ComposeResult:
-        vertical = Vertical()
-        vertical.border_title = f'Delete Work Item {self._work_item_key}'
-        with vertical:
-            yield Static(
-                Text(
-                    f'Warning: if the work item {self._work_item_key} has subtasks, deleting it will also delete all its subtasks!',
-                    style='italic orange',
-                )
-            )
-            yield Rule()
-            with ItemGrid(classes='delete-work-item-grid-buttons'):
-                yield Button('Delete', variant='success', id='delete-work-item-button')
-                yield Button('Cancel', variant='error', id='delete-work-item-button-cancel')
-
-    @on(Button.Pressed, '#delete-work-item-button')
-    def delete_item(self) -> None:
-        if self._work_item_key:
-            self.dismiss(True)
-
-    @on(Button.Pressed, '#delete-work-item-button-cancel')
-    def cancel_deleting_item(self) -> None:
-        self.dismiss(False)
 
 
 class DataTableSearchInput(Input):
@@ -329,7 +293,12 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         """
 
         await self.app.push_screen(
-            ConfirmDeleteItemScreen(work_item_key), callback=self._delete_work_item
+            ConfirmationScreen(
+                message='Are you sure you want to delete this item?',
+                title=f'Delete Work Item {work_item_key}',
+                warning_message=f'Warning: if the work item {work_item_key} has subtasks, deleting it will also delete all its subtasks!',
+            ),
+            callback=self._delete_work_item,
         )
 
     async def _delete_work_item(self, delete_item: bool = False) -> None:

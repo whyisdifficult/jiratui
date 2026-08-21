@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from rich.text import Text
+from textual import on
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.message import Message
@@ -10,12 +11,14 @@ from textual.widgets import Collapsible, Link, Rule, Static
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
+from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
 from jiratui.utils.styling import get_style_for_work_item_status
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
+from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
@@ -49,6 +52,7 @@ class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):
     for supported_action_id in [
         SupportedActions.VIEW_WORK_ITEM,
         SupportedActions.OPEN_GO_TO_SCREEN,
+        SupportedActions.DELETE_WORK_ITEM,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -72,6 +76,10 @@ class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):
         for action in ACTIONS
         if isinstance(action.action, str)
     ]
+
+    @dataclass
+    class WorkItemDeleted(Message):
+        work_item_key: str
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)
@@ -106,6 +114,21 @@ class ChildWorkItemCollapsible(Actionable, Collapsible, inherit_bindings=False):
             self.notify('Select/Highlight an item to view its related items')
         else:
             self.notify('This feature is disabled. Check config.enable_goto', severity='warning')
+
+    async def action_delete_work_item(self) -> None:
+        if self.work_item_key:
+            await self.app.push_screen(
+                ConfirmationScreen(
+                    message='Are you sure you want to delete this item?',
+                    title=f'Delete Work Item {self.work_item_key}',
+                    warning_message=f'Warning: if the work item {self.work_item_key} has subtasks, deleting it will also delete all its subtasks!',
+                ),
+                callback=self._delete_work_item,
+            )
+
+    def _delete_work_item(self, delete: bool) -> None:
+        if delete:
+            self.post_message(self.WorkItemDeleted(self.work_item_key))
 
     def _close_goto_screen(self, work_item_key: str) -> None:
         # sends a message to request the handler, the Main Screen, to search for the work item with the given key
@@ -201,6 +224,31 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
                 severity='warning',
             )
 
+    @on(ChildWorkItemCollapsible.WorkItemDeleted)
+    async def delete_work_item(self, event: ChildWorkItemCollapsible.WorkItemDeleted) -> None:
+        if event.work_item_key:
+            response: APIControllerResponse = await self.app.api.delete_work_item(  # type:ignore[attr-defined]
+                event.work_item_key
+            )
+            if response.success:
+                # do not fetch subtasks to make it faster
+                self.notify(f'Deleted {event.work_item_key}', title='Delete Work Item')
+                self.issues = WorkItemSubtasks(
+                    work_item_key=self.issues.work_item_key,
+                    project_key=self.issues.project_key,
+                    issues=[
+                        item for item in self.issues.issues or [] if item.key != event.work_item_key
+                    ],
+                )
+            else:
+                self.notify(
+                    f'Failed to delete the item {event.work_item_key}',
+                    title='Delete Work Item',
+                    severity='error',
+                )
+                if response.error:
+                    self.notify(response.error, title='Delete Work Item', severity='error')
+
     def watch_issues(self, work_item_subtasks: WorkItemSubtasks | None = None) -> None:
         """Updates the list of work items that are subtasks of the currently-selected item.
 
@@ -213,7 +261,7 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
         """
 
         # reset the widget's data
-        self.remove_children()
+        self.remove_children(ChildWorkItemCollapsible)
         self._work_item_key = None
         self._work_item_project_key = None
 
@@ -222,12 +270,22 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
 
         self._work_item_key = work_item_subtasks.work_item_key
         self._work_item_project_key = work_item_subtasks.project_key
+        rows: list[ChildWorkItemCollapsible] = self._build_collapsible_subtasks_widgets(
+            work_item_subtasks.issues
+        )
+        self.mount_all(rows)
 
+    @staticmethod
+    def _build_collapsible_subtasks_widgets(
+        items: list[JiraIssue] | None = None,
+    ) -> list[ChildWorkItemCollapsible]:
         rows: list[ChildWorkItemCollapsible] = []
-        for issue in work_item_subtasks.issues or []:
+        for issue in items or []:
             children: list[Widget] = [
                 Static(Text(f'Type: {issue.issue_type.name}')),
                 Static(Text(f'Assignee: {issue.display_assignee()}')),
+                Rule(classes='rule-horizontal-compact-70'),
+                Static(Text(issue.cleaned_summary())),
             ]
             if browsable_url := build_external_url_for_issue(issue.key):
                 children.append(
@@ -235,10 +293,6 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
                         browsable_url, url=browsable_url, tooltip='open link in the default browser'
                     )
                 )
-            children.append(
-                Rule(classes='rule-horizontal-compact-70'),
-            )
-            children.append(Static(Text(issue.cleaned_summary())))
 
             collapsible = ChildWorkItemCollapsible(
                 *children,
@@ -250,4 +304,4 @@ class IssueChildWorkItemsWidget(Actionable, VerticalScroll, inherit_bindings=Fal
                 collapsible.styles.border = ('round', collapsible_color)
 
             rows.append(collapsible)
-        self.mount_all(rows)
+        return rows

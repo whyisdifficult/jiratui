@@ -814,16 +814,13 @@ ConfirmationScreen {
 }
 
 ConfirmationScreen > Vertical {
-    width: 40%;
-    height: 30%;
+    width: 50%;
+    height: 35%;
     border: round $foreground;
-    padding: 0 1;
-    & > Static {
-        margin-top: 1;
-    }
+    padding: 0 1 0 1;
 }
 
-#confirmation-button-accept {
+.confirmation-button-accept {
     width: 20%;
     padding: 0 0;
     box_sizing: content-box;
@@ -831,7 +828,7 @@ ConfirmationScreen > Vertical {
     border-bottom: blank $surface-lighten-1;
 }
 
-#confirmation-button-cancel {
+.confirmation-button-cancel {
     width: 20%;
     padding: 0 0;
     box_sizing: content-box;
@@ -845,9 +842,17 @@ ConfirmationScreen > Vertical {
     align: center middle;
 }
 
-#confirmation-question {
+.confirmation-question-label {
     column-span: 2;
-    height: 1fr;
+    margin-top: 2;
+    width: 1fr;
+    content-align: center middle;
+}
+
+.confirmation-warning-message {
+    column-span: 2;
+    margin-top: 1;
+    margin-bottom: 2;
     width: 1fr;
     content-align: center middle;
 }
