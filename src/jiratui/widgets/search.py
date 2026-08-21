@@ -22,6 +22,7 @@ from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.messages import SearchWorkItem
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.goto import GoToScreen
+from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 
 
 class DataTableSearchInput(Input):
@@ -123,6 +124,10 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
+    - Use Case: Open Quick-View Screen
+    - Use Case: Filter Search Results
+    - Use Case: Fetch Next Page
+    - Use Case: Fetch Previous Page
     - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
     """
 
@@ -132,6 +137,10 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
     # set up the key-bindings based on the configuration selected by the user
     key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
+        SupportedActions.VIEW_WORK_ITEM,
+        SupportedActions.OPEN_IN_BROWSER,
+        SupportedActions.DELETE_WORK_ITEM,
+        SupportedActions.OPEN_GO_TO_SCREEN,
         SupportedActions.SELECT_CURSOR,
         SupportedActions.CURSOR_UP,
         SupportedActions.CURSOR_DOWN,
@@ -142,9 +151,6 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         SupportedActions.FILTER,
         SupportedActions.PREVIOUS_ISSUES_PAGE,
         SupportedActions.NEXT_ISSUES_PAGE,
-        SupportedActions.OPEN_IN_BROWSER,
-        SupportedActions.DELETE_WORK_ITEM,
-        SupportedActions.OPEN_GO_TO_SCREEN,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -267,6 +273,14 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         """Stores the key of the currently-selected item."""
         if event.row_key:
             self.current_work_item_id, self.current_work_item_key = event.row_key.value.split('#')
+
+    async def action_view_work_item(self) -> None:
+        """Opens the quick-view screen for the currently selected work item."""
+        if self.current_work_item_key:
+            await self.app.push_screen(
+                WorkItemQuickViewScreen(self.current_work_item_key),
+                callback=self._load_work_item_after_viewing,
+            )
 
     def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
@@ -421,6 +435,12 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     def _close_goto_screen(self, work_item_key: str) -> None:
         # sends a message to request the handler, the Main Screen, to search for the work item with the given key
+        if work_item_key:
+            self.post_message(SearchWorkItem(work_item_key))
+
+    def _load_work_item_after_viewing(self, work_item_key: str | None = None) -> None:
+        """Posts a message to fetch a work item after the user selects it from the quick-view screen."""
+
         if work_item_key:
             self.post_message(SearchWorkItem(work_item_key))
 

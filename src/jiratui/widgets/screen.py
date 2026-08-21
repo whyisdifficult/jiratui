@@ -1329,6 +1329,7 @@ class MainScreen(Actionable, Screen):
         Returns:
             None
         """
+
         import asyncio
 
         # Get the search results table
@@ -1367,16 +1368,6 @@ class MainScreen(Actionable, Screen):
 
         # Convert 1-based position to 0-based index
         row_index = position - 1
-
-        # Get the row key at this position
-        row_keys = list(table.rows)
-        row_key = row_keys[row_index]
-
-        # Extract the work item key from the row
-        row_key_value = str(row_key.value)
-        work_item_key = None
-        if '#' in row_key_value:
-            _, work_item_key = row_key_value.split('#')
 
         # Move cursor to this row
         table.move_cursor(row=row_index)
