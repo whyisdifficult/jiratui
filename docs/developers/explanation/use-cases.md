@@ -447,6 +447,14 @@ The following are the main components used by the application to support this us
 ```
 ````
 
+## Manage Subtasks
+
+(use-case-delete-subtask)=
+### Delete Subtask
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes to delete a subtasks from the Subtasks tab.
+
 ## Manage Comments
 
 (use-case-add-comment)=

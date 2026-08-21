@@ -124,6 +124,10 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
+    - Use Case: Open Quick-View Screen
+    - Use Case: Filter Search Results
+    - Use Case: Fetch Next Page
+    - Use Case: Fetch Previous Page
     - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
     """
 

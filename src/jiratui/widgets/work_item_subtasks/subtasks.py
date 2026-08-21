@@ -40,10 +40,14 @@ class SubtaskCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
     - posting the message [SearchWorkItem](#jiratui.widgets.messages.SearchWorkItem)
     when the screen [WorkItemQuickViewScreen](#jiratui.widgets.screens.work_item_quick_view.WorkItemQuickViewScreen) is
     dismissed with a work item key.
+    - opening a confirmation screen to delete a subtask and posting the message
+    [SubtaskCollapsible.WorkItemDeleted](#jiratui.widgets.work_item_subtasks.subtasks.SubtaskCollapsible.WorkItemDeleted)
+    to request the deletion of the subtask.
 
     **See Also**:
     - [Architecture](#architecture-work-item-subtasks-classes)
     - [Use Case: Open Go-To Screen](#use-case-subtasks-goto-screen)
+    - [Use Case: Delete a Subtask](#use-case-delete-subtask)
     """
 
     ACTIONS: list[UIAction] = []
