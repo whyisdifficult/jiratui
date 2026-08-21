@@ -278,11 +278,11 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
                 callback=self._load_work_item_after_viewing,
             )
 
-    async def action_open_in_browser(self) -> None:
+    def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self.current_work_item_key:
             self.notify('Opening Work Item in the browser...')
-            await self.app.open_url(build_external_url_for_issue(self.current_work_item_key))
+            self.app.open_url(build_external_url_for_issue(self.current_work_item_key))
 
     def action_delete_work_item(self) -> None:
         """Deletes the currently-selected item."""

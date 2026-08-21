@@ -574,7 +574,7 @@ async def test_open_in_browser_selected_item(
         await pilot.press('ctrl+o')
         # THEN
         assert main_screen.search_results_table.has_focus
-        app.open_url.assert_awaited_once_with('foo.bar')
+        app.open_url.assert_called_once_with('foo.bar')
 
 
 @patch('jiratui.widgets.screen.MainScreen._search_work_items')
