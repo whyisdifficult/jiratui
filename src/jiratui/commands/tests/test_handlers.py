@@ -1551,14 +1551,18 @@ async def test_clone_work_item_cloning_succeeds_with_custom_summary(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(CommandHandler, 'get_create_metadata')
 @patch.object(APIController, 'create_work_item')
 async def test_create_work_item_without_user_input(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1589,14 +1593,18 @@ async def test_create_work_item_without_user_input(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(CommandHandler, 'get_create_metadata')
 @patch.object(APIController, 'create_work_item')
 async def test_create_work_item_without_user_input_creation_fails(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(success=False, error='Some error')
     get_create_metadata_mock.return_value = {
@@ -1628,14 +1636,18 @@ async def test_create_work_item_without_user_input_creation_fails(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(CommandHandler, 'get_create_metadata')
 @patch.object(APIController, 'create_work_item')
 async def test_create_work_item_without_user_input_unsupported_required_fields(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1663,14 +1675,18 @@ async def test_create_work_item_without_user_input_unsupported_required_fields(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value=None))
 @patch.object(CommandHandler, 'get_create_metadata')
 @patch.object(APIController, 'create_work_item')
 async def test_create_work_item_without_user_input_missing_jira_account_id(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1697,6 +1713,7 @@ async def test_create_work_item_without_user_input_missing_jira_account_id(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(CommandHandler, 'projects')
 @patch.object(CommandHandler, 'get_create_metadata')
@@ -1705,8 +1722,11 @@ async def test_create_work_item_ask_user_input_project_key_no_projects_found(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
     projects_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1732,6 +1752,7 @@ async def test_create_work_item_ask_user_input_project_key_no_projects_found(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'projects')
@@ -1742,8 +1763,11 @@ async def test_create_work_item_ask_user_input_project_key_no_project_provided(
     get_create_metadata_mock: AsyncMock,
     projects_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1771,6 +1795,7 @@ async def test_create_work_item_ask_user_input_project_key_no_project_provided(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'projects')
@@ -1781,8 +1806,11 @@ async def test_create_work_item_ask_user_input_project_key_provided(
     get_create_metadata_mock: AsyncMock,
     projects_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1816,6 +1844,7 @@ async def test_create_work_item_ask_user_input_project_key_provided(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'work_item_types_by_project')
@@ -1826,8 +1855,11 @@ async def test_create_work_item_ask_user_input_item_type_no_type_provided(
     get_create_metadata_mock: AsyncMock,
     work_item_types_by_project_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1854,6 +1886,7 @@ async def test_create_work_item_ask_user_input_item_type_no_type_provided(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'work_item_types_by_project')
@@ -1864,8 +1897,11 @@ async def test_create_work_item_ask_user_input_item_type_provided(
     get_create_metadata_mock: AsyncMock,
     work_item_types_by_project_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1898,6 +1934,7 @@ async def test_create_work_item_ask_user_input_item_type_provided(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'projects')
@@ -1908,8 +1945,11 @@ async def test_create_work_item_ask_user_input_summary_provided(
     get_create_metadata_mock: AsyncMock,
     projects_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1942,6 +1982,7 @@ async def test_create_work_item_ask_user_input_summary_provided(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'get_create_metadata')
@@ -1950,8 +1991,11 @@ async def test_create_work_item_ask_user_required_parent_key(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
@@ -1985,6 +2029,7 @@ async def test_create_work_item_ask_user_required_parent_key(
 
 
 @pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
 @patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
 @patch.object(questionary.Question, 'ask_async')
 @patch.object(CommandHandler, 'get_create_metadata')
@@ -1993,8 +2038,11 @@ async def test_create_work_item_parent_key_not_required(
     create_work_item_mock: AsyncMock,
     get_create_metadata_mock: AsyncMock,
     ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
 ):
     # GIVEN
+    config_mock.return_value = config_for_testing
     handler = CommandHandler()
     create_work_item_mock.return_value = APIControllerResponse(
         result=JiraBaseIssue(id='1', key='WI-1')
