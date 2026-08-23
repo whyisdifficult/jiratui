@@ -29,6 +29,7 @@ from jiratui.config import ApplicationConfiguration
 from jiratui.configuration_app import JiraTUIConfigurationApp
 from jiratui.exceptions import CLIException
 from jiratui.files import get_config_file
+from jiratui.models import JiraUserGroup
 
 console = Console()
 
@@ -100,6 +101,15 @@ def config():
     help='The path to the file where the configuration will be saved.',
 )
 def configure_create(output_file: str | None = None) -> None:
+    """Launches the configuration management tool.
+
+    Args:
+        output_file: the file to save the configuration.
+
+    Returns:
+        None
+    """
+
     JiraTUIConfigurationApp(output_file=output_file).run()
 
 
@@ -141,16 +151,17 @@ def search_issues(
     """Searches work items.
 
     Args:
-        project_key:
-        key:
-        assignee_account_id:
-        limit:
-        created_from:
-        created_until:
+        project_key: searches work items in the project/space identified by this (case-sensitive) key.
+        key: searches a single work item identified by this (case-sensitive) key.
+        assignee_account_id: searches work items assigned to the user identified by this id.
+        limit: searches a maximum of this number of work items. Default is 50.
+        created_from: searches work items created from this date (inclusive). Expects YYYY-MM-DD.
+        created_until: searches work items created until this date (inclusive). Expects YYYY-MM-DD.
 
     Returns:
-
+        None
     """
+
     if not project_key and not key:
         raise click.BadParameter(
             'One of --project-key (-p) or --key (-k) must be provided',
@@ -255,7 +266,7 @@ def issue_metadata(work_item_key: str, field_id: str | None = None) -> None:
     is_flag=True,
     type=bool,
     default=False,
-    help='Shows metadata for an issue. This is useful for updates.',
+    help='Shows (edit) metadata for an issue. This is useful for updates.',
 )
 @click.option(
     '--status-id',
@@ -277,10 +288,22 @@ def update_issue(
     meta: bool | None = None,
     status_id: int | None = None,
     priority_id: int | None = None,
-):
-    """Updates (some) fields of the work item identified by WORK_ITEM_KEY."""
+) -> None:
+    """Updates (some) fields of the work item identified by WORK_ITEM_KEY.
 
-    # WORK_ITEM_KEY is the case-sensitive key that identifies the work item we want to update.
+    Args:
+        work_item_key: the case-sensitive key that identifies the work item we want to update.
+        summary: the summary to set up.
+        assignee_account_id: the account ID of the user to whom the work item will be assigned.
+        due_date: the due date of an issue. Expects YYYY-MM-DD.
+        meta: if True then the command shows (edit) metadata for an issue.
+        status_id: the ID of the status to set for the work item.
+        priority_id: the ID of the priority to set for the work item.
+
+    Returns:
+        None
+    """
+
     handler = CommandHandler()
 
     if meta:
@@ -430,9 +453,42 @@ def delete_work_item(work_item_key: str) -> None:
             renderer = CLIExceptionRenderer()
             renderer.render(console, e.get_extra_details())
         except Exception as e:
-            console.print(f'Unable to delete the selected work item. {str(e)}')
+            console.print(f'Unable to delete the selected work item. {str(e)}', style='bold red')
         else:
-            console.print('Work item deleted successfully.')
+            console.print('Work item deleted successfully.', style='bold green')
+
+
+@issues.command('new')
+@click.option(
+    '--project-key', '-p', type=str, help='A case-sensitive key that identifies a project.'
+)
+@click.option('--summary', '-s', type=str, help='A case-sensitive key that identifies a project.')
+@click.option(
+    '--work_item_type', '-t', type=str, help='A case-sensitive key that identifies a project.'
+)
+def create_work_item(
+    project_key: str | None = None, summary: str | None = None, work_item_type: str | None = None
+) -> None:
+    """Creates a new work item.
+
+    Args:
+        project_key: the key of the Jira projetc/space to which the work item belongs. If missing, the application will
+        prompt the user to enter it.
+        summary: a short summary of the work item. If missing, the application will prompt the user to enter it.
+        work_item_type: the type of work item to create. If missing, the application will prompt the user to enter it.
+
+    Returns:
+        None
+    """
+
+    handler = CommandHandler()
+    try:
+        response: str = asyncio.run(handler.create_work_item(project_key, work_item_type, summary))
+    except CLIException as e:
+        console.print(str(e), style='bold red')
+    else:
+        console.print(f'Work item with key {response} created successfully', style='bold green')
+        console.print(f'View it with: jiratui issues search -k {response}')
 
 
 # -- PROJECTS --
@@ -450,8 +506,10 @@ def delete_work_item(work_item_key: str) -> None:
 def create_metadata(project_key: str, work_item_type_id: str, save_as: str | None = None) -> None:
     """Retrieves create-metadata for the requested project key and type of work item.
 
-    PROJECT_KEY case-sensitive key that identifies a project in your organization.
-    WORK_ITEM_TYPE_ID the id that identifies a type of work item in the project.
+    Args:
+        project_key: case-sensitive key that identifies a project in your organization.
+        work_item_type_id: the id that identifies a type of work item in the project.
+        save_as: an optional filename to export the JSON result.
     """
 
     handler = CommandHandler()
@@ -480,12 +538,14 @@ def create_metadata(project_key: str, work_item_type_id: str, save_as: str | Non
 @comments.command('add')
 @click.argument('work-item-key')
 @click.argument('message')
-def add_comment(message: str, work_item_key: str):
+def add_comment(message: str, work_item_key: str) -> None:
     """Adds a comment to the work item identified by WORK_ITEM_KEY.
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
-    MESSAGE is the message of the comment.
+    Args:
+        work_item_key: is the case-sensitive key that identifies the work item.
+        message: is the message of the comment.
     """
+
     handler = CommandHandler()
     with console.status('Trying to add the comment to the issue...'):
         try:
@@ -509,11 +569,15 @@ def add_comment(message: str, work_item_key: str):
     help='The page number we want to retrieve. The max number of items per page is 10',
 )
 @click.option('--comment-id', '-c', default=None, help='The ID of a comment')
-def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = None):
+def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = None) -> None:
     """Lists the comments of the work item identified by WORK_ITEM_KEY.
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
+    Args:
+        work_item_key: is the case-sensitive key that identifies the work item.
+        page: is the page number we want to retrieve. The max number of items per page is 10.
+        comment_id: if provided then only the comment with this Id will be retrieved.
     """
+
     handler = CommandHandler()
     with console.status('Fetching comments for the issue...'):
         try:
@@ -533,9 +597,11 @@ def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = No
 def show_comment(work_item_key: str, comment_id: str) -> None:
     """Shows the text of a comment of the work item identified by WORK_ITEM_KEY.
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
-    COMMENT_ID the id of the comment whose text we want to view.
+    Args:
+        work_item_key: is the case-sensitive key that identifies the work item.
+        comment_id: the id of the comment whose text we want to view.
     """
+
     handler = CommandHandler()
     with console.status('Fetching comment...'):
         try:
@@ -552,12 +618,14 @@ def show_comment(work_item_key: str, comment_id: str) -> None:
 @comments.command('delete')
 @click.argument('work-item-key')
 @click.argument('comment-id')
-def delete_comment(work_item_key: str, comment_id: str):
+def delete_comment(work_item_key: str, comment_id: str) -> None:
     """Deletes the comment with id COMMENT_ID of the work item identified by WORK_ITEM_KEY.
 
-    WORK_ITEM_KEY is the case-sensitive key that identifies the work item.
-    COMMENT_ID the id of the comment whose text we want to view.
+    Args:
+        work_item_key: is the case-sensitive key that identifies the work item.
+        comment_id: the id of the comment whose text we want to view.
     """
+
     handler = CommandHandler()
     with console.status('Trying to delete the comment...'):
         try:
@@ -629,8 +697,23 @@ def ui(
     theme: str | None = None,
     search_on_startup: bool = False,
     focus_item_on_startup: int | None = None,
-):
-    """Launches the JiraTUI application."""
+) -> None:
+    """Launches the JiraTUI application.
+
+    Args:
+        project_key: if provided then the application will use this key to set up the project selection dropdown.
+        work_item_key: if provided then the application will use this key to set up the work item filter.
+        assignee_account_id: if provided then the application will use this id to set up the assignee filter.
+        jql_expression_id: if provided the application wil set the JQL search filter with the JQL expression given by
+        this id.
+        theme: if provided then the application will use this theme.
+        search_on_startup: if True then the application will run a search on start-up using the search filters.
+        focus_item_on_startup: if provided then the application will focus on the work item at the specified position
+        in the search results. This requires `search_on_startup`.
+
+    Returns:
+        None
+    """
 
     # check that the config file exists
     try:
@@ -700,11 +783,13 @@ def check_config_file() -> None:
 
 @users.command('search')
 @click.argument('email_or_name')
-def search_users(email_or_name: str):
+def search_users(email_or_name: str) -> None:
     """Searches users by email or name. This is useful for getting the account ID of users.
 
-    EMAIL_OR_NAME is the email address or name to search users.
+    Args:
+        email_or_name: is the email address or name to search users.
     """
+
     handler = CommandHandler()
     with console.status('Searching Jira users...'):
         try:
@@ -749,7 +834,17 @@ def search_users_groups(
     group_id: str | None = None,
     page: int = 1,
 ) -> None:
-    """Searches Jira users groups. Use it to find groups of users by name or ID."""
+    """Searches Jira users groups. Use it to find groups of users by name or ID.
+
+    Args:
+        group_ids:
+        group_names:
+        group_id:
+        page:
+
+    Returns:
+        None
+    """
 
     handler = CommandHandler()
     if group_id:
@@ -768,7 +863,7 @@ def search_users_groups(
     with console.status('Searching Jira user groups...'):
         # find Jira users groups
         try:
-            items = handler.search_user_groups(
+            items: list[JiraUserGroup] = handler.search_user_groups(
                 page=page,
                 group_ids=[gid.strip() for gid in group_ids.split(',')] if group_ids else None,
                 group_names=[gn.strip() for gn in group_names.split(',')] if group_names else None,
