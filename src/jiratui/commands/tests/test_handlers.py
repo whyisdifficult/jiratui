@@ -1,8 +1,9 @@
 from datetime import date, datetime
 import re
-from unittest.mock import AsyncMock, call, patch
+from unittest.mock import AsyncMock, PropertyMock, call, patch
 
 import pytest
+import questionary
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.commands.handler import CommandHandler
@@ -1547,3 +1548,478 @@ async def test_clone_work_item_cloning_succeeds_with_custom_summary(
         'key': 'WI-2',
         'work_item': JiraIssueSearchResponse(issues=[cloned_issue]),
     }
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_without_user_input(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    # WHEN
+    result = await handler.create_work_item('P1', '1', summary='Custom summary')
+    # THEN
+    assert result == 'WI-1'
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_without_user_input_creation_fails(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(success=False, error='Some error')
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    # WHEN
+    with pytest.raises(
+        CLIException,
+        match='Some error',
+    ):
+        await handler.create_work_item('P1', '1', summary='Custom summary')
+    # THEN
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_without_user_input_unsupported_required_fields(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+                {'fieldId': 'duedate', 'required': True},
+            ]
+        }
+    }
+    # WHEN
+    with pytest.raises(
+        CLIException,
+        match='Creating this type of work item for the given project requires the fields: duedate, issuetype, project, reporter, summary. This is not supported via the CLI. Use the UI application instead.',
+    ):
+        await handler.create_work_item('P1', '1', summary='Custom summary')
+    # THEN
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value=None))
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_without_user_input_missing_jira_account_id(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    # WHEN
+    with pytest.raises(
+        CLIException,
+        match="Creating this type of work item via the CLI requires your user's Jira account ID to be defined in the configuration file. This is required to set the reporter of the issue.",
+    ):
+        await handler.create_work_item('P1', '1', summary='Custom summary')
+    # THEN
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(CommandHandler, 'projects')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_project_key_no_projects_found(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    projects_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    projects_mock.return_value = []
+    # WHEN
+    with pytest.raises(CLIException, match='No project was found'):
+        await handler.create_work_item(None, '1', summary='Custom summary')
+    # THEN
+    projects_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_not_awaited()
+    create_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'projects')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_project_key_no_project_provided(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    projects_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    projects_mock.return_value = [Project(id='1', key='P2', name='P2')]
+    ask_async_mock.return_value = ''
+    # WHEN
+    with pytest.raises(CLIException, match='Validation Error: the project/space key is required'):
+        await handler.create_work_item(None, '1', summary='Custom summary')
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    projects_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_not_awaited()
+    create_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'projects')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_project_key_provided(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    projects_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    projects_mock.return_value = [Project(id='1', key='P2', name='P2')]
+    ask_async_mock.return_value = 'P2'
+    # WHEN
+    await handler.create_work_item(None, '1', summary='Custom summary')
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    projects_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_awaited_once_with('P2', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P2',
+            'issue_type_id': '1',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'work_item_types_by_project')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_item_type_no_type_provided(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    work_item_types_by_project_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    work_item_types_by_project_mock.return_value = [IssueType(id='1', name='Task')]
+    ask_async_mock.return_value = ''
+    # WHEN
+    with pytest.raises(CLIException, match='Validation Error: the type of work item is required'):
+        await handler.create_work_item('P1', None, summary='Custom summary')
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_not_awaited()
+    create_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'work_item_types_by_project')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_item_type_provided(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    work_item_types_by_project_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    work_item_types_by_project_mock.return_value = [IssueType(id='1', name='Task')]
+    ask_async_mock.return_value = '10001'
+    # WHEN
+    await handler.create_work_item('P1', None, summary='Custom summary')
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_awaited_once_with('P1', '10001')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '10001',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'projects')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_input_summary_provided(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    projects_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    ask_async_mock.return_value = 'Test summary'
+    # WHEN
+    await handler.create_work_item('P1', '1', None)
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    projects_mock.assert_not_awaited()
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Test summary',
+            'reporter_account_id': '12345',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_ask_user_required_parent_key(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+                {'fieldId': 'parent', 'required': True},
+            ]
+        }
+    }
+    ask_async_mock.return_value = 'P3'
+    # WHEN
+    await handler.create_work_item('P1', '1', 'Test summary')
+    # THEN
+    ask_async_mock.assert_awaited_once()
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Test summary',
+            'reporter_account_id': '12345',
+            'parent_key': 'P3',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_parent_key_not_required(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+):
+    # GIVEN
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    ask_async_mock.return_value = 'P3'
+    # WHEN
+    await handler.create_work_item('P1', '1', 'Test summary')
+    # THEN
+    ask_async_mock.assert_not_awaited()
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Test summary',
+            'reporter_account_id': '12345',
+        }
+    )

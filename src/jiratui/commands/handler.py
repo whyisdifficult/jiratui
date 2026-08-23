@@ -2,6 +2,8 @@ import asyncio
 from datetime import date
 from typing import Any
 
+import questionary
+
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.exceptions import (
@@ -12,11 +14,13 @@ from jiratui.exceptions import (
 from jiratui.models import (
     IssueComment,
     IssueTransition,
+    IssueType,
     JiraBaseIssue,
     JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
     JiraUserGroup,
+    Project,
 )
 from jiratui.utils.work_item_updates import (
     work_item_assignee_has_changed,
@@ -28,9 +32,21 @@ COMMENTS_PER_PAGE = 10
 
 
 class CommandHandler:
+    CREATE_ITEM_SUPPORTED_FIELDS: set[str] = {
+        'issuetype',
+        'project',
+        'reporter',
+        'summary',
+        'parent',
+    }
+
     def __init__(self):
         CONFIGURATION.set(ApplicationConfiguration())  # type:ignore[call-arg]
         self.api = APIController()
+
+    @property
+    def jira_account_id(self) -> str | None:
+        return CONFIGURATION.get().jira_account_id
 
     def users(self, email_or_name: str) -> list[JiraUser]:
         """Searches Jira users by name or email.
@@ -83,11 +99,11 @@ class CommandHandler:
                 groups_names=group_names,
             )
         )
-        if not response.success:
+        if not response.success or not response.result:
             raise CLIException(
                 f'An error occurred while searching for user groups: {response.error}'
             )
-        return response.result
+        return response.result or []
 
     def total_users_in_group(self, group_id: str | None = None) -> int:
         """Counts the number of users in a group.
@@ -104,11 +120,11 @@ class CommandHandler:
         response: APIControllerResponse = asyncio.run(
             self.api.count_users_in_group(group_id=group_id)
         )
-        if not response.success:
+        if not response.success or response.result is None:
             raise CLIException(
                 f'An error occurred while counting the users in the group: {response.error}'
             )
-        return response.result
+        return response.result or 0
 
     def add_comment(self, key: str, message: str) -> IssueComment | None:
         """Adds a comment to a work item.
@@ -367,7 +383,7 @@ class CommandHandler:
                 order_by=CONFIGURATION.get().search_results_default_order,
             )
         )
-        if response.success:
+        if response.success and response.result is not None:
             return response.result
         raise CLIException(response.error)
 
@@ -630,3 +646,149 @@ class CommandHandler:
                 extra={'work_item_key': work_item_key, 'error_message': response.error},
             )
         return True
+
+    async def projects(self) -> list[Project] | None:
+        """Searches Jira users by name or email.
+
+        Returns:
+            A list of `JiraUser` instances.
+
+        Raises:
+            CLIException: if an error occurs while fetching the users.
+            CLIException: if no email or name is provided.
+        """
+
+        response: APIControllerResponse = await self.api.search_projects()
+        if not response.success:
+            raise CLIException(f'An error occurred while searching for projects: {response.error}')
+        return response.result
+
+    async def work_item_types_by_project(self, project_key: str) -> list[IssueType] | None:
+        """Searches Jira users by name or email.
+
+        Args:
+            project_key:
+
+        Returns:
+            A list of `JiraUser` instances.
+
+        Raises:
+            CLIException: if an error occurs while fetching the users.
+            CLIException: if no email or name is provided.
+        """
+
+        response: APIControllerResponse = await self.api.get_issue_types_for_project(project_key)
+        if not response.success:
+            raise CLIException(
+                f'An error occurred while searching for work item types: {response.error}'
+            )
+        return response.result
+
+    async def create_work_item(
+        self,
+        project_key: str | None = None,
+        work_item_type_id: str | None = None,
+        summary: str | None = None,
+    ) -> str:
+        """Creates a new work item.
+
+        The CLI application only supports creating work items that require only the following fields:
+
+        - issuetype
+        - project
+        - reporter
+        - summary
+
+        If creating the work item requires any other field then the user needs to use the UI application.
+
+        Args:
+            project_key: the key of the Jira projetc/space to which the work item belongs. If missing, the application
+            will prompt the user to enter it.
+            work_item_type_id: the type of work item to create. If missing, the application will prompt the user to
+            enter it.
+            summary: a short summary of the work item. If missing, the application will prompt the user to enter it.
+
+        Returns:
+            The key of the newly created work item.
+
+        Raises:
+            CLIException: if the required project key is missing.
+            CLIException: if the required type of work item is missing.
+            CLIException: if the work item can not be created.
+            CLIException: if the creation fails.
+        """
+
+        payload: dict[str, Any] = {}
+
+        if not project_key:
+            # fetch the list of projects
+            response: list[Project] | None = await self.projects()
+            if not response:
+                raise CLIException('No project was found')
+            # ask the user to choose a project
+            project_key = await questionary.select(
+                'Please specify the Jira project/space to which the work item belongs.',
+                choices=[
+                    questionary.Choice(project.name, project.key) for project in response or []
+                ],
+            ).ask_async()
+            if not project_key:
+                raise CLIException('Validation Error: the project/space key is required')
+
+        if not work_item_type_id:
+            # choose the type of issue
+            response_work_item_types = await self.work_item_types_by_project(project_key)
+            work_item_type_id = await questionary.select(
+                'Please specify the type of work item to create.',
+                choices=[
+                    questionary.Choice(record.name, record.id)
+                    for record in response_work_item_types or []
+                ],
+            ).ask_async()
+            if not work_item_type_id:
+                raise CLIException('Validation Error: the type of work item is required')
+
+        # fetch create-metadata to determine if we can create the item based on the required fields
+        create_metadata: dict = await self.get_create_metadata(project_key, work_item_type_id)
+        if create_metadata and (metadata := create_metadata.get('metadata', {})):
+            required_fields: set[str] = {
+                x.get('fieldId') for x in metadata.get('fields', []) if x.get('required')
+            }
+            if not required_fields.issubset(self.CREATE_ITEM_SUPPORTED_FIELDS):
+                required = ', '.join(sorted(required_fields))
+                raise CLIException(
+                    f'Creating this type of work item for the given project requires the fields: {required}. This is not supported via the CLI. Use the UI application instead.'
+                )
+
+            # check if the use defined the account_id in the config; if not fail with a hint.
+            if 'reporter' in required_fields:
+                if not self.jira_account_id:
+                    raise CLIException(
+                        "Creating this type of work item via the CLI requires your user's Jira account ID to be defined in the configuration file. This is required to set the reporter of the issue."
+                    )
+
+                payload['reporter_account_id'] = self.jira_account_id
+
+            if 'parent' in required_fields:
+                parent_key = await questionary.text(
+                    'Please specify the key of the parent work item.',
+                    validate=lambda text: True if len(text) > 0 else 'Please enter a value',
+                ).ask_async()
+                payload['parent_key'] = parent_key
+
+        if not summary:
+            # ask for summary
+            summary = await questionary.text(
+                'Provide the summary of the work item',
+                validate=lambda text: True if len(text) > 0 else 'Please enter a value',
+            ).ask_async()
+
+        payload['project_key'] = project_key
+        payload['issue_type_id'] = work_item_type_id
+        payload['summary'] = summary
+
+        create_response: APIControllerResponse = await self.api.create_work_item(payload)
+        item: JiraBaseIssue | None
+        if create_response.success and (item := create_response.result):
+            return item.key
+        raise CLIException(create_response.error)

@@ -16,6 +16,7 @@ configured in the config file via the variable `key_bindings_style`. By [@whyisd
 - Fix parent-key autocomplete to skip child work item when updating work item details. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/330
 - Add ability to delete subtasks. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/335
 - Add ability view details using the quick-view screen for items in the search results table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/336
+- Add a new CLI command `jiratui issues new` to create work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/337
 
 ### Bug Fixes
 

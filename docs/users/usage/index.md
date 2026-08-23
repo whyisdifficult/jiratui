@@ -861,8 +861,8 @@ In addition to the `ui` command, the CLI tool offers several commands to help yo
 users.
 
 ```{note}
-The CLI tool offers a simples interface for interacting with Jira when compared to the UI app. It's only meant to be
-used as a quick tool for some common tasks, for example, transitioning items from one staus to another. For a comore
+The CLI tool offers a simple interface for interacting with Jira when compared to the UI app. It's only meant to be
+used as a quick tool for some common tasks, for example, transitioning items from one staus to another. For a more
 complete experience the UI is recommended.
 ```
 
@@ -1117,4 +1117,94 @@ $ jiratui users groups --group-names developers
 | ID   | Name         | Total users in group? |
 |------|--------------|-----------------------|
 | 2    | developers   | 20                    |
+```
+
+### Creating New Work Items
+
+The CLI offers a basic command to create new work items.
+
+```{important}
+The CLI application only supports creating work items that require only the following fields:
+
+    - issuetype
+    - project
+    - reporter
+    - summary
+    - parent (for creating subtasks)
+
+If creating the work item requires any other field then the user needs to use the UI application.
+```
+
+The command to create a new work item is
+
+```shell
+jiratui issues new
+```
+
+You can use this command without arguments. In this case the command will ask you for the required input.
+
+Example:
+
+```shell
+jiratui issues new
+? Please specify the Jira project/space to which the work item belongs. (Use arrow keys)
+  > Project 1
+  Project 2
+? Please specify the type of work item to create. (Use arrow keys)
+  > Task
+  Bug
+? Provide the summary of the work item: Test summary
+Work item with key WI-123 created successfully
+View it with: jiratui issues search -k WI-123
+```
+
+You can also pass some of the required arguments. This includes:
+
+- the project's key (`-p 123`)
+- the id of the type of item (`-t 10001`)
+- the summary (`-s 'Some text'`)
+
+```shell
+jiratui issues new -p 123 -t 1001 -s 'Implement...'
+```
+
+```{tip}
+You can cancel the command at any time with `ctrl+c`.
+```
+
+### Cloning Work Items
+
+To clone an item simply pass the key of the source item and an optional summary. If no summary is
+provided then the new item's summary will be set to `(clone) <original summary>`.
+
+```{important}
+Cloning a work item will only clone these fields:
+- summary
+- project
+- priority
+- status (optional)
+- description
+- type
+- due date
+- assignee
+- reporter
+- parent
+```
+
+```shell
+jiratui issues clone WI-123 -s 'The new summary...' --clone-status
+```
+
+If you also want to clone the status of the source item then you can run it as
+
+```shell
+jiratui issues clone WI-123 -s 'The new summary...' --clone-status
+```
+
+### Deleting Work Items
+
+To delete an item run the following
+
+```shell
+jiratui issues delete WI-123
 ```
