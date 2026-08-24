@@ -1143,7 +1143,6 @@ class MainScreen(Actionable, Screen):
                 'description',
                 'duedate',
                 'priority',
-                'status',
             }
             # separate base data from dynamic fields (custom fields, components, etc.)
             base_data = {k: v for k, v in data.items() if k in base_fields}
