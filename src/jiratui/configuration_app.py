@@ -6,15 +6,16 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import HorizontalGroup, ItemGrid, Vertical, VerticalScroll
-from textual.screen import Screen
+from textual.screen import ModalScreen, Screen
 from textual.theme import BUILTIN_THEMES
-from textual.widgets import Button, Checkbox, Input, Label, Select, Static
+from textual.widgets import Button, Checkbox, DirectoryTree, Footer, Input, Label, Select, Static
 import yaml
 
-from jiratui.api_controller.controller import APIController
+from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import ApplicationConfiguration, SSLConfiguration
 from jiratui.constants import DEFAULT_JIRA_API_VERSION
 from jiratui.files import get_config_file
+from jiratui.models import JiraMyselfInfo
 
 BANNER = """
      ,--.,--.               ,--------.,--. ,--.,--.
@@ -24,6 +25,22 @@ BANNER = """
  `-----' `--'`--'    `--`--'   `--'    `-----' `--'
 v1.13.0
 """
+
+
+class FileSelectorScreen(ModalScreen[dict]):
+    BINDINGS = [
+        Binding('escape', 'app.pop_screen', show=False),
+    ]
+
+    def __init__(self, focused_widget_id: str):
+        self._focused_widget_id = focused_widget_id
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield DirectoryTree('/')
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        self.dismiss({'focused_widget_id': self._focused_widget_id, 'path': event.path})
 
 
 class ConfigAppConfiguration(ApplicationConfiguration):
@@ -41,12 +58,19 @@ class ConfigAppConfiguration(ApplicationConfiguration):
 
 class ConfigurationInputWidget(Input):
     def __init__(self, *args, **kwargs):
+        border_subtitle = kwargs.pop('border_subtitle', '')
         title = kwargs.pop('title', '')
         super().__init__(*args, compact=True, **kwargs)
         self.border_title = title
+        self.border_subtitle = border_subtitle
 
 
 class ConfigurationScreen(Screen):
+    BINDINGS = [
+        Binding('escape', 'unfocus', show=False),
+        Binding('ctrl+f', 'select_file', show=True, description='Select File'),
+    ]
+
     def __init__(self, target_config_file: Path | None = None):
         super().__init__()
         self.__controller: APIController | None = None
@@ -57,6 +81,8 @@ class ConfigurationScreen(Screen):
         else:
             self.__using_default_config_file_location = True
             self.__configuration_file = self.__default_config_location
+        self.connectivity_tested: bool = False
+        self.my_data: JiraMyselfInfo | None = None
 
     @property
     def button_save_widget(self) -> Button:
@@ -81,6 +107,22 @@ class ConfigurationScreen(Screen):
     @property
     def configuration_file_path_widget(self) -> ConfigurationInputWidget:
         return self.query_one('#configuration_file_path', expect_type=ConfigurationInputWidget)
+
+    @property
+    def jira_account_id_widget(self) -> ConfigurationInputWidget:
+        return self.query_one('#jira_account_id', expect_type=ConfigurationInputWidget)
+
+    @property
+    def ca_bundle_widget(self) -> ConfigurationInputWidget:
+        return self.query_one('#ca_bundle', expect_type=ConfigurationInputWidget)
+
+    @property
+    def certificate_file_widget(self) -> ConfigurationInputWidget:
+        return self.query_one('#certificate_file', expect_type=ConfigurationInputWidget)
+
+    @property
+    def key_file_widget(self) -> ConfigurationInputWidget:
+        return self.query_one('#key_file', expect_type=ConfigurationInputWidget)
 
     @property
     def use_bearer_authentication_widget(self) -> Checkbox:
@@ -204,18 +246,21 @@ class ConfigurationScreen(Screen):
                         placeholder='Path to the CA bundle file',
                         classes='configuration-input',
                         title='CA Bundle File',
+                        border_subtitle='[^f]',
                     )
                     yield ConfigurationInputWidget(
                         id='certificate_file',
                         placeholder='Path to the a client-side certificate file, e.g. cert.pem',
                         classes='configuration-input',
                         title='Client-side Certificate File',
+                        border_subtitle='[^f]',
                     )
                     yield ConfigurationInputWidget(
                         id='key_file',
                         placeholder='Path to the key file',
                         classes='configuration-input',
                         title='Key File',
+                        border_subtitle='[^f]',
                     )
                     yield ConfigurationInputWidget(
                         id='password',
@@ -249,7 +294,7 @@ class ConfigurationScreen(Screen):
                 theme_selection.border_title = 'Theme'
                 yield theme_selection
                 yield Static(
-                    'The ID of the Jira user using the application. This is useful if you want the user selection dropdown widgets to automatically select your user from the options. It is also used as the default reporter of any new work item that is created in the application',
+                    'The ID of the Jira user using the application. This is useful if you want the user selection dropdown widgets to automatically select your user from the options. It is also used as the default reporter of any new work item that is created in the application. Use Test button to autofill.',
                     classes='configuration-tip',
                     shrink=True,
                 )
@@ -281,6 +326,7 @@ class ConfigurationScreen(Screen):
                         disabled=True,
                     )
             yield Static()
+            yield Footer(compact=True, show_command_palette=False)
 
     def on_mount(self):
         self.configuration_file_path_widget.value = str(self.__configuration_file)
@@ -295,6 +341,35 @@ class ConfigurationScreen(Screen):
             self.configuration_file_path_message_widget.add_class('invisible')
         else:
             self.configuration_file_path_message_widget.remove_class('invisible')
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action == 'select_file':
+            if self.focused and self.focused.id in ['ca_bundle', 'certificate_file', 'key_file']:
+                return True
+            return None
+        return True
+
+    def action_unfocus(self) -> None:
+        self.set_focus(None)
+
+    def action_select_file(self) -> None:
+        if focused_input_widget := self.focused:
+            if focused_input_widget.id in ['ca_bundle', 'certificate_file', 'key_file']:
+                self.app.push_screen(
+                    FileSelectorScreen(focused_input_widget.id), callback=self._select_file
+                )
+
+    def _select_file(self, data: dict) -> None:
+        selected_path: Path | None
+        if (focused_widget_id := data.get('focused_widget_id')) and (
+            selected_path := data.get('path')
+        ):
+            if focused_widget_id == 'ca_bundle':
+                self.ca_bundle_widget.value = str(selected_path.resolve())
+            elif focused_widget_id == 'certificate_file':
+                self.certificate_file_widget.value = str(selected_path.resolve())
+            elif focused_widget_id == 'key_file':
+                self.key_file_widget.value = str(selected_path.resolve())
 
     @on(Select.Changed, '#theme')
     def toggle_theme(self, event: Select.Changed) -> None:
@@ -387,6 +462,7 @@ class ConfigurationScreen(Screen):
         jira_api_token = self.jira_api_token_widget.value
         jira_api_base_url = self.jira_api_base_url_widget.value
         if jira_api_base_url and jira_api_token and jira_api_username:
+            self.connectivity_tested = True
             self.__controller = APIController(
                 ConfigAppConfiguration(
                     jira_api_username=jira_api_username,
@@ -394,13 +470,19 @@ class ConfigurationScreen(Screen):
                     jira_api_base_url=jira_api_base_url,
                 )
             )
-            response = await self.__controller.myself()  # type:ignore[attr-defined]
+            response: APIControllerResponse = await self.__controller.myself()  # type:ignore[attr-defined]
             buton_test_message_widget = self.query_one('#buton_test_message', expect_type=Static)
-            if response.success:
+            if response.success and response.result:
                 buton_test_message_widget.remove_class('error-message')
                 buton_test_message_widget.add_class('success-message')
                 buton_test_message_widget.content = 'Connection successful!'
+                self.my_data = response.result
+                self.jira_account_id_widget.value = self.my_data.get_account_id()
+                self.jira_account_id_widget.border_subtitle = self.my_data.display_name
             else:
+                self.my_data = None
+                self.jira_account_id_widget.value = ''
+                self.jira_account_id_widget.border_subtitle = ''
                 buton_test_message_widget.remove_class('success-message')
                 buton_test_message_widget.add_class('error-message')
                 buton_test_message_widget.content = f'Connection failed: {response.error}'
@@ -418,16 +500,12 @@ class ConfigurationScreen(Screen):
         if event.value:
             file_path = Path(event.value)
             if not file_path.exists():
-                self.query_one('#ca_bundle', expect_type=ConfigurationInputWidget).add_class(
-                    '-invalid'
-                )
+                self.ca_bundle_widget.add_class('-invalid')
                 self.notify(
                     severity='error', message='File does not exist', title='Validation Error'
                 )
             else:
-                self.query_one('#ca_bundle', expect_type=ConfigurationInputWidget).remove_class(
-                    '-invalid'
-                )
+                self.ca_bundle_widget.remove_class('-invalid')
 
     @on(Input.Blurred, '#certificate_file')
     def validate_certificate_file_path(self, event: Input.Blurred):
@@ -465,13 +543,11 @@ class ConfigurationScreen(Screen):
         fields: dict[str, Any] = {
             'verify_ssl': self.query_one('#verify_ssl', expect_type=Checkbox).value
         }
-        if ca_bundle := self.query_one('#ca_bundle', expect_type=ConfigurationInputWidget).value:
+        if ca_bundle := self.ca_bundle_widget.value:
             fields['ca_bundle'] = ca_bundle
-        if certificate_file := self.query_one(
-            '#certificate_file', expect_type=ConfigurationInputWidget
-        ).value:
+        if certificate_file := self.certificate_file_widget.value:
             fields['certificate_file'] = certificate_file
-        if key_file := self.query_one('#key_file', expect_type=ConfigurationInputWidget).value:
+        if key_file := self.key_file_widget.value:
             fields['key_file'] = key_file
         if password := self.query_one('#password', expect_type=ConfigurationInputWidget).value:
             fields['password'] = password
