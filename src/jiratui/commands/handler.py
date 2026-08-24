@@ -732,7 +732,7 @@ class CommandHandler:
                 raise CLIException('No project was found')
             # ask the user to choose a project
             project_key = await questionary.select(
-                'Please specify the Jira project/space to which the work item belongs.',
+                'Please specify the Jira project/space to which the work item belongs:',
                 choices=[
                     questionary.Choice(project.name, project.key) for project in response or []
                 ],
@@ -744,7 +744,7 @@ class CommandHandler:
             # choose the type of issue
             response_work_item_types = await self.work_item_types_by_project(project_key)
             work_item_type_id = await questionary.select(
-                'Please specify the type of work item to create.',
+                'Please specify the type of work item to create:',
                 choices=[
                     questionary.Choice(record.name, record.id)
                     for record in response_work_item_types or []
@@ -778,7 +778,7 @@ class CommandHandler:
 
         if 'parent' in required_fields:
             parent_key = await questionary.text(
-                'Please specify the key of the parent work item.',
+                'Please specify the key of the parent work item:',
                 validate=lambda text: True if len(text) > 0 else 'Please enter a value',
             ).ask_async()
             payload['parent_key'] = parent_key
@@ -806,7 +806,7 @@ class CommandHandler:
         if not summary:
             # ask for summary
             summary = await questionary.text(
-                'Provide the summary of the work item',
+                'Provide the summary of the work item:',
                 validate=lambda text: True if len(text) > 0 else 'Please enter a value',
             ).ask_async()
 

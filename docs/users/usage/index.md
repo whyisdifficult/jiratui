@@ -1131,6 +1131,7 @@ The CLI application only supports creating work items that require only the foll
     - reporter
     - summary
     - parent (for creating subtasks)
+    - status
 
 If creating the work item requires any other field then the user needs to use the UI application.
 ```
@@ -1162,10 +1163,22 @@ You can also pass some of the required arguments. This includes:
 
 - the project's key (`-p 123`)
 - the id of the type of item (`-t 10001`)
-- the summary (`-s 'Some text'`)
+- the summary (`-s Some text`)
 
 ```shell
 jiratui issues new -p 123 -t 1001 -s 'Implement...'
+```
+
+You can also select the status of the new item by passing the argument `--with-status`. The command will display a list
+of possible statuses to choose from.
+
+```shell
+? Please specify the Jira project/space to which the work item belongs. My Project
+? Please specify the type of work item to create. Task
+? Select the status of the new item. In Progress
+? Provide the summary of the work item: my new item
+Work item with key WI-123 created and transitioned to the selected status
+View it with: jiratui issues search -k WI-123
 ```
 
 ```{tip}
