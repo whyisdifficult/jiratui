@@ -31,8 +31,6 @@ from jiratui.exceptions import CLIException
 from jiratui.files import get_config_file
 from jiratui.models import JiraUserGroup
 
-console = Console()
-
 
 @click.group()
 def cli():
@@ -68,13 +66,14 @@ def configure():
 def version():
     from importlib.metadata import version
 
-    console.print(version('jiratui'))
+    Console().print(version('jiratui'))
 
 
 @cli.command(
     'themes', help='List the available built-in themes. Using a theme: jiratui ui --theme <NAME>'
 )
 def themes():
+    console = Console()
     console.print('Available built-in themes\n')
     renderer = ThemesRenderer()
     renderer.render(console, list(BUILTIN_THEMES.keys()))
@@ -85,6 +84,7 @@ def themes():
 
 @cli.command('config', help='Shows the location of the configuration file.')
 def config():
+    console = Console()
     if jira_tui_config_file := os.getenv('JIRA_TUI_CONFIG_FILE'):
         conf_file = Path(jira_tui_config_file).resolve()
         console.print(f'Using JIRA_TUI_CONFIG_FILE: {conf_file}')
@@ -167,6 +167,7 @@ def search_issues(
             'One of --project-key (-p) or --key (-k) must be provided',
         )
 
+    console = Console()
     handler = CommandHandler()
 
     if key:
@@ -235,6 +236,7 @@ def issue_metadata(work_item_key: str, field_id: str | None = None) -> None:
         None
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Fetching metadata for the selected work item...'):
         try:
@@ -304,6 +306,7 @@ def update_issue(
         None
     """
 
+    console = Console()
     handler = CommandHandler()
 
     if meta:
@@ -408,6 +411,7 @@ def clone_work_item(
         None
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status(f'Cloning work item with key {work_item_key}...'):
         try:
@@ -444,6 +448,7 @@ def delete_work_item(work_item_key: str) -> None:
         None
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status(f'Deleting work item with key {work_item_key}...'):
         try:
@@ -466,8 +471,17 @@ def delete_work_item(work_item_key: str) -> None:
 @click.option(
     '--work_item_type', '-t', type=str, help='A case-sensitive key that identifies a project.'
 )
+@click.option(
+    '--with-status',
+    is_flag=True,
+    default=False,
+    help='Allows you to set the status of the new item.',
+)
 def create_work_item(
-    project_key: str | None = None, summary: str | None = None, work_item_type: str | None = None
+    project_key: str | None = None,
+    summary: str | None = None,
+    work_item_type: str | None = None,
+    with_status: bool = False,
 ) -> None:
     """Creates a new work item.
 
@@ -476,19 +490,37 @@ def create_work_item(
         prompt the user to enter it.
         summary: a short summary of the work item. If missing, the application will prompt the user to enter it.
         work_item_type: the type of work item to create. If missing, the application will prompt the user to enter it.
+        with_status: if True then the user will be prompted for the status of the new item.
 
     Returns:
         None
     """
 
+    console = Console()
     handler = CommandHandler()
     try:
-        response: str = asyncio.run(handler.create_work_item(project_key, work_item_type, summary))
+        response: dict = asyncio.run(
+            handler.create_work_item(project_key, work_item_type, summary, with_status)
+        )
     except CLIException as e:
         console.print(str(e), style='bold red')
     else:
-        console.print(f'Work item with key {response} created successfully', style='bold green')
-        console.print(f'View it with: jiratui issues search -k {response}')
+        status_transitioned: bool | None = response.get('status_transitioned')
+        if status_transitioned is None:
+            console.print(
+                f'Work item with key {response.get("key", "")} created', style='bold green'
+            )
+        elif status_transitioned:
+            console.print(
+                f'Work item with key {response.get("key", "")} created and transitioned to the selected status',
+                style='bold green',
+            )
+        else:
+            console.print(
+                f'Work item with key {response.get("key", "")} created', style='bold green'
+            )
+            console.print('Failed to change the status', style='bold red')
+        console.print(f'View it with: jiratui issues search -k {response.get("key", "")}')
 
 
 # -- PROJECTS --
@@ -512,6 +544,7 @@ def create_metadata(project_key: str, work_item_type_id: str, save_as: str | Non
         save_as: an optional filename to export the JSON result.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status(
         'Fetching create-metadata for the selected project and type of work item...'
@@ -546,6 +579,7 @@ def add_comment(message: str, work_item_key: str) -> None:
         message: is the message of the comment.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Trying to add the comment to the issue...'):
         try:
@@ -578,6 +612,7 @@ def list_comments(work_item_key: str, page: int = 1, comment_id: str | None = No
         comment_id: if provided then only the comment with this Id will be retrieved.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Fetching comments for the issue...'):
         try:
@@ -602,6 +637,7 @@ def show_comment(work_item_key: str, comment_id: str) -> None:
         comment_id: the id of the comment whose text we want to view.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Fetching comment...'):
         try:
@@ -626,6 +662,7 @@ def delete_comment(work_item_key: str, comment_id: str) -> None:
         comment_id: the id of the comment whose text we want to view.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Trying to delete the comment...'):
         try:
@@ -644,6 +681,8 @@ def delete_comment(work_item_key: str, comment_id: str) -> None:
 @click.argument('shell', type=click.Choice(['bash', 'zsh', 'fish']))
 def completions(shell):
     """Generate shell completion script for the specified shell (bash, zsh, fish)."""
+
+    console = Console()
     env = os.environ.copy()
     env['_JIRATUI_COMPLETE'] = f'{shell}_source'
     try:
@@ -715,6 +754,7 @@ def ui(
         None
     """
 
+    console = Console()
     # check that the config file exists
     try:
         check_config_file()
@@ -790,6 +830,7 @@ def search_users(email_or_name: str) -> None:
         email_or_name: is the email address or name to search users.
     """
 
+    console = Console()
     handler = CommandHandler()
     with console.status('Searching Jira users...'):
         try:
@@ -846,6 +887,7 @@ def search_users_groups(
         None
     """
 
+    console = Console()
     handler = CommandHandler()
     if group_id:
         # fetch the number of users in the group

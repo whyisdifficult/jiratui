@@ -1580,7 +1580,7 @@ async def test_create_work_item_without_user_input(
     # WHEN
     result = await handler.create_work_item('P1', '1', summary='Custom summary')
     # THEN
-    assert result == 'WI-1'
+    assert result == {'key': 'WI-1', 'status_transitioned': None}
     get_create_metadata_mock.assert_awaited_once_with('P1', '1')
     create_work_item_mock.assert_awaited_once_with(
         {
@@ -1590,6 +1590,32 @@ async def test_create_work_item_without_user_input(
             'reporter_account_id': '12345',
         }
     )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_missing_metadata(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = None
+    # WHEN
+    with pytest.raises(CLIException, match='Unable to retrieve metadata for creating the item'):
+        await handler.create_work_item('P1', '1', summary='Custom summary')
+    # THEN
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -2071,3 +2097,184 @@ async def test_create_work_item_parent_key_not_required(
             'reporter_account_id': '12345',
         }
     )
+
+
+@pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'get_project_statuses')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_with_status_transition_success(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    get_project_statuses_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    get_project_statuses_mock.return_value = APIControllerResponse(
+        success=True,
+        result={
+            '1': {
+                'issue_type_statuses': [
+                    IssueStatus(name='In Progress', id='1234'),
+                    IssueStatus(name='In Review', id='5678'),
+                ]
+            }
+        },
+    )
+    ask_async_mock.return_value = '1234'
+    transition_issue_status_mock.return_value = APIControllerResponse()
+    # WHEN
+    result = await handler.create_work_item('P1', '1', summary='Custom summary', with_status=True)
+    # THEN
+    assert result == {'key': 'WI-1', 'status_transitioned': True}
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+    get_project_statuses_mock.assert_awaited_once_with('P1')
+    transition_issue_status_mock.assert_awaited_once_with('WI-1', '1234')
+
+
+@pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'get_project_statuses')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_with_status_transition_fails(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    get_project_statuses_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    get_project_statuses_mock.return_value = APIControllerResponse(
+        success=True,
+        result={
+            '1': {
+                'issue_type_statuses': [
+                    IssueStatus(name='In Progress', id='1234'),
+                    IssueStatus(name='In Review', id='5678'),
+                ]
+            }
+        },
+    )
+    ask_async_mock.return_value = '1234'
+    transition_issue_status_mock.return_value = APIControllerResponse(success=False)
+    # WHEN
+    result = await handler.create_work_item('P1', '1', summary='Custom summary', with_status=True)
+    # THEN
+    assert result == {'key': 'WI-1', 'status_transitioned': False}
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'project_key': 'P1',
+            'issue_type_id': '1',
+            'summary': 'Custom summary',
+            'reporter_account_id': '12345',
+        }
+    )
+    get_project_statuses_mock.assert_awaited_once_with('P1')
+    transition_issue_status_mock.assert_awaited_once_with('WI-1', '1234')
+
+
+@pytest.mark.asyncio
+@patch('jiratui.commands.handler.ApplicationConfiguration')
+@patch.object(CommandHandler, 'jira_account_id', PropertyMock(return_value='12345'))
+@patch.object(questionary.Question, 'ask_async')
+@patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'get_project_statuses')
+@patch.object(CommandHandler, 'get_create_metadata')
+@patch.object(APIController, 'create_work_item')
+async def test_create_work_item_with_status_no_user_selection(
+    create_work_item_mock: AsyncMock,
+    get_create_metadata_mock: AsyncMock,
+    get_project_statuses_mock: AsyncMock,
+    transition_issue_status_mock: AsyncMock,
+    ask_async_mock: AsyncMock,
+    config_mock,
+    config_for_testing,
+):
+    # GIVEN
+    config_mock.return_value = config_for_testing
+    handler = CommandHandler()
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='1', key='WI-1')
+    )
+    get_create_metadata_mock.return_value = {
+        'metadata': {
+            'fields': [
+                {'fieldId': 'summary', 'required': True},
+                {'fieldId': 'issuetype', 'required': True},
+                {'fieldId': 'project', 'required': True},
+                {'fieldId': 'reporter', 'required': True},
+            ]
+        }
+    }
+    get_project_statuses_mock.return_value = APIControllerResponse(
+        success=True,
+        result={
+            '1': {
+                'issue_type_statuses': [
+                    IssueStatus(name='In Progress', id='1234'),
+                    IssueStatus(name='In Review', id='5678'),
+                ]
+            }
+        },
+    )
+    ask_async_mock.return_value = ''
+    # WHEN
+    with pytest.raises(CLIException, match=''):
+        await handler.create_work_item('P1', '1', summary='Custom summary', with_status=True)
+    # THEN
+    get_create_metadata_mock.assert_awaited_once_with('P1', '1')
+    create_work_item_mock.assert_not_awaited()
+    get_project_statuses_mock.assert_awaited_once_with('P1')
+    transition_issue_status_mock.assert_not_awaited()

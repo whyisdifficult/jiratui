@@ -3,6 +3,7 @@ from datetime import date
 from typing import Any
 
 import questionary
+from rich.console import Console
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
@@ -38,6 +39,7 @@ class CommandHandler:
         'reporter',
         'summary',
         'parent',
+        'status',
     }
 
     def __init__(self):
@@ -689,7 +691,8 @@ class CommandHandler:
         project_key: str | None = None,
         work_item_type_id: str | None = None,
         summary: str | None = None,
-    ) -> str:
+        with_status: bool = False,
+    ) -> dict:
         """Creates a new work item.
 
         The CLI application only supports creating work items that require only the following fields:
@@ -698,6 +701,7 @@ class CommandHandler:
         - project
         - reporter
         - summary
+        - status
 
         If creating the work item requires any other field then the user needs to use the UI application.
 
@@ -707,6 +711,7 @@ class CommandHandler:
             work_item_type_id: the type of work item to create. If missing, the application will prompt the user to
             enter it.
             summary: a short summary of the work item. If missing, the application will prompt the user to enter it.
+            with_status: if True then the user will be prompted for the status of the new item.
 
         Returns:
             The key of the newly created work item.
@@ -727,7 +732,7 @@ class CommandHandler:
                 raise CLIException('No project was found')
             # ask the user to choose a project
             project_key = await questionary.select(
-                'Please specify the Jira project/space to which the work item belongs.',
+                'Please specify the Jira project/space to which the work item belongs:',
                 choices=[
                     questionary.Choice(project.name, project.key) for project in response or []
                 ],
@@ -739,7 +744,7 @@ class CommandHandler:
             # choose the type of issue
             response_work_item_types = await self.work_item_types_by_project(project_key)
             work_item_type_id = await questionary.select(
-                'Please specify the type of work item to create.',
+                'Please specify the type of work item to create:',
                 choices=[
                     questionary.Choice(record.name, record.id)
                     for record in response_work_item_types or []
@@ -750,36 +755,58 @@ class CommandHandler:
 
         # fetch create-metadata to determine if we can create the item based on the required fields
         create_metadata: dict = await self.get_create_metadata(project_key, work_item_type_id)
-        if create_metadata and (metadata := create_metadata.get('metadata', {})):
-            required_fields: set[str] = {
-                x.get('fieldId') for x in metadata.get('fields', []) if x.get('required')
-            }
-            if not required_fields.issubset(self.CREATE_ITEM_SUPPORTED_FIELDS):
-                required = ', '.join(sorted(required_fields))
+        if not create_metadata or not (metadata := create_metadata.get('metadata', {})):
+            raise CLIException('Unable to retrieve metadata for creating the item')
+
+        required_fields: set[str] = {
+            x.get('fieldId') for x in metadata.get('fields', []) if x.get('required')
+        }
+        if not required_fields.issubset(self.CREATE_ITEM_SUPPORTED_FIELDS):
+            required = ', '.join(sorted(required_fields))
+            raise CLIException(
+                f'Creating this type of work item for the given project requires the fields: {required}. This is not supported via the CLI. Use the UI application instead.'
+            )
+
+        # check if the use defined the account_id in the config; if not fail with a hint.
+        if 'reporter' in required_fields:
+            if not self.jira_account_id:
                 raise CLIException(
-                    f'Creating this type of work item for the given project requires the fields: {required}. This is not supported via the CLI. Use the UI application instead.'
+                    "Creating this type of work item via the CLI requires your user's Jira account ID to be defined in the configuration file. This is required to set the reporter of the issue."
                 )
 
-            # check if the use defined the account_id in the config; if not fail with a hint.
-            if 'reporter' in required_fields:
-                if not self.jira_account_id:
-                    raise CLIException(
-                        "Creating this type of work item via the CLI requires your user's Jira account ID to be defined in the configuration file. This is required to set the reporter of the issue."
-                    )
+            payload['reporter_account_id'] = self.jira_account_id
 
-                payload['reporter_account_id'] = self.jira_account_id
+        if 'parent' in required_fields:
+            parent_key = await questionary.text(
+                'Please specify the key of the parent work item:',
+                validate=lambda text: True if len(text) > 0 else 'Please enter a value',
+            ).ask_async()
+            payload['parent_key'] = parent_key
 
-            if 'parent' in required_fields:
-                parent_key = await questionary.text(
-                    'Please specify the key of the parent work item.',
-                    validate=lambda text: True if len(text) > 0 else 'Please enter a value',
+        status_id: str | None = None
+        if with_status or 'status' in required_fields:
+            # fetch possible status ids
+            project_statuses_response = await self.api.get_project_statuses(project_key)
+            status_codes_by_work_item_type_id: dict | None
+            if project_statuses_response.success and (
+                status_codes_by_work_item_type_id := project_statuses_response.result
+            ):
+                record: dict = status_codes_by_work_item_type_id.get(work_item_type_id, {})
+                # ask the user
+                status_id = await questionary.select(
+                    'Select the status of the new item.',
+                    choices=[
+                        questionary.Choice(status.name, str(status.id))
+                        for status in record.get('issue_type_statuses', [])
+                    ],
                 ).ask_async()
-                payload['parent_key'] = parent_key
+                if not status_id:
+                    raise CLIException('Validation Error: select the status of the new item')
 
         if not summary:
             # ask for summary
             summary = await questionary.text(
-                'Provide the summary of the work item',
+                'Provide the summary of the work item:',
                 validate=lambda text: True if len(text) > 0 else 'Please enter a value',
             ).ask_async()
 
@@ -787,8 +814,17 @@ class CommandHandler:
         payload['issue_type_id'] = work_item_type_id
         payload['summary'] = summary
 
-        create_response: APIControllerResponse = await self.api.create_work_item(payload)
+        console = Console()
+        with console.status('Creating new item...'):
+            create_response: APIControllerResponse = await self.api.create_work_item(payload)
         item: JiraBaseIssue | None
         if create_response.success and (item := create_response.result):
-            return item.key
+            if status_id:
+                # the user wants to set the status of the new work item
+                with console.status('Transitioning item to the selected status...'):
+                    status_transition_response = await self.api.transition_issue_status(
+                        item.key, status_id
+                    )
+                return {'key': item.key, 'status_transitioned': status_transition_response.success}
+            return {'key': item.key, 'status_transitioned': None}
         raise CLIException(create_response.error)
