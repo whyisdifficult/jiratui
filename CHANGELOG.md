@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.13.0] 2026-08-24
 
 ### Added
 
@@ -33,6 +33,8 @@ dropdown silently empty. By [@devHaitham481](https://github.com/devHaitham481) i
 - Bump `aiohttp` to version `3.14.3`; in https://github.com/whyisdifficult/jiratui/pull/325
 - Introduce and use a `SupportedActions` `Enum` class for all available actions. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/333
 - Show keybindings in the main screen's widgets based on the selected keybinding style. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/334
+- Use `^f` to select files in the configuration app. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/339
+- Autocomplete the user's Jira account Id based on the test results. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/339
 
 ## [1.12.0] 2026-08-01
 

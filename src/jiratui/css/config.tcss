@@ -1,5 +1,22 @@
 /* CSS definitions for the configuration manager application */
 
+FileSelectorScreen {
+    align: center middle;
+    background: $background 70%;
+}
+FileSelectorScreen > Vertical {
+    width: 50%;
+    height: 80%;
+    border: round $foreground;
+    padding: 0 1;
+    & > Static {
+        margin-top: 1;
+    }
+}
+.directory-tree {
+    background: $background 60%;
+    hatch: right $success 20%;
+}
 ConfigurationScreen > VerticalScroll {
     & .heading {
         width: 1fr;
