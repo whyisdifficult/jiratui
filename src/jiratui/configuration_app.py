@@ -37,7 +37,8 @@ class FileSelectorScreen(ModalScreen[dict]):
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield DirectoryTree('/')
+        with Vertical():
+            yield DirectoryTree('/', classes='directory-tree')
 
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
         self.dismiss({'focused_widget_id': self._focused_widget_id, 'path': event.path})
