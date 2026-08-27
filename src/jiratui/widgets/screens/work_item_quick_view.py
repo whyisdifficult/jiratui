@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.message import Message
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Footer, Rule, Static, TabbedContent, TabPane
+from textual.widgets import DataTable, Footer, Rule, Static, TabPane
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
@@ -27,10 +27,10 @@ from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import ActionableTabbedContent, ReadOnlyPlainTextTextAreaWidget
 
 
-class QuickViewDetails(DataTable):
+class QuickViewDetails(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
     """A [DataTable](textual.widgets.DataTable) that displays the details of a work item being displayed on the quick
     view screen.
 
@@ -38,6 +38,41 @@ class QuickViewDetails(DataTable):
     - posting the message [WorkItemSelected](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.WorkItemSelected)
     when the user selects a data row that contains a work item key; e.g. the key or parent key rows.
     """
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict[str, dict] = get_application_key_bindings()
+    for supported_action_id in [
+        SupportedActions.SELECT_CURSOR,
+        SupportedActions.CURSOR_UP,
+        SupportedActions.CURSOR_DOWN,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_TOP,
+        SupportedActions.SCROLL_BOTTOM,
+    ]:
+        data = key_bindings.get(supported_action_id.value, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id.value,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ]
 
     class WorkItemSelected(Message):
         def __init__(self, work_item_key: str):
@@ -124,7 +159,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                 cursor_type='row', show_header=False, id='work-item-readonly-details-dt'
             )
             yield Rule()
-            with TabbedContent(id='read-only-work-item-tabs'):
+            with ActionableTabbedContent(id='read-only-work-item-tabs'):
                 yield TabPane('Description', id='tab-description')
         yield Footer(show_command_palette=False, compact=True)
 
@@ -133,8 +168,8 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
         return self.query_one('#tab-description', expect_type=TabPane)
 
     @property
-    def tabbed_content(self) -> TabbedContent:
-        return self.query_one('#read-only-work-item-tabs', expect_type=TabbedContent)
+    def tabbed_content(self) -> ActionableTabbedContent:
+        return self.query_one('#read-only-work-item-tabs', expect_type=ActionableTabbedContent)
 
     async def on_mount(self) -> None:
         if not self._work_item_key:

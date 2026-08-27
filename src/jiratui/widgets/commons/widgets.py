@@ -78,7 +78,16 @@ from textual.binding import Binding
 from textual.events import Key
 from textual.message import Message
 from textual.validation import Number, ValidationResult
-from textual.widgets import Input, MaskedInput, Select, SelectionList, Static, TextArea
+from textual.widgets import (
+    Input,
+    MaskedInput,
+    Select,
+    SelectionList,
+    Static,
+    TabbedContent,
+    Tabs,
+    TextArea,
+)
 from textual.widgets.selection_list import Selection
 
 from jiratui.actions.constants import SupportedActions
@@ -1693,7 +1702,7 @@ class EmptyTextAreaStaticWidget(Static):
         super().__init__(**kwargs)
         self.jira_field_key = jira_field_key
         name = self.name or self.jira_field_key.replace('_', ' ').title()
-        self.content = f'There is no "{name}" set. Press "^e" to edit it.'
+        self.content = f'There is no "{name}" set.'
 
 
 # ============================================================================
@@ -2329,3 +2338,47 @@ class SprintSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
         if self.selection is None:
             return None
         return int(self.selection)
+
+
+class ActionableTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # type:ignore[call-arg]
+    """A custom, actionable TabbedContent widget to implement keybinding styles."""
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict[str, dict] = get_application_key_bindings()
+    for supported_action_id in [
+        SupportedActions.NEXT_TAB,
+        SupportedActions.PREVIOUS_TAB,
+    ]:
+        data = key_bindings.get(supported_action_id.value, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id.value,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ]
+
+    def action_next_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_next_tab()
+
+    def action_previous_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_previous_tab()

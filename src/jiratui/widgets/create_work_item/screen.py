@@ -23,6 +23,7 @@ from textual.widgets import (
     Static,
     TabbedContent,
     TabPane,
+    Tabs,
     TextArea,
 )
 
@@ -83,6 +84,8 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
     key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
         SupportedActions.OPEN_TEXT_EDITOR,
+        SupportedActions.NEXT_TAB,
+        SupportedActions.PREVIOUS_TAB,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -110,6 +113,16 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__configuration = CONFIGURATION.get()
+
+    def action_next_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_next_tab()
+
+    def action_previous_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_previous_tab()
 
     def _get_textarea_widget(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None:
         if (active_pane := self.active_pane) is None:
