@@ -1295,6 +1295,94 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_escape(
         load_work_item_mock.assert_not_called()
 
 
+# @patch.object(APIController, 'transition_issue_status')
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_without_data_to_add(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    # transition_issue_status_mock: AsyncMock,
+    app,
+):
+    """Creating a work item when the status field is not set will not request the API to transition the status of the
+    recently created work item."""
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen.create_work_item({})
+        await pilot.pause()
+        # THEN
+        create_work_item_mock.assert_not_called()
+
+
+@patch.object(APIController, 'create_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_create_work_item_with_data_to_add(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    app,
+):
+    """Creating a work item when the status field is not set will not request the API to transition the status of the
+    recently created work item."""
+    # GIVEN
+    app.config.view_work_item_after_creation = False
+    app.config.enable_recent_history = False
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='key-2')
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen.create_work_item(
+            {
+                'summary': 'some value here',
+                'project_key': 'P1',
+                'parent_key': 'WI-100',
+                'issue_type_id': '1000',
+                'assignee_account_id': '12345',
+                'reporter_account_id': '09876',
+                'description': 'some text here',
+                'duedate': '2026-12-31',
+                'priority': '1',
+                'status': '10001',
+                'field_1': '1',
+            }
+        )
+        await pilot.pause()
+        # THEN
+        create_work_item_mock.assert_awaited_once_with(
+            {
+                'summary': 'some value here',
+                'project_key': 'P1',
+                'parent_key': 'WI-100',
+                'issue_type_id': '1000',
+                'assignee_account_id': '12345',
+                'reporter_account_id': '09876',
+                'description': 'some text here',
+                'duedate': '2026-12-31',
+                'priority': '1',
+                'status': '10001',
+            },
+            field_1='1',
+        )
+
+
 @patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')

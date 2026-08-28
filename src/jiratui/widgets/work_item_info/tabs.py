@@ -1,7 +1,7 @@
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.message import Message
-from textual.widgets import Static, TabbedContent, TabPane
+from textual.widgets import Static, TabbedContent, TabPane, Tabs
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
@@ -21,6 +21,8 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         SupportedActions.EDIT_CONTENT,
         SupportedActions.VIEW_CONTENT,
         SupportedActions.COPY_CONTENT,
+        SupportedActions.NEXT_TAB,
+        SupportedActions.PREVIOUS_TAB,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -62,6 +64,16 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def action_next_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_next_tab()
+
+    def action_previous_tab(self) -> None:
+        tabs = self.query_one(Tabs)
+        if tabs.has_focus:
+            tabs.action_previous_tab()
 
     def _get_textarea_widget(
         self,
@@ -106,7 +118,8 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         ) = self._get_textarea_widget()
         if widget is not None:
             if isinstance(widget, Static):
-                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
+                key = self.key_bindings.get(SupportedActions.EDIT_CONTENT.value).get('keys', [])[0]
+                self.notify(f'The field {widget.name} has no content. Press "{key}" to edit it.')
             else:
                 self.post_message(self.DisplayContent(widget.text_content, widget.field_title))
 
@@ -118,7 +131,8 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         ) = self._get_textarea_widget()
         if widget is not None:
             if isinstance(widget, Static):
-                self.notify(f'The field {widget.name} has no content. Press "^e" to edit it.')
+                key = self.key_bindings.get(SupportedActions.EDIT_CONTENT.value).get('keys', [])[0]
+                self.notify(f'The field {widget.name} has no content. Press "{key}" to edit it.')
             else:
                 self.app.copy_to_clipboard(widget.text_content.strip())
                 self.notify('Content copied!')

@@ -58,6 +58,8 @@ class SupportedActions(Enum):
     LINK_WORK_ITEM = 'link_work_item'
     LOG_WORK = 'log_work'
     NEXT_ISSUES_PAGE = 'next_issues_page'
+    NEXT_TAB = 'next_tab'
+    PREVIOUS_TAB = 'previous_tab'
     OPEN_ATTACHMENT = 'open_attachment'
     OPEN_GO_TO_SCREEN = 'open_go_to_screen'
     OPEN_IN_BROWSER = 'open_in_browser'
@@ -507,6 +509,18 @@ KEY_BINDINGS_LEGACY = {
         'description': '\u2716',
         'tooltip': 'Delete attachment',
     },
+    SupportedActions.NEXT_TAB.value: {
+        'keys': ['right'],
+        'show': False,
+        'description': 'Focus next tab',
+        'tooltip': 'Focus next tab',
+    },
+    SupportedActions.PREVIOUS_TAB.value: {
+        'keys': ['left'],
+        'show': False,
+        'description': 'Focus previous tab',
+        'tooltip': 'Focus previous tab',
+    },
 }
 
 KEY_BINDINGS_STANDARD = {
@@ -948,5 +962,17 @@ KEY_BINDINGS_STANDARD = {
         'show': True,
         'description': 'Empty History',
         'tooltip': 'Empty recent history',
+    },
+    SupportedActions.NEXT_TAB.value: {
+        'keys': ['l', 'right'],
+        'show': False,
+        'description': 'Focus next tab',
+        'tooltip': 'Focus next tab',
+    },
+    SupportedActions.PREVIOUS_TAB.value: {
+        'keys': ['h', 'left'],
+        'show': False,
+        'description': 'Focus previous tab',
+        'tooltip': 'Focus previous tab',
     },
 }

@@ -8,7 +8,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, HorizontalGroup, ItemGrid, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, LoadingIndicator, Select, TabbedContent, TabPane
+from textual.widgets import Button, Footer, Header, LoadingIndicator, Select, TabPane
 from textual.worker import Worker
 
 from jiratui.actions.constants import SupportedActions
@@ -31,6 +31,7 @@ from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
 from jiratui.widgets.comments.comments import IssueCommentsWidget, WorkItemComments
 from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
+from jiratui.widgets.commons.widgets import ActionableTabbedContent
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
@@ -218,8 +219,8 @@ class MainScreen(Actionable, Screen):
         return self.query_one('#run-button', expect_type=Button)
 
     @property
-    def tabs(self) -> TabbedContent:
-        return self.query_one(TabbedContent)
+    def tabs(self) -> ActionableTabbedContent:
+        return self.query_one('#tabs', ActionableTabbedContent)
 
     @property
     def search_results_table(self) -> IssuesSearchResultsTable:
@@ -405,7 +406,7 @@ class MainScreen(Actionable, Screen):
                 ):
                     yield DataTableSearchInput()
                     yield IssuesSearchResultsTable()
-                with TabbedContent(id='tabs'):
+                with ActionableTabbedContent(id='tabs'):
                     with TabPane(
                         title=self.work_item_tabs_titles.get('work_item_info_container', 'Info'),
                         classes='summary-description-container',
@@ -1132,7 +1133,7 @@ class MainScreen(Actionable, Screen):
             self.loading_container.display = True
 
             # split data into base fields and dynamic fields (custom fields, components, etc.)
-            # base fields are handled explicitly by the controller
+            # base fields are handled differently by the controller
             base_fields = {
                 'project_key',
                 'parent_key',
@@ -1143,10 +1144,11 @@ class MainScreen(Actionable, Screen):
                 'description',
                 'duedate',
                 'priority',
+                'status',
             }
             # separate base data from dynamic fields (custom fields, components, etc.)
-            base_data = {k: v for k, v in data.items() if k in base_fields}
-            dynamic_fields = {k: v for k, v in data.items() if k not in base_fields}
+            base_data: dict = {k: v for k, v in data.items() if k in base_fields}
+            dynamic_fields: dict = {k: v for k, v in data.items() if k not in base_fields}
             # request the API to create the work item
             response: APIControllerResponse = await self.api.create_work_item(
                 base_data, **dynamic_fields

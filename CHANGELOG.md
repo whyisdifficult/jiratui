@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] 2026-08-28
+
+### Added
+
+- Add support for new keybindings to focus the next and the previous tab. Using the standard style users can press
+`h, left` to focus the previous tab and `l, right` to focus the next. Using the legacy style users can press
+`left` to focus the previous tab and `right` to focus the next. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/341
+
+### Bug Fixes
+
+- Fix bug that prevent users from creating new work items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/341
+
 ## [1.13.0] 2026-08-24
 
 ### Added
