@@ -2339,22 +2339,29 @@ class APIController:
             An instance of `APIControllerResponse` with an instance of `JiraBaseIssue` as the result. This includes the
             item id and key. If an error occurs then  `APIControllerResponse.success == False` and
             `APIControllerResponse.error` indicates the error.
+
+        Raises:
+            ValidationError: if the field `project_key` is missing.
+            ValidationError: if the field `issue_type_id` is missing.
         """
 
-        fields: dict[str, Any] = {}
-
-        # fetch create metadata to check which fields are available for this project/issue type
         project_key = data.get('project_key', '')
         issue_type_id = data.get('issue_type_id', '')
+
+        if not project_key:
+            raise ValidationError('The project_key field can not be empty')
+
+        if not issue_type_id:
+            raise ValidationError('The issue_type_id field can not be empty')
+
+        fields: dict[str, Any] = {}
         available_fields: set[str] = set()
 
-        if project_key and issue_type_id:
-            metadata_response = await self.get_issue_create_metadata(project_key, issue_type_id)
-            if metadata_response.success and metadata_response.result:
-                metadata_fields = metadata_response.result.get('fields', [])
-                available_fields = {
-                    field.get('key') for field in metadata_fields if field.get('key')
-                }
+        # fetch create metadata to check which fields are available for this project/issue type
+        metadata_response = await self.get_issue_create_metadata(project_key, issue_type_id)
+        if metadata_response.success and metadata_response.result:
+            metadata_fields = metadata_response.result.get('fields', [])
+            available_fields = {field.get('key') for field in metadata_fields if field.get('key')}
 
         if assignee_account_id := data.get('assignee_account_id'):
             fields['assignee'] = {'id': assignee_account_id}
@@ -2363,14 +2370,11 @@ class APIController:
             if not available_fields or 'reporter' in available_fields:
                 fields['reporter'] = {'id': reporter_account_id}
 
-        if issue_type_id:
-            fields['issuetype'] = {'id': issue_type_id}
+        fields['project'] = {'key': project_key}
+        fields['issuetype'] = {'id': issue_type_id}
 
         if parent_key := data.get('parent_key'):
             fields['parent'] = {'key': parent_key}
-
-        if project_key:
-            fields['project'] = {'key': project_key}
 
         if due_date := data.get('duedate'):
             fields['duedate'] = due_date

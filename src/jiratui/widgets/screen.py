@@ -1133,7 +1133,7 @@ class MainScreen(Actionable, Screen):
             self.loading_container.display = True
 
             # split data into base fields and dynamic fields (custom fields, components, etc.)
-            # base fields are handled explicitly by the controller
+            # base fields are handled differently by the controller
             base_fields = {
                 'project_key',
                 'parent_key',
@@ -1147,8 +1147,8 @@ class MainScreen(Actionable, Screen):
                 'status',
             }
             # separate base data from dynamic fields (custom fields, components, etc.)
-            base_data = {k: v for k, v in data.items() if k in base_fields}
-            dynamic_fields = {k: v for k, v in data.items() if k not in base_fields}
+            base_data: dict = {k: v for k, v in data.items() if k in base_fields}
+            dynamic_fields: dict = {k: v for k, v in data.items() if k not in base_fields}
             # request the API to create the work item
             response: APIControllerResponse = await self.api.create_work_item(
                 base_data, **dynamic_fields

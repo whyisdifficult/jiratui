@@ -4711,6 +4711,34 @@ async def test_create_work_item_with_components_single_id(
     assert fields['components'] == [{'id': '10100'}]
 
 
+@pytest.mark.parametrize(
+    'data, expected_error_message',
+    [
+        (
+            {
+                'summary': 'TEST',
+            },
+            'The project_key field can not be empty',
+        ),
+        (
+            {
+                'project_key': 'P1',
+            },
+            'The issue_type_id field can not be empty',
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_create_work_item_with_missing_project_key_or_issue_type_id(
+    jira_api_controller: APIController,
+    data: dict,
+    expected_error_message: str,
+):
+    # WHEN/THEN
+    with pytest.raises(ValidationError, match=expected_error_message):
+        await jira_api_controller.create_work_item(data)
+
+
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'create_work_item')
 async def test_create_work_item_with_components_already_formatted(

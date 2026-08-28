@@ -352,6 +352,20 @@ def test_standard_action_empty_recent_history():
     ]
 
 
+def test_standard_action_next_tab():
+    assert set(KEY_BINDINGS_STANDARD.get(SupportedActions.NEXT_TAB.value).get('keys')) == {
+        'right',
+        'l',
+    }
+
+
+def test_standard_action_previous_tab():
+    assert set(KEY_BINDINGS_STANDARD.get(SupportedActions.PREVIOUS_TAB.value).get('keys')) == {
+        'left',
+        'h',
+    }
+
+
 # Legacy Binding Style
 
 
@@ -687,3 +701,15 @@ def test_legacy_action_open_attachment():
 
 def test_legacy_action_delete_attachment():
     assert KEY_BINDINGS_LEGACY.get(SupportedActions.DELETE_ATTACHMENT.value).get('keys') == ['d']
+
+
+def test_legacy_action_next_tab():
+    assert set(KEY_BINDINGS_LEGACY.get(SupportedActions.NEXT_TAB.value).get('keys')) == {
+        'right',
+    }
+
+
+def test_legacy_action_previous_tab():
+    assert set(KEY_BINDINGS_LEGACY.get(SupportedActions.PREVIOUS_TAB.value).get('keys')) == {
+        'left',
+    }
