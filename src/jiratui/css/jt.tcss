@@ -282,6 +282,10 @@ CustomTitle > Rule.-horizontal {
 .dropdown {
     border: round $primary-lighten-3;
     padding: 0 1;
+    /* focus-within: while the overlay is open the child SelectOverlay holds the focus */
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 .input-checkbox {
@@ -583,6 +587,9 @@ IssueLinkTypeSelector {
     width: auto;
     border: round $accent;
     padding: 0 1;
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 LinkedWorkItemInputWidget {
@@ -606,11 +613,17 @@ LinkedWorkItemInputWidget {
 WorkItemProjectSelectionField {
     border: round $accent;
     padding: 0 1;
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 WorkItemTypeSelectionField {
     border: round $accent;
     padding: 0 1;
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 .create-work-item-multi-user-picker {
@@ -632,6 +645,9 @@ WorkItemTypeSelectionField {
 .create-work-item-user-picker {
     border: round $primary-lighten-3;
     padding: 0 1;
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 .create-work-item-generic-input-field {
@@ -662,6 +678,9 @@ WorkItemTypeSelectionField {
     &.required {
         border: round $accent;
     }
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 .update-work-item-generic-selector {
@@ -674,6 +693,9 @@ WorkItemTypeSelectionField {
     background: $background;
     &.required {
         border: round $accent;
+    }
+    &:focus-within {
+        border: round $accent-lighten-3;
     }
 }
 
@@ -1196,6 +1218,9 @@ GitBranchNameInput {
 GitRepositorySelectionWidget {
     border: round $accent;
     padding: 0 1;
+    &:focus-within {
+        border: round $accent-lighten-3;
+    }
 }
 
 /* Screen for logging work */
