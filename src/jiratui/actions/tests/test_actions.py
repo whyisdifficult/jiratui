@@ -196,12 +196,47 @@ def bindings() -> dict:
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
 async def test_quick_access_keys_with_standard_keybindings_style(
-    search_projects_mock, fetch_issue_types_mock, fetch_statuses_mock, key: str, widget, app
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    key: str,
+    widget,
+    app,
 ):
     async with app.run_test() as pilot:
         await pilot.press(key)
         main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         assert isinstance(main_screen.focused, widget)
+
+
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_next_and_previous_tabs_for_work_item_information_tabs(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    async with app.run_test() as pilot:
+        # WHEN
+        await pilot.press(
+            get_application_key_bindings()
+            .get('focus_work_item_information_tab', {})
+            .get('keys', [])[0]
+        )
+        # THEN
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        assert isinstance(main_screen.focused, WorkItemInfoContainer)
+        await pilot.press('shift+tab')
+        await pilot.press(get_application_key_bindings().get('next_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        assert isinstance(main_screen.focused, IssueDetailsWidget)
+        await pilot.press('shift+tab')
+        await pilot.press(get_application_key_bindings().get('previous_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        assert isinstance(main_screen.focused, WorkItemInfoContainer)
 
 
 @pytest.mark.parametrize(

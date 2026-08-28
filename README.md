@@ -73,7 +73,7 @@ Commands:
   completions Generate shell completion script.
   config      Shows the location of the configuration file.
   configure   Use it to manage the configuration file.
-  issues      Use it to search, update or delete work items.
+  issues      Use it to create, search, update or delete work items.
   projects    Use it to manage information related to projects.
   themes      List the available built-in themes.
   ui          Launches the Jira TUI application.
@@ -116,7 +116,7 @@ jiratui configure create -o /Users/Downloads/file.yaml
 
 The application launches and guides you through the process.
 
-![The initial screen of JiraTUI](jtsite/assets/img/gallery/configuration-manager.png "JiraTUI Configuration Manager")
+![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/configuration-manager.png "JiraTUI Configuration Manager")
 
 ### Authoring the Config File Manually
 
