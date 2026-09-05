@@ -1,0 +1,201 @@
+.list-style-none {
+  list-style: none !important;
+  padding-left: 2px;
+}
+.py-2 {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.rounded-2 {
+  border-radius: 6px !important;
+}
+.install-bar {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--bg4);
+  overflow: visible;
+  max-width: 640px;
+
+  @media (max-width: 544px) {
+     flex-direction: column;
+  }
+}
+.install-method-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+.install-method-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: none;
+  border-right: 1px solid var(--bd3);
+  /*background: var(--bg5);*/
+  color: var(--tx5);
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  list-style: none;
+  user-select: none;
+
+   &::-webkit-details-marker { display: none; }
+   &::marker { display: none; content: ""; }
+
+   &:hover {
+     /*background-color: #161b22;*/
+   }
+
+   @media (max-width: 544px) {
+     border-right: none;
+     border-bottom: 1px solid var(--bd3);
+   }
+}
+
+.install-method-options {
+   position: absolute;
+   top: 100%;
+   left: 0;
+   z-index: 100;
+   min-width: 280px;
+   margin-top: 4px;
+   background-color: var(--bg7);
+   border: 1px solid #21262d;
+   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  .install-option {
+     display: block;
+     width: 100%;
+     padding: 8px 16px;
+     border: none;
+     background: none;
+     color: var(--tx6);
+     text-align: left;
+     text-decoration: none;
+     font-size: 14px;
+     font-family: inherit;
+     cursor: pointer;
+     white-space: nowrap;
+
+     &:hover {
+       background-color: var(--bg6);
+       color: var(--tx6);
+     }
+  }
+}
+
+ .install-options-divider {
+   height: 1px;
+   margin: 4px 16px;
+   background-color: #21262d;
+ }
+
+ .install-command {
+   flex: 1;
+   display: flex;
+   align-items: center;
+   padding: 14px 20px;
+   color: var(--tx4);
+   font-size: 16px;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   background: none;
+ }
+
+.install-cta {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 14px 20px;
+   font-size: 16px;
+   font-weight: 600;
+   font-family: inherit;
+   white-space: nowrap;
+   border: none;
+   cursor: pointer;
+   text-decoration: none;
+   flex-shrink: 0;
+ }
+
+ .install-cta-copy {
+   background-color: var(--color-scale-green-5);
+   color: var(--color-scale-white);
+
+   &:hover {
+     background-color: var(--color-scale-green-4);
+   }
+
+   .check-icon { display: none; }
+
+   &.copied {
+     .copy-icon { display: none; }
+     .check-icon { display: inline; }
+   }
+
+   @media (max-width: 544px) {
+     border-radius: 0 0 6px 6px;
+     justify-content: center;
+   }
+ }
+
+ .install-cta-download {
+   background-color: var(--color-scale-green-5);
+   color: var(--color-scale-white);
+   border-radius: 0 6px 6px 0;
+
+   &:hover {
+     background-color: var(--color-scale-green-4);
+     color: var(--color-scale-white);
+   }
+
+   @media (max-width: 544px) {
+     border-radius: 0 0 6px 6px;
+     justify-content: center;
+   }
+ }
+
+ // Light-theme overrides for bottom CTA
+ [data-color-mode="light"] {
+   .install-bar {
+     background-color: var(--color-scale-gray-1);
+     border-color: var(--color-scale-gray-3);
+   }
+
+   .install-method-summary {
+     color: var(--color-scale-gray-9);
+     border-right-color: var(--color-scale-gray-3);
+
+     &:hover {
+       background-color: var(--color-scale-gray-2);
+     }
+
+     @media (max-width: 544px) {
+       border-bottom-color: var(--color-scale-gray-3);
+     }
+   }
+
+   .install-method-options {
+     background-color: var(--color-scale-white);
+     border-color: var(--color-scale-gray-3);
+     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+     .install-option {
+       color: var(--color-scale-gray-8);
+
+       &:hover {
+         background-color: var(--color-scale-gray-1);
+         color: var(--color-scale-gray-9);
+       }
+     }
+   }
+
+   .install-options-divider {
+     background-color: var(--color-scale-gray-3);
+   }
+
+   .install-command {
+     color: var(--color-scale-gray-7);
+   }
+ }
