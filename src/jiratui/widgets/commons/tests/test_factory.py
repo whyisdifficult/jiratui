@@ -472,6 +472,23 @@ def test_build_read_only_rich_text_widget_without_adf_support_enabled(
     assert widget.border_subtitle == '(*)'
 
 
+@patch('jiratui.widgets.commons.factory_utils._adf_support_enabled')
+def test_build_read_only_rich_text_widget_converts_data_center_html(
+    adf_support_enabled_mock: Mock,
+):
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    # WHEN
+    widget = build_read_only_rich_text_widget(
+        jira_field_key='description',
+        field_name='Description',
+        content='<p>Hello <strong>world</strong></p><ul><li>One</li><li>Two</li></ul>',
+    )
+    # THEN
+    assert isinstance(widget, ReadOnlyPlainTextTextAreaWidget)
+    assert widget.text_content == 'Hello world\n- One\n- Two'
+
+
 @pytest.mark.parametrize(
     'allowed_values,expected',
     [

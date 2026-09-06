@@ -17,6 +17,7 @@ from textual.widget import Widget
 from textual.widgets import Select
 
 from jiratui.config import CONFIGURATION
+from jiratui.utils.html import html_to_text_if_needed
 from jiratui.widgets.commons import FieldMode
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.widgets import (
@@ -741,7 +742,7 @@ def build_read_only_rich_text_widget(
         jira_field_key=jira_field_key,
         title=field_name,
         required=required,
-        original_value=content or '',  # type:ignore[arg-type]
+        original_value=html_to_text_if_needed(content) if isinstance(content, str) else '',
     )
 
 
