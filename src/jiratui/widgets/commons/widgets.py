@@ -79,6 +79,7 @@ from textual.events import Key
 from textual.message import Message
 from textual.validation import Number, ValidationResult
 from textual.widgets import (
+    Collapsible,
     Input,
     MaskedInput,
     Select,
@@ -2382,3 +2383,10 @@ class ActionableTabbedContent(Actionable, TabbedContent, inherit_bindings=False)
         tabs = self.query_one(Tabs)
         if tabs.has_focus:
             tabs.action_previous_tab()
+
+
+class WebLinksCollapsible(Collapsible):
+    """A Collapsible that contains Link widgets."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, title='Links in the text', **kwargs)

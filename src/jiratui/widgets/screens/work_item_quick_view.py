@@ -8,12 +8,13 @@ from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.message import Message
 from textual.screen import ModalScreen
-from textual.widgets import DataTable, Footer, Rule, Static, TabPane
+from textual.widgets import DataTable, Footer, Link, Rule, Static, TabPane
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorkItemFields
+from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.utils.styling import (
     get_style_for_work_item_priority,
     get_style_for_work_item_status,
@@ -27,7 +28,11 @@ from jiratui.widgets.commons.factory_utils import (
     FieldMetadata,
     build_read_only_rich_text_widget,
 )
-from jiratui.widgets.commons.widgets import ActionableTabbedContent, ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import (
+    ActionableTabbedContent,
+    ReadOnlyPlainTextTextAreaWidget,
+    WebLinksCollapsible,
+)
 
 
 class QuickViewDetails(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
@@ -79,7 +84,8 @@ class QuickViewDetails(Actionable, DataTable, inherit_bindings=False):  # type:i
             super().__init__()
             self.work_item_key = work_item_key
 
-    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+    @on(DataTable.RowSelected)
+    def _request_searching_selected_item(self, event: DataTable.RowSelected) -> None:
         """Posts the message
         [WorkItemSelected](#jiratui.widgets.screens.work_item_quick_view.QuickViewDetails.WorkItemSelected) to ask the
         caller to search and load the work item displayed in the row.
@@ -184,6 +190,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
             )
             self.notify(f'Unable to retrieve the work item with key: {self._work_item_key}')
         elif response.result and (issues := response.result.issues):
+            web_links: list[Link] = []
             issue = issues[0]
             color_style_priority = get_style_for_work_item_priority(issue.priority_name)
             color_style_status = get_style_for_work_item_status(issue.status.name)
@@ -258,7 +265,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                 ]
             )
 
-            # set the content of the description tab
+            # set the content of the description tab/pane
             widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             if issue.rich_text_value_is_empty(issue.description):
                 widget = Static('There is no Description set.', classes='tip')
@@ -269,6 +276,17 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                     required=False,
                     content=issue.description,
                 )
+                if widget.text_content:
+                    web_links_in_text: list[dict] = extract_web_links_from_markdown(
+                        widget.text_content
+                    )
+                    web_links = [
+                        Link(text=url.get('title', 'link'), url=url.get('url'))
+                        for url in web_links_in_text
+                    ]
+
+            if web_links:
+                await self.tab_pane_description.mount(WebLinksCollapsible(*web_links))
             await self.tab_pane_description.mount(widget)
 
             # display all the editable custom fields with whose type is textarea, i.e. those that support rich text
@@ -294,6 +312,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                         and metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value
                     ):
                         field_name = metadata.name or metadata.key.replace('_', ' ').title()
+                        web_links = []
 
                         if metadata.key.lower() == JiraWorkItemFields.ENVIRONMENT.value:
                             if issue.rich_text_value_is_empty(issue.environment):
@@ -308,6 +327,14 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                                     required=metadata.required,
                                     content=issue.environment,
                                 )
+                                if widget.text_content:
+                                    web_links_in_text = extract_web_links_from_markdown(
+                                        widget.text_content
+                                    )
+                                    web_links = [
+                                        Link(text=url.get('title', 'link'), url=url.get('url'))
+                                        for url in web_links_in_text
+                                    ]
                         else:
                             # get the value of the field
                             field_value = issue.get_custom_field_value(field_id)
@@ -323,11 +350,25 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                                     required=metadata.required,
                                     content=field_value,
                                 )
+                                if widget.text_content:
+                                    web_links_in_text = extract_web_links_from_markdown(
+                                        widget.text_content
+                                    )
+                                    web_links = [
+                                        Link(text=url.get('title', 'link'), url=url.get('url'))
+                                        for url in web_links_in_text
+                                    ]
+
+                        pane_child_widgets = [widget]
+                        if web_links:
+                            pane_child_widgets = [
+                                WebLinksCollapsible(*web_links)
+                            ] + pane_child_widgets
 
                         await tabbed.add_pane(
                             TabPane(
                                 metadata.name,
-                                widget,
+                                *pane_child_widgets,
                                 id=f'tab-{field_id}',
                                 classes='summary-description-container',
                             )

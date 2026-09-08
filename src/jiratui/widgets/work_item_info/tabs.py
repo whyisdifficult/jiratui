@@ -1,18 +1,25 @@
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.message import Message
-from textual.widgets import Static, TabbedContent, TabPane, Tabs
+from textual.widgets import TabbedContent, TabPane, Tabs
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import (
+    EmptyTextAreaStaticWidget,
+    ReadOnlyPlainTextTextAreaWidget,
+)
 
 
 class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # type:ignore[call-arg]
     """Custom TabbedContent with key bindings for editing, viewing and copying the content of the currently active
-    pane/tab."""
+    pane/tab.
+
+    This widget expects a single `TextAreaTabPane` that contains the text of a Jira's textarea (custom) field,
+    including the description and environment fields.
+    """
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
@@ -77,7 +84,12 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
 
     def _get_textarea_widget(
         self,
-    ) -> ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None:
+    ) -> (
+        ReadOnlyADFMarkdownTextAreaWidget
+        | ReadOnlyPlainTextTextAreaWidget
+        | EmptyTextAreaStaticWidget
+        | None
+    ):
         if (active_pane := self.active_pane) is None:
             return None
         try:
@@ -87,7 +99,7 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
                 return active_pane.query_one(ReadOnlyPlainTextTextAreaWidget)
             except NoMatches:
                 try:
-                    return active_pane.query_one(Static)
+                    return active_pane.query_one(EmptyTextAreaStaticWidget)
                 except NoMatches:
                     return None
 
@@ -96,10 +108,13 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         widget."""
 
         widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+            ReadOnlyADFMarkdownTextAreaWidget
+            | ReadOnlyPlainTextTextAreaWidget
+            | EmptyTextAreaStaticWidget
+            | None
         ) = self._get_textarea_widget()
         if widget is not None:
-            if isinstance(widget, Static):
+            if isinstance(widget, EmptyTextAreaStaticWidget):
                 content_to_edit = ''
                 jira_field_key = widget.id
                 title = widget.name
@@ -114,10 +129,13 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         pane's widget."""
 
         widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+            ReadOnlyADFMarkdownTextAreaWidget
+            | ReadOnlyPlainTextTextAreaWidget
+            | EmptyTextAreaStaticWidget
+            | None
         ) = self._get_textarea_widget()
         if widget is not None:
-            if isinstance(widget, Static):
+            if isinstance(widget, EmptyTextAreaStaticWidget):
                 key = self.key_bindings.get(SupportedActions.EDIT_CONTENT.value).get('keys', [])[0]
                 self.notify(f'The field {widget.name} has no content. Press "{key}" to edit it.')
             else:
@@ -127,10 +145,13 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         """Copy to the clipboard the content of the field."""
 
         widget: (
-            ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static | None
+            ReadOnlyADFMarkdownTextAreaWidget
+            | ReadOnlyPlainTextTextAreaWidget
+            | EmptyTextAreaStaticWidget
+            | None
         ) = self._get_textarea_widget()
         if widget is not None:
-            if isinstance(widget, Static):
+            if isinstance(widget, EmptyTextAreaStaticWidget):
                 key = self.key_bindings.get(SupportedActions.EDIT_CONTENT.value).get('keys', [])[0]
                 self.notify(f'The field {widget.name} has no content. Press "{key}" to edit it.')
             else:
@@ -139,8 +160,15 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
 
 
 class TextAreaTabPane(TabPane):
-    """A custom TabPane that contains either ReadOnlyADFMarkdownTextAreaWidget or ReadOnlyPlainTextTextAreaWidget as
-    its child."""
+    """A custom TabPane that contains the text content of a Jira's textarea (custom) field including the description
+    and environment fields.
+
+    This `TextAreaTabPane` widget expects 2 child widgets:
+
+    - an optional `WebLinksCollapsible` widget that contains the links found in the text content.
+    - an instance of `ReadOnlyADFMarkdownTextAreaWidget` or `ReadOnlyPlainTextTextAreaWidget` or
+    `EmptyTextAreaStaticWidget` that contains the actual text content of a Jira's textarea (custom) field.
+    """
 
     def __init__(self, title: str, widget_id: str, **kwargs):
         super().__init__(title=title, id=widget_id, **kwargs)

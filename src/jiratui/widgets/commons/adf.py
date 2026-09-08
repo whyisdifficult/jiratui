@@ -119,10 +119,6 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         if value is None:
             return ''
 
-        # if it's already a string, return it
-        if isinstance(value, str):
-            return value if value.strip() else ''
-
         # if it's a dict (ADF format), convert to Markdown
         if isinstance(value, dict):
             try:
@@ -132,6 +128,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
                 # Fallback to string representation if conversion fails
                 logger.warning(f'Failed to convert ADF to markdown: {e}')
                 return str(value)
+
+        # if it's already a string, return it
+        if isinstance(value, str):
+            return value if value.strip() else ''
 
         # fallback for any other type
         return str(value)
