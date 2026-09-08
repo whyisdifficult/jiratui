@@ -359,16 +359,19 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                                         for url in web_links_in_text
                                     ]
 
-                        pane_child_widgets = [widget]
+                        pane_widgets: list[
+                            ReadOnlyADFMarkdownTextAreaWidget
+                            | ReadOnlyPlainTextTextAreaWidget
+                            | Static
+                            | WebLinksCollapsible
+                        ] = [widget]
                         if web_links:
-                            pane_child_widgets = [
-                                WebLinksCollapsible(*web_links)
-                            ] + pane_child_widgets
+                            pane_widgets = [WebLinksCollapsible(*web_links)] + pane_widgets
 
                         await tabbed.add_pane(
                             TabPane(
                                 metadata.name,
-                                *pane_child_widgets,
+                                *pane_widgets,
                                 id=f'tab-{field_id}',
                                 classes='summary-description-container',
                             )
