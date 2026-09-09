@@ -6,11 +6,15 @@ import logging
 
 from textual.binding import Binding
 from textual.message import Message
-from textual.widgets import Markdown, TextArea
+from textual.widgets import Link, Markdown, TextArea
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
-from jiratui.utils.adf import convert_adf_to_markdown, convert_markdown_to_adf
+from jiratui.utils.adf import (
+    convert_adf_to_markdown,
+    convert_markdown_to_adf,
+    extract_web_links_from_markdown,
+)
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import BaseFieldWidget, BaseUpdateFieldWidget, FieldMode
 
@@ -35,6 +39,8 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
     - Automatic ADF to Markdown conversion on initialization
     - Rich text rendering (not editable Markdown)
     - Read-only display
+    - This widget provides a method to extract web links found in the text content being displayed. This is useful to
+     help the user navigate the links in the text; Markdown widgets do not support this.
 
     **Usage**:
 
@@ -144,6 +150,14 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
     @property
     def field_title(self) -> str:
         return self.__title
+
+    def extract_web_links(self) -> list[Link]:
+        if not self.__markdown_text:
+            return []
+        web_links_in_text: list[dict] = extract_web_links_from_markdown(self.__markdown_text)
+        return [
+            Link(text=url.get('title', 'link'), url=url.get('url')) for url in web_links_in_text
+        ]
 
 
 class ADFMarkdownTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateFieldWidget):

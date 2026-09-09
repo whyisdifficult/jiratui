@@ -20,7 +20,6 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue, JiraWorkItemFields
-from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import (
@@ -247,14 +246,7 @@ class WorkItemInfoContainer(Vertical):
                         required=field_metadata.get('required', False),
                         content=work_item.description,
                     )
-                    if widget.text_content:
-                        web_links_in_text: list[dict] = extract_web_links_from_markdown(
-                            widget.text_content
-                        )
-                        web_links = [
-                            Link(text=url.get('title', 'link'), url=url.get('url'))
-                            for url in web_links_in_text
-                        ]
+                    web_links = widget.extract_web_links()
 
                 pane = TextAreaTabPane(title='Description', widget_id='pane-description')
                 await self.info_tabbed_content.add_pane(pane)
@@ -322,14 +314,7 @@ class WorkItemInfoContainer(Vertical):
                         pane_title = widget.name
                     else:
                         pane_title = widget.field_title
-                        if widget.text_content:
-                            web_links_in_text: list[dict] = extract_web_links_from_markdown(
-                                widget.text_content
-                            )
-                            web_links = [
-                                Link(text=url.get('title', 'link'), url=url.get('url'))
-                                for url in web_links_in_text
-                            ]
+                        web_links = widget.extract_web_links()
 
                     pane = TextAreaTabPane(
                         title=pane_title or '', widget_id=f'pane-{widget.jira_field_key}'

@@ -81,6 +81,7 @@ from textual.validation import Number, ValidationResult
 from textual.widgets import (
     Collapsible,
     Input,
+    Link,
     MaskedInput,
     Select,
     SelectionList,
@@ -93,6 +94,7 @@ from textual.widgets.selection_list import Selection
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
+from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
 from jiratui.widgets.commons.base import (
@@ -1625,6 +1627,9 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
 
     Use it in the Info tab or to display comment's content or to display fields in the read-only work item details
     screen.
+
+    This widget provides a method to extract web links found in the text content being displayed. This is useful to help
+    the user navigate the links in the text; Markdown widgets do not support this.
     """
 
     def __init__(
@@ -1684,6 +1689,14 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
     @property
     def field_title(self) -> str:
         return self.__title
+
+    def extract_web_links(self) -> list[Link]:
+        if not self.text:
+            return []
+        web_links_in_text: list[dict] = extract_web_links_from_markdown(self.text)
+        return [
+            Link(text=url.get('title', 'link'), url=url.get('url')) for url in web_links_in_text
+        ]
 
 
 class EmptyTextAreaStaticWidget(Static):
@@ -2386,7 +2399,11 @@ class ActionableTabbedContent(Actionable, TabbedContent, inherit_bindings=False)
 
 
 class WebLinksCollapsible(Collapsible):
-    """A Collapsible that contains Link widgets."""
+    """A Collapsible to display web links.
+
+    This is useful for displaying links found in text content, e.g. comments, description, and other textarea (custom)
+    fields.
+    """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, title='Links in the text', **kwargs)
+        super().__init__(*args, title='View links found in the text', **kwargs)

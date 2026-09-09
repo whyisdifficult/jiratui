@@ -14,7 +14,6 @@ from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraWorkItemFields
-from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.utils.styling import (
     get_style_for_work_item_priority,
     get_style_for_work_item_status,
@@ -276,14 +275,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                     required=False,
                     content=issue.description,
                 )
-                if widget.text_content:
-                    web_links_in_text: list[dict] = extract_web_links_from_markdown(
-                        widget.text_content
-                    )
-                    web_links = [
-                        Link(text=url.get('title', 'link'), url=url.get('url'))
-                        for url in web_links_in_text
-                    ]
+                web_links = widget.extract_web_links()
 
             if web_links:
                 await self.tab_pane_description.mount(WebLinksCollapsible(*web_links))
@@ -327,14 +319,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                                     required=metadata.required,
                                     content=issue.environment,
                                 )
-                                if widget.text_content:
-                                    web_links_in_text = extract_web_links_from_markdown(
-                                        widget.text_content
-                                    )
-                                    web_links = [
-                                        Link(text=url.get('title', 'link'), url=url.get('url'))
-                                        for url in web_links_in_text
-                                    ]
+                                web_links = widget.extract_web_links()
                         else:
                             # get the value of the field
                             field_value = issue.get_custom_field_value(field_id)
@@ -350,14 +335,7 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                                     required=metadata.required,
                                     content=field_value,
                                 )
-                                if widget.text_content:
-                                    web_links_in_text = extract_web_links_from_markdown(
-                                        widget.text_content
-                                    )
-                                    web_links = [
-                                        Link(text=url.get('title', 'link'), url=url.get('url'))
-                                        for url in web_links_in_text
-                                    ]
+                                web_links = widget.extract_web_links()
 
                         pane_widgets: list[
                             ReadOnlyADFMarkdownTextAreaWidget
