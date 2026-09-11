@@ -10,6 +10,7 @@ from textual.containers import Center, Vertical, VerticalGroup, VerticalScroll
 from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import (
+    Link,
     LoadingIndicator,
     Rule,
     Static,
@@ -28,6 +29,7 @@ from jiratui.widgets.commons.factory_utils import (
 from jiratui.widgets.commons.widgets import (
     EmptyTextAreaStaticWidget,
     ReadOnlyPlainTextTextAreaWidget,
+    WebLinksCollapsible,
 )
 from jiratui.widgets.work_item_info.screens import DisplayTextContentScreen, EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
@@ -97,8 +99,8 @@ class WorkItemInfoContainer(Vertical):
 
     @on(InfoTabbedContent.DisplayContent)
     def _display_content(self, event: InfoTabbedContent.DisplayContent) -> None:
-        self.app.push_screen(DisplayTextContentScreen(event.content, event.title))
         event.stop()
+        self.app.push_screen(DisplayTextContentScreen(event.content, event.title))
 
     def _handle_edit_result(self, data: dict | None) -> None:
         """Receives the result from the built-in editor and schedules the API update."""
@@ -220,6 +222,7 @@ class WorkItemInfoContainer(Vertical):
 
         if issue_edit_metadata := work_item.get_edit_metadata():
             if field_metadata := issue_edit_metadata.get(JiraWorkItemFields.DESCRIPTION.value, {}):
+                web_links: list[Link] = []
                 field_name = field_metadata.get('name') or field_metadata.get('key', 'Description')
                 field_name = field_name.title()
                 widget: (
@@ -243,8 +246,12 @@ class WorkItemInfoContainer(Vertical):
                         required=field_metadata.get('required', False),
                         content=work_item.description,
                     )
+                    web_links = widget.extract_web_links()
+
                 pane = TextAreaTabPane(title='Description', widget_id='pane-description')
                 await self.info_tabbed_content.add_pane(pane)
+                if web_links:
+                    await pane.mount(WebLinksCollapsible(*web_links))
                 await pane.mount(widget)
 
     async def _refresh_tabs_and_set_work_item(self, work_item: JiraIssue | None):
@@ -302,14 +309,19 @@ class WorkItemInfoContainer(Vertical):
                     | EmptyTextAreaStaticWidget
                 ] = self._build_textarea_widgets(work_item)
                 for widget in widgets:
+                    web_links: list[Link] = []
                     if isinstance(widget, EmptyTextAreaStaticWidget):
                         pane_title = widget.name
                     else:
                         pane_title = widget.field_title
+                        web_links = widget.extract_web_links()
 
-                    pane_id = f'pane-{widget.jira_field_key}'
-                    pane = TextAreaTabPane(title=pane_title, widget_id=pane_id)
+                    pane = TextAreaTabPane(
+                        title=pane_title or '', widget_id=f'pane-{widget.jira_field_key}'
+                    )
                     await self.info_tabbed_content.add_pane(pane)
+                    if web_links:
+                        await pane.mount(WebLinksCollapsible(*web_links))
                     await pane.mount(widget)
 
     def _build_textarea_widgets(

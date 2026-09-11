@@ -1446,3 +1446,21 @@ MultiSelectWidget {
 .time-tracking-container {
     height: auto;
 }
+
+WebLinksCollapsible {
+    width: 1fr;
+    height: auto;
+    border: round $secondary-lighten-3;
+    padding: 0 0;
+    background: transparent;
+    &:focus-within {
+        background-tint: $foreground 5%;
+    }
+    &.-collapsed > Contents {
+        display: none;
+    }
+    & > CollapsibleTitle {
+        text-style: italic;
+        color: $accent-lighten-1;
+    }
+}

@@ -679,7 +679,7 @@ def build_read_only_rich_text_widget(
     """A factory method that builds a widget for displaying the content of a textarea field in read-only mode.
 
     Some Jira issue's fields can contain long rich text. Jira stores these values as either ADF
-    (Atlassian Document Format), when using theJira CLoud Platform, or as plain text, when using the Jira DC Platform.
+    (Atlassian Document Format), when using theJira Cloud Platform, or as plain text, when using the Jira DC Platform.
 
     JiraTUI will display these fields as either a Markdown widget or a TextArea widget according to these rules:
 

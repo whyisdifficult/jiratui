@@ -1,10 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
+from textual.widgets import Link
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget, WebLinksCollapsible
 from jiratui.widgets.screens.work_item_quick_view import QuickViewDetails, WorkItemQuickViewScreen
 
 
@@ -400,6 +401,71 @@ async def test_mount_with_issue_metadata_single_tab(
         table = screen.query_one(QuickViewDetails)
         assert table.row_count == 13
         assert screen.tabbed_content.tab_count == 1
+
+
+@patch.object(JiraIssue, 'rich_text_value_is_empty')
+@patch.object(APIController, 'get_issue')
+@pytest.mark.asyncio
+async def test_mount_with_issue_metadata_single_tab_with_web_links_in_content(
+    get_issue_mock: AsyncMock,
+    rich_text_value_is_empty_mock: Mock,
+    mock_configuration,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    rich_text_value_is_empty_mock.return_value = False
+    issue = jira_issues[0]
+    issue.edit_meta = {
+        'fields': {
+            'description': {
+                'required': False,
+                'schema': {
+                    'type': 'array',
+                    'items': 'option',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                    'customId': 10021,
+                },
+                'name': 'Flagged',
+                'key': 'description',
+                'operations': ['add', 'set', 'remove'],
+                'allowedValues': [{'value': 'Impediment', 'id': '10019'}],
+            },
+        }
+    }
+    issue.description = {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [{'type': 'text', 'text': 'Goodbye world! https://foo.bar'}],
+            }
+        ],
+    }
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[issue])
+    )
+    mock_configuration.jira_base_url = 'http://foo.bar'
+    async with app.run_test() as pilot:
+        # WHEN
+        screen = WorkItemQuickViewScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        get_issue_mock.assert_called_once_with(issue_id_or_key='WI-1')
+        rich_text_value_is_empty_mock.assert_has_calls(
+            [
+                call(issue.description),
+            ]
+        )
+        table = screen.query_one(QuickViewDetails)
+        assert table.row_count == 13
+        assert screen.tabbed_content.tab_count == 1
+        c = screen.tab_pane_description.query_one(WebLinksCollapsible)
+        link = c.query_one(Link)
+        assert link.text == 'https://foo.bar'
+        assert link.url == 'https://foo.bar'
 
 
 @patch('jiratui.widgets.screens.work_item_quick_view.build_read_only_rich_text_widget')

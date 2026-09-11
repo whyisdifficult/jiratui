@@ -21,7 +21,7 @@ from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget
+from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget, WebLinksCollapsible
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
@@ -273,6 +273,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
             )
             widget: ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | Static
             for comment in comments_list:
+                web_links: list[Link] = []
                 if comment.rich_text_value_is_empty(comment.body):  # type:ignore[arg-type]
                     widget = Static('There is no "Comment" set.', classes='tip')
                 else:
@@ -282,6 +283,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                         required=False,
                         content=comment.body,
                     )
+                    web_links = widget.extract_web_links()
 
                 url = (
                     build_external_url_for_comment(self._work_item_key, comment.id)
@@ -295,11 +297,22 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                 )
                 hg.compose_add_child(Static(f' | Last Update: {comment.updated_on()}'))
 
+                collapsible_child_widgets: list[
+                    ReadOnlyADFMarkdownTextAreaWidget
+                    | ReadOnlyPlainTextTextAreaWidget
+                    | Static
+                    | WebLinksCollapsible
+                ] = [widget]
+                if web_links:
+                    collapsible_child_widgets = [
+                        WebLinksCollapsible(*web_links)
+                    ] + collapsible_child_widgets
+
                 elements.append(
                     CommentCollapsible(
                         hg,
                         Rule(classes='rule-horizontal-compact-70'),
-                        widget,
+                        *collapsible_child_widgets,
                         title=Text(comment.short_metadata()),
                         work_item_key=self._work_item_key,
                         comment_id=comment.id,

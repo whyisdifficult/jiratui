@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
-from textual.widgets import Rule, Static
+from textual.widgets import Link, Rule, Static
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
@@ -9,6 +9,7 @@ from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
+from jiratui.widgets.commons.widgets import WebLinksCollapsible
 from jiratui.widgets.work_item_info.info import (
     WorkItemInfoContainer,
 )
@@ -54,6 +55,60 @@ async def test_work_item_info_container_with_summary_description_only(
         assert tab_panes[0].children[0].border_title == 'Description'
         assert tab_panes[0].children[0].border_subtitle == '(*)'
         assert tab_panes[0].children[0].jira_field_key == 'description'
+
+
+@pytest.mark.asyncio
+async def test_work_item_info_container_with_summary_description_only_including_web_links(
+    jira_issues_with_custom_fields,
+    app,
+):
+    # GIVEN
+    jira_issues_with_custom_fields[0].edit_meta = {
+        'fields': {
+            'description': {
+                'key': 'description',
+                'name': 'description',
+                'required': True,
+            },
+        }
+    }
+    jira_issues_with_custom_fields[0].description = {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [
+                    {'type': 'text', 'text': 'Hello world, try this link: https://foo.bar'}
+                ],
+            }
+        ],
+    }
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.issue = jira_issues_with_custom_fields[0]
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert widget.issue_summary_widget.content == 'abcd'
+        assert widget.query_one(Rule).visible is True
+        assert isinstance(widget.info_tabbed_content, InfoTabbedContent)
+        tab_panes = widget.info_tabbed_content.query(TextAreaTabPane)
+        assert len(tab_panes) == 1
+        assert isinstance(tab_panes[0], TextAreaTabPane)
+        assert tab_panes[0].id == 'pane-description'
+        widgets_in_tab_pane = tab_panes[0].children
+        assert len(widgets_in_tab_pane) == 2
+        assert isinstance(widgets_in_tab_pane[0], WebLinksCollapsible)
+        assert isinstance(widgets_in_tab_pane[1], ReadOnlyADFMarkdownTextAreaWidget)
+        assert widgets_in_tab_pane[1].border_title == 'Description'
+        assert widgets_in_tab_pane[1].border_subtitle == '(*)'
+        assert widgets_in_tab_pane[1].jira_field_key == 'description'
+        link = widgets_in_tab_pane[0].query_one(Link)
+        assert link.text == 'https://foo.bar'
+        assert link.url == 'https://foo.bar'
 
 
 @patch.object(
@@ -244,6 +299,89 @@ async def test_work_item_info_container_updating_additional_fields_enabled_with_
         assert tab_panes[0].children[0].border_title == 'Description'
         assert tab_panes[0].children[0].border_subtitle == '(*)'
         assert tab_panes[0].children[0].jira_field_key == 'description'
+
+
+@patch.object(
+    WorkItemInfoContainer, '_update_additional_fields_ignore_ids', PropertyMock(return_value=[])
+)
+@patch.object(
+    WorkItemInfoContainer, '_enable_updating_additional_fields', PropertyMock(return_value=True)
+)
+@pytest.mark.asyncio
+async def test_work_item_info_container_updating_additional_fields_enable_with_textarea_custom_type_with_web_links(
+    jira_issues_with_custom_fields,
+    app,
+):
+    # GIVEN
+    jira_issues_with_custom_fields[0].edit_meta = {
+        'fields': {
+            'description': {
+                'key': 'description',
+                'name': 'description',
+                'required': True,
+            },
+            'environment': {
+                'schema': {'custom': ''},
+                'key': 'environment',
+                'name': 'environment',
+                'required': True,
+            },
+            'field_a': {
+                'schema': {'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea'},
+                'key': 'field_a',
+                'name': 'Field A',
+                'required': False,
+            },
+        }
+    }
+    jira_issues_with_custom_fields[0].description = {
+        'type': 'doc',
+        'version': 1,
+        'content': [{'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello world!'}]}],
+    }
+    jira_issues_with_custom_fields[0].environment = {
+        'type': 'doc',
+        'version': 1,
+        'content': [
+            {
+                'type': 'paragraph',
+                'content': [{'type': 'text', 'text': 'Goodbye world! https://foo.bar'}],
+            }
+        ],
+    }
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.issue = jira_issues_with_custom_fields[0]
+        await app.workers.wait_for_complete()
+        await pilot.pause()
+        assert widget.issue_summary_widget.content == 'abcd'
+        assert widget.query_one(Rule).visible is True
+        assert isinstance(widget.info_tabbed_content, InfoTabbedContent)
+        tab_panes = widget.info_tabbed_content.query(TextAreaTabPane)
+        assert len(tab_panes) == 3
+        assert isinstance(tab_panes[0], TextAreaTabPane)
+        assert isinstance(tab_panes[1], TextAreaTabPane)
+        assert isinstance(tab_panes[2], TextAreaTabPane)
+        assert tab_panes[0].id == 'pane-description'
+        assert tab_panes[1].id == 'pane-environment'
+        assert tab_panes[2].id == 'pane-field_a'
+        assert isinstance(tab_panes[0].children[0], ReadOnlyADFMarkdownTextAreaWidget)
+        assert isinstance(tab_panes[1].children[0], WebLinksCollapsible)
+        assert isinstance(tab_panes[1].children[1], ReadOnlyADFMarkdownTextAreaWidget)
+        assert isinstance(tab_panes[2].children[0], Static)
+        assert tab_panes[0].children[0].border_title == 'Description'
+        assert tab_panes[0].children[0].border_subtitle == '(*)'
+        assert tab_panes[0].children[0].jira_field_key == 'description'
+        assert tab_panes[1].children[1].border_title == 'environment'
+        assert tab_panes[1].children[1].border_subtitle == '(*)'
+        assert tab_panes[1].children[1].jira_field_key == 'environment'
+        assert tab_panes[2].children[0].id == 'field_a'
+        link = tab_panes[1].query_one(Link)
+        assert link.text == 'https://foo.bar'
+        assert link.url == 'https://foo.bar'
 
 
 @patch.object(
