@@ -103,7 +103,7 @@ class JiraUserInput(Input):
     @property
     def account_id(self) -> str | None:
         """This is required to support autocomplete behavior."""
-        return self._account_id if self.value and self.value.strip() else None
+        return self._account_id
 
     @account_id.setter
     def account_id(self, account_id: str | None):
