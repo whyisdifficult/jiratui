@@ -10,7 +10,7 @@
 
 A **Text User Interface (TUI)** for interacting with Atlassian's Jira directly from your shell.
 
-![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/app-homepage.png "JiraTUI initial screen")
+![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/screenshot-jiratui-home.png "JiraTUI initial screen")
 
 ## Introduction
 
@@ -116,7 +116,7 @@ jiratui configure create -o /Users/Downloads/file.yaml
 
 The application launches and guides you through the process.
 
-![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/configuration-manager.png "JiraTUI Configuration Manager")
+![The initial screen of JiraTUI](https://whyisdifficult.github.io/jiratui/assets/img/gallery/screenshot-jiratui-configure.png "JiraTUI Configuration Manager")
 
 ### Authoring the Config File Manually
 
