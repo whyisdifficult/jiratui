@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.14.0] 2026-09-13
 
 ### Added
 
@@ -16,6 +16,7 @@ links. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github
 ### Minor Improvements
 
 - Add tests for extracting urls from Markdown content and make sure to extract unique URLs only. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/351
+- Bump `gitpython` to version `3.1.59`; in https://github.com/whyisdifficult/jiratui/pull/348
 
 ## [1.13.1] 2026-08-28
 
