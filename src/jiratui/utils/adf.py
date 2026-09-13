@@ -58,13 +58,11 @@ def extract_web_links_from_markdown(content: str) -> list[dict]:
     """
 
     link_parser_transformer = Transformer()
+    pattern = r"""(?:https?|ftp)://(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?::\d+)?(?:/[^\s\[\]()]*)?(?:\?[^\s\[\]()]*)?(?:#[^\s\[\]()]*)?|www\.(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?::\d+)?(?:/[^\s\[\]()]*)?(?:\?[^\s\[\]()]*)?(?:#[^\s\[\]()]*)?"""
 
     @link_parser_transformer.register(Text)
     def _process_text(node: Text) -> Text | None:
-        raw_urls_regex = re.compile(
-            r'https?://[^\s\[\]()]+|ftp://[^\s\[\]()]+|(?:www\.)[^\s\[\]()]+|(?<![\(\[])(?<![a-zA-Z]\()(?:(?<!\()\b(?:[a-z]{2,}\.)+(com|org|net|edu|gov|io|co|uk)\b)',
-            re.MULTILINE,
-        )
+        raw_urls_regex = re.compile(pattern, re.MULTILINE)
         m: Mark
         link_text = node.text or ''
         for m in node.marks:
@@ -81,9 +79,16 @@ def extract_web_links_from_markdown(content: str) -> list[dict]:
                     url = href
                     if 'http' not in url:
                         url = f'https://{href}'
-                    links.append({'url': url, 'title': href})
+                    links.append({'url': _clean_url(url), 'title': href})
         # return the unmodified node
         return node
+
+    def _clean_url(url: str) -> str:
+        url = url.strip()
+        url = re.sub(r'[,;:!?.]+$', '', url)
+        while url.endswith(')') and url.count('(') < url.count(')'):
+            url = url[:-1]
+        return url.strip()
 
     if not content:
         return []
