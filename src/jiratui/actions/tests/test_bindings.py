@@ -366,6 +366,14 @@ def test_standard_action_previous_tab():
     }
 
 
+def test_standard_action_open_user_mention_picker():
+    assert set(
+        KEY_BINDINGS_STANDARD.get(SupportedActions.OPEN_USER_MENTION_PICKER.value).get('keys')
+    ) == {
+        'ctrl+@',
+    }
+
+
 # Legacy Binding Style
 
 
@@ -712,4 +720,12 @@ def test_legacy_action_next_tab():
 def test_legacy_action_previous_tab():
     assert set(KEY_BINDINGS_LEGACY.get(SupportedActions.PREVIOUS_TAB.value).get('keys')) == {
         'left',
+    }
+
+
+def test_legacy_action_open_user_mention_picker():
+    assert set(
+        KEY_BINDINGS_LEGACY.get(SupportedActions.OPEN_USER_MENTION_PICKER.value).get('keys')
+    ) == {
+        'ctrl+@',
     }

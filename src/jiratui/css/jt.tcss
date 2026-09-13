@@ -435,11 +435,12 @@ GoToScreen > VerticalScroll {
 
 AddCommentScreen {
     align: center middle;
-    background: $background 80%;
+    background: $background 90%;
 }
-AddCommentScreen > Vertical {
+
+#add-comment-screen-vertical {
     width: 60%;
-    height: 60%;
+    height: 50%;
     border: round $foreground;
     background: $background;
     padding: 0 1;
@@ -453,6 +454,19 @@ AddCommentScreen > Vertical {
         margin-top: 1;
     }
 }
+
+MentionOverlay {
+    align: center middle;
+    width: 100%;
+    height: auto;
+    background: $background;
+    padding: 1 0;
+    & > JiraUserInput {
+        border: round $primary;
+        background: transparent;
+    }
+}
+
 #add-comment-button-save {
     width: 20%;
     padding: 0 0;
@@ -1374,7 +1388,7 @@ SelectionsScreen > SelectionList {
     background: transparent;
 }
 
-UsersAutoComplete {
+UsersAutoComplete, MentionAutoComplete {
     /* Customize the dropdown */
     & AutoCompleteList {
         max-height: 6;                  /* The number of lines before scrollbars appear */

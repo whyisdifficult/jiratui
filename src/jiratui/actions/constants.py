@@ -82,6 +82,7 @@ class SupportedActions(Enum):
     VIEW_CONTENT = 'view_content'
     VIEW_WORKLOG = 'view_worklog'
     VIEW_WORK_ITEM = 'view_work_item'
+    OPEN_USER_MENTION_PICKER = 'open_user_mention_picker'
 
 
 KEY_BINDINGS_LEGACY = {
@@ -520,6 +521,12 @@ KEY_BINDINGS_LEGACY = {
         'show': False,
         'description': 'Focus previous tab',
         'tooltip': 'Focus previous tab',
+    },
+    SupportedActions.OPEN_USER_MENTION_PICKER.value: {
+        'keys': ['ctrl+@'],
+        'show': False,
+        'description': 'User Picker',
+        'tooltip': 'User Picker',
     },
 }
 
@@ -974,5 +981,11 @@ KEY_BINDINGS_STANDARD = {
         'show': False,
         'description': 'Focus previous tab',
         'tooltip': 'Focus previous tab',
+    },
+    SupportedActions.OPEN_USER_MENTION_PICKER.value: {
+        'keys': ['ctrl+@'],
+        'show': False,
+        'description': 'User Picker',
+        'tooltip': 'User Picker',
     },
 }

@@ -78,7 +78,7 @@ import hashlib
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
-from textual import on
+from textual import events, on
 from textual.binding import Binding
 from textual.events import Key
 from textual.message import Message
@@ -2473,3 +2473,46 @@ class WebLinksDataTable(Actionable, DataTable, inherit_bindings=False):  # type:
         self.add_columns(*['Title', 'URL'])
         for index, link in enumerate(self.__links):
             self.add_row(*[link.text, link.url], key=str(index))
+
+
+class TextAreaWithUserMention(TextArea):
+    """A `TextArea` that supports mentioning users when the user executes the action
+    `jiratui.actions.constants.SupportedActions.OPEN_USER_MENTION_PICKER`.
+
+    The `@` character is still inserted as normal text; a [MentionRequested](#jiratui.widgets.commons.widgets.TextAreaWithUserMention.MentionRequested)
+    message is posted alongside it so the screen can open the mention picker. The message is only posted when
+    `@` is typed at a *word boundary* (start of line or after whitespace) and there is no active selection,
+    so email addresses such as `user@example.com` never trigger it.
+    """
+
+    class MentionRequested(Message):
+        """Posted when the user types `@` at a word boundary.
+
+        Args:
+            location: the (row, column) location of the `@` that triggered the request.
+        """
+
+        def __init__(self, location: tuple[int, int]) -> None:
+            self.location = location
+            super().__init__()
+
+    async def _on_key(self, event: events.Key) -> None:
+        is_mention_trigger = (
+            event.character == '@'
+            and not self.read_only
+            and self.selection.start == self.selection.end
+            and self._preceding_char_is_boundary()
+        )
+        await super()._on_key(event)
+        if is_mention_trigger:
+            row, column = self.cursor_location
+            self.post_message(self.MentionRequested(location=(row, max(column - 1, 0))))
+
+    def _preceding_char_is_boundary(self) -> bool:
+        row, column = self.cursor_location
+        if column == 0:
+            return True
+        try:
+            return self.document[row][column - 1].isspace()
+        except IndexError:
+            return True
