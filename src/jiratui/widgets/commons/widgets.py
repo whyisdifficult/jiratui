@@ -67,6 +67,10 @@ shorter layout.
 Jira user.
 - [PlainTextTextAreaWidget](#jiratui.widgets.commons.widgets.PlainTextTextAreaWidget): a TexArea widget that allows
 editing non-ADF text.
+- [WebLinksCollapsible]((#jiratui.widgets.commons.widgets.WebLinksCollapsible): a collapsible widget to display web
+links.
+- [WebLinksDataTable]((#jiratui.widgets.commons.widgets.WebLinksDataTable): a datatable widget to display web
+links.
 """
 
 from dataclasses import dataclass
@@ -74,12 +78,14 @@ import hashlib
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
+from textual import on
 from textual.binding import Binding
 from textual.events import Key
 from textual.message import Message
 from textual.validation import Number, ValidationResult
 from textual.widgets import (
     Collapsible,
+    DataTable,
     Input,
     Link,
     MaskedInput,
@@ -2402,8 +2408,68 @@ class WebLinksCollapsible(Collapsible):
     """A Collapsible to display web links.
 
     This is useful for displaying links found in text content, e.g. comments, description, and other textarea (custom)
-    fields.
+    fields. This can be combined with [WebLinksDataTable](#jiratui.widgets.commons.widgets.WebLinksDataTable).
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, title='View links found in the text', **kwargs)
+
+
+class WebLinksDataTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
+    """A [textual.widgets.DataTable](#textual.widgets.DataTable) to display web links.
+
+    This is useful for displaying links found in text content, e.g. comments, description, and other textarea (custom)
+    fields. This can be combined with [WebLinksCollapsible](#jiratui.widgets.commons.widgets.WebLinksCollapsible).
+    """
+
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict[str, dict] = get_application_key_bindings()
+    for supported_action_id in [
+        SupportedActions.SELECT_CURSOR,
+        SupportedActions.CURSOR_UP,
+        SupportedActions.CURSOR_DOWN,
+        SupportedActions.PAGE_UP,
+        SupportedActions.PAGE_DOWN,
+        SupportedActions.SCROLL_TOP,
+        SupportedActions.SCROLL_BOTTOM,
+    ]:
+        data = key_bindings.get(supported_action_id.value, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id.value,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ]
+
+    def __init__(self, links: list[Link]):
+        super().__init__(cursor_type='row', show_header=False, show_row_labels=False)
+        self.__links = links or []
+
+    @on(DataTable.RowSelected)
+    def selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        if row := self.get_row(event.row_key):
+            self.app.open_url(row[1])
+
+    def on_mount(self):
+        self.clear(columns=True)
+        # table = self.query_one(DataTable)
+        self.add_columns(*['Title', 'URL'])
+        for index, link in enumerate(self.__links):
+            self.add_row(*[link.text, link.url], key=str(index))

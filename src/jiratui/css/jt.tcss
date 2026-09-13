@@ -1464,3 +1464,7 @@ WebLinksCollapsible {
         color: $accent-lighten-1;
     }
 }
+
+WebLinksDataTable {
+    background: transparent;
+}

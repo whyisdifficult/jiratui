@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
-from textual.widgets import Link, Rule, Static
+from textual.widgets import Rule, Static
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.app import JiraApp
@@ -9,7 +9,7 @@ from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
-from jiratui.widgets.commons.widgets import WebLinksCollapsible
+from jiratui.widgets.commons.widgets import WebLinksCollapsible, WebLinksDataTable
 from jiratui.widgets.work_item_info.info import (
     WorkItemInfoContainer,
 )
@@ -106,9 +106,11 @@ async def test_work_item_info_container_with_summary_description_only_including_
         assert widgets_in_tab_pane[1].border_title == 'Description'
         assert widgets_in_tab_pane[1].border_subtitle == '(*)'
         assert widgets_in_tab_pane[1].jira_field_key == 'description'
-        link = widgets_in_tab_pane[0].query_one(Link)
-        assert link.text == 'https://foo.bar'
-        assert link.url == 'https://foo.bar'
+        table = widgets_in_tab_pane[0].query_one(WebLinksDataTable)
+        assert table.row_count == 1
+        row = table.get_row_at(0)
+        assert row[0] == 'https://foo.bar'
+        assert row[1] == 'https://foo.bar'
 
 
 @patch.object(
@@ -379,9 +381,11 @@ async def test_work_item_info_container_updating_additional_fields_enable_with_t
         assert tab_panes[1].children[1].border_subtitle == '(*)'
         assert tab_panes[1].children[1].jira_field_key == 'environment'
         assert tab_panes[2].children[0].id == 'field_a'
-        link = tab_panes[1].query_one(Link)
-        assert link.text == 'https://foo.bar'
-        assert link.url == 'https://foo.bar'
+        table = tab_panes[1].query_one(WebLinksDataTable)
+        assert table.row_count == 1
+        row = table.get_row_at(0)
+        assert row[0] == 'https://foo.bar'
+        assert row[1] == 'https://foo.bar'
 
 
 @patch.object(
