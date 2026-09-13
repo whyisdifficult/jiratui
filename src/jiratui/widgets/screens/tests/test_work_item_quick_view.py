@@ -1,11 +1,14 @@
 from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
-from textual.widgets import Link
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget, WebLinksCollapsible
+from jiratui.widgets.commons.widgets import (
+    ReadOnlyPlainTextTextAreaWidget,
+    WebLinksCollapsible,
+    WebLinksDataTable,
+)
 from jiratui.widgets.screens.work_item_quick_view import QuickViewDetails, WorkItemQuickViewScreen
 
 
@@ -462,10 +465,12 @@ async def test_mount_with_issue_metadata_single_tab_with_web_links_in_content(
         table = screen.query_one(QuickViewDetails)
         assert table.row_count == 13
         assert screen.tabbed_content.tab_count == 1
-        c = screen.tab_pane_description.query_one(WebLinksCollapsible)
-        link = c.query_one(Link)
-        assert link.text == 'https://foo.bar'
-        assert link.url == 'https://foo.bar'
+        collapsible = screen.tab_pane_description.query_one(WebLinksCollapsible)
+        table = collapsible.query_one(WebLinksDataTable)
+        assert table.row_count == 1
+        row = table.get_row_at(0)
+        assert row[0] == 'https://foo.bar'
+        assert row[1] == 'https://foo.bar'
 
 
 @patch('jiratui.widgets.screens.work_item_quick_view.build_read_only_rich_text_widget')

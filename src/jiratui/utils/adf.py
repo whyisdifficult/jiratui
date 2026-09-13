@@ -69,13 +69,19 @@ def extract_web_links_from_markdown(content: str) -> list[dict]:
         link_text = node.text or ''
         for m in node.marks:
             if isinstance(m, LinkMark):
-                links.append({'url': m.href, 'title': m.title or link_text})
+                url = m.href
+                if 'http' not in url:
+                    url = f'https://{m.href}'
+                links.append({'url': url, 'title': m.title or link_text})
         # there may also be "raw" links in the text; i.e. w/o Markdown []() syntax. We need to extract these using a
         # regex
         if link_text:
             for link in raw_urls_regex.finditer(link_text):
                 if href := link.group():
-                    links.append({'url': href, 'title': href})
+                    url = href
+                    if 'http' not in url:
+                        url = f'https://{href}'
+                    links.append({'url': url, 'title': href})
         # return the unmodified node
         return node
 

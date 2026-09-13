@@ -31,6 +31,7 @@ from jiratui.widgets.commons.widgets import (
     ActionableTabbedContent,
     ReadOnlyPlainTextTextAreaWidget,
     WebLinksCollapsible,
+    WebLinksDataTable,
 )
 
 
@@ -278,7 +279,9 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                 web_links = widget.extract_web_links()
 
             if web_links:
-                await self.tab_pane_description.mount(WebLinksCollapsible(*web_links))
+                await self.tab_pane_description.mount(
+                    WebLinksCollapsible(WebLinksDataTable(web_links))
+                )
             await self.tab_pane_description.mount(widget)
 
             # display all the editable custom fields with whose type is textarea, i.e. those that support rich text
@@ -344,7 +347,9 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                             | WebLinksCollapsible
                         ] = [widget]
                         if web_links:
-                            pane_widgets = [WebLinksCollapsible(*web_links)] + pane_widgets
+                            pane_widgets = [
+                                WebLinksCollapsible(WebLinksDataTable(web_links))
+                            ] + pane_widgets
 
                         await tabbed.add_pane(
                             TabPane(

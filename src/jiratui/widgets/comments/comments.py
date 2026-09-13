@@ -21,7 +21,11 @@ from jiratui.utils.urls import build_external_url_for_comment
 from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
-from jiratui.widgets.commons.widgets import ReadOnlyPlainTextTextAreaWidget, WebLinksCollapsible
+from jiratui.widgets.commons.widgets import (
+    ReadOnlyPlainTextTextAreaWidget,
+    WebLinksCollapsible,
+    WebLinksDataTable,
+)
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 
 
@@ -305,7 +309,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                 ] = [widget]
                 if web_links:
                     collapsible_child_widgets = [
-                        WebLinksCollapsible(*web_links)
+                        WebLinksCollapsible(WebLinksDataTable(web_links))
                     ] + collapsible_child_widgets
 
                 elements.append(

@@ -30,6 +30,7 @@ from jiratui.widgets.commons.widgets import (
     EmptyTextAreaStaticWidget,
     ReadOnlyPlainTextTextAreaWidget,
     WebLinksCollapsible,
+    WebLinksDataTable,
 )
 from jiratui.widgets.work_item_info.screens import DisplayTextContentScreen, EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
@@ -251,7 +252,7 @@ class WorkItemInfoContainer(Vertical):
                 pane = TextAreaTabPane(title='Description', widget_id='pane-description')
                 await self.info_tabbed_content.add_pane(pane)
                 if web_links:
-                    await pane.mount(WebLinksCollapsible(*web_links))
+                    await pane.mount(WebLinksCollapsible(WebLinksDataTable(web_links)))
                 await pane.mount(widget)
 
     async def _refresh_tabs_and_set_work_item(self, work_item: JiraIssue | None):
@@ -321,7 +322,7 @@ class WorkItemInfoContainer(Vertical):
                     )
                     await self.info_tabbed_content.add_pane(pane)
                     if web_links:
-                        await pane.mount(WebLinksCollapsible(*web_links))
+                        await pane.mount(WebLinksCollapsible(WebLinksDataTable(web_links)))
                     await pane.mount(widget)
 
     def _build_textarea_widgets(

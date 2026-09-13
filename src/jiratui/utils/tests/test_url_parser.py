@@ -64,7 +64,7 @@ def test_extract_web_links_from_markdown():
             'title': 'https://www.example.com',
         },
         {
-            'url': 'www.github.com,',
+            'url': 'https://www.github.com,',
             'title': 'www.github.com,',
         },
         {
@@ -84,7 +84,7 @@ def test_extract_web_links_from_markdown():
             'title': 'Stack Overflow',
         },
         {
-            'url': 'www.udemy.com',
+            'url': 'https://www.udemy.com',
             'title': 'www.udemy.com',
         },
         {
@@ -104,7 +104,7 @@ def test_extract_web_links_from_markdown():
             'title': 'https://github.com/some-project',
         },
         {
-            'url': 'www.docs.example.com',
+            'url': 'https://www.docs.example.com',
             'title': 'www.docs.example.com',
         },
         {'url': 'https://www.example.com/install', 'title': 'installation guide'},
@@ -117,7 +117,7 @@ def test_extract_web_links_from_markdown():
             'title': 'https://www.youtube.com',
         },
         {
-            'url': 'www.codecademy.com',
+            'url': 'https://www.codecademy.com',
             'title': 'www.codecademy.com',
         },
         {
@@ -129,7 +129,7 @@ def test_extract_web_links_from_markdown():
             'title': 'https://www.rust-lang.org',
         },
         {
-            'url': 'www.golang.org',
+            'url': 'https://www.golang.org',
             'title': 'www.golang.org',
         },
     ]
