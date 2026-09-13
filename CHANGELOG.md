@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 will appear in the Info tab's text panes (description, environment, etc.) so the use can open the desired
 links. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/347
 
+### Minor Improvements
+
+- Add tests for extracting urls from Markdown content and make sure to extract unique URLs only. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/349
+
 ## [1.13.1] 2026-08-28
 
 ### Added
