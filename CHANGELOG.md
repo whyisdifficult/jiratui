@@ -15,7 +15,7 @@ links. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github
 
 ### Minor Improvements
 
-- Add tests for extracting urls from Markdown content and make sure to extract unique URLs only. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/349
+- Add tests for extracting urls from Markdown content and make sure to extract unique URLs only. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/351
 
 ## [1.13.1] 2026-08-28
 
