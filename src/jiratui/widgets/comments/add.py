@@ -125,7 +125,7 @@ class AddCommentScreen(Actionable, Screen[str]):
 
     @property
     def overlay_container(self) -> Vertical:
-        return self.query_one('#overlay-container', Vertical)
+        return self.query_one('#user-mention-overlay-container', Vertical)
 
     def compose(self) -> ComposeResult:
         with Vertical(id='add-comment-screen-vertical') as vc:
@@ -142,7 +142,7 @@ class AddCommentScreen(Actionable, Screen[str]):
             textarea.border_title = 'Comment'
             textarea.border_subtitle = 'Markdown Enabled'
             yield textarea
-            yield Vertical(id='overlay-container')
+            yield Vertical(id='user-mention-overlay-container')
             with ItemGrid(classes='add-comment-grid-buttons'):
                 yield Button('Save', variant='success', id='add-comment-button-save', disabled=True)
                 yield Button('Cancel', variant='error', id='add-comment-button-quit')
@@ -236,9 +236,6 @@ class AddCommentScreen(Actionable, Screen[str]):
                 ),
             ]
         )
-        # await overlay_container.mount(
-        #
-        # )
         user_input.focus()
 
     async def _close_mention_picker(self) -> None:
