@@ -49,6 +49,7 @@ class SupportedActions(Enum):
     FOCUS_SEARCH_WORK_ITEM_TYPE_FILTER = 'focus_search_work_item_type_filter'
     FOCUS_WORK_ITEM_ATTACHMENTS_TAB = 'focus_work_item_attachments_tab'
     FOCUS_WORK_ITEM_COMMENTS_TAB = 'focus_work_item_comments_tab'
+    FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS = 'focus_work_item_details_filter_status'
     FOCUS_WORK_ITEM_DETAILS_TAB = 'focus_work_item_details_tab'
     FOCUS_WORK_ITEM_INFORMATION_TAB = 'focus_work_item_information_tab'
     FOCUS_WORK_ITEM_LINKS_TAB = 'focus_work_item_links_tab'
@@ -528,6 +529,12 @@ KEY_BINDINGS_LEGACY = {
         'description': 'User Picker',
         'tooltip': 'User Picker',
     },
+    SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value: {
+        'keys': ['z'],
+        'show': False,
+        'description': 'Focuses the work item status dropdown',
+        'tooltip': 'Focuses the work item status dropdown',
+    },
 }
 
 KEY_BINDINGS_STANDARD = {
@@ -987,5 +994,11 @@ KEY_BINDINGS_STANDARD = {
         'show': False,
         'description': 'User Picker',
         'tooltip': 'User Picker',
+    },
+    SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value: {
+        'keys': ['z'],
+        'show': False,
+        'description': 'Focuses the work item status dropdown',
+        'tooltip': 'Focuses the work item status dropdown',
     },
 }

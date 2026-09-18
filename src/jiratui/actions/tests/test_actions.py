@@ -5606,6 +5606,13 @@ def test_issue_details_widget_actions_and_bindings(bindings: dict):
             show=True,
             tooltip='Flag a work item',
         ),
+        UIAction(
+            action='focus_work_item_details_filter_status',
+            keys=bindings.get('focus_work_item_details_filter_status', {}).get('keys', []),
+            description='Focuses the work item status dropdown',
+            show=False,
+            tooltip='Focuses the work item status dropdown',
+        ),
     ]
     assert IssueDetailsWidget.BINDINGS == [
         Binding(
@@ -5640,6 +5647,18 @@ def test_issue_details_widget_actions_and_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='Flag a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('focus_work_item_details_filter_status', {}).get('keys', [])),
+            action='focus_work_item_details_filter_status',
+            description='Focuses the work item status dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item status dropdown',
             id=None,
             system=False,
             group=None,
