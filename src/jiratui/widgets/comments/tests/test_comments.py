@@ -1,11 +1,9 @@
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from textual.binding import Binding
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueComment, JiraUser
-from jiratui.utils.ui_actions import UIAction
 from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.comments.comments import (
     CommentCollapsible,
@@ -479,41 +477,3 @@ async def test_cancelling_mention_restores_literal_at(app):
         assert len(screen.query('#mention-overlay')) == 0
         assert screen.comment_textarea.text == '@'
         assert isinstance(app.screen, AddCommentScreen)
-
-
-def test_add_comment_screen_actions_and_bindings():
-    assert AddCommentScreen.ACTIONS == [
-        UIAction(
-            action='open_user_mention_picker',
-            keys=['ctrl+@'],
-            description='User Picker',
-            show=False,
-            tooltip='User Picker',
-        ),
-    ]
-    assert AddCommentScreen.BINDINGS == [
-        Binding(
-            key='ctrl+@',
-            action='open_user_mention_picker',
-            description='User Picker',
-            show=False,
-            key_display=None,
-            priority=False,
-            tooltip='User Picker',
-            id=None,
-            system=False,
-            group=None,
-        ),
-        Binding(
-            key='escape',
-            action='app.pop_screen',
-            description='Close',
-            show=True,
-            key_display=None,
-            priority=False,
-            tooltip='',
-            id=None,
-            system=False,
-            group=None,
-        ),
-    ]

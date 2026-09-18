@@ -2,7 +2,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
-from textual.binding import Binding
 from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -16,7 +15,6 @@ from jiratui.models import (
     JiraIssueSearchResponse,
     Project,
 )
-from jiratui.utils.ui_actions import UIAction
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
@@ -3224,87 +3222,3 @@ async def test_press_edit_on_description_widget_does_not_call_open_as_temporary_
         await pilot.press('ctrl+e')
         # THEN
         open_as_temporary_file_mock.assert_not_called()
-
-
-def test_textarea_tabbed_content_actions_bindings():
-    widget = TextAreaTabbedContent()
-    assert widget.ACTIONS == [
-        UIAction(
-            action='open_text_editor',
-            keys=['ctrl+e'],
-            description='✎',
-            show=True,
-            tooltip='Open external editor',
-        ),
-    ]
-    assert widget.BINDINGS == [
-        Binding(
-            key='ctrl+e',
-            action='open_text_editor',
-            description='✎',
-            show=True,
-            key_display=None,
-            priority=False,
-            tooltip='Open external editor',
-            id=None,
-            system=False,
-            group=None,
-        ),
-    ]
-
-
-def test_add_work_item_screen_actions_bindings():
-    assert AddWorkItemScreen.ACTIONS == [
-        UIAction(
-            action='save_content',
-            keys=['ctrl+s'],
-            description='\uf0c7',
-            show=True,
-            tooltip='Save the text content of a resource',
-        ),
-        UIAction(
-            action='open_user_mention_picker',
-            keys=['ctrl+@'],
-            description='User Picker',
-            show=False,
-            tooltip='User Picker',
-        ),
-    ]
-    assert AddWorkItemScreen.BINDINGS == [
-        Binding(
-            key='ctrl+s',
-            action='save_content',
-            description='\uf0c7',
-            show=True,
-            key_display=None,
-            priority=False,
-            tooltip='Save the text content of a resource',
-            id=None,
-            system=False,
-            group=None,
-        ),
-        Binding(
-            key='ctrl+@',
-            action='open_user_mention_picker',
-            description='User Picker',
-            show=False,
-            key_display=None,
-            priority=False,
-            tooltip='User Picker',
-            id=None,
-            system=False,
-            group=None,
-        ),
-        Binding(
-            key='escape',
-            action='app.pop_screen',
-            description='Close',
-            show=True,
-            key_display=None,
-            priority=False,
-            tooltip='',
-            id=None,
-            system=False,
-            group=None,
-        ),
-    ]
