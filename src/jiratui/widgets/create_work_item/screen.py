@@ -79,7 +79,7 @@ class TextAreaTabPane(TabPane):
 
 
 class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # type:ignore[call-arg]
-    """Custom TabbedContent with a key binding for editing content."""
+    """Custom TabbedContent with a key binding for opening an external text editor."""
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user

@@ -3234,7 +3234,7 @@ def test_textarea_tabbed_content_actions_bindings():
             keys=['ctrl+e'],
             description='✎',
             show=True,
-            tooltip='Open text editor',
+            tooltip='Open external editor',
         ),
     ]
     assert widget.BINDINGS == [
@@ -3245,7 +3245,7 @@ def test_textarea_tabbed_content_actions_bindings():
             show=True,
             key_display=None,
             priority=False,
-            tooltip='Open text editor',
+            tooltip='Open external editor',
             id=None,
             system=False,
             group=None,

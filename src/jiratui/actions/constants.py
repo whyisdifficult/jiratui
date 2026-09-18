@@ -886,7 +886,7 @@ KEY_BINDINGS_STANDARD = {
         'keys': ['ctrl+e'],
         'show': True,
         'description': '\u270e',
-        'tooltip': 'Open text editor',
+        'tooltip': 'Open external editor',
     },
     SupportedActions.VIEW_CONTENT.value: {
         'keys': ['v'],
