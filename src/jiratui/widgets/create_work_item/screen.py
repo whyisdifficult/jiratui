@@ -18,20 +18,21 @@ from textual.widgets import (
     Button,
     Footer,
     Input,
+    Label,
     Rule,
     Select,
     Static,
     TabbedContent,
     TabPane,
-    Tabs,
     TextArea,
 )
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.models import AgileSprint, IssueType, JiraIssue, Project
+from jiratui.utils.mentions import build_mention_token
+from jiratui.utils.text import char_at_location_matches
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.commons import CustomFieldType
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
@@ -41,7 +42,7 @@ from jiratui.widgets.commons.base import (
     MultiUserPickerAutoComplete,
     WorkItemKeyAutoComplete,
 )
-from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
+from jiratui.widgets.commons.users import JiraUserInput, UserMentionAutoComplete, UsersAutoComplete
 from jiratui.widgets.commons.widgets import (
     LabelsWidget,
     MultiSelectWidget,
@@ -50,6 +51,7 @@ from jiratui.widgets.commons.widgets import (
     SingleUserPickerWidget,
     SprintSelectionWidget,
     SprintWidget,
+    UserMentionOverlay,
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
 from jiratui.widgets.create_work_item.fields import (
@@ -84,8 +86,6 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
     key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
         SupportedActions.OPEN_TEXT_EDITOR,
-        SupportedActions.NEXT_TAB,
-        SupportedActions.PREVIOUS_TAB,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -112,17 +112,6 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__configuration = CONFIGURATION.get()
-
-    def action_next_tab(self) -> None:
-        tabs = self.query_one(Tabs)
-        if tabs.has_focus:
-            tabs.action_next_tab()
-
-    def action_previous_tab(self) -> None:
-        tabs = self.query_one(Tabs)
-        if tabs.has_focus:
-            tabs.action_previous_tab()
 
     def _get_textarea_widget(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None:
         if (active_pane := self.active_pane) is None:
@@ -135,35 +124,22 @@ class TextAreaTabbedContent(Actionable, TabbedContent, inherit_bindings=False): 
             except NoMatches:
                 return None
 
-    def _edit_text_content(self, content: str) -> None:
-        if not self.__configuration.text_editor:
+    def action_open_text_editor(self) -> None:
+        """Opens an external editor to update the content of the textarea."""
+
+        if not (external_text_editor := self.app.config.text_editor):  # type:ignore[attr-defined]
             self.notify(
                 severity='error',
                 message='Rich text editor is not enabled. Check config.text_editor',
             )
         else:
-            new_content = self._open_as_temporary_file(self.__configuration.text_editor, content)
-            # update the content of the textarea widget
             widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
                 self._get_textarea_widget()
             )
             if widget is not None:
-                widget.text = new_content.strip() if new_content else ''
-
-    @on(ADFMarkdownTextAreaWidget.EditContent)
-    def edit_adf_content(self, event: ADFMarkdownTextAreaWidget.EditContent) -> None:
-        self._edit_text_content(event.content)
-
-    @on(PlainTextTextAreaWidget.EditContent)
-    def edit_plain_text_content(self, event: PlainTextTextAreaWidget.EditContent) -> None:
-        self._edit_text_content(event.content)
-
-    def action_open_text_editor(self) -> None:
-        widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
-            self._get_textarea_widget()
-        )
-        if widget is not None:
-            self._edit_text_content(widget.text)
+                content = self._open_as_temporary_file(external_text_editor, widget.text)
+                # update the content of the textarea widget
+                widget.text = content.strip() if content else ''
 
     def _open_as_temporary_file(self, command: str, content: str) -> str:
         editor_args: list[str] = shlex.split(command)
@@ -227,6 +203,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
         SupportedActions.SAVE_CONTENT,
+        SupportedActions.OPEN_USER_MENTION_PICKER,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -280,16 +257,18 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
         self._field_metadata: dict[str, dict[str, Any]] = {}
         # this is used for determining whether the reporter field should be requested to the user and updated
         self._reporter_is_editable: bool = True  # default to editable
-        self.__configuration = CONFIGURATION.get()
+        # used for user mentions in textarea widgets
+        self._mention_overlay_open: bool = False
+        self._mention_trigger_location: tuple[int, int] | None = None
+
+    @property
+    def _adf_support_enabled(self) -> bool:
+        # determines if the application is connecting to a Jira API instance that supports ADF
+        return self.app.config.cloud and self.app.config.jira_api_version == 3  # type:ignore[attr-defined]
 
     @property
     def help_anchor(self) -> str:
         return '#creating-work-items'
-
-    @property
-    def adf_support_enabled(self) -> bool:
-        # determines if the application is connecting to a Jira API instance that supports ADF
-        return self.__configuration.cloud and self.__configuration.jira_api_version == 3
 
     @property
     def reporter_account_id(self) -> str | None:
@@ -333,7 +312,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
 
     @property
     def description_field(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
-        if self.adf_support_enabled:
+        if self._adf_support_enabled:
             return self.query_one('#description', expect_type=ADFMarkdownTextAreaWidget)
         return self.query_one('#description', expect_type=PlainTextTextAreaWidget)
 
@@ -348,6 +327,10 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     @property
     def textarea_fields_tabbed_content(self) -> TextAreaTabbedContent:
         return self.query_one('#textarea-fields-tabs', expect_type=TextAreaTabbedContent)
+
+    @property
+    def user_mention_overlay_container(self) -> Vertical:
+        return self.query_one('#user-mention-overlay-container', Vertical)
 
     def _validate_required_fields(self) -> bool:
         """Checks if all required fields for saving the form data have values.
@@ -410,13 +393,14 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                         yield SummaryField()
                         yield ParentKeyField(self._parent_work_item_key)
                         yield WorkItemStatusField([])
+                    yield Vertical(id='user-mention-overlay-container')
                     # dynamically-created widgets
-                    with VerticalScroll(classes='add-work-item-form-textarea-fields'):
+                    with Vertical(classes='add-work-item-form-textarea-fields'):
                         with TextAreaTabbedContent(
                             id='textarea-fields-tabs'
                         ):  # Container for dynamic fields - textarea fields
                             widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget
-                            if self.adf_support_enabled:
+                            if self._adf_support_enabled:
                                 widget = ADFMarkdownTextAreaWidget(
                                     mode=FieldMode.CREATE,
                                     jira_field_key='description',
@@ -478,9 +462,10 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
         self.mount_all(
             [reporter_autocomplete, assignee_autocomplete, work_item_parent_key_autocomplete]
         )
+        self.user_mention_overlay_container.styles.display = 'none'
 
     def _use_advanced_full_text_search(self) -> bool:
-        return self.__configuration.enable_advanced_full_text_search
+        return self.app.config.enable_advanced_full_text_search  # type:ignore[attr-defined]
 
     async def _search_work_items(self, query: str) -> list[JiraIssue] | None:
         """Searches and retrieves work items to fill in the autocomplete suggestions for parent key.
@@ -626,9 +611,11 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     async def _fetch_issue_create_metadata(
         self, project_key: str | None = None, issue_type_id: str | None = None
     ) -> None:
-        """Fetches the metadata for creating work items of a given type in the given project.
+        """Fetches the metadata for creating work items of a given type and project and, builds the widgets
+        for the fields to create a work item.
 
         This function does a few things:
+
         - Retrieves the metadata for creating work items of a given type in the given project.
         - Builds and mounts the necessary widgets that compose the create-work-item form.
 
@@ -671,14 +658,14 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                         # hide reporter field if not editable
                         self.reporter_selector.display = self._reporter_is_editable
 
-                # create all the widgets for the additional fields supported
+                # create all the (dynamic) widgets for the supported fields
                 widgets_to_create_work_item: list[Widget] = create_widgets_for_work_item_creation(
                     data=fields_data,
                     api_controller=application.api,
-                    adf_support_enabled=self.adf_support_enabled,
+                    adf_support_enabled=self._adf_support_enabled,
                 )
 
-                # split the fields based on type so we can mount them in different places in the UI
+                # split the widgets based on type so we can mount them in different places in the UI
                 textarea_widgets: list[ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget] = []
                 non_textarea_widgets: list[Widget] = []
                 sprint_selection_widgets: list[SprintSelectionWidget] = []
@@ -812,7 +799,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
         content widget.
 
         Returns:
-            None.
+            None
         """
 
         if panes := self.textarea_fields_tabbed_content.query(TextAreaTabPane):
@@ -990,3 +977,116 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     @on(Button.Pressed, '#add-work-item-button-quit')
     def handle_cancel(self) -> None:
         self.dismiss({})
+
+    def _get_textarea_widget_in_active_pane(
+        self,
+    ) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None:
+        """The TextAreaTabbedContent contains at least 1 TextAreaTabPane. Each TextAreaTabPane contains a textarea
+        widget of type ADFMarkdownTextAreaWidget or PlainTextTextAreaWidget.
+
+        This method returns the textarea widget found in the active pane.
+        """
+
+        active_pane: TabPane | None
+        if (active_pane := self.textarea_fields_tabbed_content.active_pane) is None:
+            return None
+        try:
+            return active_pane.query_one(ADFMarkdownTextAreaWidget)
+        except NoMatches:
+            try:
+                return active_pane.query_one(PlainTextTextAreaWidget)
+            except NoMatches:
+                return None
+
+    # logic related to user mentions
+
+    @on(UserMentionOverlay.Cancelled)
+    async def _on_mention_cancelled(self, message: UserMentionOverlay.Cancelled) -> None:
+        message.stop()
+        await self._close_mention_picker()
+        textarea: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+            self._get_textarea_widget_in_active_pane()
+        )
+        if textarea:
+            textarea.focus()
+
+    @on(UserMentionAutoComplete.UserSelected)
+    async def _on_mention_user_selected(
+        self, message: UserMentionAutoComplete.UserSelected
+    ) -> None:
+        message.stop()
+        textarea: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+            self._get_textarea_widget_in_active_pane()
+        )
+        if textarea:
+            location = self._mention_trigger_location
+            token = build_mention_token(message.display_name, message.account_id)
+            if location is not None and self._char_at_is_trigger(location):
+                end = (location[0], location[1] + 1)
+                textarea.replace(token, location, end)
+                textarea.move_cursor((location[0], location[1] + len(token)))
+            else:
+                textarea.insert(token)
+            await self._close_mention_picker()
+            textarea.focus()
+
+    @on(ADFMarkdownTextAreaWidget.MentionRequested)
+    async def _on_mention_requested(
+        self, message: ADFMarkdownTextAreaWidget.MentionRequested
+    ) -> None:
+        message.stop()
+        if self._adf_support_enabled:
+            await self._open_user_mention_picker(trigger_location=message.location)
+
+    def action_open_user_mention_picker(self) -> None:
+        if self._adf_support_enabled:
+            # only show the user-picker overlay when a TabPane's textarea is focused
+            if (textarea := self._get_textarea_widget_in_active_pane()) and textarea.has_focus:
+                self.run_worker(self._open_user_mention_picker())
+
+    async def _open_user_mention_picker(
+        self, trigger_location: tuple[int, int] | None = None
+    ) -> None:
+        if self._mention_overlay_open:
+            return
+        self._mention_overlay_open = True
+        self._mention_trigger_location = trigger_location
+        user_input = JiraUserInput(id='mention-user-input', border_title='User')
+        overlay_container = self.user_mention_overlay_container
+        overlay_container.styles.display = 'block'
+        await overlay_container.mount_all(
+            [
+                UserMentionOverlay(
+                    Label('Search a user to mention. Enter selects, Esc cancels.', classes='tip'),
+                    user_input,
+                    id='mention-overlay',
+                ),
+                UserMentionAutoComplete(
+                    user_input,
+                    cast('JiraApp', self.app).api,  # type:ignore[name-defined] # noqa: F821
+                    id='mention-autocomplete',
+                    user_search_function=self._search_users_for_mention,
+                ),
+            ]
+        )
+        user_input.focus()
+
+    async def _search_users_for_mention(self, query: str) -> APIControllerResponse:
+        api = cast('JiraApp', self.app).api  # type:ignore[name-defined] # noqa: F821
+        return await api.search_users(email_or_name=query)
+
+    async def _close_mention_picker(self) -> None:
+        self._mention_overlay_open = False
+        self._mention_trigger_location = None
+        self.user_mention_overlay_container.styles.display = 'none'
+        for widget in list(self.query(UserMentionAutoComplete)):
+            await widget.remove()
+        for item in list(self.query(UserMentionOverlay)):
+            await item.remove()
+
+    def _char_at_is_trigger(self, location: tuple[int, int]) -> bool:
+        row, column = location
+        textarea: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget | None = (
+            self._get_textarea_widget_in_active_pane()
+        )
+        return char_at_location_matches(textarea, row, column, '@')

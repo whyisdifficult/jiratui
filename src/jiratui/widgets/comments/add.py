@@ -1,11 +1,3 @@
-"""
-The screen also provides an `@` mention picker: typing `@` at a word boundary (or the `ctrl+@` binding)
-opens a small overlay that live-searches Jira users and inserts a mention *token* (`@[Name](accountId)`) at
-the cursor. Tokens are expanded to ADF `Mention` nodes on submit by
-[expand_mention_tokens](#jiratui.utils.mentions.expand_mention_tokens);
-see [proposals/0001](https://github.com/whyisdifficult/jiratui/issues/125).
-"""
-
 from typing import cast
 
 from rich.text import Text
@@ -13,58 +5,18 @@ from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical
-from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Label, Static, TextArea
-from textual_autocomplete import TargetState
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.utils.mentions import build_mention_token
+from jiratui.utils.text import char_at_location_matches
 from jiratui.utils.ui_actions import Actionable, UIAction
-from jiratui.widgets.commons.users import JiraUserInput, UsersAutoComplete
-from jiratui.widgets.commons.widgets import TextAreaWithUserMention
-
-
-class MentionAutoComplete(UsersAutoComplete):
-    """A [UsersAutoComplete](#jiratui.widgets.commons.users.UsersAutoComplete) that announces the picked user.
-
-    The base class stores the selected user's account id on the target input but does not emit a message; this
-    subclass posts a [UserSelected](#jiratui.widgets.comments.add.MentionAutoComplete.UserSelected) message so
-    the screen can build and insert the mention token.
-    """
-
-    class UserSelected(Message):
-        """Posted when a user is chosen from the mention autocomplete dropdown."""
-
-        def __init__(self, account_id: str, display_name: str) -> None:
-            self.account_id = account_id
-            self.display_name = display_name
-            super().__init__()
-
-    def apply_completion(self, value: str, state: TargetState) -> None:
-        super().apply_completion(value, state)
-        account_id: str | None = getattr(self.target, 'account_id', None)
-        display_name = (self.target.value or '').split('|', 1)[0].strip()
-        if account_id and display_name:
-            self.post_message(self.UserSelected(account_id=account_id, display_name=display_name))
-
-
-class MentionOverlay(Vertical):
-    """The inline overlay that hosts the mention search input.
-
-    It is an ancestor of the search `Input`, so its `escape` binding takes precedence over the screen's
-    `escape` binding and cancels the picker instead of closing the whole screen.
-    """
-
-    BINDINGS = [Binding('escape', 'cancel', 'Cancel', show=False)]
-
-    class Cancelled(Message):
-        """Posted when the user cancels the mention picker."""
-
-    def action_cancel(self) -> None:
-        self.post_message(self.Cancelled())
+from jiratui.widgets.commons.base import TextAreaWithUserMention
+from jiratui.widgets.commons.users import JiraUserInput, UserMentionAutoComplete
+from jiratui.widgets.commons.widgets import UserMentionOverlay
 
 
 class AddCommentScreen(Actionable, Screen[str]):
@@ -72,6 +24,12 @@ class AddCommentScreen(Actionable, Screen[str]):
 
     The screen does not add the comment to the work item. Instead, it returns the comment's text to the caller via the
     `dismiss()` call and the caller will proceed to add the comment via the API.
+
+    The screen also provides an `@` mention picker: typing `@` at a word boundary (or the `ctrl+@` binding) opens a
+    small overlay that live-searches Jira users and inserts a mention *token* (`@[Name](accountId)`) at the
+    cursor. Tokens are expanded to ADF `Mention` nodes on submit
+    by [expand_mention_tokens](#jiratui.utils.mentions.expand_mention_tokens); see
+    [proposals/0001](https://github.com/whyisdifficult/jiratui/issues/125).
 
     **See Also**:
     - [Add Comment Screen Design](#components-add-comment-screen)
@@ -168,14 +126,16 @@ class AddCommentScreen(Actionable, Screen[str]):
     def _adf_support_enabled(self) -> bool:
         return self.app.config.cloud and self.app.config.jira_api_version == 3  # type:ignore[attr-defined]
 
-    @on(MentionOverlay.Cancelled)
-    async def _on_mention_cancelled(self, message: MentionOverlay.Cancelled) -> None:
+    @on(UserMentionOverlay.Cancelled)
+    async def _on_mention_cancelled(self, message: UserMentionOverlay.Cancelled) -> None:
         message.stop()
         await self._close_mention_picker()
         self.comment_textarea.focus()
 
-    @on(MentionAutoComplete.UserSelected)
-    async def _on_mention_user_selected(self, message: MentionAutoComplete.UserSelected) -> None:
+    @on(UserMentionAutoComplete.UserSelected)
+    async def _on_mention_user_selected(
+        self, message: UserMentionAutoComplete.UserSelected
+    ) -> None:
         message.stop()
         token = build_mention_token(message.display_name, message.account_id)
         textarea = self.comment_textarea
@@ -194,14 +154,12 @@ class AddCommentScreen(Actionable, Screen[str]):
         self, message: TextAreaWithUserMention.MentionRequested
     ) -> None:
         message.stop()
-        await self._open_user_mention_picker(trigger_location=message.location)
+        if self._adf_support_enabled:
+            await self._open_user_mention_picker(trigger_location=message.location)
 
     def action_open_user_mention_picker(self) -> None:
-        self.run_worker(self._open_user_mention_picker())
-
-    def _user_mentions_enabled(self) -> bool:
-        """Mentions are only supported on Jira Cloud with API v3 (where comments are submitted as ADF)."""
-        return self._adf_support_enabled
+        if self._adf_support_enabled:
+            self.run_worker(self._open_user_mention_picker())
 
     async def _search_users_for_mention(self, query: str) -> APIControllerResponse:
         api = cast('JiraApp', self.app).api  # type:ignore[name-defined] # noqa: F821
@@ -214,7 +172,7 @@ class AddCommentScreen(Actionable, Screen[str]):
     async def _open_user_mention_picker(
         self, trigger_location: tuple[int, int] | None = None
     ) -> None:
-        if self._mention_overlay_open or not self._user_mentions_enabled():
+        if self._mention_overlay_open:
             return
         self._mention_overlay_open = True
         self._mention_trigger_location = trigger_location
@@ -223,12 +181,12 @@ class AddCommentScreen(Actionable, Screen[str]):
         overlay_container.styles.display = 'block'
         await overlay_container.mount_all(
             [
-                MentionOverlay(
+                UserMentionOverlay(
                     Label('Search a user to mention. Enter selects, Esc cancels.', classes='tip'),
                     user_input,
                     id='mention-overlay',
                 ),
-                MentionAutoComplete(
+                UserMentionAutoComplete(
                     user_input,
                     cast('JiraApp', self.app).api,  # type:ignore[name-defined] # noqa: F821
                     id='mention-autocomplete',
@@ -242,13 +200,11 @@ class AddCommentScreen(Actionable, Screen[str]):
         self._mention_overlay_open = False
         self._mention_trigger_location = None
         self.overlay_container.styles.display = 'none'
-        for selector in ('#mention-autocomplete', '#mention-overlay'):
-            for widget in list(self.query(selector)):
-                await widget.remove()
+        for widget in list(self.query(UserMentionAutoComplete)):
+            await widget.remove()
+        for item in list(self.query(UserMentionOverlay)):
+            await item.remove()
 
     def _char_at_is_trigger(self, location: tuple[int, int]) -> bool:
         row, column = location
-        try:
-            return self.comment_textarea.document[row][column] == '@'
-        except IndexError:
-            return False
+        return char_at_location_matches(self.comment_textarea, row, column, '@')

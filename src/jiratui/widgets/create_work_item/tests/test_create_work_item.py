@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
+from textual.binding import Binding
 from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -15,6 +16,7 @@ from jiratui.models import (
     JiraIssueSearchResponse,
     Project,
 )
+from jiratui.utils.ui_actions import UIAction
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
 from jiratui.widgets.commons.widgets import (
@@ -625,7 +627,7 @@ async def test_save_excludes_reporter_when_not_editable(
         assert dismiss_args['status'] == '1'
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_reporter_when_editable(
@@ -704,7 +706,7 @@ async def test_save_includes_reporter_when_editable(
 
 
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_additional_fields_with_adf_support_enabled(
@@ -770,7 +772,7 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_sprint_selected(
@@ -828,7 +830,7 @@ async def test_save_with_support_for_sprint_selection_sprint_selected(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_no_sprint_selected(
@@ -886,7 +888,7 @@ async def test_save_with_support_for_sprint_selection_no_sprint_selected(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_provided(
@@ -944,7 +946,7 @@ async def test_save_with_support_for_sprint_input_sprint_provided(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_not_provided(
@@ -999,7 +1001,7 @@ async def test_save_with_support_for_sprint_input_sprint_not_provided(
         assert 'customfield_10020' not in dismiss_args
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_additional_fields_with_adf_support_disabled(
@@ -1105,7 +1107,7 @@ async def test_save_includes_additional_fields_with_adf_support_disabled(
         assert dismiss_args['customfield_10147'] == 'Some value for the ADF field'
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_description_widget_with_adf_support(app, create_metadata_with_editable_reporter):
     async with app.run_test() as pilot:
@@ -1116,7 +1118,7 @@ async def test_description_widget_with_adf_support(app, create_metadata_with_edi
         assert isinstance(screen.description_field, ADFMarkdownTextAreaWidget)
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_description_widget_without_adf_support(app, create_metadata_with_editable_reporter):
     async with app.run_test() as pilot:
@@ -3117,14 +3119,14 @@ async def test_press_cancel_dismisses_screen_without_data(
 
 
 @patch.object(APIController, 'get_issue_create_metadata')
-@patch.object(TextAreaTabbedContent, '_edit_text_content')
+@patch.object(TextAreaTabbedContent, '_open_as_temporary_file')
 @patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
 @patch.object(AddWorkItemScreen, 'fetch_available_projects')
 @pytest.mark.asyncio
-async def test_press_edit_on_description_widget_calls_edit_text_content(
+async def test_press_edit_on_description_widget_calls_open_as_temporary_file_when_editor_set(
     fetch_available_projects_mock: AsyncMock,
     fetch_available_issue_types_mock: AsyncMock,
-    edit_text_content_mock: Mock,
+    open_as_temporary_file_mock: Mock,
     get_issue_create_metadata_mock: AsyncMock,
     app,
 ):
@@ -3147,6 +3149,8 @@ async def test_press_edit_on_description_widget_calls_edit_text_content(
             ]
         }
     )
+    app.config.text_editor = 'vim'
+    open_as_temporary_file_mock.return_value = 'hello'
     async with app.run_test() as pilot:
         screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
         screen.dismiss = Mock()
@@ -3165,4 +3169,142 @@ async def test_press_edit_on_description_widget_calls_edit_text_content(
         await pilot.press('tab')
         await pilot.press('ctrl+e')
         # THEN
-        edit_text_content_mock.assert_called_once_with('')
+        open_as_temporary_file_mock.assert_called_once_with('vim', '')
+        assert screen.textarea_fields_tabbed_content._get_textarea_widget().text == 'hello'
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(TextAreaTabbedContent, '_open_as_temporary_file')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_press_edit_on_description_widget_does_not_call_open_as_temporary_file_when_no_editor_set(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    open_as_temporary_file_mock: Mock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    app.config.text_editor = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('b')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('ctrl+e')
+        # THEN
+        open_as_temporary_file_mock.assert_not_called()
+
+
+def test_textarea_tabbed_content_actions_bindings():
+    widget = TextAreaTabbedContent()
+    assert widget.ACTIONS == [
+        UIAction(
+            action='open_text_editor',
+            keys=['ctrl+e'],
+            description='✎',
+            show=True,
+            tooltip='Open text editor',
+        ),
+    ]
+    assert widget.BINDINGS == [
+        Binding(
+            key='ctrl+e',
+            action='open_text_editor',
+            description='✎',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Open text editor',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_add_work_item_screen_actions_bindings():
+    assert AddWorkItemScreen.ACTIONS == [
+        UIAction(
+            action='save_content',
+            keys=['ctrl+s'],
+            description='\uf0c7',
+            show=True,
+            tooltip='Save the text content of a resource',
+        ),
+        UIAction(
+            action='open_user_mention_picker',
+            keys=['ctrl+@'],
+            description='User Picker',
+            show=False,
+            tooltip='User Picker',
+        ),
+    ]
+    assert AddWorkItemScreen.BINDINGS == [
+        Binding(
+            key='ctrl+s',
+            action='save_content',
+            description='\uf0c7',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Save the text content of a resource',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='ctrl+@',
+            action='open_user_mention_picker',
+            description='User Picker',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='User Picker',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]

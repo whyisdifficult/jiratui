@@ -1311,7 +1311,7 @@ async def test_action_open_text_editor_from_add_work_item_screen(
         action_open_text_editor_mock.assert_called_once()
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(ADFMarkdownTextAreaWidget, 'action_open_text_editor')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1345,7 +1345,7 @@ async def test_action_open_text_editor_with_adf_support_enabled_from_add_work_it
         action_open_text_editor_mock.assert_called_once()
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
 @patch.object(PlainTextTextAreaWidget, 'action_open_text_editor')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
