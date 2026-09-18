@@ -5501,8 +5501,7 @@ def test_main_screen_actions_and_bindings(bindings: dict):
 
 
 def test_textarea_tabbed_content_actions_bindings(bindings: dict):
-    widget = TextAreaTabbedContent()
-    assert widget.ACTIONS == [
+    assert TextAreaTabbedContent.ACTIONS == [
         UIAction(
             action='open_text_editor',
             keys=bindings.get('open_text_editor', {}).get('keys', []),
@@ -5511,7 +5510,7 @@ def test_textarea_tabbed_content_actions_bindings(bindings: dict):
             tooltip='Open external editor',
         ),
     ]
-    assert widget.BINDINGS == [
+    assert TextAreaTabbedContent.BINDINGS == [
         Binding(
             key=bindings.get('open_text_editor', {}).get('keys', [])[0],
             action='open_text_editor',
@@ -5577,6 +5576,70 @@ def test_add_work_item_screen_actions_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_issue_details_widget_actions_and_bindings(bindings: dict):
+    assert IssueDetailsWidget.ACTIONS == [
+        UIAction(
+            action='save_content',
+            keys=bindings.get('save_content', {}).get('keys', []),
+            description='\uf0c7',
+            show=True,
+            tooltip='Save the text content of a resource',
+        ),
+        UIAction(
+            action='view_worklog',
+            keys=bindings.get('view_worklog', {}).get('keys', []),
+            description='⌚',
+            show=True,
+            tooltip='View the worklog of a work item',
+        ),
+        UIAction(
+            action='flag_work_item',
+            keys=bindings.get('flag_work_item', {}).get('keys', []),
+            description='★',
+            show=True,
+            tooltip='Flag a work item',
+        ),
+    ]
+    assert IssueDetailsWidget.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get('save_content', {}).get('keys', [])),
+            action='save_content',
+            description='\uf0c7',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Save the text content of a resource',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('view_worklog', {}).get('keys', [])),
+            action='view_worklog',
+            description='⌚',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='View the worklog of a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('flag_work_item', {}).get('keys', [])),
+            action='flag_work_item',
+            description='★',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Flag a work item',
             id=None,
             system=False,
             group=None,
