@@ -415,7 +415,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         self.mount_all(
             [assignee_autocomplete, reporter_autocomplete, work_item_parent_key_autocomplete]
         )
-        if self.app.config.show_keybinding_hints:
+        if self.app.config.show_keybinding_hints:  # type:ignore[attr-defined]
             self.issue_status_selector.border_subtitle = (
                 get_application_key_bindings()
                 .get(SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value, {})
