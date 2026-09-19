@@ -3379,7 +3379,7 @@ async def test_mention_overlay_not_opened_when_adf_disabled(
         assert screen._mention_overlay_open is False
         assert len(screen.query('#mention-overlay')) == 0
         assert screen.description_field.text == '@'
-        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+        assert isinstance(screen.focused, PlainTextTextAreaWidget)
 
 
 @patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
