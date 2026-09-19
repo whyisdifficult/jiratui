@@ -12,6 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for mentioning users in comments. Typing `@` (or pressing `ctrl+@`) while writing a comment on
 Jira Cloud (API v3) opens a user search; selecting a user inserts an `@[Name](accountId)` token that is
 submitted as an ADF `mention` node. Resolves [#125](https://github.com/whyisdifficult/jiratui/issues/125). By [@mrsnakeoil](https://github.com/mrsnakeoil)
+- Add support for mentioning users when creating new work items. Typing `@` (or pressing `ctrl+@`) while writing text
+in a textarea-based field on Jira Cloud (API v3) opens a user search; selecting a user inserts an `@[Name](accountId)`
+token that is submitted as an ADF `mention` node. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+- Add a new keybind to focus the status dropdown when editing work item details. Using the legacy keybinding pressing
+`z` will focus the status dropdown. Using the standard keybinding pressing `alt+z` will focus the status dropdown. By
+[@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+
+### Minor Improvements
+
+- Bump `anyio` to `v4.15.1`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+
+### Bug Fixes
+
+- Remove `Actionable` behaviour from `ADFMarkdownTextAreaWidget` and `PlainTextTextAreaWidget`. This was causing issues
+with some key presses when writing text into the textarea. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
 
 ## [1.14.0] 2026-09-13
 
