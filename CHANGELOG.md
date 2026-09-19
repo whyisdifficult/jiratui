@@ -22,6 +22,9 @@ token that is submitted as an ADF `mention` node. By [@whyisdifficult](https://g
 ### Minor Improvements
 
 - Bump `anyio` to `v4.15.1`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+- Bump `textual` to `v8.2.8`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+- Bump `click` to `v8.5.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
+- Bump `python-json-logger` to `v4.2.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
 
 ### Bug Fixes
 
