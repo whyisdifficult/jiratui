@@ -10,6 +10,7 @@ from jiratui.utils.adf import (
     convert_markdown_to_adf,
     extract_web_links_from_markdown,
 )
+from jiratui.utils.mentions import expand_mention_tokens
 from jiratui.widgets.commons import BaseFieldWidget, BaseUpdateFieldWidget, FieldMode
 from jiratui.widgets.commons.base import TextAreaWithUserMention
 
@@ -268,7 +269,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
 
         text = self.text.strip() if self.text else ''
         try:
-            return convert_markdown_to_adf(text)
+            return convert_markdown_to_adf(expand_mention_tokens(text))
         except Exception:
             # fallback to a single paragraph
             return {
@@ -277,7 +278,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
                         'content': [
                             {
                                 'type': 'text',
-                                'text': text,
+                                'text': expand_mention_tokens(text),
                             }
                         ],
                         'type': 'paragraph',
@@ -298,7 +299,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
 
         text = self.text.strip() if self.text else ''
         try:
-            return convert_markdown_to_adf(text)
+            return convert_markdown_to_adf(expand_mention_tokens(text))
         except Exception:
             # fallback to a single paragraph
             return {
@@ -307,7 +308,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
                         'content': [
                             {
                                 'type': 'text',
-                                'text': text,
+                                'text': expand_mention_tokens(text),
                             }
                         ],
                         'type': 'paragraph',
