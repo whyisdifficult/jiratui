@@ -73,13 +73,13 @@ links.
 links.
 """
 
-from dataclasses import dataclass
 import hashlib
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
 from textual import on
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.events import Key
 from textual.message import Message
 from textual.validation import Number, ValidationResult
@@ -1434,7 +1434,7 @@ class MultiUserPickerWidget(Input):
             self.cursor_position = len(self.value)
 
 
-class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
+class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
     """Unified textarea widget for non-ADF fields that supports CREATE and UPDATE modes.
 
     **Features**:
@@ -1469,39 +1469,6 @@ class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateF
     widget.get_value_for_create()
     ```
     """
-
-    ACTIONS: list[UIAction] = []
-    # set up the key-bindings based on the configuration selected by the user
-    key_bindings: dict[str, dict] = get_application_key_bindings()
-    for supported_action_id in [
-        SupportedActions.OPEN_TEXT_EDITOR,
-    ]:
-        data = key_bindings.get(supported_action_id.value, {})
-        ACTIONS.append(
-            UIAction(
-                action=supported_action_id.value,
-                keys=data.get('keys', []),
-                show=data.get('show', False),
-                description=data.get('description'),
-                tooltip=data.get('tooltip', ''),
-            )
-        )
-
-    BINDINGS = [
-        Binding(
-            key=','.join(action.keys),
-            action=action.action,
-            show=action.show,
-            description=action.description or '',
-            tooltip=action.tooltip,
-        )
-        for action in ACTIONS
-        if isinstance(action.action, str)
-    ]
-
-    @dataclass
-    class EditContent(Message):
-        content: str
 
     def __init__(
         self,
@@ -1547,9 +1514,6 @@ class PlainTextTextAreaWidget(Actionable, TextArea, BaseFieldWidget, BaseUpdateF
                 field_supports_update=field_supports_update,
             )
         self.add_class('create-work-item-description')
-
-    def action_open_text_editor(self):
-        self.post_message(self.EditContent(content=self.text))
 
     def get_value_for_update(self) -> str | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -2473,3 +2437,19 @@ class WebLinksDataTable(Actionable, DataTable, inherit_bindings=False):  # type:
         self.add_columns(*['Title', 'URL'])
         for index, link in enumerate(self.__links):
             self.add_row(*[link.text, link.url], key=str(index))
+
+
+class UserMentionOverlay(Vertical):
+    """The inline overlay that hosts the mention search input.
+
+    It is an ancestor of the search `Input`, so its `escape` binding takes precedence over the screen's
+    `escape` binding and cancels the picker instead of closing the whole screen.
+    """
+
+    BINDINGS = [Binding('escape', 'cancel', 'Cancel', show=False)]
+
+    class Cancelled(Message):
+        """Posted when the user cancels the mention picker."""
+
+    def action_cancel(self) -> None:
+        self.post_message(self.Cancelled())

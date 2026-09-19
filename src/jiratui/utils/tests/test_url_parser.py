@@ -47,6 +47,8 @@ You can also use **reference-style links** like this: Check out [this resource][
 [1]: https://www.example.com/resource
 
 Or simply drop URLs inline without any formatting at all: https://www.rust-lang.org or www.golang.org
+
+hello@jira.com
 """
 
 
@@ -64,8 +66,8 @@ def test_extract_web_links_from_markdown():
             'title': 'https://www.example.com',
         },
         {
-            'url': 'https://www.github.com,',
-            'title': 'www.github.com,',
+            'url': 'https://www.github.com',
+            'title': 'GitHub',
         },
         {
             'url': 'https://www.wikipedia.org',
@@ -94,10 +96,6 @@ def test_extract_web_links_from_markdown():
         {
             'url': 'https://www.medium.com',
             'title': 'https://www.medium.com',
-        },
-        {
-            'url': 'https://www.github.com',
-            'title': 'GitHub',
         },
         {
             'url': 'https://github.com/some-project',

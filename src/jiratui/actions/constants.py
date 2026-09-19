@@ -49,6 +49,7 @@ class SupportedActions(Enum):
     FOCUS_SEARCH_WORK_ITEM_TYPE_FILTER = 'focus_search_work_item_type_filter'
     FOCUS_WORK_ITEM_ATTACHMENTS_TAB = 'focus_work_item_attachments_tab'
     FOCUS_WORK_ITEM_COMMENTS_TAB = 'focus_work_item_comments_tab'
+    FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS = 'focus_work_item_details_filter_status'
     FOCUS_WORK_ITEM_DETAILS_TAB = 'focus_work_item_details_tab'
     FOCUS_WORK_ITEM_INFORMATION_TAB = 'focus_work_item_information_tab'
     FOCUS_WORK_ITEM_LINKS_TAB = 'focus_work_item_links_tab'
@@ -82,6 +83,7 @@ class SupportedActions(Enum):
     VIEW_CONTENT = 'view_content'
     VIEW_WORKLOG = 'view_worklog'
     VIEW_WORK_ITEM = 'view_work_item'
+    OPEN_USER_MENTION_PICKER = 'open_user_mention_picker'
 
 
 KEY_BINDINGS_LEGACY = {
@@ -521,6 +523,18 @@ KEY_BINDINGS_LEGACY = {
         'description': 'Focus previous tab',
         'tooltip': 'Focus previous tab',
     },
+    SupportedActions.OPEN_USER_MENTION_PICKER.value: {
+        'keys': ['ctrl+@'],
+        'show': False,
+        'description': 'User Picker',
+        'tooltip': 'User Picker',
+    },
+    SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value: {
+        'keys': ['z'],
+        'show': False,
+        'description': 'Focuses the work item status dropdown',
+        'tooltip': 'Focuses the work item status dropdown',
+    },
 }
 
 KEY_BINDINGS_STANDARD = {
@@ -879,7 +893,7 @@ KEY_BINDINGS_STANDARD = {
         'keys': ['ctrl+e'],
         'show': True,
         'description': '\u270e',
-        'tooltip': 'Open text editor',
+        'tooltip': 'Open external editor',
     },
     SupportedActions.VIEW_CONTENT.value: {
         'keys': ['v'],
@@ -974,5 +988,17 @@ KEY_BINDINGS_STANDARD = {
         'show': False,
         'description': 'Focus previous tab',
         'tooltip': 'Focus previous tab',
+    },
+    SupportedActions.OPEN_USER_MENTION_PICKER.value: {
+        'keys': ['ctrl+@'],
+        'show': False,
+        'description': 'User Picker',
+        'tooltip': 'User Picker',
+    },
+    SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value: {
+        'keys': ['alt+z'],
+        'show': False,
+        'description': 'Focuses the work item status dropdown',
+        'tooltip': 'Focuses the work item status dropdown',
     },
 }

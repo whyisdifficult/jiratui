@@ -625,7 +625,7 @@ async def test_save_excludes_reporter_when_not_editable(
         assert dismiss_args['status'] == '1'
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_reporter_when_editable(
@@ -704,7 +704,7 @@ async def test_save_includes_reporter_when_editable(
 
 
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_additional_fields_with_adf_support_enabled(
@@ -770,7 +770,7 @@ async def test_save_includes_additional_fields_with_adf_support_enabled(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_sprint_selected(
@@ -828,7 +828,7 @@ async def test_save_with_support_for_sprint_selection_sprint_selected(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_selection_no_sprint_selected(
@@ -886,7 +886,7 @@ async def test_save_with_support_for_sprint_selection_no_sprint_selected(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_provided(
@@ -944,7 +944,7 @@ async def test_save_with_support_for_sprint_input_sprint_provided(
 @patch('jiratui.widgets.create_work_item.factory._uses_cloud_api')
 @patch.object(AddWorkItemScreen, '_validate_required_fields')
 @patch.object(AddWorkItemScreen, '_get_sprints_in_project')
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_with_support_for_sprint_input_sprint_not_provided(
@@ -999,7 +999,7 @@ async def test_save_with_support_for_sprint_input_sprint_not_provided(
         assert 'customfield_10020' not in dismiss_args
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
 @patch.object(APIController, 'get_issue_create_metadata')
 @pytest.mark.asyncio
 async def test_save_includes_additional_fields_with_adf_support_disabled(
@@ -1105,7 +1105,7 @@ async def test_save_includes_additional_fields_with_adf_support_disabled(
         assert dismiss_args['customfield_10147'] == 'Some value for the ADF field'
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
 @pytest.mark.asyncio
 async def test_description_widget_with_adf_support(app, create_metadata_with_editable_reporter):
     async with app.run_test() as pilot:
@@ -1116,7 +1116,7 @@ async def test_description_widget_with_adf_support(app, create_metadata_with_edi
         assert isinstance(screen.description_field, ADFMarkdownTextAreaWidget)
 
 
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
 @pytest.mark.asyncio
 async def test_description_widget_without_adf_support(app, create_metadata_with_editable_reporter):
     async with app.run_test() as pilot:
@@ -3117,14 +3117,120 @@ async def test_press_cancel_dismisses_screen_without_data(
 
 
 @patch.object(APIController, 'get_issue_create_metadata')
-@patch.object(TextAreaTabbedContent, '_edit_text_content')
+@patch.object(TextAreaTabbedContent, '_open_as_temporary_file')
 @patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
 @patch.object(AddWorkItemScreen, 'fetch_available_projects')
 @pytest.mark.asyncio
-async def test_press_edit_on_description_widget_calls_edit_text_content(
+async def test_press_edit_on_description_widget_calls_open_as_temporary_file_when_editor_set(
     fetch_available_projects_mock: AsyncMock,
     fetch_available_issue_types_mock: AsyncMock,
-    edit_text_content_mock: Mock,
+    open_as_temporary_file_mock: Mock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    app.config.text_editor = 'vim'
+    open_as_temporary_file_mock.return_value = 'hello'
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('b')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('ctrl+e')
+        # THEN
+        open_as_temporary_file_mock.assert_called_once_with('vim', '')
+        assert screen.textarea_fields_tabbed_content._get_textarea_widget().text == 'hello'
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(TextAreaTabbedContent, '_open_as_temporary_file')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_press_edit_on_description_widget_does_not_call_open_as_temporary_file_when_no_editor_set(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    open_as_temporary_file_mock: Mock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    app.config.text_editor = None
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')
+        await pilot.press('b')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press('ctrl+e')
+        # THEN
+        open_as_temporary_file_mock.assert_not_called()
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_typing_at_opens_mention_overlay(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
     get_issue_create_metadata_mock: AsyncMock,
     app,
 ):
@@ -3152,17 +3258,326 @@ async def test_press_edit_on_description_widget_calls_edit_text_content(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
+        await pilot.press('tab')  # focus project dropdown
+        await pilot.press('tab')  # focus issue type dropdown
+        await pilot.press('tab')  # focus reporter
+        await pilot.press('tab')  # focus assignee
+        await pilot.press('tab')  # focus summary
         await pilot.press('a')
-        await pilot.press('tab')
+        await pilot.press('tab')  # focus parent
         await pilot.press('b')
+        await pilot.press('tab')  # focus status dropdown
+        await pilot.press('tab')  # focus description tab
         await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('ctrl+e')
+        await pilot.press('@')
+        await pilot.pause()
+        # THEN the mention overlay opens
+        assert screen._mention_overlay_open is True
+        assert len(screen.query('#mention-overlay')) == 1
+        assert screen.description_field.text == '@'
+        assert isinstance(screen.focused, JiraUserInput)
+
+
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_typing_at_after_word_does_not_open_overlay(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        for _i in range(0, 5):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')  # focus parent
+        await pilot.press('b')
+        for _i in range(0, 3):
+            await pilot.press('tab')  # focus status dropdown/description tab
+        # the user types an email-like sequence (no word boundary before '@')
+        for key in ['b', 'a', 'r', 't', 'at']:
+            await pilot.press(key)
+        # THEN the overlay is not opened
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.description_field.text == 'bart@'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_mention_overlay_not_opened_when_adf_disabled(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN the user types '@' but ADF is not supported (e.g. Jira DC / API v2)
+        for _i in range(0, 5):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')  # focus parent
+        await pilot.press('b')
+        for _i in range(0, 3):
+            await pilot.press('tab')  # focus status dropdown/description tab
+        await pilot.press('@')
+        await pilot.pause()
+        # THEN no overlay opens and the '@' remains as literal text
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.description_field.text == '@'
+        assert isinstance(screen.focused, PlainTextTextAreaWidget)
+
+
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_selecting_user_inserts_mention_token(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+    from jiratui.widgets.commons.users import UserMentionAutoComplete
+
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN a user is selected from the mention autocomplete
+        for _i in range(0, 5):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')  # focus parent
+        await pilot.press('b')
+        for _i in range(0, 3):
+            await pilot.press('tab')  # focus status dropdown/description tab
+        await pilot.press('at')
+        await pilot.pause()
+        assert screen._mention_overlay_open is True
+        screen.post_message(
+            UserMentionAutoComplete.UserSelected(
+                account_id='557058:abc-123', display_name='Homer Simpson'
+            )
+        )
+        await pilot.pause()
+        # THEN the trigger '@' is replaced by a mention token and the overlay closes
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.description_field.text == '@[Homer Simpson](557058:abc-123)'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_cancelling_mention_restores_literal_at(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    app,
+):
+
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN a user is selected from the mention autocomplete
+        for _i in range(0, 5):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('tab')
+        await pilot.press('a')
+        await pilot.press('tab')  # focus parent
+        await pilot.press('b')
+        for _i in range(0, 3):
+            await pilot.press('tab')  # focus status dropdown/description tab
+        await pilot.press('at')
+        await pilot.pause()
+        # WHEN the user cancels the mention picker with Escape
+        await pilot.press('escape')
+        await pilot.pause()
+        # THEN the overlay closes, the literal '@' remains and the screen is not popped
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.description_field.text == '@'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(AddWorkItemScreen, '_open_user_mention_picker')
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_on_mention_requested_opens_user_picker_when_adf_support_enabled(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    open_user_mention_picker_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        screen.post_message(ADFMarkdownTextAreaWidget.MentionRequested(location=(0, 0)))
+        await pilot.pause()
         # THEN
-        edit_text_content_mock.assert_called_once_with('')
+        open_user_mention_picker_mock.assert_called_once_with(trigger_location=(0, 0))
+
+
+@patch.object(AddWorkItemScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(AddWorkItemScreen, '_open_user_mention_picker')
+@patch.object(APIController, 'get_issue_create_metadata')
+@patch.object(AddWorkItemScreen, 'fetch_available_issue_types')
+@patch.object(AddWorkItemScreen, 'fetch_available_projects')
+@pytest.mark.asyncio
+async def test_on_mention_requested_does_not_open_user_picker_when_adf_support_disabled(
+    fetch_available_projects_mock: AsyncMock,
+    fetch_available_issue_types_mock: AsyncMock,
+    get_issue_create_metadata_mock: AsyncMock,
+    open_user_mention_picker_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    fetch_available_projects_mock.return_value = APIControllerResponse(
+        result=[Project(id='1', name='P1', key='P1')]
+    )
+    fetch_available_issue_types_mock.return_value = APIControllerResponse(
+        result=[IssueType(id='1', name='Task')]
+    )
+    get_issue_create_metadata_mock.return_value = APIControllerResponse(
+        result={
+            'fields': [
+                {
+                    'fieldId': 'description',
+                    'name': 'Description',
+                    'required': True,
+                    'operations': ['set'],
+                },
+            ]
+        }
+    )
+    async with app.run_test() as pilot:
+        screen = AddWorkItemScreen(project_key='P1', reporter_account_id='user123')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        screen.post_message(ADFMarkdownTextAreaWidget.MentionRequested(location=(0, 0)))
+        await pilot.pause()
+        # THEN
+        open_user_mention_picker_mock.assert_not_called()

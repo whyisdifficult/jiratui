@@ -92,6 +92,8 @@ context.
 | `x`          | Delete attachment                                      | Attachments Tab                                                         |
 | `x`          | Empty recent history                                   | Recent History Screen                                                   |
 | `o`          | Open resource in the browser                           | Search results table, Worklog, Recent history screen, Quick view screen |
+| `alt+z`      | Focus the status dropdown when editing items details                        | Details Tab                                                             |
+| `ctrl+@`     | Allows searching users to mention in comments and work item textarea fields | Create work item screen, Comments Tab                                               |
 
 ## Legacy Style
 
@@ -168,6 +170,8 @@ context.
 | `^u`, `n`               | Attach a file to a work item                             |         |
 | `^o`                    | Open attachment                                          |         |
 | `d`                     | Delete attachment                                        |         |
+| `z`      | Focus the status dropdown when editing items details                        | Details Tab                                                             |
+| `ctrl+@`     | Allows searching users to mention in comments and work item textarea fields | Create work item screen, Comments Tab                                               |
 
 
 # Searching Work Items

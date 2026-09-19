@@ -32,8 +32,6 @@ The application launches and guides you through the process.
 The screen of the configuration manager
 ```
 
-
-
 ## Authoring the Config File Manually
 
 The application uses the [XDG specification](https://specifications.freedesktop.org/basedir-spec/latest/) to locate
