@@ -298,9 +298,10 @@ def create_dynamic_widgets_for_updating_work_item(
                 if metadata.field_id in work_item.get_custom_fields():
                     value = work_item.get_custom_field_value(metadata.field_id)
 
+                    current_value = value
                     # extract the language code if it's a dict with 'languageCode' key
                     if value and isinstance(value, dict) and 'languageCode' in value:
-                        value = value['languageCode']
+                        current_value = value['languageCode']
 
                     # parse options from allowedValues if available
                     options = AllowedValuesParser.parse_options(field.get('allowedValues', []))
@@ -308,7 +309,7 @@ def create_dynamic_widgets_for_updating_work_item(
                         mode=FieldMode.UPDATE,
                         metadata=metadata,
                         options=options,
-                        current_value=value,
+                        current_value=current_value,
                     )
             elif schema_custom_type == CustomFieldType.SPRINT.value:
                 if _uses_cloud_api():
