@@ -996,7 +996,7 @@ KEY_BINDINGS_STANDARD = {
         'tooltip': 'User Picker',
     },
     SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value: {
-        'keys': ['z'],
+        'keys': ['alt+z'],
         'show': False,
         'description': 'Focuses the work item status dropdown',
         'tooltip': 'Focuses the work item status dropdown',

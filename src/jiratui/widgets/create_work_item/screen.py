@@ -998,7 +998,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
             except NoMatches:
                 return None
 
-    # logic related to user mentions
+    # logic related to user mentions in textarea widgets
 
     @on(UserMentionOverlay.Cancelled)
     async def _on_mention_cancelled(self, message: UserMentionOverlay.Cancelled) -> None:

@@ -374,6 +374,12 @@ def test_standard_action_open_user_mention_picker():
     }
 
 
+def test_standard_action_focus_status_dropdown_in_work_item_details():
+    assert KEY_BINDINGS_STANDARD.get(
+        SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value
+    ).get('keys') == ['alt+z']
+
+
 # Legacy Binding Style
 
 
@@ -729,3 +735,9 @@ def test_legacy_action_open_user_mention_picker():
     ) == {
         'ctrl+@',
     }
+
+
+def test_legacy_action_focus_status_dropdown_in_work_item_details():
+    assert KEY_BINDINGS_LEGACY.get(
+        SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value
+    ).get('keys') == ['z']

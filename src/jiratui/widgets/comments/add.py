@@ -121,7 +121,7 @@ class AddCommentScreen(Actionable, Screen[str]):
     def handle_cancel(self) -> None:
         self.dismiss('')
 
-    # logic related to user mentions
+    # logic related to user mentions in textarea widgets
     @property
     def _adf_support_enabled(self) -> bool:
         return self.app.config.cloud and self.app.config.jira_api_version == 3  # type:ignore[attr-defined]
