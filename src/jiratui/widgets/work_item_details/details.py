@@ -168,6 +168,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         SupportedActions.SAVE_CONTENT,
         SupportedActions.VIEW_WORKLOG,
         SupportedActions.FLAG_WORK_ITEM,
+        SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -414,6 +415,12 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         self.mount_all(
             [assignee_autocomplete, reporter_autocomplete, work_item_parent_key_autocomplete]
         )
+        if self.app.config.show_keybinding_hints:  # type:ignore[attr-defined]
+            self.issue_status_selector.border_subtitle = (
+                get_application_key_bindings()
+                .get(SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value, {})
+                .get('keys', [])[0]
+            )
 
     async def _search_work_item_parent_options(self, query: str) -> list[JiraIssue] | None:
         """Searches and retrieves work items to fill in the autocomplete suggestions for parent key.
@@ -497,6 +504,10 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
 
         if self.issue:
             self.app.push_screen(WorkItemWorkLogScreen(self.issue.key, self.issue.time_tracking))
+
+    def action_focus_work_item_details_filter_status(self) -> None:
+        if dropdown := self.issue_status_selector:
+            dropdown.focus()
 
     async def _refresh_work_item_details(self) -> None:
         """Fetches the details of the work item to retrieve the latest changes and update the details form.

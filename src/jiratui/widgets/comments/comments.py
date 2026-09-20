@@ -297,7 +297,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
 
                 hg = HorizontalGroup()
                 hg.compose_add_child(
-                    Link('Open Link', url=url, tooltip='view comment in the browser')
+                    Link('Open in Browser', url=url, tooltip='view comment in the browser')
                 )
                 hg.compose_add_child(Static(f' | Last Update: {comment.updated_on()}'))
 

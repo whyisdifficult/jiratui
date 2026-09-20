@@ -10,9 +10,10 @@ Running tests for this module:
 """
 
 from typing import cast
-from unittest.mock import AsyncMock, Mock, PropertyMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from textual.binding import Binding
 from textual.widget import Widget
 from textual.widgets import DataTable
 
@@ -30,19 +31,19 @@ from jiratui.models import (
     RelatedJiraIssue,
 )
 from jiratui.utils.history import HistoryEntry, HistoryManager
+from jiratui.utils.ui_actions import UIAction
 from jiratui.widgets.attachments.attachments import (
     AttachmentsDataTable,
     IssueAttachmentsWidget,
     WorkItemAttachments,
 )
+from jiratui.widgets.comments.add import AddCommentScreen
 from jiratui.widgets.comments.comments import (
     CommentCollapsible,
     IssueCommentsWidget,
     WorkItemComments,
 )
-from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.users import JiraUserInput
-from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget
 from jiratui.widgets.create_work_item.screen import AddWorkItemScreen, TextAreaTabbedContent
 from jiratui.widgets.filters import (
     ActiveSprintCheckbox,
@@ -1297,74 +1298,6 @@ async def test_action_open_text_editor_from_add_work_item_screen(
     app.config.pre_defined_jql_expressions = None
     async with app.run_test() as pilot:
         app.push_screen(AddWorkItemScreen())
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press(bindings.get('open_text_editor', {}).get('keys', [])[0])
-        # THEN
-        action_open_text_editor_mock.assert_called_once()
-
-
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=True))
-@patch.object(ADFMarkdownTextAreaWidget, 'action_open_text_editor')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_action_open_text_editor_with_adf_support_enabled_from_add_work_item_screen_focused_on_textarea(
-    fetch_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    action_open_text_editor_mock: Mock,
-    bindings: dict,
-    app,
-):
-    # test action save_content from the screen that creates new work items
-    # GIVEN
-    app.config.pre_defined_jql_expressions = None
-    async with app.run_test() as pilot:
-        app.push_screen(AddWorkItemScreen())
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press('tab')
-        await pilot.press(bindings.get('open_text_editor', {}).get('keys', [])[0])
-        # THEN
-        action_open_text_editor_mock.assert_called_once()
-
-
-@patch.object(AddWorkItemScreen, 'adf_support_enabled', PropertyMock(return_value=False))
-@patch.object(PlainTextTextAreaWidget, 'action_open_text_editor')
-@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
-@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
-@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
-@pytest.mark.asyncio
-async def test_action_open_text_editor_without_adf_support_enabled_from_add_work_item_screen_focused_on_textarea(
-    fetch_projects_mock: AsyncMock,
-    fetch_issue_types_mock: AsyncMock,
-    fetch_statuses_mock: AsyncMock,
-    action_open_text_editor_mock: Mock,
-    bindings: dict,
-    app,
-):
-    # test action save_content from the screen that creates new work items
-    # GIVEN
-    app.config.pre_defined_jql_expressions = None
-    async with app.run_test() as pilot:
-        app.push_screen(AddWorkItemScreen())
-        await pilot.press('tab')
         await pilot.press('tab')
         await pilot.press('tab')
         await pilot.press('tab')
@@ -5045,3 +4978,689 @@ async def test_action_select_cursor_in_history_screen(
         await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
         # THEN
         action_select_cursor_mock.assert_called_once()
+
+
+def test_add_comment_screen_actions_and_bindings(bindings: dict):
+    assert AddCommentScreen.ACTIONS == [
+        UIAction(
+            action='open_user_mention_picker',
+            keys=bindings.get('open_user_mention_picker', {}).get('keys', []),
+            description='User Picker',
+            show=False,
+            tooltip='User Picker',
+        ),
+    ]
+    assert AddCommentScreen.BINDINGS == [
+        Binding(
+            key=bindings.get('open_user_mention_picker', {}).get('keys', [])[0],
+            action='open_user_mention_picker',
+            description='User Picker',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='User Picker',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_main_screen_actions_and_bindings(bindings: dict):
+    assert MainScreen.ACTIONS == [
+        UIAction(
+            action='focus_project_filter',
+            keys=bindings.get('focus_project_filter', {}).get('keys', []),
+            description='Focuses the project dropdown',
+            show=False,
+            tooltip='Focuses the project dropdown',
+        ),
+        UIAction(
+            action='focus_search_work_item_type_filter',
+            keys=bindings.get('focus_search_work_item_type_filter', {}).get('keys', []),
+            description='Focuses the work item types dropdown',
+            show=False,
+            tooltip='Focuses the work item types dropdown',
+        ),
+        UIAction(
+            action='focus_search_work_item_status_filter',
+            keys=bindings.get('focus_search_work_item_status_filter', {}).get('keys', []),
+            description='Focuses the work item statuses dropdown',
+            show=False,
+            tooltip='Focuses the work item statuses dropdown',
+        ),
+        UIAction(
+            action='focus_search_assignee_filter',
+            keys=bindings.get('focus_search_assignee_filter', {}).get('keys', []),
+            description='Focuses the assignee dropdown',
+            show=False,
+            tooltip='Focuses the assignee dropdown',
+        ),
+        UIAction(
+            action='focus_search_work_item_key_filter',
+            keys=bindings.get('focus_search_work_item_key_filter', {}).get('keys', []),
+            description='Focuses the work item key search input',
+            show=False,
+            tooltip='Focuses the work item key search input',
+        ),
+        UIAction(
+            action='focus_search_created_from_filter',
+            keys=bindings.get('focus_search_created_from_filter', {}).get('keys', []),
+            description='Focuses the created-from search input',
+            show=False,
+            tooltip='Focuses the created-from search input',
+        ),
+        UIAction(
+            action='focus_search_created_until_filter',
+            keys=bindings.get('focus_search_created_until_filter', {}).get('keys', []),
+            description='Focuses the created-until search input',
+            show=False,
+            tooltip='Focuses the created-until search input',
+        ),
+        UIAction(
+            action='focus_search_sort_filter',
+            keys=bindings.get('focus_search_sort_filter', {}).get('keys', []),
+            description='Focuses the sorting search input',
+            show=False,
+            tooltip='Focuses the sorting search input',
+        ),
+        UIAction(
+            action='focus_search_sprint_filter',
+            keys=bindings.get('focus_search_sprint_filter', {}).get('keys', []),
+            description='Focuses the active-sprint search input',
+            show=False,
+            tooltip='Focuses the active-sprint search input',
+        ),
+        UIAction(
+            action='focus_search_jql',
+            keys=bindings.get('focus_search_jql', {}).get('keys', []),
+            description='Focuses the JQL search input',
+            show=False,
+            tooltip='Focuses the JQL search input',
+        ),
+        UIAction(
+            action='focus_search_results',
+            keys=bindings.get('focus_search_results', {}).get('keys', []),
+            description='Focuses the search results table',
+            show=False,
+            tooltip='Focuses the search results table',
+        ),
+        UIAction(
+            action='focus_work_item_information_tab',
+            keys=bindings.get('focus_work_item_information_tab', {}).get('keys', []),
+            description='Focuses the work item information tab',
+            show=False,
+            tooltip='Focuses the work item information tab',
+        ),
+        UIAction(
+            action='focus_work_item_details_tab',
+            keys=bindings.get('focus_work_item_details_tab', {}).get('keys', []),
+            description='Focuses the work item details tab',
+            show=False,
+            tooltip='Focuses the work item details tab',
+        ),
+        UIAction(
+            action='focus_work_item_comments_tab',
+            keys=bindings.get('focus_work_item_comments_tab', {}).get('keys', []),
+            description='Focuses the work item comments tab',
+            show=False,
+            tooltip='Focuses the work item comments tab',
+        ),
+        UIAction(
+            action='focus_work_item_related_tab',
+            keys=bindings.get('focus_work_item_related_tab', {}).get('keys', []),
+            description='Focuses the related work items tab',
+            show=False,
+            tooltip='Focuses the related work items tab',
+        ),
+        UIAction(
+            action='focus_work_item_attachments_tab',
+            keys=bindings.get('focus_work_item_attachments_tab', {}).get('keys', []),
+            description='Focuses the attachments tab',
+            show=False,
+            tooltip='Focuses the attachments tab',
+        ),
+        UIAction(
+            action='focus_work_item_links_tab',
+            keys=bindings.get('focus_work_item_links_tab', {}).get('keys', []),
+            description='Focuses the web links tab',
+            show=False,
+            tooltip='Focuses the web links tab',
+        ),
+        UIAction(
+            action='focus_work_item_subtasks_tab',
+            keys=bindings.get('focus_work_item_subtasks_tab', {}).get('keys', []),
+            description='Focuses the work item subtasks tab',
+            show=False,
+            tooltip='Focuses the work item subtasks tab',
+        ),
+        UIAction(
+            action='copy_issue_key',
+            keys=bindings.get('copy_issue_key', {}).get('keys', []),
+            description='⎘ Key',
+            show=True,
+            tooltip='Copy the work item key',
+        ),
+        UIAction(
+            action='copy_issue_url',
+            keys=bindings.get('copy_issue_url', {}).get('keys', []),
+            description='⎘ URL',
+            show=True,
+            tooltip='Copy the work item URL',
+        ),
+        UIAction(
+            action='search',
+            keys=bindings.get('search', {}).get('keys', []),
+            description='\uf002',
+            show=True,
+            tooltip='Search work items',
+        ),
+        UIAction(
+            action='find_by_text',
+            keys=bindings.get('find_by_text', {}).get('keys', []),
+            description='Full-Text Search',
+            show=True,
+            tooltip='Perform a full-text search of work items',
+        ),
+        UIAction(
+            action='create_work_item',
+            keys=bindings.get('create_work_item', {}).get('keys', []),
+            description='New Item',
+            show=True,
+            tooltip='Creates a new work item',
+        ),
+        UIAction(
+            action='show_recent_history',
+            keys=bindings.get('show_recent_history', {}).get('keys', []),
+            description='Recent',
+            show=True,
+            tooltip='Shows the recent history',
+        ),
+        UIAction(
+            action='create_git_branch',
+            keys=bindings.get('create_git_branch', {}).get('keys', []),
+            description='Git',
+            show=True,
+            tooltip='Creates a Git branch for a work item',
+        ),
+    ]
+    assert MainScreen.BINDINGS == [
+        Binding(
+            key=bindings.get('focus_project_filter', {}).get('keys', [])[0],
+            action='focus_project_filter',
+            description='Focuses the project dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the project dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_work_item_type_filter', {}).get('keys', [])[0],
+            action='focus_search_work_item_type_filter',
+            description='Focuses the work item types dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item types dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_work_item_status_filter', {}).get('keys', [])[0],
+            action='focus_search_work_item_status_filter',
+            description='Focuses the work item statuses dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item statuses dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_assignee_filter', {}).get('keys', [])[0],
+            action='focus_search_assignee_filter',
+            description='Focuses the assignee dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the assignee dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_work_item_key_filter', {}).get('keys', [])[0],
+            action='focus_search_work_item_key_filter',
+            description='Focuses the work item key search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item key search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_created_from_filter', {}).get('keys', [])[0],
+            action='focus_search_created_from_filter',
+            description='Focuses the created-from search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the created-from search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_created_until_filter', {}).get('keys', [])[0],
+            action='focus_search_created_until_filter',
+            description='Focuses the created-until search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the created-until search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_sort_filter', {}).get('keys', [])[0],
+            action='focus_search_sort_filter',
+            description='Focuses the sorting search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the sorting search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_sprint_filter', {}).get('keys', [])[0],
+            action='focus_search_sprint_filter',
+            description='Focuses the active-sprint search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the active-sprint search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_jql', {}).get('keys', [])[0],
+            action='focus_search_jql',
+            description='Focuses the JQL search input',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the JQL search input',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_search_results', {}).get('keys', [])[0],
+            action='focus_search_results',
+            description='Focuses the search results table',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the search results table',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0],
+            action='focus_work_item_information_tab',
+            description='Focuses the work item information tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item information tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_details_tab', {}).get('keys', [])[0],
+            action='focus_work_item_details_tab',
+            description='Focuses the work item details tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item details tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0],
+            action='focus_work_item_comments_tab',
+            description='Focuses the work item comments tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item comments tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_related_tab', {}).get('keys', [])[0],
+            action='focus_work_item_related_tab',
+            description='Focuses the related work items tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the related work items tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_attachments_tab', {}).get('keys', [])[0],
+            action='focus_work_item_attachments_tab',
+            description='Focuses the attachments tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the attachments tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_links_tab', {}).get('keys', [])[0],
+            action='focus_work_item_links_tab',
+            description='Focuses the web links tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the web links tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('focus_work_item_subtasks_tab', {}).get('keys', [])[0],
+            action='focus_work_item_subtasks_tab',
+            description='Focuses the work item subtasks tab',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item subtasks tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('copy_issue_key', {}).get('keys', [])[0],
+            action='copy_issue_key',
+            description='⎘ Key',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Copy the work item key',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('copy_issue_url', {}).get('keys', [])[0],
+            action='copy_issue_url',
+            description='⎘ URL',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Copy the work item URL',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('search', {}).get('keys', [])),
+            action='search',
+            description='\uf002',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Search work items',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('find_by_text', {}).get('keys', [])[0],
+            action='find_by_text',
+            description='Full-Text Search',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Perform a full-text search of work items',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('create_work_item', {}).get('keys', [])[0],
+            action='create_work_item',
+            description='New Item',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Creates a new work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('show_recent_history', {}).get('keys', [])[0],
+            action='show_recent_history',
+            description='Recent',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Shows the recent history',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('create_git_branch', {}).get('keys', [])[0],
+            action='create_git_branch',
+            description='Git',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Creates a Git branch for a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_textarea_tabbed_content_actions_bindings(bindings: dict):
+    assert TextAreaTabbedContent.ACTIONS == [
+        UIAction(
+            action='open_text_editor',
+            keys=bindings.get('open_text_editor', {}).get('keys', []),
+            description='✎',
+            show=True,
+            tooltip='Open external editor',
+        ),
+    ]
+    assert TextAreaTabbedContent.BINDINGS == [
+        Binding(
+            key=bindings.get('open_text_editor', {}).get('keys', [])[0],
+            action='open_text_editor',
+            description='✎',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Open external editor',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_add_work_item_screen_actions_bindings(bindings: dict):
+    assert AddWorkItemScreen.ACTIONS == [
+        UIAction(
+            action='save_content',
+            keys=bindings.get('save_content', {}).get('keys', []),
+            description='\uf0c7',
+            show=True,
+            tooltip='Save the text content of a resource',
+        ),
+        UIAction(
+            action='open_user_mention_picker',
+            keys=bindings.get('open_user_mention_picker', {}).get('keys', []),
+            description='User Picker',
+            show=False,
+            tooltip='User Picker',
+        ),
+    ]
+    assert AddWorkItemScreen.BINDINGS == [
+        Binding(
+            key=bindings.get('save_content', {}).get('keys', [])[0],
+            action='save_content',
+            description='\uf0c7',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Save the text content of a resource',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=bindings.get('open_user_mention_picker', {}).get('keys', [])[0],
+            action='open_user_mention_picker',
+            description='User Picker',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='User Picker',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_issue_details_widget_actions_and_bindings(bindings: dict):
+    assert IssueDetailsWidget.ACTIONS == [
+        UIAction(
+            action='save_content',
+            keys=bindings.get('save_content', {}).get('keys', []),
+            description='\uf0c7',
+            show=True,
+            tooltip='Save the text content of a resource',
+        ),
+        UIAction(
+            action='view_worklog',
+            keys=bindings.get('view_worklog', {}).get('keys', []),
+            description='⌚',
+            show=True,
+            tooltip='View the worklog of a work item',
+        ),
+        UIAction(
+            action='flag_work_item',
+            keys=bindings.get('flag_work_item', {}).get('keys', []),
+            description='★',
+            show=True,
+            tooltip='Flag a work item',
+        ),
+        UIAction(
+            action='focus_work_item_details_filter_status',
+            keys=bindings.get('focus_work_item_details_filter_status', {}).get('keys', []),
+            description='Focuses the work item status dropdown',
+            show=False,
+            tooltip='Focuses the work item status dropdown',
+        ),
+    ]
+    assert IssueDetailsWidget.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get('save_content', {}).get('keys', [])),
+            action='save_content',
+            description='\uf0c7',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Save the text content of a resource',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('view_worklog', {}).get('keys', [])),
+            action='view_worklog',
+            description='⌚',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='View the worklog of a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('flag_work_item', {}).get('keys', [])),
+            action='flag_work_item',
+            description='★',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Flag a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get('focus_work_item_details_filter_status', {}).get('keys', [])),
+            action='focus_work_item_details_filter_status',
+            description='Focuses the work item status dropdown',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Focuses the work item status dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]

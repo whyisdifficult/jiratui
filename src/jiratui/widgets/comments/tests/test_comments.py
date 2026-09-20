@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
 
@@ -137,12 +137,13 @@ async def test_sets_comments_with_empty_list(mock_configuration, app):
 
 @pytest.mark.asyncio
 async def test_open_screen_to_add_comment_without_existing_comments(app):
-    async with app.run_test():
+    async with app.run_test() as pilot:
         widget = IssueCommentsWidget()
         await app.screen.mount(widget)
         widget.comments = WorkItemComments(work_item_key='WI-1')
         # WHEN
         widget.action_add_comment()
+        await pilot.pause()  # for the on_mount method
         # THEN
         assert isinstance(app.screen, AddCommentScreen)
 
@@ -163,7 +164,7 @@ async def test_open_screen_to_add_comment_without_existing_comments_and_without_
 async def test_open_screen_to_add_comment_with_existing_comments(mock_configuration, app):
     # GIVEN
     mock_configuration.jira_base_url = 'http://foo.bar'
-    async with app.run_test():
+    async with app.run_test() as pilot:
         widget = IssueCommentsWidget()
         await app.screen.mount(widget)
         widget.comments = WorkItemComments(
@@ -178,6 +179,7 @@ async def test_open_screen_to_add_comment_with_existing_comments(mock_configurat
         )
         # WHEN
         widget.action_add_comment()
+        await pilot.pause()  # for the on_mount method
         # THEN
         assert isinstance(app.screen, AddCommentScreen)
 
@@ -384,3 +386,94 @@ async def test_delete_comment_comments_left_without_getting_comments(
         delete_comment_mock.assert_called_once_with('WI-1', '1')
         get_comments_mock.assert_not_called()
         assert len(widget.children) == 1
+
+
+@pytest.mark.asyncio
+async def test_typing_at_opens_mention_overlay(app):
+    async with app.run_test() as pilot:
+        # GIVEN the add-comment screen (app fixture is Cloud + API v3, so mentions are enabled)
+        screen = AddCommentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN the user types '@' at the start of the comment (a word boundary)
+        await pilot.press('at')
+        await pilot.pause()
+        # THEN the mention overlay opens
+        assert screen._mention_overlay_open is True
+        assert len(screen.query('#mention-overlay')) == 1
+        assert screen.comment_textarea.text == '@'
+
+
+@pytest.mark.asyncio
+async def test_typing_at_after_word_does_not_open_overlay(app):
+    async with app.run_test() as pilot:
+        screen = AddCommentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN the user types an email-like sequence (no word boundary before '@')
+        for key in ['b', 'a', 'r', 't', 'at']:
+            await pilot.press(key)
+        await pilot.pause()
+        # THEN the overlay is not opened
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.comment_textarea.text == 'bart@'
+
+
+@patch.object(AddCommentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_mention_overlay_not_opened_when_adf_disabled(app):
+    async with app.run_test() as pilot:
+        screen = AddCommentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        # WHEN the user types '@' but ADF is not supported (e.g. Jira DC / API v2)
+        await pilot.press('at')
+        await pilot.pause()
+        # THEN no overlay opens and the '@' remains as literal text
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.comment_textarea.text == '@'
+
+
+@pytest.mark.asyncio
+async def test_selecting_user_inserts_mention_token(app):
+    from jiratui.widgets.commons.users import UserMentionAutoComplete
+
+    async with app.run_test() as pilot:
+        screen = AddCommentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.press('at')
+        await pilot.pause()
+        assert screen._mention_overlay_open is True
+        # WHEN a user is selected from the mention autocomplete
+        screen.post_message(
+            UserMentionAutoComplete.UserSelected(
+                account_id='557058:abc-123', display_name='Homer Simpson'
+            )
+        )
+        await pilot.pause()
+        # THEN the trigger '@' is replaced by a mention token and the overlay closes
+        assert screen.comment_textarea.text == '@[Homer Simpson](557058:abc-123)'
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+
+
+@pytest.mark.asyncio
+async def test_cancelling_mention_restores_literal_at(app):
+    async with app.run_test() as pilot:
+        screen = AddCommentScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.press('at')
+        await pilot.pause()
+        assert screen._mention_overlay_open is True
+        # WHEN the user cancels the mention picker with Escape
+        await pilot.press('escape')
+        await pilot.pause()
+        # THEN the overlay closes, the literal '@' remains and the screen is not popped
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.comment_textarea.text == '@'
+        assert isinstance(app.screen, AddCommentScreen)

@@ -36,6 +36,7 @@ from jiratui.widgets.commons.widgets import (
 from jiratui.widgets.screen import WorkItemSearchResult
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
 from jiratui.widgets.work_item_details.fields import (
+    IssueDetailsStatusSelection,
     IssueSprintField,
     WorkItemDetailsDueDate,
 )
@@ -1934,6 +1935,97 @@ async def test_action_view_worklog_no_issue_set(app: JiraApp):
         details_widget.action_view_worklog()
         # THEN
         assert not isinstance(app.screen, WorkItemWorkLogScreen)
+
+
+@patch.object(APIController, 'search_users_assignable_to_issue')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_focus_work_item_details_status_filter(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('z')
+        assert isinstance(app.focused, IssueDetailsStatusSelection)
+
+
+@pytest.mark.parametrize('show_keybinding_hints, border_subtitle', [(True, 'z'), (False, None)])
+@patch.object(APIController, 'search_users_assignable_to_issue')
+@patch.object(APIController, 'get_issue')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_show_keybind_hint_for_status_selector(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    search_users_assignable_to_issue_mock: AsyncMock,
+    show_keybinding_hints: bool,
+    border_subtitle: str,
+    jira_issues: list[JiraIssue],
+    app,
+):
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.show_issue_web_links = False
+    app.config.show_keybinding_hints = show_keybinding_hints
+    async with app.run_test() as pilot:
+        # GIVEN
+        search_work_items_mock.return_value = WorkItemSearchResult(
+            total=2,
+            response=JiraIssueSearchResponse(
+                issues=jira_issues, next_page_token=None, is_last=None
+            ),
+        )
+        get_issue_mock.return_value = APIControllerResponse(
+            result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+        )
+        # WHEN
+        await pilot.press('ctrl+r')
+        await pilot.press('down')
+        await pilot.press('enter')
+        await pilot.press('3')
+        await pilot.press('tab')
+        await pilot.press('z')
+        assert isinstance(app.focused, IssueDetailsStatusSelection)
+        assert app.focused.border_subtitle == border_subtitle
 
 
 @pytest.mark.asyncio

@@ -38,6 +38,7 @@ The selected user's account ID can be retrieved via the `account_id` property of
 import logging
 from typing import Callable
 
+from textual.message import Message
 from textual.reactive import Reactive, reactive
 from textual.widgets import Input
 from textual_autocomplete import AutoComplete, DropdownItem, TargetState
@@ -245,3 +246,27 @@ class UsersAutoComplete(AutoComplete):
         value = value.split('|', 1)[0]
         super().apply_completion(value, state)
         self.target.account_id = account_id  # type:ignore[attr-defined]
+
+
+class UserMentionAutoComplete(UsersAutoComplete):
+    """A [UsersAutoComplete](#jiratui.widgets.commons.users.UsersAutoComplete) that announces the picked user.
+
+    The base class stores the selected user's account id on the target input but does not emit a message; this
+    subclass posts a [UserSelected](#jiratui.widgets.comments.add.MentionAutoComplete.UserSelected) message so
+    the screen can build and insert the mention token.
+    """
+
+    class UserSelected(Message):
+        """Posted when a user is chosen from the mention autocomplete dropdown."""
+
+        def __init__(self, account_id: str, display_name: str) -> None:
+            self.account_id = account_id
+            self.display_name = display_name
+            super().__init__()
+
+    def apply_completion(self, value: str, state: TargetState) -> None:
+        super().apply_completion(value, state)
+        account_id: str | None = getattr(self.target, 'account_id', None)
+        display_name = (self.target.value or '').split('|', 1)[0].strip()
+        if account_id and display_name:
+            self.post_message(self.UserSelected(account_id=account_id, display_name=display_name))
