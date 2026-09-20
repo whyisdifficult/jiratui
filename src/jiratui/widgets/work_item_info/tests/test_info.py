@@ -961,3 +961,31 @@ async def test_update_field_update_issue_raises_error(
             jira_issues_with_custom_fields[0], {'description': 'abcd'}
         )
         send_work_item_updated_message_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_hide_info_widgets_when_no_issue_is_displayed(app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = WorkItemInfoContainer()
+        await app.mount(widget)
+        await pilot.pause()
+        # THEN
+        assert widget.work_item_info_content_container.display is False
+
+
+@pytest.mark.asyncio
+async def test_show_info_widgets_when_issue_is_displayed(
+    jira_issues_with_custom_fields, app: JiraApp
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.mount(widget)
+        await pilot.pause()
+        # WHEN
+        widget.issue = jira_issues_with_custom_fields[0]
+        await app.workers.wait_for_complete()
+        # THEN
+        assert widget.work_item_info_content_container.display is True

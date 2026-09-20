@@ -166,7 +166,7 @@ class WorkItemInfoContainer(Vertical):
         return self.query_one('#work-item-info-loading-container', expect_type=Center)
 
     @property
-    def content_container(self) -> VerticalGroup:
+    def work_item_info_content_container(self) -> VerticalGroup:
         return self.query_one('#work-item-info-content', expect_type=VerticalGroup)
 
     @property
@@ -181,8 +181,9 @@ class WorkItemInfoContainer(Vertical):
         with Center(id='work-item-info-loading-container') as loading_container:
             loading_container.display = False
             yield LoadingIndicator()
-        with VerticalGroup(id='work-item-info-content') as vg:
-            vg.can_focus = False
+        with VerticalGroup(id='work-item-info-content') as work_item_info_content:
+            work_item_info_content.can_focus = False
+            work_item_info_content.display = False
             yield Static(id='issue_summary', markup=False)
             yield Rule()
             with VerticalScroll(id='tabs-container', classes='work-item-info-tabs-container'):
@@ -197,6 +198,7 @@ class WorkItemInfoContainer(Vertical):
         self.issue_summary_widget.update('')
         self.issue_summary_widget.visible = False
         self.query_one(Rule).visible = False
+        self.work_item_info_content_container.display = False
 
     async def _setup_work_item_description(self, work_item: JiraIssue) -> None:
         """Sets up the TextAreaTabPane widget that holds and display the work item's description field.
@@ -325,6 +327,8 @@ class WorkItemInfoContainer(Vertical):
                         await pane.mount(WebLinksCollapsible(WebLinksDataTable(web_links)))
                     await pane.mount(widget)
 
+            self.work_item_info_content_container.display = True
+
     def _build_textarea_widgets(
         self,
         work_item: JiraIssue,
@@ -443,12 +447,12 @@ class WorkItemInfoContainer(Vertical):
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
         self.loading_container.display = True
-        self.content_container.display = False
+        self.work_item_info_content_container.display = False
 
     def hide_loading(self) -> None:
         """Hides the loading indicator and shows content."""
         self.loading_container.display = False
-        self.content_container.display = True
+        self.work_item_info_content_container.display = True
 
     def _open_as_temporary_file(self, command: str, content: str) -> str:
         editor_args: list[str] = shlex.split(command)
