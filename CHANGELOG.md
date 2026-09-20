@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.15.0] [unreleased]
 
 ### Added
 
@@ -27,6 +27,7 @@ token that is submitted as an ADF `mention` node. By [@whyisdifficult](https://g
 - Bump `python-json-logger` to `v4.2.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
 - Show/Hide details form and use a striped background. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/358
 - Show/Hide info tab widgets and use a striped background. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/358
+- Add tests for actions and bindings. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/359
 
 ### Bug Fixes
 
