@@ -296,7 +296,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         return self.query_one('#work-item-details-loading-container', expect_type=Center)
 
     @property
-    def content_container(self) -> VerticalScroll:
+    def issue_details_form_container(self) -> VerticalScroll:
         return self.query_one('#issue-details-form', expect_type=VerticalScroll)
 
     @property
@@ -318,13 +318,13 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
         self.loading_container.display = True
-        self.content_container.display = False
+        self.issue_details_form_container.display = False
         self.work_item_flag_widget.display = False
 
     def hide_loading(self) -> None:
         """Hides the loading indicator and shows content."""
         self.loading_container.display = False
-        self.content_container.display = True
+        self.issue_details_form_container.display = True
 
     def compose(self) -> ComposeResult:
         with Center(id='work-item-details-loading-container') as loading_container:
@@ -332,7 +332,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             yield LoadingIndicator()
         with Right():
             yield WorkItemFlagField()  # row 0
-        with VerticalScroll(id='issue-details-form'):
+        with VerticalScroll(id='issue-details-form') as user_details_form_container:
+            user_details_form_container.display = False
             with StaticFieldsWidgets():
                 # set widgets in row 1
                 yield IssueSummaryField()  # row 1 - cols 3
@@ -581,6 +582,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             self.time_tracking_container.remove_children()
             # clear all the dynamically-generated widgets
             self.dynamic_fields_widgets_container.remove_children()
+            self.issue_details_form_container.display = False
 
     def _setup_time_tracking(self, time_tracking_data: TimeTracking | None = None) -> None:
         self.time_tracking_container.remove_children(TimeTrackingWidget)
@@ -1013,6 +1015,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         if self._enable_updating_additional_fields:
             # add dynamic widgets to support updating custom fields and other system fields
             self.run_worker(self._add_dynamic_widgets(work_item))
+
+        self.issue_details_form_container.display = True
 
     async def _add_dynamic_widgets(self, work_item: JiraIssue) -> None:
         """Builds and mounts a list of (dynamic) widgets to support updating (some) system and custom field types.

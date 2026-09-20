@@ -148,6 +148,10 @@ IssueCommentsWidget {
 
 /*  Work Item Details */
 
+IssueDetailsWidget {
+    hatch: right $success 20%;
+}
+
 #issue-details-form {
     scrollbar-size-vertical: 1;
 }
