@@ -1036,6 +1036,10 @@ JQLEditorScreen > Vertical {
 
 /* Work Item Information (description, summary and custom fields) */
 
+WorkItemInfoContainer {
+    hatch: right $success 20%;
+}
+
 .textarea-collapsible {
     border: round $secondary-lighten-3;
     background: transparent;

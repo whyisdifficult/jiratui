@@ -26,6 +26,7 @@ token that is submitted as an ADF `mention` node. By [@whyisdifficult](https://g
 - Bump `click` to `v8.5.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
 - Bump `python-json-logger` to `v4.2.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/353
 - Show/Hide details form and use a striped background. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/358
+- Show/Hide info tab widgets and use a striped background. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/358
 
 ### Bug Fixes
 
