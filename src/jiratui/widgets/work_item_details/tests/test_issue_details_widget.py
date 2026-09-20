@@ -2289,3 +2289,29 @@ async def test_set_issue_with_support_for_sprint_selection(
             )
             is not None
         )
+
+
+@pytest.mark.asyncio
+async def test_hide_details_form_when_no_issue_is_displayed(app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        # WHEN
+        widget = IssueDetailsWidget()
+        await app.mount(widget)
+        await pilot.pause()
+        # THEN
+        assert widget.issue_details_form_container.display is False
+
+
+@pytest.mark.asyncio
+async def test_show_details_form_when_issue_is_displayed(jira_issue, app: JiraApp):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = IssueDetailsWidget()
+        await app.mount(widget)
+        await pilot.pause()
+        # WHEN
+        widget.issue = jira_issue
+        await app.workers.wait_for_complete()
+        # THEN
+        assert widget.issue_details_form_container.display is True
