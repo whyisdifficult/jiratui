@@ -5878,7 +5878,9 @@ def test_related_issue_collapsible_actions_and_bindings(bindings: dict):
         UIAction(
             action=SupportedActions.VIEW_WORK_ITEM.value,
             keys=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('keys', []),
-            description='ℹ',
+            description=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get(
+                'description', ''
+            ),
             show=True,
             tooltip='View details of a work item',
         ),
@@ -5894,7 +5896,7 @@ def test_related_issue_collapsible_actions_and_bindings(bindings: dict):
             keys=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', []),
             description='Related',
             show=True,
-            tooltip='View items related to the currently selected work item',
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', ''),
         ),
     ]
     assert RelatedIssueCollapsible.BINDINGS == [
