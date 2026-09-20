@@ -17,6 +17,7 @@ from textual.binding import Binding
 from textual.widget import Widget
 from textual.widgets import DataTable
 
+from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import (
@@ -5659,6 +5660,428 @@ def test_issue_details_widget_actions_and_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='Focuses the work item status dropdown',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_attachment_datatable_actions_and_bindings(bindings: dict):
+    assert AttachmentsDataTable.ACTIONS == [
+        UIAction(
+            action=SupportedActions.OPEN_ATTACHMENT.value,
+            keys=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get('keys', []),
+            description=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get(
+                'description', ''
+            ),
+            show=True,
+            tooltip='Open attachment',
+        ),
+        UIAction(
+            action=SupportedActions.DELETE_ATTACHMENT.value,
+            keys=bindings.get(SupportedActions.DELETE_ATTACHMENT.value, {}).get('keys', []),
+            description='✖',
+            show=True,
+            tooltip='Delete attachment',
+        ),
+        UIAction(
+            action=SupportedActions.SELECT_CURSOR.value,
+            keys=bindings.get(SupportedActions.SELECT_CURSOR.value, {}).get('keys', []),
+            description='Select the item under the cursor',
+            show=False,
+            tooltip='Select the item under the cursor',
+        ),
+        UIAction(
+            action=SupportedActions.CURSOR_UP.value,
+            keys=bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', []),
+            description='Move up',
+            show=False,
+            tooltip='Move up',
+        ),
+        UIAction(
+            action=SupportedActions.CURSOR_DOWN.value,
+            keys=bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', []),
+            description='Move down',
+            show=False,
+            tooltip='Move down',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_UP.value,
+            keys=bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', []),
+            description='Move 1 page up',
+            show=False,
+            tooltip='Move 1 page up',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_DOWN.value,
+            keys=bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', []),
+            description='Move 1 page down',
+            show=False,
+            tooltip='Move 1 page down',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_TOP.value,
+            keys=bindings.get(SupportedActions.SCROLL_TOP.value, {}).get('keys', []),
+            description='Scroll to the top',
+            show=False,
+            tooltip='Scroll to the top',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_BOTTOM.value,
+            keys=bindings.get(SupportedActions.SCROLL_BOTTOM.value, {}).get('keys', []),
+            description='Scroll to the bottom',
+            show=False,
+            tooltip='Scroll to the bottom',
+        ),
+    ]
+    assert AttachmentsDataTable.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get('keys', [])),
+            action=SupportedActions.OPEN_ATTACHMENT.value,
+            description=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get(
+                'description', ''
+            ),
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Open attachment',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(
+                bindings.get(SupportedActions.DELETE_ATTACHMENT.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.DELETE_ATTACHMENT.value,
+            description='✖',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Delete attachment',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SELECT_CURSOR.value, {}).get('keys', [])),
+            action=SupportedActions.SELECT_CURSOR.value,
+            description='Select the item under the cursor',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Select the item under the cursor',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_UP.value,
+            description='Move up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_DOWN.value,
+            description='Move down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_UP.value,
+            description='Move 1 page up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_DOWN.value,
+            description='Move 1 page down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_TOP.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_TOP.value,
+            description='Scroll to the top',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the top',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            action=SupportedActions.SCROLL_BOTTOM.value,
+            key=','.join(bindings.get(SupportedActions.SCROLL_BOTTOM.value, {}).get('keys', [])),
+            description='Scroll to the bottom',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the bottom',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_issue_attachment_actions_and_bindings(bindings: dict):
+    assert IssueAttachmentsWidget.ACTIONS == [
+        UIAction(
+            action=SupportedActions.ADD_ATTACHMENT.value,
+            keys=bindings.get(SupportedActions.ADD_ATTACHMENT.value, {}).get('keys', []),
+            description='✚',
+            show=True,
+            tooltip='Attach a file to a work item',
+        ),
+    ]
+    assert IssueAttachmentsWidget.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.ADD_ATTACHMENT.value, {}).get('keys', [])),
+            action=SupportedActions.ADD_ATTACHMENT.value,
+            description='✚',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Attach a file to a work item',
+            id=None,
+            system=False,
+            group=None,
+        )
+    ]
+
+
+def test_related_issue_collapsible_actions_and_bindings(bindings: dict):
+    assert RelatedIssueCollapsible.ACTIONS == [
+        UIAction(
+            action=SupportedActions.VIEW_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('keys', []),
+            description=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get(
+                'description', ''
+            ),
+            show=True,
+            tooltip='View details of a work item',
+        ),
+        UIAction(
+            action=SupportedActions.UNLINK_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.UNLINK_WORK_ITEM.value, {}).get('keys', []),
+            description='✖',
+            show=True,
+            tooltip='Delete a link between work items',
+        ),
+        UIAction(
+            action=SupportedActions.OPEN_GO_TO_SCREEN.value,
+            keys=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', []),
+            description='Related',
+            show=True,
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', ''),
+        ),
+    ]
+    assert RelatedIssueCollapsible.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('keys', [])),
+            action=SupportedActions.VIEW_WORK_ITEM.value,
+            description=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get(
+                'description', ''
+            ),
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('tooltip', ''),
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.UNLINK_WORK_ITEM.value, {}).get('keys', [])),
+            action=SupportedActions.UNLINK_WORK_ITEM.value,
+            description='✖',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Delete a link between work items',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(
+                bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.OPEN_GO_TO_SCREEN.value,
+            description=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get(
+                'description', ''
+            ),
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', ''),
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_related_issues_actions_and_bindings(bindings: dict):
+    assert RelatedIssuesWidget.ACTIONS == [
+        UIAction(
+            action=SupportedActions.LINK_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.LINK_WORK_ITEM.value, {}).get('keys', []),
+            description='✚',
+            show=True,
+            tooltip='Create a link between work items',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_UP.value,
+            keys=bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', []),
+            description='Move 1 page up',
+            show=False,
+            tooltip='Move 1 page up',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_DOWN.value,
+            keys=bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', []),
+            description='Move 1 page down',
+            show=False,
+            tooltip='Move 1 page down',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_HOME.value,
+            keys=bindings.get(SupportedActions.SCROLL_HOME.value, {}).get('keys', []),
+            description='Scroll to the beginning',
+            show=False,
+            tooltip='Scroll to the beginning',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_END.value,
+            keys=bindings.get(SupportedActions.SCROLL_END.value, {}).get('keys', []),
+            description='Scroll to the end',
+            show=False,
+            tooltip='Scroll to the end',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_UP.value,
+            keys=bindings.get(SupportedActions.SCROLL_UP.value, {}).get('keys', []),
+            description='Scroll up the page',
+            show=False,
+            tooltip='Scroll up the page',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_DOWN.value,
+            keys=bindings.get(SupportedActions.SCROLL_DOWN.value, {}).get('keys', []),
+            description='Scroll down the page',
+            show=False,
+            tooltip='Scroll down the page',
+        ),
+    ]
+    assert RelatedIssuesWidget.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.LINK_WORK_ITEM.value, {}).get('keys', [])),
+            action=SupportedActions.LINK_WORK_ITEM.value,
+            description='✚',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Create a link between work items',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_UP.value,
+            description='Move 1 page up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_DOWN.value,
+            description='Move 1 page down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_HOME.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_HOME.value,
+            description='Scroll to the beginning',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the beginning',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            action=SupportedActions.SCROLL_END.value,
+            key=','.join(bindings.get(SupportedActions.SCROLL_END.value, {}).get('keys', [])),
+            description='Scroll to the end',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the end',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_UP.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_UP.value,
+            description='Scroll up the page',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll up the page',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_DOWN.value,
+            description='Scroll down the page',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll down the page',
             id=None,
             system=False,
             group=None,
