@@ -5672,7 +5672,9 @@ def test_attachment_datatable_actions_and_bindings(bindings: dict):
         UIAction(
             action=SupportedActions.OPEN_ATTACHMENT.value,
             keys=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get('keys', []),
-            description='↗',
+            description=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get(
+                'description', ''
+            ),
             show=True,
             tooltip='Open attachment',
         ),
@@ -5737,7 +5739,9 @@ def test_attachment_datatable_actions_and_bindings(bindings: dict):
         Binding(
             key=','.join(bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get('keys', [])),
             action=SupportedActions.OPEN_ATTACHMENT.value,
-            description='↗',
+            description=bindings.get(SupportedActions.OPEN_ATTACHMENT.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
@@ -5903,11 +5907,13 @@ def test_related_issue_collapsible_actions_and_bindings(bindings: dict):
         Binding(
             key=','.join(bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('keys', [])),
             action=SupportedActions.VIEW_WORK_ITEM.value,
-            description='ℹ',
+            description=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
-            tooltip='View details of a work item',
+            tooltip=bindings.get(SupportedActions.VIEW_WORK_ITEM.value, {}).get('tooltip', ''),
             id=None,
             system=False,
             group=None,
@@ -5929,11 +5935,13 @@ def test_related_issue_collapsible_actions_and_bindings(bindings: dict):
                 bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', [])
             ),
             action=SupportedActions.OPEN_GO_TO_SCREEN.value,
-            description='Related',
+            description=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
-            tooltip='View items related to the currently selected work item',
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', ''),
             id=None,
             system=False,
             group=None,
