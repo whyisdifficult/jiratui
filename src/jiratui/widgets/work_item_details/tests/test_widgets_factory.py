@@ -1338,3 +1338,38 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_without_usin
         assert widget.disabled is True
         assert widget.border_subtitle is None
         assert widget.border_title == 'Sprint'
+
+
+@pytest.mark.parametrize('sprint_value', ['Server Sprint', ['Server Sprint']])
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_server_sprint_as_string(
+    uses_cloud_api_mock,
+    sprint_value: str | list[str],
+    work_item: JiraIssue,
+    app: JiraApp,
+):
+    uses_cloud_api_mock.return_value = False
+    work_item.edit_meta['fields'] = {
+        'customfield_10020': {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'json',
+                'custom': 'com.pyxis.greenhopper.jira:gh-sprint',
+                'customId': 10020,
+            },
+            'name': 'Sprint',
+            'key': 'customfield_10020',
+            'operations': ['set'],
+            'fieldId': 'customfield_10020',
+        }
+    }
+    work_item.custom_fields['customfield_10020'] = sprint_value
+
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], IssueSprintField)
+        assert widgets[0].value == 'Server Sprint'

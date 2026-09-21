@@ -350,7 +350,10 @@ def create_dynamic_widgets_for_updating_work_item(
                     widget = IssueSprintField()
                     if metadata.field_id in work_item.get_custom_fields():
                         if value := work_item.get_custom_field_value(metadata.field_id):
-                            widget.value = value[0].get('name')
+                            sprint = value[0] if isinstance(value, list) else value
+                            widget.value = (
+                                sprint.get('name') if isinstance(sprint, dict) else str(sprint)
+                            )
         else:
             # process the non-custom fields based on the schema type
             if schema.get('system', '').lower() == 'labels':
