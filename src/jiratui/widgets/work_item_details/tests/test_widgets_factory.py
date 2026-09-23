@@ -1340,12 +1340,35 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_without_usin
         assert widget.border_title == 'Sprint'
 
 
-@pytest.mark.parametrize('sprint_value', ['Server Sprint', ['Server Sprint']])
+@pytest.mark.parametrize(
+    ('sprint_value', 'expected_value'),
+    [
+        ('Server Sprint', 'Server Sprint'),
+        (['Server Sprint'], 'Server Sprint'),
+        (
+            [
+                'com.atlassian.greenhopper.service.sprint.Sprint@4c101cbb['
+                'id=2504,rapidViewId=1082,state=ACTIVE,name=Server Sprint,'
+                'startDate=2026-09-01T09:00:00.000Z,endDate=2026-09-15T09:00:00.000Z,'
+                'completeDate=<null>,sequence=2483,goal=<null>]'
+            ],
+            'Server Sprint',
+        ),
+        (
+            'com.atlassian.greenhopper.service.sprint.Sprint@4c101cbb['
+            'id=2504,rapidViewId=1082,state=ACTIVE,name=Backend, Q3,'
+            'startDate=2026-09-01T09:00:00.000Z,endDate=2026-09-15T09:00:00.000Z,'
+            'completeDate=<null>,sequence=2483,goal=<null>]',
+            'Backend, Q3',
+        ),
+    ],
+)
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
 @pytest.mark.asyncio
 async def test_create_dynamic_widgets_server_sprint_as_string(
     uses_cloud_api_mock,
     sprint_value: str | list[str],
+    expected_value: str,
     work_item: JiraIssue,
     app: JiraApp,
 ):
@@ -1372,4 +1395,4 @@ async def test_create_dynamic_widgets_server_sprint_as_string(
 
         assert len(widgets) == 1
         assert isinstance(widgets[0], IssueSprintField)
-        assert widgets[0].value == 'Server Sprint'
+        assert widgets[0].value == expected_value
