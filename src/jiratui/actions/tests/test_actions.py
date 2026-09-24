@@ -3772,11 +3772,7 @@ async def test_action_edit_content_open_edit_screen_from_info_tab_without_adf_su
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = {
-        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
-        'type': 'doc',
-        'version': 1,
-    }
+    jira_issues[1].description = 'Hello'
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
@@ -4001,7 +3997,11 @@ async def test_action_copy_content_from_info_tab(
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
