@@ -3705,7 +3705,60 @@ async def test_action_edit_content_from_info_tab(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_action_edit_content_open_edit_screen_from_info_tab(
+async def test_action_edit_content_open_edit_screen_from_info_tab_without_adf_support(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    app.config.enable_updating_rich_text = True
+    app.config.text_editor = None
+    app.config.cloud = False  # to disable support for ADF
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    jira_issues[1].description = 'hello'
+    jira_issues[1].edit_meta = {
+        'fields': {
+            'description': {
+                'key': 'description',
+            }
+        }
+    }
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_info_container.issue = jira_issues[1]
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press(bindings.get('edit_content', {}).get('keys', [])[0])
+        # THEN
+        assert isinstance(app.screen, EditTextContentScreen)
+
+
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_edit_content_open_edit_screen_from_info_tab_with_adf_support(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -3731,7 +3784,11 @@ async def test_action_edit_content_open_edit_screen_from_info_tab(
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
@@ -3786,7 +3843,68 @@ async def test_action_save_content_in_edit_screen_from_info_tab(
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    jira_issues[1].edit_meta = {
+        'fields': {
+            'description': {
+                'key': 'description',
+            }
+        }
+    }
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_info_container.issue = jira_issues[1]
+        await pilot.press(bindings.get('focus_work_item_information_tab', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        await pilot.press('tab')
+        await pilot.press('tab')
+        await pilot.press(bindings.get('edit_content', {}).get('keys', [])[0])
+        await pilot.press(bindings.get('save_content', {}).get('keys', [])[0])
+        # THEN
+        action_save_content_mock.assert_called_once()
+
+
+@patch.object(EditTextContentScreen, 'action_save_content')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_save_content_in_edit_screen_from_info_tab_with_no_adf_support(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_save_content_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # test the action save_content on the screen that edits text content
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    app.config.enable_updating_rich_text = True
+    app.config.text_editor = None
+    app.config.cloud = False
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    app.config.pre_defined_jql_expressions = None
+    jira_issues[1].description = 'Hello'
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
@@ -6082,6 +6200,65 @@ def test_related_issues_actions_and_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='Scroll down the page',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_edit_text_content_screen_actions_and_bindings(bindings: dict):
+    assert EditTextContentScreen.ACTIONS == [
+        UIAction(
+            action=SupportedActions.SAVE_CONTENT.value,
+            keys=bindings.get(SupportedActions.SAVE_CONTENT.value, {}).get('keys', []),
+            description='\uf0c7',
+            show=True,
+            tooltip='Save the text content of a resource',
+        ),
+        UIAction(
+            action=SupportedActions.OPEN_USER_MENTION_PICKER.value,
+            keys=bindings.get(SupportedActions.OPEN_USER_MENTION_PICKER.value, {}).get('keys', []),
+            description='User Picker',
+            show=False,
+            tooltip='User Picker',
+        ),
+    ]
+    assert EditTextContentScreen.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SAVE_CONTENT.value, {}).get('keys', [])),
+            action=SupportedActions.SAVE_CONTENT.value,
+            description='\uf0c7',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Save the text content of a resource',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(
+                bindings.get(SupportedActions.OPEN_USER_MENTION_PICKER.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.OPEN_USER_MENTION_PICKER.value,
+            description='User Picker',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='User Picker',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
             id=None,
             system=False,
             group=None,
