@@ -1347,7 +1347,11 @@ async def test_action_add_comment(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1399,7 +1403,11 @@ async def test_action_page_up_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1451,7 +1459,11 @@ async def test_action_page_down_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1503,7 +1515,11 @@ async def test_action_scroll_home_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1555,7 +1571,11 @@ async def test_action_scroll_end_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1607,7 +1627,11 @@ async def test_action_scroll_up_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1660,7 +1684,11 @@ async def test_action_scroll_down_in_comments_tab(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -1713,7 +1741,11 @@ async def test_action_delete_comment(
         IssueComment(
             id='1',
             author=JiraUser(account_id='1', active=True, display_name='Bart'),
-            body='I will study',
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
         )
     ]
     app.config.pre_defined_jql_expressions = None
@@ -3627,7 +3659,11 @@ async def test_action_view_content_from_info_tab(
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
@@ -3679,7 +3715,11 @@ async def test_action_edit_content_from_info_tab(
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
@@ -3732,7 +3772,11 @@ async def test_action_edit_content_open_edit_screen_from_info_tab_without_adf_su
         end=1,
     )
     app.config.pre_defined_jql_expressions = None
-    jira_issues[1].description = 'hello'
+    jira_issues[1].description = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     jira_issues[1].edit_meta = {
         'fields': {
             'description': {
