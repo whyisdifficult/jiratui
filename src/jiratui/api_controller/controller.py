@@ -1553,7 +1553,9 @@ class APIController:
             )
             return {}
 
-    async def update_issue(self, issue: JiraIssue, updates: dict) -> APIControllerResponse:
+    async def update_issue(
+        self, issue: JiraIssue, updates: dict[str, Any]
+    ) -> APIControllerResponse:
         """Updates a work item.
 
         This method supports updating the following fields:
@@ -1756,7 +1758,11 @@ class APIController:
                 # rich text-based fields in Jira Cloud use ADF
                 try:
                     payload['fields'][JiraWorkItemFields.DESCRIPTION.value] = (
-                        convert_markdown_to_adf(updates.get(JiraWorkItemFields.DESCRIPTION.value))
+                        convert_markdown_to_adf(
+                            expand_mention_tokens(
+                                updates.get(JiraWorkItemFields.DESCRIPTION.value, '')
+                            )
+                        )
                     )
                 except Exception as e:
                     self.logger.error(
@@ -1788,7 +1794,11 @@ class APIController:
                 # rich text-based fields in Jira Cloud use ADF
                 try:
                     payload['fields'][JiraWorkItemFields.ENVIRONMENT.value] = (
-                        convert_markdown_to_adf(updates.get(JiraWorkItemFields.ENVIRONMENT.value))
+                        convert_markdown_to_adf(
+                            expand_mention_tokens(
+                                updates.get(JiraWorkItemFields.ENVIRONMENT.value, '')
+                            )
+                        )
                     )
                 except Exception as e:
                     self.logger.error(
@@ -1834,11 +1844,11 @@ class APIController:
                                 # rich text-based fields in Jira Cloud use ADF
                                 try:
                                     payload['fields'][field_id] = convert_markdown_to_adf(
-                                        field_value
+                                        expand_mention_tokens(field_value)
                                     )
                                 except Exception as e:
                                     self.logger.error(
-                                        'Failed to convert markdown to adf.',
+                                        'Failed to convert markdown to adf',
                                         extra={'field': field_id, 'details': str(e)},
                                     )
                                     raise UpdateWorkItemException(
@@ -2070,17 +2080,6 @@ class APIController:
             )
         return APIControllerResponse(result=comments)
 
-    def _convert_comment_message_to_adf(self, message: str) -> dict:
-        try:
-            return convert_markdown_to_adf(expand_mention_tokens(message))
-        except Exception as e:
-            self.logger.warning('Failed to convert Markdown to ADF: %s', str(e))
-            return {
-                'content': [{'content': [{'text': message, 'type': 'text'}], 'type': 'paragraph'}],
-                'type': 'doc',
-                'version': 1,
-            }
-
     async def add_comment(self, issue_key_or_id: str, message: str) -> APIControllerResponse:
         """Adds a comment to a work item.
 
@@ -2095,7 +2094,7 @@ class APIController:
             return APIControllerResponse(success=False, error='Missing required message.')
         try:
             if self._adf_support_enabled():
-                adf: dict = self._convert_comment_message_to_adf(message)
+                adf: dict = convert_markdown_to_adf(expand_mention_tokens(message))
                 response = await self.api.add_comment(issue_key_or_id, adf)
             else:
                 response = await self.api.add_comment(issue_key_or_id, message)

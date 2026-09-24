@@ -260,6 +260,7 @@ def create_widgets_for_work_item_creation(
                         title=item.get('name'),
                         required=required,
                     )
+                widget.add_class('create-work-item-description')
             else:
                 # the default widget for any other field
                 widget = TextInputWidget(

@@ -1513,7 +1513,6 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-        self.add_class('create-work-item-description')
 
     def get_value_for_update(self) -> str | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -1621,8 +1620,12 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
             original_value: the original value from Jira - always string.
         """
 
+        self.__original_value = original_value
+
         # initialize TextArea widget
-        super().__init__(text=original_value or '', id=field_id, compact=True, read_only=True)
+        super().__init__(
+            text=self.__original_value or '', id=field_id, compact=True, read_only=True
+        )
 
         self.field_id = field_id
         self._jira_field_key = jira_field_key
@@ -1634,6 +1637,10 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
             self.border_subtitle = '(*)'
             if hasattr(self, 'add_class'):
                 self.add_class('required')
+
+    @property
+    def original_value(self) -> str | None:
+        return self.__original_value
 
     @property
     def required(self) -> bool:

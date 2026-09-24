@@ -1076,20 +1076,50 @@ EditTextContentScreen {
     align: center middle;
     background: $background 80%;
 }
+
 EditTextContentScreen > Vertical {
     width: 80%;
-    height: 80%;
+    height: 90%;
     border: round $foreground;
     background: $background;
     padding: 0 1;
-    & > TextArea {
-        margin-top: 1;
+    & > ADFMarkdownTextAreaWidget {
         scrollbar-size-vertical: 1;
         border: round $primary;
         background: transparent;
+        box_sizing: border-box;
+        height: 1fr;
+        width: 100%;
+        margin-top: 0;
+        padding: 0 1;
+        &.required {
+            border: round $accent;
+        }
+        &:focus {
+            border: round $accent-lighten-3;
+        }
+    }
+    & > PlainTextTextAreaWidget {
+        scrollbar-size-vertical: 1;
+        border: round $primary;
+        background: transparent;
+        box_sizing: border-box;
+        height: 1fr;
+        width: 100%;
+        margin-top: 0;
+        padding: 0 1;
+        &.required {
+            border: round $accent;
+        }
+        &:focus {
+            border: round $accent-lighten-3;
+        }
     }
     & > ItemGrid {
         margin-top: 1;
+    }
+    & #user-mention-overlay-container {
+        height: auto;
     }
 }
 

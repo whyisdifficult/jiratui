@@ -414,6 +414,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                                     field_id='description',
                                     title='Description',
                                 )
+                            widget.add_class('create-work-item-description')
                             yield TextAreaTabPane('Description', widget)
                 # right-hand side panel
                 with Vertical():

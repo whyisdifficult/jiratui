@@ -70,8 +70,9 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
             original_value: the original value from Jira. It expects an ADF dict.
         """
 
+        self.__original_value = original_value
         # the Markdown text that we want to display; convert ADF to Markdown if needed
-        self.__markdown_text = self._convert_to_markdown(original_value)
+        self.__markdown_text = self._convert_to_markdown(self.__original_value)
 
         # initialize Markdown widget with converted text
         super().__init__(markdown=self.__markdown_text, id=field_id)
@@ -89,6 +90,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
 
         # add CSS class for styling
         self.add_class('adf-textarea-readonly')
+
+    @property
+    def original_value(self) -> dict | None:
+        return self.__original_value
 
     @property
     def required(self) -> bool:
@@ -255,7 +260,6 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-        self.add_class('create-work-item-description')
 
     def get_value_for_update(self) -> dict | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
