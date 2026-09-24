@@ -5,7 +5,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import Button, Footer, Label, MarkdownViewer, Static, TextArea
+from textual.widgets import Button, Footer, Label, MarkdownViewer, TextArea
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
@@ -20,7 +20,16 @@ from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget, UserMention
 
 
 class EditTextContentScreen(Actionable, Screen[dict]):
-    """A modal screen that displays a TextArea to allow users to edit Plain Text/Markdown content."""
+    """A modal screen that displays a TextArea to allow users to edit plain text/ADF content.
+
+    The screen does not save the changes. Instead, it can be dismissed with a dictionary that contains the changes
+    to save. The caller is responsible for saving the changes.
+
+    The screen supports the following actions:
+
+    - saving content
+    - mentioning users in the text content
+    """
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
@@ -120,7 +129,6 @@ class EditTextContentScreen(Actionable, Screen[dict]):
                     id='edit-description-button-quit',
                     classes='save-cancel-buttons',
                 )
-            yield Static()
         yield Footer(compact=True, show_command_palette=False)
 
     def on_mount(self):
