@@ -36,14 +36,14 @@ from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPa
 
 
 class WorkItemInfoContainer(Vertical):
-    """The container for all the widgets that store/show information (description and other text-based fields) of a
+    """The container for all the widgets that store/show information (description and other textarea-based fields) of a
     work item."""
 
     HELP = 'See Work Item Info section in the help'
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
-    """The issue whose information we want to display."""
+    """The work item whose information we want to display."""
     clear_information: Reactive[bool] = reactive(False, always_update=True)
-    """Reactive variable to clear the summary, description and extra fields."""
+    """Reactive variable to clear the summary, description and other textarea-based fields."""
 
     class WorkItemUpdated(Message):
         def __init__(self, work_item_key: str):

@@ -70,6 +70,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
             original_value: the original value from Jira. It expects an ADF dict.
         """
 
+        if original_value is not None:
+            if not isinstance(original_value, dict):
+                raise ValueError('original_value must be a dict with ADF content')
+
         self.__original_value = original_value
         # the Markdown text that we want to display; convert ADF to Markdown if needed
         self.__markdown_text = self._convert_to_markdown(self.__original_value)
@@ -167,7 +171,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
     **Features**:
 
     - Multi-line text input for fields with textarea custom type.
-    - ADF-to-Markdown and Markdown-toADF conversion.
+    - ADF-to-Markdown and Markdown-to-ADF conversion.
     - Mode-aware behavior (CREATE vs UPDATE)
     - Change tracking for UPDATE mode
     - Required field support
@@ -194,15 +198,29 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         jira_field_key='customfield_12345',
         field_id='customfield_12345',
         title='Custom Field A',
-        original_value='Original text',
+        original_value={
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        },
         field_supports_update=True,
     )
     # Check changes:
     widget.value_has_changed
     # Get value for API updates:
     widget.get_value_for_update()
+    {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     # Get value for API creation operations:
     widget.get_value_for_create()
+    {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     ```
     """
 
@@ -232,7 +250,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         markdown = ''
         if original_value is not None:
             if not isinstance(original_value, dict):
-                raise ValueError('original_value must be a dict')
+                raise ValueError('original_value must be a dict with ADF content')
 
             try:
                 markdown = convert_adf_to_markdown(original_value)
