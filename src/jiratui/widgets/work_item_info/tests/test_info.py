@@ -7,12 +7,18 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.app import JiraApp
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue
-from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget, ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
-from jiratui.widgets.commons.widgets import WebLinksCollapsible, WebLinksDataTable
+from jiratui.widgets.commons.users import JiraUserInput
+from jiratui.widgets.commons.widgets import (
+    PlainTextTextAreaWidget,
+    WebLinksCollapsible,
+    WebLinksDataTable,
+)
 from jiratui.widgets.work_item_info.info import (
     WorkItemInfoContainer,
 )
+from jiratui.widgets.work_item_info.screens import EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
 
 
@@ -989,3 +995,248 @@ async def test_show_info_widgets_when_issue_is_displayed(
         await app.workers.wait_for_complete()
         # THEN
         assert widget.work_item_info_content_container.display is True
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_typing_at_opens_mention_overlay(app):
+    # GIVEN
+    content_to_edit = {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        app.save_screenshot('screenshot.svg')
+        await pilot.press('@')
+        await pilot.pause()
+        # THEN the mention overlay opens
+        assert isinstance(screen.textarea, ADFMarkdownTextAreaWidget)
+        assert screen._mention_overlay_open is True
+        assert len(screen.query('#mention-overlay')) == 1
+        assert screen.textarea.text == '@Hello\n'
+        assert isinstance(screen.focused, JiraUserInput)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_typing_at_opens_mention_overlay_without_adf_support(app):
+    # GIVEN
+    content_to_edit = 'Hello '
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        await pilot.press('@')
+        await pilot.pause()
+        # THEN the mention overlay will not open
+        assert isinstance(screen.textarea, PlainTextTextAreaWidget)
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.textarea.text == '@Hello '
+        assert isinstance(screen.focused, PlainTextTextAreaWidget)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_typing_at_after_word_does_not_open_overlay_with_adf_support(app):
+    # GIVEN
+    content_to_edit = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        for _ in range(6):
+            await pilot.press('right')
+        # the user types an email-like sequence (no word boundary before '@')
+        for key in ['b', 'a', 'r', 't', 'at']:
+            await pilot.press(key)
+        # THEN the overlay is not opened
+        assert isinstance(screen.textarea, ADFMarkdownTextAreaWidget)
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.textarea.text == 'Hello bart@\n'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_typing_at_after_word_does_not_open_overlay_without_adf_support(app):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', 'Hello ')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN
+        for _ in range(6):
+            await pilot.press('right')
+        # the user types an email-like sequence (no word boundary before '@')
+        for key in ['b', 'a', 'r', 't', 'at']:
+            await pilot.press(key)
+        # THEN the overlay is not opened
+        assert isinstance(screen.textarea, PlainTextTextAreaWidget)
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.textarea.text == 'Hello bart@'
+        assert isinstance(screen.focused, PlainTextTextAreaWidget)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_selecting_user_inserts_mention_token_with_adf_support(
+    app,
+):
+    from jiratui.widgets.commons.users import UserMentionAutoComplete
+
+    # GIVEN
+    content_to_edit = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN a user is selected from the mention autocomplete
+        for _i in range(0, 6):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('right')
+        await pilot.press('at')
+        await pilot.pause()
+        app.save_screenshot('screenshot.svg')
+        assert screen._mention_overlay_open is True
+        screen.post_message(
+            UserMentionAutoComplete.UserSelected(
+                account_id='557058:abc-123', display_name='Bart Simpson'
+            )
+        )
+        await pilot.pause()
+        # THEN the trigger '@' is replaced by a mention token and the overlay closes
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.textarea.text == 'Hello @[Bart Simpson](557058:abc-123)\n'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_cancelling_mention_restores_literal_at_with_adf_support(app):
+
+    # GIVEN
+    content_to_edit = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        # WHEN a user is selected from the mention autocomplete
+        for _i in range(0, 6):
+            # focus project/issue type dropdown, reporter, assignee, summary
+            await pilot.press('right')
+        await pilot.press('at')
+        await pilot.pause()
+        # WHEN the user cancels the mention picker with Escape
+        await pilot.press('escape')
+        await pilot.pause()
+        # THEN the overlay closes, the literal '@' remains and the screen is not popped
+        assert screen._mention_overlay_open is False
+        assert len(screen.query('#mention-overlay')) == 0
+        assert screen.textarea.text == 'Hello @\n'
+        assert isinstance(screen.focused, ADFMarkdownTextAreaWidget)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(EditTextContentScreen, '_open_user_mention_picker')
+@pytest.mark.asyncio
+async def test_on_mention_requested_opens_user_picker_when_adf_support_enabled(
+    open_user_mention_picker_mock: AsyncMock, app
+):
+    # GIVEN
+    content_to_edit = {
+        'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', content_to_edit)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        screen.post_message(ADFMarkdownTextAreaWidget.MentionRequested(location=(0, 0)))
+        await pilot.pause()
+        # THEN
+        open_user_mention_picker_mock.assert_called_once_with(trigger_location=(0, 0))
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@patch.object(EditTextContentScreen, '_open_user_mention_picker')
+@pytest.mark.asyncio
+async def test_on_mention_requested_does_not_open_user_picker_when_adf_support_disabled(
+    open_user_mention_picker_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = EditTextContentScreen('WI-1', 'Title 1', 'Hello')
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        screen.post_message(ADFMarkdownTextAreaWidget.MentionRequested(location=(0, 0)))
+        await pilot.pause()
+        # THEN
+        open_user_mention_picker_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('content', ['Hello', ''])
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_edit_text_content_screen_requires_adf_when_adf_support_is_enabled(content, app):
+    # GIVEN
+    async with app.run_test():
+        # WHEN/THEN
+        with pytest.raises(ValueError, match='The content must be an ADF dict'):
+            EditTextContentScreen('WI-1', 'Title 1', content)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_edit_text_content_screen_does_not_require_adf_when_adf_support_is_enabled_and_content_is_none(
+    app,
+):
+    # GIVEN
+    async with app.run_test():
+        # WHEN/THEN
+        EditTextContentScreen('WI-1', 'Title 1', None)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_edit_text_content_screen_requires_string_when_adf_support_is_disabled(app):
+    # GIVEN
+    async with app.run_test():
+        # WHEN/THEN
+        with pytest.raises(ValueError, match='The content must be a string'):
+            EditTextContentScreen('WI-1', 'Title 1', 1)
+
+
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_edit_text_content_screen_does_not_require_string_when_adf_support_is_disabled_and_content_is_none(
+    app,
+):
+    # GIVEN
+    async with app.run_test():
+        # WHEN/THEN
+        EditTextContentScreen('WI-1', 'Title 1', None)

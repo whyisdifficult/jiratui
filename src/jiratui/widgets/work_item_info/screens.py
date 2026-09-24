@@ -20,7 +20,7 @@ from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget, UserMention
 
 
 class EditTextContentScreen(Actionable, Screen[dict]):
-    """A modal screen that displays a TextArea editor to allow users to edit Plain Text/Markdown content."""
+    """A modal screen that displays a TextArea to allow users to edit Plain Text/Markdown content."""
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
@@ -53,10 +53,18 @@ class EditTextContentScreen(Actionable, Screen[dict]):
     ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
     def __init__(
-        self, jira_field_key: str, title: str | None = None, raw_content: str | dict | None = None
+        self, jira_field_key: str, title: str | None = None, content: str | dict | None = None
     ):
         super().__init__()
-        self.__raw_content: str | dict | None = raw_content
+        if content is not None:
+            if self._adf_support_enabled:
+                if not isinstance(content, dict):
+                    raise ValueError('The content must be an ADF dict')
+            else:
+                if not isinstance(content, str):
+                    raise ValueError('The content must be a string')
+
+        self.__content: str | dict | None = content
         self.__jira_field_key = jira_field_key
         self.title = title or ''
         # used for user mentions in textarea widgets
@@ -89,9 +97,7 @@ class EditTextContentScreen(Actionable, Screen[dict]):
                     jira_field_key=self.__jira_field_key,
                     field_id=self.__jira_field_key,
                     title=self.title,
-                    original_value=cast(dict, self.__raw_content)
-                    if self.__raw_content is not None
-                    else None,
+                    original_value=self.__content,  # type:ignore[arg-type]
                 )
             else:
                 yield PlainTextTextAreaWidget(
@@ -99,9 +105,7 @@ class EditTextContentScreen(Actionable, Screen[dict]):
                     jira_field_key=self.__jira_field_key,
                     field_id=self.__jira_field_key,
                     title=self.title,
-                    original_value=cast(str, self.__raw_content)
-                    if self.__raw_content is not None
-                    else None,
+                    original_value=self.__content,  # type:ignore[arg-type]
                 )
             with ItemGrid(classes='edit-grid-buttons'):
                 yield Button(

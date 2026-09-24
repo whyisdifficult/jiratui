@@ -194,9 +194,11 @@ class WorkItemInfoContainer(Vertical):
             yield Static(id='issue_summary', markup=False)
             yield Rule()
             with VerticalScroll(id='tabs-container', classes='work-item-info-tabs-container'):
-                yield InfoTabbedContent(
-                    id='info-tabbed-content'
-                )  # Container for dynamic fields - textarea fields
+                # the container for dynamic widgets; for textarea-based fields
+                # this container contains TextAreaTabPane instances and each pane contains:
+                # - an (optional) WebLinksCollapsible
+                # - a ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | EmptyTextAreaStaticWidget
+                yield InfoTabbedContent(id='info-tabbed-content')
 
     def watch_issue(self, work_item: JiraIssue | None) -> None:
         self.run_worker(self._refresh_tabs_and_set_work_item(work_item))
