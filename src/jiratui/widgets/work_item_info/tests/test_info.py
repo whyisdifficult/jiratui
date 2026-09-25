@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
+from textual.containers import Vertical
 from textual.widgets import Rule, Static
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
@@ -15,10 +16,11 @@ from jiratui.widgets.commons.widgets import (
     WebLinksCollapsible,
     WebLinksDataTable,
 )
+from jiratui.widgets.screen import MainScreen
 from jiratui.widgets.work_item_info.info import (
     WorkItemInfoContainer,
 )
-from jiratui.widgets.work_item_info.screens import EditTextContentScreen
+from jiratui.widgets.work_item_info.screens import DisplayTextContentScreen, EditTextContentScreen
 from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPane
 
 
@@ -1230,3 +1232,186 @@ async def test_edit_text_content_screen_does_not_require_string_when_adf_support
     async with app.run_test():
         # WHEN/THEN
         EditTextContentScreen('WI-1', 'Title 1', None)
+
+
+@patch.object(EditTextContentScreen, 'textarea', PropertyMock(return_value=Mock()))
+@patch.object(
+    EditTextContentScreen, 'user_mention_overlay_container', PropertyMock(return_value=Vertical())
+)
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=True)
+)
+@patch.object(WorkItemInfoContainer, '_external_text_editor', PropertyMock(return_value=''))
+@pytest.mark.asyncio
+async def test_open_edit_text_content_screen_upon_receiving_edit_content_message(app):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.post_message(
+            InfoTabbedContent.EditContent(
+                jira_field_key='field_1',
+                content='Hello',
+                raw_content={
+                    'content': [
+                        {'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
+                title='Title',
+            )
+        )
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, EditTextContentScreen)
+
+
+@patch.object(WorkItemInfoContainer, '_update_field')
+@patch.object(WorkItemInfoContainer, '_open_as_temporary_file')
+@patch.object(EditTextContentScreen, 'textarea', PropertyMock(return_value=Mock()))
+@patch.object(
+    EditTextContentScreen, 'user_mention_overlay_container', PropertyMock(return_value=Vertical())
+)
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=True)
+)
+@patch.object(WorkItemInfoContainer, '_external_text_editor', PropertyMock(return_value='vim'))
+@pytest.mark.asyncio
+async def test_open_external_editor_upon_receiving_edit_content_message(
+    open_as_temporary_file: Mock, update_field: AsyncMock, app
+):
+    # GIVEN
+    open_as_temporary_file.return_value = ''
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.post_message(
+            InfoTabbedContent.EditContent(
+                jira_field_key='field_1',
+                content='Hello',
+                raw_content={
+                    'content': [
+                        {'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
+                title='Title',
+            )
+        )
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        open_as_temporary_file.assert_called_once_with('vim', 'Hello')
+        update_field.assert_called_once()
+
+
+@patch.object(WorkItemInfoContainer, '_update_field')
+@patch.object(WorkItemInfoContainer, '_open_as_temporary_file')
+@patch.object(EditTextContentScreen, 'textarea', PropertyMock(return_value=Mock()))
+@patch.object(
+    EditTextContentScreen, 'user_mention_overlay_container', PropertyMock(return_value=Vertical())
+)
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=False)
+)
+@patch.object(WorkItemInfoContainer, '_external_text_editor', PropertyMock(return_value=''))
+@pytest.mark.asyncio
+async def test_does_not_open_edit_text_content_screen_upon_receiving_edit_content_message(
+    open_as_temporary_file: Mock, update_field: AsyncMock, app
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.post_message(
+            InfoTabbedContent.EditContent(
+                jira_field_key='field_1',
+                content='Hello',
+                raw_content={
+                    'content': [
+                        {'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
+                title='Title',
+            )
+        )
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        open_as_temporary_file.assert_not_called()
+        update_field.assert_not_called()
+
+
+@patch.object(WorkItemInfoContainer, 'issue')
+@patch.object(WorkItemInfoContainer, '_update_field')
+@patch.object(WorkItemInfoContainer, '_open_as_temporary_file')
+@patch.object(EditTextContentScreen, 'textarea', PropertyMock(return_value=Mock()))
+@patch.object(
+    EditTextContentScreen, 'user_mention_overlay_container', PropertyMock(return_value=Vertical())
+)
+@patch.object(EditTextContentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=False)
+)
+@patch.object(WorkItemInfoContainer, '_external_text_editor', PropertyMock(return_value=''))
+@pytest.mark.asyncio
+async def test_does_not_open_edit_text_content_screen_upon_receiving_edit_content_message_when_no_issue_set(
+    open_as_temporary_file: Mock, update_field: AsyncMock, issue_mock: Mock, app
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        issue_mock.return_value = None
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.post_message(
+            InfoTabbedContent.EditContent(
+                jira_field_key='field_1',
+                content='Hello',
+                raw_content={
+                    'content': [
+                        {'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
+                title='Title',
+            )
+        )
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        open_as_temporary_file.assert_not_called()
+        update_field.assert_not_called()
+
+
+@patch.object(
+    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=True)
+)
+@patch.object(WorkItemInfoContainer, '_external_text_editor', PropertyMock(return_value=''))
+@pytest.mark.asyncio
+async def test_open_display_text_content_screen_upon_receiving_view_content_message(app):
+    # GIVEN
+    async with app.run_test() as pilot:
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        await app.workers.wait_for_complete()
+        # WHEN
+        widget.post_message(InfoTabbedContent.DisplayContent(content='Hello', title='Title'))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, DisplayTextContentScreen)
