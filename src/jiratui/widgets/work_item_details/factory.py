@@ -2,6 +2,7 @@
 item."""
 
 from enum import Enum
+import re
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
@@ -65,6 +66,22 @@ class WorkItemUnsupportedUpdateFieldKeys(Enum):
 def _uses_cloud_api() -> bool:
     config = CONFIGURATION.get()
     return config.cloud
+
+
+def _get_sprint_display_name(value: Any) -> str:
+    """Get the sprint name from Cloud JSON or Jira Server's legacy string representation."""
+    sprint = value[0] if isinstance(value, list) else value
+    if isinstance(sprint, dict):
+        return str(sprint.get('name', ''))
+
+    sprint_value = str(sprint)
+    match = re.search(
+        r'(?:\[|,)name=(.*?)(?=,\s*'
+        r'(?:id|rapidViewId|state|goal|startDate|endDate|completeDate|activatedDate|sequence|'
+        r'autoStartStop|synced)=|\]$)',
+        sprint_value,
+    )
+    return match.group(1) if match else sprint_value
 
 
 def create_dynamic_widgets_for_updating_work_item(
@@ -350,7 +367,7 @@ def create_dynamic_widgets_for_updating_work_item(
                     widget = IssueSprintField()
                     if metadata.field_id in work_item.get_custom_fields():
                         if value := work_item.get_custom_field_value(metadata.field_id):
-                            widget.value = value[0].get('name')
+                            widget.value = _get_sprint_display_name(value)
         else:
             # process the non-custom fields based on the schema type
             if schema.get('system', '').lower() == 'labels':
