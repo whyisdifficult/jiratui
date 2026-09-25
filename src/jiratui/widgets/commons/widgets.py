@@ -100,6 +100,7 @@ from textual.widgets.selection_list import Selection
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
+from jiratui.config import CONFIGURATION
 from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
@@ -1661,6 +1662,8 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
 
     @property
     def text_content(self) -> str:
+        """Retrieves the Markdown representation of the underlying text value being displayed in this widget."""
+
         return self.text
 
     @property
@@ -1681,8 +1684,8 @@ class EmptyTextAreaStaticWidget(Static):
     or any other textarea-based custom field.
 
     This widget is used for displaying a message to the user that the underlying field is empty but to allow the user
-    to edit the field using an editor. The jira_field_key value is used to store the content of the field after the user
-    update its content in the editor.
+    to edit the field using an editor. The `jira_field_key` value is used to store the content of the field after the
+    user update its content in the editor.
     """
 
     def __init__(
@@ -1691,9 +1694,31 @@ class EmptyTextAreaStaticWidget(Static):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.jira_field_key = jira_field_key
-        name = self.name or self.jira_field_key.replace('_', ' ').title()
+        self.__jira_field_key = jira_field_key
+        name = self.name or self.__jira_field_key.replace('_', ' ').title()
         self.content = f'There is no "{name}" set.'
+
+    @property
+    def text_content(self) -> str:
+        """This widget never stores a value"""
+
+        return ''
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self.__jira_field_key
+
+    @property
+    def field_title(self) -> str:
+        return self.name or self.__jira_field_key.replace('_', ' ').title()
+
+    @property
+    def original_value(self) -> str | dict | None:
+        return {} if self._adf_support_enabled else ''
+
+    @property
+    def _adf_support_enabled(self) -> bool:
+        return CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3
 
 
 # ============================================================================

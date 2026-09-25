@@ -46,8 +46,12 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         jira_field_key='customfield_10745',
         title='HL Solution',
         required=True,
-        original_value={'type': 'doc', 'content': [...]},  # ADF dict
+        original_value={
+            'type': 'doc', 'content': [{'content': [{'text': 'Hello World', 'type': 'text'}], 'type': 'paragraph'}]
+        },  # ADF dict
     )
+    widget.text_content
+    Hello World
     ```
     """
 
@@ -149,7 +153,8 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
 
     @property
     def text_content(self) -> str:
-        """Retrieves the Markdown representation of this ADF value being displayed in this widget."""
+        """Retrieves the Markdown representation of the underlying ADF value being displayed in this widget."""
+
         return self.__markdown_text
 
     @property

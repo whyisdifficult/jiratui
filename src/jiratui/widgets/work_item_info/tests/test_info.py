@@ -816,36 +816,55 @@ async def test_work_item_info_container_clear_information(
         assert len(widget.tabs_container.children) == 0
 
 
-@patch.object(WorkItemInfoContainer, 'run_worker')
+@patch.object(WorkItemInfoContainer, '_update_field')
 @pytest.mark.asyncio
-async def test_handle_edit_result_schedules_update(run_worker_mock: Mock, app):
+async def test_handle_edit_result_schedules_update(update_field_mock: AsyncMock, app):
     async with app.run_test():
         # GIVEN
+        app.config.enable_updating_rich_text = True
         widget = WorkItemInfoContainer()
         await app.screen.mount(widget)
         data = {'jira_field_key': 'description', 'content': 'updated text'}
         # WHEN
         widget._handle_edit_result(data)
+        app.workers.wait_for_complete()
         # THEN
-        run_worker_mock.assert_called()
-        assert run_worker_mock.call_count == 3
+        update_field_mock.assert_called_once_with(data)
 
 
-@pytest.mark.parametrize('handle_edit_result_argument', [{}, {'content': 'updated text'}])
-@patch.object(WorkItemInfoContainer, 'run_worker')
+@patch.object(WorkItemInfoContainer, '_update_field')
 @pytest.mark.asyncio
-async def test_handle_edit_result_without_expected_data_shows_error(
-    run_worker_mock: Mock, handle_edit_result_argument, app
+async def test_handle_edit_result_does_not_schedule_update_when_updating_rich_text_is_disabled(
+    update_field_mock: AsyncMock, app
 ):
     async with app.run_test():
         # GIVEN
+        app.config.enable_updating_rich_text = False
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        data = {'jira_field_key': 'description', 'content': 'updated text'}
+        # WHEN
+        widget._handle_edit_result(data)
+        app.workers.wait_for_complete()
+        # THEN
+        update_field_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('handle_edit_result_argument', [{}, {'content': 'updated text'}])
+@patch.object(WorkItemInfoContainer, '_update_field')
+@pytest.mark.asyncio
+async def test_handle_edit_result_without_expected_data_shows_error(
+    update_field_mock: AsyncMock, handle_edit_result_argument, app
+):
+    async with app.run_test():
+        # GIVEN
+        app.config.enable_updating_rich_text = True
         widget = WorkItemInfoContainer()
         await app.screen.mount(widget)
         # WHEN
         widget._handle_edit_result(handle_edit_result_argument)
         # THEN
-        run_worker_mock.assert_called()
-        assert run_worker_mock.call_count == 2
+        update_field_mock.assert_not_called()
 
 
 @patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
@@ -874,33 +893,6 @@ async def test_update_field_data_parameter(
         result = await widget._update_field(update_field_data)  # type:ignore[func-returns-value]
         # THEN
         assert result == expected_result
-        update_issue_mock.assert_not_called()
-        send_work_item_updated_message_mock.assert_not_called()
-
-
-@patch.object(WorkItemInfoContainer, '_send_work_item_updated_message')
-@patch.object(APIController, 'update_issue')
-@patch.object(
-    WorkItemInfoContainer, '_updating_rich_text_is_enabled', PropertyMock(return_value=False)
-)
-@pytest.mark.asyncio
-async def test_update_field_updating_rich_text_is_enabled_false(
-    update_issue_mock: AsyncMock,
-    send_work_item_updated_message_mock: Mock,
-    app,
-):
-    # GIVEN
-    async with app.run_test() as pilot:
-        widget = WorkItemInfoContainer()
-        await app.screen.mount(widget)
-        await app.workers.wait_for_complete()
-        widget.issue = None
-        await app.workers.wait_for_complete()
-        await pilot.pause()
-        # WHEN
-        result = await widget._update_field({'jira_field_key': 'description', 'content': 'abcd'})  # type:ignore[func-returns-value]
-        # THEN
-        assert result is None
         update_issue_mock.assert_not_called()
         send_work_item_updated_message_mock.assert_not_called()
 
@@ -1011,7 +1003,6 @@ async def test_typing_at_opens_mention_overlay(app):
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN
-        app.save_screenshot('screenshot.svg')
         await pilot.press('@')
         await pilot.pause()
         # THEN the mention overlay opens
@@ -1114,7 +1105,6 @@ async def test_selecting_user_inserts_mention_token_with_adf_support(
             await pilot.press('right')
         await pilot.press('at')
         await pilot.pause()
-        app.save_screenshot('screenshot.svg')
         assert screen._mention_overlay_open is True
         screen.post_message(
             UserMentionAutoComplete.UserSelected(

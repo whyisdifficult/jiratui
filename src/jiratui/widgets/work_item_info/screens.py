@@ -19,7 +19,7 @@ from jiratui.widgets.commons.users import JiraUserInput, UserMentionAutoComplete
 from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget, UserMentionOverlay
 
 
-class EditTextContentScreen(Actionable, Screen[dict]):
+class EditTextContentScreen(Actionable, Screen[dict[str, str]]):
     """A modal screen that displays a TextArea to allow users to edit plain text/ADF content.
 
     The screen does not save the changes. Instead, it can be dismissed with a dictionary that contains the changes
@@ -97,9 +97,8 @@ class EditTextContentScreen(Actionable, Screen[dict]):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield Vertical(
-                id='user-mention-overlay-container'
-            )  # a container for searching and mentioning users
+            # a container for searching and mentioning users
+            yield Vertical(id='user-mention-overlay-container')
             if self._adf_support_enabled:
                 yield ADFMarkdownTextAreaWidget(
                     mode=FieldMode.UPDATE,

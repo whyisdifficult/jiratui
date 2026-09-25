@@ -122,7 +122,13 @@ class WorkItemInfoContainer(Vertical):
                 title='Update Work Item',
             )
             return
-        self.run_worker(self._update_field(data))
+        if self._updating_rich_text_is_enabled:
+            self.run_worker(self._update_field(data))
+        else:
+            self.notify(
+                'Updating this field is not enabled. Check config.enable_updating_rich_text',
+                severity='warning',
+            )
 
     async def _update_field(self, data: dict) -> None:
         """Updates the value of a textarea-based field in the work item."""
@@ -130,32 +136,24 @@ class WorkItemInfoContainer(Vertical):
         if not data or not data.get('jira_field_key'):
             return
 
-        if self._updating_rich_text_is_enabled:
-            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-            payload: dict[str, str] = {data.get('jira_field_key', ''): data.get('content', '')}
-            try:
-                response: APIControllerResponse = await application.api.update_issue(
-                    self.issue, payload
-                )
-            except UpdateWorkItemException as e:
-                self.notify(str(e), severity='error', title='Work item update error')
-            except ValidationError as e:
-                self.notify(str(e), severity='error', title='Data validation error')
-            except Exception as e:
-                self.notify(str(e), severity='error', title='Unknown error')
-            else:
-                if not response.success:
-                    self.notify(
-                        f'Unable to update the work item: {response.error}', severity='error'
-                    )
-                else:
-                    self._send_work_item_updated_message(self.issue.key)
-                    self.notify('Work item updated successfully')
-        else:
-            self.notify(
-                'Updating this field is not enabled. Check config.enable_updating_rich_text',
-                severity='warning',
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        payload: dict[str, str] = {data.get('jira_field_key', ''): data.get('content', '') or ''}
+        try:
+            response: APIControllerResponse = await application.api.update_issue(
+                self.issue, payload
             )
+        except UpdateWorkItemException as e:
+            self.notify(str(e), severity='error', title='Work item update error')
+        except ValidationError as e:
+            self.notify(str(e), severity='error', title='Data validation error')
+        except Exception as e:
+            self.notify(str(e), severity='error', title='Unknown error')
+        else:
+            if not response.success:
+                self.notify(f'Unable to update the work item: {response.error}', severity='error')
+            else:
+                self._send_work_item_updated_message(self.issue.key)
+                self.notify('Work item updated successfully')
 
     def _send_work_item_updated_message(self, work_item_key: str) -> None:
         self.post_message(self.WorkItemUpdated(work_item_key))

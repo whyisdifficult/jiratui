@@ -79,10 +79,11 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         jira_field_key: str
         """The key of the Jira field whose text content the user wants to edit."""
         content: str
-        """The text content the user wants to edit. If the field's value is ADF then this is the Markdown version of
-        it."""
+        """The text content the user views and wants to edit. If the field's value is ADF then this is the Markdown
+        version of it."""
         raw_content: str | dict | None = None
-        """The raw content of the field. This can be either ADF or plain text."""
+        """The raw content of the field. This can be either ADF or plain text; depending on the widget that displays
+        the content."""
         title: str | None = None
 
     def __init__(self, *args, **kwargs):
@@ -132,22 +133,12 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
             | None
         ) = self._get_textarea_widget()
         if widget is not None:
-            if isinstance(widget, EmptyTextAreaStaticWidget):
-                jira_field_key = widget.id
-                content_to_edit = ''
-                title = widget.name
-                raw_content: str | dict = ''
-            else:
-                jira_field_key = widget.jira_field_key
-                content_to_edit = widget.text_content
-                title = widget.field_title
-                raw_content = widget.original_value
             self.post_message(
                 self.EditContent(
-                    jira_field_key=jira_field_key,
-                    content=content_to_edit,
-                    raw_content=raw_content,
-                    title=title,
+                    jira_field_key=widget.jira_field_key,
+                    content=widget.text_content,
+                    raw_content=widget.original_value,
+                    title=widget.field_title,
                 )
             )
 
