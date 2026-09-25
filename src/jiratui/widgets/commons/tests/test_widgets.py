@@ -12,15 +12,20 @@ Tests both CREATE and UPDATE modes for all widget types:
 - SingleUserPickerWidget
 """
 
+from unittest.mock import PropertyMock, patch
+
 import pytest
 from textual.widgets import Input, MaskedInput, Select
 
+from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.base import FieldMode
 from jiratui.widgets.commons.widgets import (
     DateInputWidget,
     DateTimeInputWidget,
+    EmptyTextAreaStaticWidget,
     MultiUserPickerWidget,
     NumericInputWidget,
+    ReadOnlyPlainTextTextAreaWidget,
     SelectionWidget,
     SingleUserPickerWidget,
     SprintSelectionWidget,
@@ -1267,6 +1272,121 @@ class TestSingleUserPickerWidget:
             assert widget.value_has_changed is True
             assert widget.value == 'homer'
             assert widget.get_value_for_update() == {'id': '2'}
+
+
+class TestEmptyTextAreaStaticWidget:
+    @patch.object(
+        EmptyTextAreaStaticWidget, '_adf_support_enabled', PropertyMock(return_value=True)
+    )
+    def test_initialize_with_adf_support_enabled(self):
+        # GIVEN
+        widget = EmptyTextAreaStaticWidget(jira_field_key='customfield_10002')
+        # THEN
+        assert widget.text_content == ''
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value == {}
+
+    @patch.object(
+        EmptyTextAreaStaticWidget, '_adf_support_enabled', PropertyMock(return_value=False)
+    )
+    def test_initialize_with_adf_support_disabled(self):
+        # GIVEN
+        widget = EmptyTextAreaStaticWidget(jira_field_key='customfield_10002')
+        # THEN
+        assert widget.text_content == ''
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value == ''
+
+    @patch.object(
+        EmptyTextAreaStaticWidget, '_adf_support_enabled', PropertyMock(return_value=False)
+    )
+    def test_initialize_with_custom_name(self):
+        # GIVEN
+        widget = EmptyTextAreaStaticWidget(jira_field_key='customfield_10002', name='Some value')
+        # THEN
+        assert widget.text_content == ''
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Some value'
+        assert widget.original_value == ''
+
+
+class TestReadOnlyADFMarkdownTextAreaWidget:
+    def test_initialize_without_original_value(self):
+        # GIVEN
+        widget = ReadOnlyADFMarkdownTextAreaWidget(
+            jira_field_key='customfield_10002', field_id='customfield_10002', required=True
+        )
+        # THEN
+        assert widget.text_content == ''
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value is None
+        assert widget.required
+        assert widget.extract_web_links() == []
+
+    def test_initialize_with_original_value(self):
+        # GIVEN
+        widget = ReadOnlyADFMarkdownTextAreaWidget(
+            jira_field_key='customfield_10002',
+            field_id='customfield_10002',
+            original_value={
+                'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
+        )
+        # THEN
+        assert widget.text_content == 'Hello\n'
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value == {
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        }
+        assert not widget.required
+        assert widget.extract_web_links() == []
+
+    def test_initialize_with_invalid_original_value(self):
+        # GIVEN
+        with pytest.raises(ValueError, match='original_value must be a dict with ADF content'):
+            ReadOnlyADFMarkdownTextAreaWidget(
+                jira_field_key='customfield_10002',
+                field_id='customfield_10002',
+                original_value='',
+            )
+
+
+class TestReadOnlyPlainTextTextAreaWidget:
+    def test_initialize_without_original_value(self):
+        # GIVEN
+        widget = ReadOnlyPlainTextTextAreaWidget(
+            jira_field_key='customfield_10002', field_id='customfield_10002', required=True
+        )
+        # THEN
+        assert widget.text_content == ''
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value is None
+        assert widget.required
+        assert widget.extract_web_links() == []
+
+    def test_initialize_with_original_value(self):
+        # GIVEN
+        widget = ReadOnlyPlainTextTextAreaWidget(
+            jira_field_key='customfield_10002',
+            field_id='customfield_10002',
+            original_value='Hello',
+        )
+        # THEN
+        assert widget.text_content == 'Hello'
+        assert widget.jira_field_key == 'customfield_10002'
+        assert widget.field_title == 'Customfield 10002'
+        assert widget.original_value == 'Hello'
+        assert not widget.required
+        assert widget.extract_web_links() == []
 
 
 # ============================================================================
