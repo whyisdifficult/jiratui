@@ -1361,6 +1361,13 @@ async def test_create_dynamic_widgets_custom_field_sprint_selection_without_usin
             'completeDate=<null>,sequence=2483,goal=<null>]',
             'Backend, Q3',
         ),
+        (
+            'com.atlassian.greenhopper.service.sprint.Sprint@4c101cbb['
+            'id=2504,state=ACTIVE,name=Server Sprint,rapidViewId=1082,'
+            'startDate=2026-09-01T09:00:00.000Z,endDate=2026-09-15T09:00:00.000Z,'
+            'completeDate=<null>,sequence=2483,goal=<null>]',
+            'Server Sprint',
+        ),
     ],
 )
 @patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')

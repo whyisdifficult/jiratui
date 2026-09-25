@@ -77,7 +77,8 @@ def _get_sprint_display_name(value: Any) -> str:
     sprint_value = str(sprint)
     match = re.search(
         r'(?:\[|,)name=(.*?)(?=,\s*'
-        r'(?:goal|startDate|endDate|completeDate|activatedDate|sequence|autoStartStop|synced)=|\]$)',
+        r'(?:id|rapidViewId|state|goal|startDate|endDate|completeDate|activatedDate|sequence|'
+        r'autoStartStop|synced)=|\]$)',
         sprint_value,
     )
     return match.group(1) if match else sprint_value
