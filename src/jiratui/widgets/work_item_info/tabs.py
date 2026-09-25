@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from textual.binding import Binding
 from textual.css.query import NoMatches
 from textual.message import Message
@@ -17,8 +19,12 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
     """Custom TabbedContent with key bindings for editing, viewing and copying the content of the currently active
     pane/tab.
 
-    This widget expects a single `TextAreaTabPane` that contains the text of a Jira's textarea (custom) field,
-    including the description and environment fields.
+    This widget expects instances of `TextAreaTabPane` as children. Each `TextAreaTabPane` widget contains the text of
+    a Jira's textarea (custom) field, e.g. the description and environment fields.
+
+    The `TextAreaTabPane` contains:
+        - an (optional) WebLinksCollapsible
+        - a ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | EmptyTextAreaStaticWidget
     """
 
     ACTIONS: list[UIAction] = []
@@ -55,19 +61,30 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
     ]
 
     class DisplayContent(Message):
+        """A message sent when the user wants to view the text content of the textarea in the currently active
+        TabPane."""
+
         def __init__(self, content: str, title: str | None = None):
             super().__init__()
             self.content = content
+            """The text content the user wants to view. If the field's value is ADF then this is the Markdown version of
+            it; otherwise, this is the plain text version."""
             self.title = title
 
+    @dataclass
     class EditContent(Message):
-        def __init__(
-            self, jira_field_key: str, content: str | None = None, title: str | None = None
-        ):
-            super().__init__()
-            self.content = content or ''
-            self.jira_field_key = jira_field_key
-            self.title = title
+        """A message sent when the user wants to edit the text content of the textarea in the currently active
+        TabPane."""
+
+        jira_field_key: str
+        """The key of the Jira field whose text content the user wants to edit."""
+        content: str
+        """The text content the user views and wants to edit. If the field's value is ADF then this is the Markdown
+        version of it."""
+        raw_content: str | dict | None = None
+        """The raw content of the field. This can be either ADF or plain text; depending on the widget that displays
+        the content."""
+        title: str | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,6 +107,8 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
         | EmptyTextAreaStaticWidget
         | None
     ):
+        """Takes the currently active TextAreaTabPane and returns the textarea-based widget in the pane."""
+
         if (active_pane := self.active_pane) is None:
             return None
         try:
@@ -114,15 +133,14 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
             | None
         ) = self._get_textarea_widget()
         if widget is not None:
-            if isinstance(widget, EmptyTextAreaStaticWidget):
-                content_to_edit = ''
-                jira_field_key = widget.id
-                title = widget.name
-            else:
-                content_to_edit = widget.text_content
-                jira_field_key = widget.jira_field_key
-                title = widget.field_title
-            self.post_message(self.EditContent(jira_field_key, content_to_edit, title))
+            self.post_message(
+                self.EditContent(
+                    jira_field_key=widget.jira_field_key,
+                    content=widget.text_content,
+                    raw_content=widget.original_value,
+                    title=widget.field_title,
+                )
+            )
 
     def action_view_content(self) -> None:
         """Sends an `InfoTabbedContent.DisplayContent` message to the parent to view the content of the active
@@ -142,7 +160,7 @@ class InfoTabbedContent(Actionable, TabbedContent, inherit_bindings=False):  # t
                 self.post_message(self.DisplayContent(widget.text_content, widget.field_title))
 
     def action_copy_content(self) -> None:
-        """Copy to the clipboard the content of the field."""
+        """Copies to the clipboard the content of the currently active TextAreaTabPane's textarea widget."""
 
         widget: (
             ReadOnlyADFMarkdownTextAreaWidget

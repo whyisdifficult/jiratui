@@ -100,6 +100,7 @@ from textual.widgets.selection_list import Selection
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
+from jiratui.config import CONFIGURATION
 from jiratui.utils.adf import extract_web_links_from_markdown
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.widgets.base import DateInput
@@ -1513,7 +1514,6 @@ class PlainTextTextAreaWidget(TextArea, BaseFieldWidget, BaseUpdateFieldWidget):
                 original_value=original_value or '',
                 field_supports_update=field_supports_update,
             )
-        self.add_class('create-work-item-description')
 
     def get_value_for_update(self) -> str | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -1621,8 +1621,12 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
             original_value: the original value from Jira - always string.
         """
 
+        self.__original_value = original_value
+
         # initialize TextArea widget
-        super().__init__(text=original_value or '', id=field_id, compact=True, read_only=True)
+        super().__init__(
+            text=self.__original_value or '', id=field_id, compact=True, read_only=True
+        )
 
         self.field_id = field_id
         self._jira_field_key = jira_field_key
@@ -1634,6 +1638,10 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
             self.border_subtitle = '(*)'
             if hasattr(self, 'add_class'):
                 self.add_class('required')
+
+    @property
+    def original_value(self) -> str | None:
+        return self.__original_value
 
     @property
     def required(self) -> bool:
@@ -1654,6 +1662,8 @@ class ReadOnlyPlainTextTextAreaWidget(TextArea):
 
     @property
     def text_content(self) -> str:
+        """Retrieves the Markdown representation of the underlying text value being displayed in this widget."""
+
         return self.text
 
     @property
@@ -1674,8 +1684,8 @@ class EmptyTextAreaStaticWidget(Static):
     or any other textarea-based custom field.
 
     This widget is used for displaying a message to the user that the underlying field is empty but to allow the user
-    to edit the field using an editor. The jira_field_key value is used to store the content of the field after the user
-    update its content in the editor.
+    to edit the field using an editor. The `jira_field_key` value is used to store the content of the field after the
+    user update its content in the editor.
     """
 
     def __init__(
@@ -1684,9 +1694,31 @@ class EmptyTextAreaStaticWidget(Static):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.jira_field_key = jira_field_key
-        name = self.name or self.jira_field_key.replace('_', ' ').title()
+        self.__jira_field_key = jira_field_key
+        name = self.name or self.__jira_field_key.replace('_', ' ').title()
         self.content = f'There is no "{name}" set.'
+
+    @property
+    def text_content(self) -> str:
+        """This widget never stores a value"""
+
+        return ''
+
+    @property
+    def jira_field_key(self) -> str | None:
+        return self.__jira_field_key
+
+    @property
+    def field_title(self) -> str:
+        return self.name or self.__jira_field_key.replace('_', ' ').title()
+
+    @property
+    def original_value(self) -> str | dict | None:
+        return {} if self._adf_support_enabled else ''
+
+    @property
+    def _adf_support_enabled(self) -> bool:
+        return CONFIGURATION.get().cloud and CONFIGURATION.get().jira_api_version == 3
 
 
 # ============================================================================

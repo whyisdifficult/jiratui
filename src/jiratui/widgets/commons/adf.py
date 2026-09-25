@@ -46,8 +46,12 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
         jira_field_key='customfield_10745',
         title='HL Solution',
         required=True,
-        original_value={'type': 'doc', 'content': [...]},  # ADF dict
+        original_value={
+            'type': 'doc', 'content': [{'content': [{'text': 'Hello World', 'type': 'text'}], 'type': 'paragraph'}]
+        },  # ADF dict
     )
+    widget.text_content
+    Hello World
     ```
     """
 
@@ -70,8 +74,13 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
             original_value: the original value from Jira. It expects an ADF dict.
         """
 
+        if original_value is not None:
+            if not isinstance(original_value, dict):
+                raise ValueError('original_value must be a dict with ADF content')
+
+        self.__original_value = original_value
         # the Markdown text that we want to display; convert ADF to Markdown if needed
-        self.__markdown_text = self._convert_to_markdown(original_value)
+        self.__markdown_text = self._convert_to_markdown(self.__original_value)
 
         # initialize Markdown widget with converted text
         super().__init__(markdown=self.__markdown_text, id=field_id)
@@ -89,6 +98,10 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
 
         # add CSS class for styling
         self.add_class('adf-textarea-readonly')
+
+    @property
+    def original_value(self) -> dict | None:
+        return self.__original_value
 
     @property
     def required(self) -> bool:
@@ -140,7 +153,8 @@ class ReadOnlyADFMarkdownTextAreaWidget(Markdown):
 
     @property
     def text_content(self) -> str:
-        """Retrieves the Markdown representation of this ADF value being displayed in this widget."""
+        """Retrieves the Markdown representation of the underlying ADF value being displayed in this widget."""
+
         return self.__markdown_text
 
     @property
@@ -162,7 +176,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
     **Features**:
 
     - Multi-line text input for fields with textarea custom type.
-    - ADF-to-Markdown and Markdown-toADF conversion.
+    - ADF-to-Markdown and Markdown-to-ADF conversion.
     - Mode-aware behavior (CREATE vs UPDATE)
     - Change tracking for UPDATE mode
     - Required field support
@@ -189,15 +203,29 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         jira_field_key='customfield_12345',
         field_id='customfield_12345',
         title='Custom Field A',
-        original_value='Original text',
+        original_value={
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        },
         field_supports_update=True,
     )
     # Check changes:
     widget.value_has_changed
     # Get value for API updates:
     widget.get_value_for_update()
+    {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     # Get value for API creation operations:
     widget.get_value_for_create()
+    {
+        'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+        'type': 'doc',
+        'version': 1,
+    }
     ```
     """
 
@@ -227,7 +255,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         markdown = ''
         if original_value is not None:
             if not isinstance(original_value, dict):
-                raise ValueError('original_value must be a dict')
+                raise ValueError('original_value must be a dict with ADF content')
 
             try:
                 markdown = convert_adf_to_markdown(original_value)
@@ -255,7 +283,6 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
                 original_value=original_value,
                 field_supports_update=field_supports_update,
             )
-        self.add_class('create-work-item-description')
 
     def get_value_for_update(self) -> dict | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).

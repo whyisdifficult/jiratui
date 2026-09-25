@@ -192,6 +192,12 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
     This screen does not actually create the work item. Instead, upon dismissing the screen the caller will receive the
     necessary data to create the work item via the Jira API.
     ```
+
+    The screen supports the following actions:
+
+    - saving content
+    - mentioning users in the text content
+
     **See Also**:
     - [Create Work Item Screen Design](#components-create-work-item-screen)
     - [Use Case: Create Work Item](#use-case-create-work-item)
@@ -414,6 +420,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                                     field_id='description',
                                     title='Description',
                                 )
+                            widget.add_class('create-work-item-description')
                             yield TextAreaTabPane('Description', widget)
                 # right-hand side panel
                 with Vertical():

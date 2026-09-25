@@ -17,7 +17,6 @@ from textual.widgets import (
 )
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import JiraIssue, JiraWorkItemFields
 from jiratui.widgets.commons import CustomFieldType
@@ -37,14 +36,14 @@ from jiratui.widgets.work_item_info.tabs import InfoTabbedContent, TextAreaTabPa
 
 
 class WorkItemInfoContainer(Vertical):
-    """The container for all the widgets that store/show information (description and other text-based fields) of a
+    """The container for all the widgets that store/show information (description and other textarea-based fields) of a
     work item."""
 
     HELP = 'See Work Item Info section in the help'
     issue: Reactive[JiraIssue | None] = reactive(None, always_update=True)
-    """The issue whose information we want to display."""
+    """The work item whose information we want to display."""
     clear_information: Reactive[bool] = reactive(False, always_update=True)
-    """Reactive variable to clear the summary, description and extra fields."""
+    """Reactive variable to clear the summary, description and other textarea-based fields."""
 
     class WorkItemUpdated(Message):
         def __init__(self, work_item_key: str):
@@ -55,26 +54,33 @@ class WorkItemInfoContainer(Vertical):
         super().__init__(id='work_item_info_container')
         self._has_extra_custom_fields = False
         self.can_focus = True
-        self.__configuration = CONFIGURATION.get()
 
     @property
     def _updating_rich_text_is_enabled(self) -> bool:
-        return self.__configuration.enable_updating_rich_text
+        return self.app.config.enable_updating_rich_text  # type:ignore[attr-defined]
 
     @property
     def _enable_updating_additional_fields(self) -> bool:
-        return self.__configuration.enable_updating_additional_fields
+        return self.app.config.enable_updating_additional_fields  # type:ignore[attr-defined]
 
     @property
     def _update_additional_fields_ignore_ids(self) -> list[str]:
-        return self.__configuration.update_additional_fields_ignore_ids or []
+        return self.app.config.update_additional_fields_ignore_ids or []  # type:ignore[attr-defined]
 
     @property
-    def _editor(self) -> str | None:
-        return self.__configuration.text_editor
+    def _external_text_editor(self) -> str | None:
+        return self.app.config.text_editor  # type:ignore[attr-defined]
 
     @on(InfoTabbedContent.EditContent)
     def _edit_content(self, event: InfoTabbedContent.EditContent) -> None:
+        """Handles the event triggered when the user wants to edit the text content of a textarea-based (custom)
+        field.
+
+        If the user has defined an external text editor then the widget requests opening the editor; otherwise, a modal
+        screen is opened to allow the user to edit the content.
+        """
+
+        event.stop()
         if not self.issue:
             self.notify(
                 'No work item is loaded. Select a work item and try again.',
@@ -83,20 +89,21 @@ class WorkItemInfoContainer(Vertical):
             )
 
         if self._updating_rich_text_is_enabled:
-            if self._editor:
-                new_content = self._open_as_temporary_file(self._editor, event.content)
+            if self._external_text_editor:
+                new_content = self._open_as_temporary_file(
+                    self._external_text_editor, event.content
+                )
                 self.run_worker(
                     self._update_field(
                         {'jira_field_key': event.jira_field_key, 'content': new_content}
                     )
                 )
             else:
-                # fallback to built-in rudimentary editor
+                # fallback to built-in editor
                 self.app.push_screen(
-                    EditTextContentScreen(event.content, event.jira_field_key, event.title),
+                    EditTextContentScreen(event.jira_field_key, event.title, event.raw_content),
                     self._handle_edit_result,
                 )
-        event.stop()
 
     @on(InfoTabbedContent.DisplayContent)
     def _display_content(self, event: InfoTabbedContent.DisplayContent) -> None:
@@ -115,40 +122,38 @@ class WorkItemInfoContainer(Vertical):
                 title='Update Work Item',
             )
             return
-        self.run_worker(self._update_field(data))
-
-    async def _update_field(self, data: dict) -> None:
-        """Updates the value of a text-based field in the work item."""
-
-        if not data or not data.get('jira_field_key'):
-            return
-
         if self._updating_rich_text_is_enabled:
-            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
-            payload = {data.get('jira_field_key'): data.get('content')}
-            try:
-                response: APIControllerResponse = await application.api.update_issue(
-                    self.issue, payload
-                )
-            except UpdateWorkItemException as e:
-                self.notify(str(e), severity='error', title='Work item update error')
-            except ValidationError as e:
-                self.notify(str(e), severity='error', title='Data validation error')
-            except Exception as e:
-                self.notify(str(e), severity='error', title='Unknown error')
-            else:
-                if not response.success:
-                    self.notify(
-                        f'Unable to update the work item: {response.error}', severity='error'
-                    )
-                else:
-                    self._send_work_item_updated_message(self.issue.key)
-                    self.notify('Work item updated successfully')
+            self.run_worker(self._update_field(data))
         else:
             self.notify(
                 'Updating this field is not enabled. Check config.enable_updating_rich_text',
                 severity='warning',
             )
+
+    async def _update_field(self, data: dict) -> None:
+        """Updates the value of a textarea-based field in the work item."""
+
+        if not data or not data.get('jira_field_key'):
+            return
+
+        application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+        payload: dict[str, str] = {data.get('jira_field_key', ''): data.get('content', '') or ''}
+        try:
+            response: APIControllerResponse = await application.api.update_issue(
+                self.issue, payload
+            )
+        except UpdateWorkItemException as e:
+            self.notify(str(e), severity='error', title='Work item update error')
+        except ValidationError as e:
+            self.notify(str(e), severity='error', title='Data validation error')
+        except Exception as e:
+            self.notify(str(e), severity='error', title='Unknown error')
+        else:
+            if not response.success:
+                self.notify(f'Unable to update the work item: {response.error}', severity='error')
+            else:
+                self._send_work_item_updated_message(self.issue.key)
+                self.notify('Work item updated successfully')
 
     def _send_work_item_updated_message(self, work_item_key: str) -> None:
         self.post_message(self.WorkItemUpdated(work_item_key))
@@ -187,9 +192,11 @@ class WorkItemInfoContainer(Vertical):
             yield Static(id='issue_summary', markup=False)
             yield Rule()
             with VerticalScroll(id='tabs-container', classes='work-item-info-tabs-container'):
-                yield InfoTabbedContent(
-                    id='info-tabbed-content'
-                )  # Container for dynamic fields - textarea fields
+                # the container for dynamic widgets; for textarea-based fields
+                # this container contains TextAreaTabPane instances and each pane contains:
+                # - an (optional) WebLinksCollapsible
+                # - a ReadOnlyADFMarkdownTextAreaWidget | ReadOnlyPlainTextTextAreaWidget | EmptyTextAreaStaticWidget
+                yield InfoTabbedContent(id='info-tabbed-content')
 
     def watch_issue(self, work_item: JiraIssue | None) -> None:
         self.run_worker(self._refresh_tabs_and_set_work_item(work_item))

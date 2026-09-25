@@ -38,6 +38,8 @@ from jiratui.models import (
     Project,
     UpdateWorkItemResponse,
 )
+from jiratui.utils.adf import convert_markdown_to_adf
+from jiratui.utils.mentions import expand_mention_tokens
 from jiratui.utils.test_utilities import load_json_response
 
 
@@ -5216,7 +5218,7 @@ def test_convert_comment_message_to_adf_expands_mention_token(
     # GIVEN a comment containing a picker-generated mention token
     message = 'Please review @[Homer Simpson](557058:abc-123)'
     # WHEN
-    adf = jira_api_controller._convert_comment_message_to_adf(message)
+    adf = convert_markdown_to_adf(expand_mention_tokens(message))
     # THEN the token becomes a proper ADF mention node
     nodes = [
         node
@@ -5233,7 +5235,7 @@ def test_convert_comment_message_to_adf_without_mentions(
     jira_api_controller: APIController,
 ):
     # GIVEN a plain comment (an '@' that is not a token stays literal text)
-    adf = jira_api_controller._convert_comment_message_to_adf('ping user@example.com')
+    adf = convert_markdown_to_adf(expand_mention_tokens('ping user@example.com'))
     # THEN there are no mention nodes
     nodes = [
         node

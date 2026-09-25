@@ -103,7 +103,13 @@ async def test_sets_comments(mock_configuration, app):
                 IssueComment(
                     id='1',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 ),
                 IssueComment(
                     id='2',
@@ -173,7 +179,13 @@ async def test_open_screen_to_add_comment_with_existing_comments(mock_configurat
                 IssueComment(
                     id='1',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 )
             ],
         )
@@ -213,7 +225,13 @@ async def test_save_comment(
             IssueComment(
                 id='1',
                 author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                body='I will study',
+                body={
+                    'content': [
+                        {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
             )
         ]
     )
@@ -284,7 +302,13 @@ async def test_delete_comment(
                 IssueComment(
                     id='1',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 ),
             ],
         )
@@ -318,7 +342,13 @@ async def test_delete_comment_comments_left(
             IssueComment(
                 id='2',
                 author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                body='I will study',
+                body={
+                    'content': [
+                        {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                    ],
+                    'type': 'doc',
+                    'version': 1,
+                },
             )
         ]
     )
@@ -332,7 +362,13 @@ async def test_delete_comment_comments_left(
                 IssueComment(
                     id='1',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 )
             ],
         )
@@ -370,12 +406,24 @@ async def test_delete_comment_comments_left_without_getting_comments(
                 IssueComment(
                     id='1',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 ),
                 IssueComment(
                     id='2',
                     author=JiraUser(account_id='1', active=True, display_name='Bart'),
-                    body='I will study',
+                    body={
+                        'content': [
+                            {'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}
+                        ],
+                        'type': 'doc',
+                        'version': 1,
+                    },
                 ),
             ],
         )
