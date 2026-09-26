@@ -948,24 +948,37 @@ ConfigFileScreen {
     background: $background 80%;
 }
 
-ConfigFileScreen > Vertical {
-    width: 70%;
-    height: 100%;
+ConfigFileScreen > Horizontal {
+    width: 85%;
+    height: 90%;
     border: round $foreground;
-    padding: 0 1;
+    padding: 0 0;
 }
-ConfigFileScreen > Vertical > DataTable {
+ConfigFileScreen > Horizontal > ConfigTable {
     background: transparent;
-    height: 50%;
+    height: auto;
     scrollbar-size-vertical: 1;
-    margin-top: 1
+    margin-top: 1;
+    border: round $primary;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
+}
+
+ConfigFileScreen > Horizontal > VerticalScroll {
+    background: transparent;
+    height: auto;
+    scrollbar-size-vertical: 1;
 }
 
 .config-file-textarea {
-    margin-top: 1;
     background: $background;
     scrollbar-size-vertical: 1;
-    border: solid $accent;
+    border: round $primary;
+    margin-top: 1;
+    &:focus {
+        border: round $accent-lighten-3;
+    }
 }
 
 /* Subtasks */
