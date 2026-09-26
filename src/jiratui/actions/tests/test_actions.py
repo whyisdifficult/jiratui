@@ -259,7 +259,7 @@ async def test_action_next_and_previous_tabs_for_work_item_information_tabs(
         ),
     ],
 )
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
@@ -4521,7 +4521,7 @@ async def test_action_scroll_down_in_subtasks_tab(
         action_scroll_down_mock.assert_called()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_cursor_up')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4552,7 +4552,7 @@ async def test_action_cursor_up_in_config_screen(
         action_cursor_up_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_cursor_down')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4583,7 +4583,7 @@ async def test_action_cursor_down_in_config_screen(
         action_cursor_down_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_page_up')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4614,7 +4614,7 @@ async def test_action_page_up_in_config_screen(
         action_page_up_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_page_down')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4645,7 +4645,7 @@ async def test_action_page_down_in_config_screen(
         action_page_down_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_scroll_top')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4676,7 +4676,7 @@ async def test_action_scroll_top_in_config_screen(
         action_scroll_top_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_scroll_bottom')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4707,7 +4707,7 @@ async def test_action_scroll_bottom_in_config_screen(
         action_scroll_bottom_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_select_cursor')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
