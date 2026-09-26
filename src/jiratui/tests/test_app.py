@@ -367,7 +367,7 @@ async def test_close_server_info_screen(
         assert isinstance(app.screen, MainScreen)
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
@@ -389,7 +389,7 @@ async def test_open_config_screen(
         assert isinstance(app.screen, ConfigFileScreen)
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')

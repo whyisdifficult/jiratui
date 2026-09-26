@@ -65,7 +65,7 @@ from jiratui.widgets.related_work_items.related_issues import (
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinkCollapsible, IssueRemoteLinksWidget
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
-from jiratui.widgets.screens.config import ConfigFileScreen
+from jiratui.widgets.screens.config import ConfigFileScreen, ConfigTable
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
 from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.goto import GoToScreen
@@ -259,7 +259,7 @@ async def test_action_next_and_previous_tabs_for_work_item_information_tabs(
         ),
     ],
 )
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
@@ -4521,7 +4521,7 @@ async def test_action_scroll_down_in_subtasks_tab(
         action_scroll_down_mock.assert_called()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_cursor_up')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4552,7 +4552,7 @@ async def test_action_cursor_up_in_config_screen(
         action_cursor_up_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_cursor_down')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4583,7 +4583,7 @@ async def test_action_cursor_down_in_config_screen(
         action_cursor_down_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_page_up')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4614,7 +4614,7 @@ async def test_action_page_up_in_config_screen(
         action_page_up_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_page_down')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4645,7 +4645,7 @@ async def test_action_page_down_in_config_screen(
         action_page_down_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_scroll_top')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4676,7 +4676,7 @@ async def test_action_scroll_top_in_config_screen(
         action_scroll_top_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_scroll_bottom')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -4707,7 +4707,7 @@ async def test_action_scroll_bottom_in_config_screen(
         action_scroll_bottom_mock.assert_called_once()
 
 
-@patch.object(ConfigFileScreen, '_get_data')
+@patch.object(ConfigFileScreen, '_get_config_data')
 @patch.object(DataTable, 'action_select_cursor')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -6405,6 +6405,146 @@ def test_info_tabbed_content_actions_and_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='Focus previous tab',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_config_table_actions_and_bindings(bindings: dict):
+    assert ConfigTable.ACTIONS == [
+        UIAction(
+            action=SupportedActions.SELECT_CURSOR.value,
+            keys=bindings.get(SupportedActions.SELECT_CURSOR.value, {}).get('keys', []),
+            description='Select the item under the cursor',
+            show=False,
+            tooltip='Select the item under the cursor',
+        ),
+        UIAction(
+            action=SupportedActions.CURSOR_UP.value,
+            keys=bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', []),
+            description='Move up',
+            show=False,
+            tooltip='Move up',
+        ),
+        UIAction(
+            action=SupportedActions.CURSOR_DOWN.value,
+            keys=bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', []),
+            description='Move down',
+            show=False,
+            tooltip='Move down',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_UP.value,
+            keys=bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', []),
+            description='Move 1 page up',
+            show=False,
+            tooltip='Move 1 page up',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_DOWN.value,
+            keys=bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', []),
+            description='Move 1 page down',
+            show=False,
+            tooltip='Move 1 page down',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_TOP.value,
+            keys=bindings.get(SupportedActions.SCROLL_TOP.value, {}).get('keys', []),
+            description='Scroll to the top',
+            show=False,
+            tooltip='Scroll to the top',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_BOTTOM.value,
+            keys=bindings.get(SupportedActions.SCROLL_BOTTOM.value, {}).get('keys', []),
+            description='Scroll to the bottom',
+            show=False,
+            tooltip='Scroll to the bottom',
+        ),
+    ]
+    assert ConfigTable.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SELECT_CURSOR.value, {}).get('keys', [])),
+            action=SupportedActions.SELECT_CURSOR.value,
+            description='Select the item under the cursor',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Select the item under the cursor',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_UP.value,
+            description='Move up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_DOWN.value,
+            description='Move down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_UP.value,
+            description='Move 1 page up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_DOWN.value,
+            description='Move 1 page down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_TOP.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_TOP.value,
+            description='Scroll to the top',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the top',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            action=SupportedActions.SCROLL_BOTTOM.value,
+            key=','.join(bindings.get(SupportedActions.SCROLL_BOTTOM.value, {}).get('keys', [])),
+            description='Scroll to the bottom',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the bottom',
             id=None,
             system=False,
             group=None,

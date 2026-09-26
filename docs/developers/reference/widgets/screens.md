@@ -7,7 +7,7 @@
 
 ## ServerInfoScreen
 
-```{autodoc2-object} jiratui.widgets.screens.server_info.ServerInfoScreen
+```{autodoc2-object} jiratui.widgets.screens.server.ServerInfoScreen
 ```
 
 ## QuitScreen
