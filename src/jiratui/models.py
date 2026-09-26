@@ -937,7 +937,7 @@ class AgileSprintState(enum.Enum):
 @dataclass
 class AgileBoard(BaseModel):
     """Board details as defined by
-    https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get
+    [api-group-board](https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get)
     """
 
     id: int
@@ -948,7 +948,7 @@ class AgileBoard(BaseModel):
 @dataclass
 class AgileSprint(BaseModel):
     """Sprint details as defined by
-    https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get
+    [api-group-board](https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get)
 
     This model adds a property `origin_board_name` which is not part of the API response.
     """

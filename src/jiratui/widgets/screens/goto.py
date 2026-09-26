@@ -81,8 +81,8 @@ class GoToItemsTable(Actionable, DataTable, inherit_bindings=False):  # type:ign
         self.__current_work_item_key: str | None = None
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        """Posts the message [WorkItemSelected](#jiratui.widgets.screens.goto.GoToItemsTable.WorkItemSelected)
-        to ask the caller to search the work item displayed in the row.
+        """Posts the message `jiratui.widgets.screens.goto.GoToItemsTable.WorkItemSelected` to ask the caller to search
+        the work item displayed in the row.
 
         Args:
             event: the event that triggered this.

@@ -288,7 +288,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         """Returns the value formatted for Jira API updates (UPDATE mode).
 
         Returns:
-            An ADF dict or None if the MD-to-ADF conversion fails.
+            An ADF dict.
         """
 
         if self.mode != FieldMode.UPDATE:
@@ -319,7 +319,7 @@ class ADFMarkdownTextAreaWidget(TextAreaWithUserMention, BaseFieldWidget, BaseUp
         """Returns the value formatted for Jira API creation (CREATE mode).
 
         Returns:
-            An ADF dict or None if the MD-to-ADF conversion fails.
+            An ADF dict.
         """
         if self.mode != FieldMode.CREATE:
             raise ValueError('get_value_for_create() only valid in CREATE mode')

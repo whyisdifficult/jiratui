@@ -22,13 +22,57 @@ from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget, UserMention
 class EditTextContentScreen(Actionable, Screen[dict[str, str]]):
     """A modal screen that displays a TextArea to allow users to edit plain text/ADF content.
 
+    ```{important}
     The screen does not save the changes. Instead, it can be dismissed with a dictionary that contains the changes
     to save. The caller is responsible for saving the changes.
+    ```
 
     The screen supports the following actions:
-
     - saving content
     - mentioning users in the text content
+
+    The following UML class diagram contains the most important classes to implement the different use cases supported
+    by the app related to updating text content.
+
+    ```{mermaid}
+    classDiagram
+        direction LR
+        class WorkItemInfoContainer
+        class InfoTabbedContent
+        class TextAreaTabPane
+        class WebLinkCollapsible
+        class ReadOnlyADFMarkdown
+        class ReadOnlyPlainText
+        class EmptyTextAreaStatic
+        class EditTextContentScreen {
+            +string jira_field_key
+            +string title
+            +dict | string raw_content
+        }
+        class JiraUserInput
+        class UserMentionOverlay
+        class ADFMarkdownTextArea {
+            + string text
+            + dict get_value_for_update()
+            + dict get_value_for_create()
+        }
+        class PlainTextTextArea {
+            + string text
+            + string get_value_for_update()
+            + string get_value_for_create()
+        }
+        WorkItemInfoContainer *-- "1" InfoTabbedContent : tabbed content
+        InfoTabbedContent "1" *-- "1..*" TextAreaTabPane : contains
+        TextAreaTabPane *-- "1" WebLinkCollapsible : contains
+        TextAreaTabPane --> "0..1" ReadOnlyADFMarkdown
+        TextAreaTabPane --> "0..1" ReadOnlyPlainText
+        TextAreaTabPane --> "0..1" EmptyTextAreaStatic
+        WorkItemInfoContainer --> "1" EditTextContentScreen
+        EditTextContentScreen *-- "1" JiraUserInput
+        EditTextContentScreen *-- "1" UserMentionOverlay
+        EditTextContentScreen *-- "1" ADFMarkdownTextArea
+        EditTextContentScreen *-- "1" PlainTextTextArea
+    ```
     """
 
     ACTIONS: list[UIAction] = []

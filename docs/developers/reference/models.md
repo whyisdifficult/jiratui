@@ -53,9 +53,14 @@
 ```{autodoc2-object} jiratui.models.Attachment
 ```
 
-## JiraSprint
+## AgileSprint
 
-```{autodoc2-object} jiratui.models.JiraSprint
+```{autodoc2-object} jiratui.models.AgileSprint
+```
+
+## AgileSprintState
+
+```{autodoc2-object} jiratui.models.AgileSprintState
 ```
 
 ## JiraBaseIssue
