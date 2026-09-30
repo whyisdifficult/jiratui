@@ -38,7 +38,7 @@ from jiratui.widgets.attachments.attachments import (
     IssueAttachmentsWidget,
     WorkItemAttachments,
 )
-from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.comments.add import AddUpdateCommentScreen
 from jiratui.widgets.comments.comments import (
     CommentCollapsible,
     IssueCommentsWidget,
@@ -1761,6 +1761,62 @@ async def test_action_delete_comment(
         await app.workers.wait_for_complete()
         # THEN
         action_delete_comment_mock.assert_awaited_once()
+
+
+@patch.object(CommentCollapsible, 'action_edit_comment')
+@patch('jiratui.widgets.screen.MainScreen._search_work_items')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_action_edit_comment(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_work_items_mock: AsyncMock,
+    action_edit_comment_mock: Mock,
+    jira_issues,
+    bindings: dict,
+    app,
+):
+    # GIVEN
+    app.config.search_results_truncate_work_item_summary = 10
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    app.config.search_results_per_page = 10
+    app.config.git_repositories = None
+    app.config.jira_base_url = 'foo.bar'
+    app.config.enable_goto = True
+    search_work_items_mock.return_value = WorkItemSearchResult(
+        response=JiraIssueSearchResponse(issues=jira_issues),
+        total=1,
+        start=1,
+        end=1,
+    )
+    jira_issues[1].comments = [
+        IssueComment(
+            id='1',
+            author=JiraUser(account_id='1', active=True, display_name='Bart'),
+            body={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
+        )
+    ]
+    app.config.pre_defined_jql_expressions = None
+    async with app.run_test() as pilot:
+        await pilot.press(bindings.get('search', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        app.screen.issue_comments_widget.comments = WorkItemComments(
+            work_item_key=jira_issues[1].key, comments=jira_issues[1].comments
+        )
+        await pilot.press(bindings.get('focus_work_item_comments_tab', {}).get('keys', [])[0])
+        await pilot.press('tab')
+        await pilot.press(bindings.get('edit_comment', {}).get('keys', [])[0])
+        await app.workers.wait_for_complete()
+        # THEN
+        action_edit_comment_mock.assert_called_once()
 
 
 @patch.object(IssueAttachmentsWidget, 'action_add_attachment')
@@ -5144,7 +5200,7 @@ async def test_action_select_cursor_in_history_screen(
 
 
 def test_add_comment_screen_actions_and_bindings(bindings: dict):
-    assert AddCommentScreen.ACTIONS == [
+    assert AddUpdateCommentScreen.ACTIONS == [
         UIAction(
             action='open_user_mention_picker',
             keys=bindings.get('open_user_mention_picker', {}).get('keys', []),
@@ -5153,7 +5209,7 @@ def test_add_comment_screen_actions_and_bindings(bindings: dict):
             tooltip='User Picker',
         ),
     ]
-    assert AddCommentScreen.BINDINGS == [
+    assert AddUpdateCommentScreen.BINDINGS == [
         Binding(
             key=bindings.get('open_user_mention_picker', {}).get('keys', [])[0],
             action='open_user_mention_picker',
@@ -6545,6 +6601,191 @@ def test_config_table_actions_and_bindings(bindings: dict):
             key_display=None,
             priority=False,
             tooltip='Scroll to the bottom',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_issue_comments_actions_and_bindings(bindings: dict):
+    assert IssueCommentsWidget.ACTIONS == [
+        UIAction(
+            action=SupportedActions.ADD_COMMENT.value,
+            keys=bindings.get(SupportedActions.ADD_COMMENT.value, {}).get('keys', []),
+            description='✚',
+            show=True,
+            tooltip='Add a comment',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_UP.value,
+            keys=bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', []),
+            description='Move 1 page up',
+            show=False,
+            tooltip='Move 1 page up',
+        ),
+        UIAction(
+            action=SupportedActions.PAGE_DOWN.value,
+            keys=bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', []),
+            description='Move 1 page down',
+            show=False,
+            tooltip='Move 1 page down',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_HOME.value,
+            keys=bindings.get(SupportedActions.SCROLL_HOME.value, {}).get('keys', []),
+            description='Scroll to the beginning',
+            show=False,
+            tooltip='Scroll to the beginning',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_END.value,
+            keys=bindings.get(SupportedActions.SCROLL_END.value, {}).get('keys', []),
+            description='Scroll to the end',
+            show=False,
+            tooltip='Scroll to the end',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_UP.value,
+            keys=bindings.get(SupportedActions.SCROLL_UP.value, {}).get('keys', []),
+            description='Scroll up the page',
+            show=False,
+            tooltip='Scroll up the page',
+        ),
+        UIAction(
+            action=SupportedActions.SCROLL_DOWN.value,
+            keys=bindings.get(SupportedActions.SCROLL_DOWN.value, {}).get('keys', []),
+            description='Scroll down the page',
+            show=False,
+            tooltip='Scroll down the page',
+        ),
+    ]
+    assert IssueCommentsWidget.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.ADD_COMMENT.value, {}).get('keys', [])),
+            action=SupportedActions.ADD_COMMENT.value,
+            description='✚',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Add a comment',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_UP.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_UP.value,
+            description='Move 1 page up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.PAGE_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.PAGE_DOWN.value,
+            description='Move 1 page down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move 1 page down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_HOME.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_HOME.value,
+            description='Scroll to the beginning',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the beginning',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            action=SupportedActions.SCROLL_END.value,
+            key=','.join(bindings.get(SupportedActions.SCROLL_END.value, {}).get('keys', [])),
+            description='Scroll to the end',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll to the end',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_UP.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_UP.value,
+            description='Scroll up the page',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll up the page',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.SCROLL_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.SCROLL_DOWN.value,
+            description='Scroll down the page',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Scroll down the page',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_comment_collapsible_actions_and_bindings(bindings: dict):
+    assert CommentCollapsible.ACTIONS == [
+        UIAction(
+            action=SupportedActions.DELETE_COMMENT.value,
+            keys=bindings.get(SupportedActions.DELETE_COMMENT.value, {}).get('keys', []),
+            description='✖',
+            show=True,
+            tooltip='Delete a comment',
+        ),
+        UIAction(
+            action=SupportedActions.EDIT_COMMENT.value,
+            keys=bindings.get(SupportedActions.EDIT_COMMENT.value, {}).get('keys', []),
+            description='✎',
+            show=True,
+            tooltip='Edit the comment',
+        ),
+    ]
+    assert CommentCollapsible.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.DELETE_COMMENT.value, {}).get('keys', [])),
+            action=SupportedActions.DELETE_COMMENT.value,
+            description='✖',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Delete a comment',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.EDIT_COMMENT.value, {}).get('keys', [])),
+            action=SupportedActions.EDIT_COMMENT.value,
+            description='✎',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Edit the comment',
             id=None,
             system=False,
             group=None,

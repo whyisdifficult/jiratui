@@ -380,6 +380,10 @@ def test_standard_action_focus_status_dropdown_in_work_item_details():
     ).get('keys') == ['alt+z']
 
 
+def test_standard_action_edit_comment():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.EDIT_COMMENT.value).get('keys') == ['e']
+
+
 # Legacy Binding Style
 
 
@@ -741,3 +745,7 @@ def test_legacy_action_focus_status_dropdown_in_work_item_details():
     assert KEY_BINDINGS_LEGACY.get(
         SupportedActions.FOCUS_WORK_ITEM_DETAILS_FILTER_STATUS.value
     ).get('keys') == ['z']
+
+
+def test_legacy_action_edit_comment():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.EDIT_COMMENT.value).get('keys') == ['e']

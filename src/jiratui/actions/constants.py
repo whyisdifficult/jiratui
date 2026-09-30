@@ -29,6 +29,7 @@ class SupportedActions(Enum):
     DELETE_REMOTE_LINK = 'delete_remote_link'
     DELETE_WORKLOG = 'delete_worklog'
     DELETE_WORK_ITEM = 'delete_work_item'
+    EDIT_COMMENT = 'edit_comment'
     EDIT_CONTENT = 'edit_content'
     EDIT_JQL = 'edit_jql'
     EDIT_WORKLOG_ENTRY = 'edit_worklog_entry'
@@ -420,6 +421,12 @@ KEY_BINDINGS_LEGACY = {
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit the (text) content of a resource',
+    },
+    SupportedActions.EDIT_COMMENT.value: {
+        'keys': ['e'],
+        'show': True,
+        'description': '\u270e',
+        'tooltip': 'Edit the comment',
     },
     SupportedActions.OPEN_TEXT_EDITOR.value: {
         'keys': ['ctrl+e'],
@@ -888,6 +895,12 @@ KEY_BINDINGS_STANDARD = {
         'show': True,
         'description': '\u270e',
         'tooltip': 'Edit the (text) content of a resource',
+    },
+    SupportedActions.EDIT_COMMENT.value: {
+        'keys': ['e'],
+        'show': True,
+        'description': '\u270e',
+        'tooltip': 'Edit the comment',
     },
     SupportedActions.OPEN_TEXT_EDITOR.value: {
         'keys': ['ctrl+e'],

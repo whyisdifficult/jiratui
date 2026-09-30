@@ -3564,6 +3564,127 @@ async def test_add_comment_with_api_error(
 
 
 @pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_comment')
+async def test_update_comment_with_adf_support_enabled(
+    update_comment_mock: Mock,
+    adf_support_enabled: Mock,
+    comment_response: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled.return_value = True
+    update_comment_mock.return_value = comment_response
+    # WHEN
+    response = await jira_api_controller.update_comment('1', '2', 'Hello World!')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body={
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
+    update_comment_mock.assert_called_once_with(
+        '1',
+        '2',
+        {
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_comment')
+async def test_update_comment_with_adf_support_disabled(
+    update_comment_mock: Mock,
+    adf_support_enabled: Mock,
+    comment_response: dict,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    adf_support_enabled.return_value = False
+    update_comment_mock.return_value = comment_response
+    # WHEN
+    response = await jira_api_controller.update_comment('1', '2', 'Hello World!')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == IssueComment(
+        id='1',
+        author=JiraUser(
+            account_id='1',
+            display_name='Bart',
+            active=True,
+            email='bart@foo.com',
+        ),
+        created=datetime(2025, 12, 31, 10, 20, 0),
+        updated=datetime(2025, 12, 31, 10, 20, 0),
+        update_author=JiraUser(
+            account_id='2',
+            display_name='Homer',
+            active=True,
+            email='homer@foo.com',
+        ),
+        body={
+            'type': 'doc',
+            'version': 1,
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello World!'}]}
+            ],
+        },
+    )
+    update_comment_mock.assert_called_once_with(
+        '1',
+        '2',
+        'Hello World!',
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_adf_support_enabled')
+@patch.object(JiraAPI, 'update_comment')
+async def test_update_comment_fails(
+    update_comment_mock: Mock, adf_support_enabled: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    adf_support_enabled.return_value = True
+    update_comment_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.update_comment('1', '2', 'Hello World!')
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+
+
+@pytest.mark.asyncio
 @patch.object(JiraAPI, 'delete_comment')
 async def test_delete_comment(delete_comment_mock: Mock, jira_api_controller: APIController):
     # GIVEN

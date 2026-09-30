@@ -881,6 +881,29 @@ class JiraAPI:
             url=f'issue/{issue_id_or_key}/comment/{comment_id}',
         )
 
+    async def update_comment(
+        self, issue_id_or_key: str, comment_id: str, content: dict | str
+    ) -> dict:
+        """Updates a comment.
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-comment-id-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-id-put)
+
+        Args:
+            issue_id_or_key: the case-sensitive key of the work item whose comment we want to update.
+            comment_id: the ID of the comment we want to update.
+            content: the content of the comment in ADF if ADF is supported by the Jira instance or, a string otherwise.
+
+        Returns:
+            A dictionary with the details of the comment after the update is successful; an error otherwise.
+        """
+
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.put,
+            url=f'issue/{issue_id_or_key}/comment/{comment_id}',
+            data=json.dumps({'body': content}),
+        )
+
     async def get_comments(
         self, issue_id_or_key: str, offset: int | None = None, limit: int | None = None
     ) -> dict:

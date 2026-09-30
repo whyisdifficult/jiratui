@@ -1380,6 +1380,39 @@ async def test_add_comment_with_api_v2(jira_api_v2: JiraAPIv2):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_update_comment(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.put(get_url_pattern('issue/1/comment/2'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={},
+        )
+    )
+    # WHEN
+    result = await jira_api.update_comment(
+        '1',
+        '2',
+        {
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        },
+    )
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/comment/2'
+    assert json.loads(route.calls.last.request.content) == {
+        'body': {
+            'content': [{'content': [{'text': 'Hello', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        }
+    }
+    assert result == {}
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_get_comment(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('issue/1/comment/2'))

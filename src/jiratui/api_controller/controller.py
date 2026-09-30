@@ -2106,21 +2106,78 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
         author = response.get('author', {})
-        update_author = response.get('updateAuthor')
+        update_author: dict | None = response.get('updateAuthor')
         comment = IssueComment(
             id=response.get('id'),
-            created=isoparse(response.get('created')) if response.get('created') else None,
-            updated=isoparse(response.get('updated')) if response.get('updated') else None,
+            created=isoparse(response.get('created', '')) if response.get('created') else None,
+            updated=isoparse(response.get('updated', '')) if response.get('updated') else None,
             author=JiraUser(
                 account_id=author.get('accountId'),
                 active=author.get('active'),
-                display_name=author.get('displayName'),
+                display_name=author.get('displayName', ''),
                 email=author.get('emailAddress'),
             ),
             update_author=JiraUser(
                 account_id=update_author.get('accountId'),
                 active=update_author.get('active'),
-                display_name=update_author.get('displayName'),
+                display_name=update_author.get('displayName', ''),
+                email=update_author.get('emailAddress'),
+            )
+            if update_author
+            else None,
+            body=response.get('body'),
+        )
+        return APIControllerResponse(result=comment)
+
+    async def update_comment(
+        self, issue_key_or_id: str, comment_id: str, message: str
+    ) -> APIControllerResponse:
+        """Updates the comment of a work item.
+
+        Args:
+            issue_key_or_id: the key or id of the work item whose comment we want to update.
+            comment_id: the id of the comment we want to update.
+            message: the content of the comment.
+
+        Returns:
+            An instance of `APIControllerResponse` with the comment if the update is successful; an error otherwise.
+        """
+
+        try:
+            comment_content: dict | str
+            if self._adf_support_enabled():
+                comment_content = convert_markdown_to_adf(expand_mention_tokens(message))
+            else:
+                comment_content = message
+            response = await self.api.update_comment(issue_key_or_id, comment_id, comment_content)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to update the comment',
+                extra={
+                    'issue_key_or_id': issue_key_or_id,
+                    'comment_id': comment_id,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        author = response.get('author', {})
+        update_author: dict | None = response.get('updateAuthor')
+        comment = IssueComment(
+            id=response.get('id'),
+            created=isoparse(response.get('created', '')) if response.get('created') else None,
+            updated=isoparse(response.get('updated', '')) if response.get('updated') else None,
+            author=JiraUser(
+                account_id=author.get('accountId'),
+                active=author.get('active'),
+                display_name=author.get('displayName', ''),
+                email=author.get('emailAddress'),
+            ),
+            update_author=JiraUser(
+                account_id=update_author.get('accountId'),
+                active=update_author.get('active'),
+                display_name=update_author.get('displayName', ''),
                 email=update_author.get('emailAddress'),
             )
             if update_author

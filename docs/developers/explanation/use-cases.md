@@ -501,6 +501,34 @@ the application takes to add a new comment to an existing work item.
 ```
 ````
 
+(use-case-update-comment)=
+### Update Comment
+
+The following sequence diagram depicts the interaction of the user with the application and the series of steps that
+the application takes to update a comment from an existing work item.
+
+````{toggle}
+```{mermaid}
+    ---
+    config:
+        theme: "default"
+    ---
+    sequenceDiagram
+        actor User as User
+        participant CommentUI as CommentsTab Widget
+        participant CommentDisplay as CommentDisplay Widget
+        participant ConfirmModal
+        participant CommentHandler
+        participant JiraAPI
+        participant Storage as Comment Cache
+
+        User->>CommentUI: Navigate to specific comment
+        CommentUI->>CommentDisplay: Highlight selected comment
+        CommentDisplay-->>User: Display comment with 'e' key hint
+        User->>CommentDisplay: Presses 'e' key to update
+```
+````
+
 (use-case-delete-comment)=
 ### Delete Comment
 
