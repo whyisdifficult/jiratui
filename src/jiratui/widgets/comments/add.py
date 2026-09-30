@@ -1,12 +1,12 @@
+from dataclasses import dataclass
 from typing import cast
 
-from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import ItemGrid, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Label, Static, TextArea
+from textual.widgets import Button, Label, TextArea
 
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
@@ -14,16 +14,29 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.utils.mentions import build_mention_token
 from jiratui.utils.text import char_at_location_matches
 from jiratui.utils.ui_actions import Actionable, UIAction
-from jiratui.widgets.commons.base import TextAreaWithUserMention
+from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
+from jiratui.widgets.commons.base import FieldMode
 from jiratui.widgets.commons.users import JiraUserInput, UserMentionAutoComplete
-from jiratui.widgets.commons.widgets import UserMentionOverlay
+from jiratui.widgets.commons.widgets import PlainTextTextAreaWidget, UserMentionOverlay
 
 
-class AddCommentScreen(Actionable, Screen[str]):
-    """A modal screen that allows users to add a comment to a work item.
+@dataclass
+class CommentScreenResult:
+    """Contains the data for the caller when the screen is dismissed."""
 
-    The screen does not add the comment to the work item. Instead, it returns the comment's text to the caller via the
-    `dismiss()` call and the caller will proceed to add the comment via the API.
+    content: str
+    """The content of the comment that we want to add or update. This is always a string."""
+    work_item_key: str | None = None
+    """The key of the work item whose comment the user wants to delete."""
+    comment_id: str | None = None
+    """The ID of the comment the user wants to delete."""
+
+
+class AddCommentScreen(Actionable, Screen[CommentScreenResult | None]):
+    """A modal screen that allows users to add/update work item's comments.
+
+    The screen does not add/update the comment to the work item. Instead, it returns the comment's text to the caller
+    via the `dismiss()` call and the caller will proceed to add/update the comment via the API.
 
     The screen also provides an `@` mention picker: typing `@` at a word boundary (or the `ctrl+@` binding) opens a
     small overlay that live-searches Jira users and inserts a mention *token* (`@[Name](accountId)`) at the
@@ -34,6 +47,7 @@ class AddCommentScreen(Actionable, Screen[str]):
     **See Also**:
     - [Add Comment Screen Design](#components-add-comment-screen)
     - [Use Case: Add Comment](#use-case-add-comment)
+    - [Use Case: Update Comment](#use-case-update-comment)
     - [Architecture](#architecture-work-item-comments-classes)
     """
 
@@ -66,16 +80,42 @@ class AddCommentScreen(Actionable, Screen[str]):
         if isinstance(action.action, str)
     ] + [Binding('escape', 'app.pop_screen', 'Close')]
 
-    def __init__(self, work_item_key: str | None = None):
+    def __init__(
+        self,
+        work_item_key: str | None = None,
+        update_mode: bool = False,
+        comment_id: str | None = None,
+        content: str | dict | None = None,
+    ):
+        """Creates the modal screen.
+
+        Args:
+            work_item_key: the key of the work item for which the user is adding or updating a comment.
+            update_mode: if `True` then the user wants to update an existing comment; otherwise the user is adding a new
+            comment.
+            content: the initial content of the comment if update_mode is `True`. When `update_mode=True` this will
+            contain the current content of the comment. The type of content varies depending on whether the Jira server
+            supports ADF or not.
+        """
+
         super().__init__()
         self.__work_item_key = work_item_key
-        self.title = f'Add comment to the work item {self.__work_item_key}'
+        self.__update_mode = update_mode
+        self.__comment_id = comment_id
+        self.__initial_content: str | dict | None = content
+        if self.__update_mode:
+            self.title = f'Update Comment for {self.__work_item_key}'
+        else:
+            self.title = f'Add Comment for {self.__work_item_key}'
         self._mention_overlay_open: bool = False
         self._mention_trigger_location: tuple[int, int] | None = None
 
     @property
-    def comment_textarea(self) -> TextAreaWithUserMention:
-        return self.query_one(TextAreaWithUserMention)
+    def comment_textarea(self) -> ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget:
+        if self._adf_support_enabled:
+            return self.query_one(ADFMarkdownTextAreaWidget)
+        else:
+            return self.query_one(PlainTextTextAreaWidget)
 
     @property
     def save_button(self) -> Button:
@@ -86,20 +126,27 @@ class AddCommentScreen(Actionable, Screen[str]):
         return self.query_one('#user-mention-overlay-container', Vertical)
 
     def compose(self) -> ComposeResult:
+        widget: ADFMarkdownTextAreaWidget | PlainTextTextAreaWidget
         with Vertical(id='add-comment-screen-vertical') as vc:
             vc.border_title = self.title
-            yield Static(
-                Text(
-                    'Tip: tab works as indentation control. Use Escape or shift+tab to focus/unfocus elements in the screen.'
-                ),
-                classes='tip',
-            )
-            textarea = TextAreaWithUserMention.code_editor(
-                '', language='markdown', show_line_numbers=False, compact=True
-            )
-            textarea.border_title = 'Comment'
-            textarea.border_subtitle = 'Markdown Enabled'
-            yield textarea
+            if self._adf_support_enabled:
+                widget = ADFMarkdownTextAreaWidget(
+                    mode=FieldMode.CREATE if not self.__update_mode else FieldMode.UPDATE,
+                    jira_field_key='comment',
+                    field_id='comment',
+                    title='Comment',
+                    original_value=self.__initial_content if self.__update_mode else None,  # type:ignore[arg-type]
+                )
+            else:
+                widget = PlainTextTextAreaWidget(
+                    mode=FieldMode.CREATE if not self.__update_mode else FieldMode.UPDATE,
+                    jira_field_key='comment',
+                    field_id='comment',
+                    title='Comment',
+                    original_value=self.__initial_content if self.__update_mode else None,  # type:ignore[arg-type]
+                )
+            widget.compact = True
+            yield widget
             yield Vertical(id='user-mention-overlay-container')
             with ItemGrid(classes='add-comment-grid-buttons'):
                 yield Button('Save', variant='success', id='add-comment-button-save', disabled=True)
@@ -115,11 +162,17 @@ class AddCommentScreen(Actionable, Screen[str]):
 
     @on(Button.Pressed, '#add-comment-button-save')
     def handle_save(self) -> None:
-        self.dismiss(self.comment_textarea.text.strip() or '')
+        self.dismiss(
+            CommentScreenResult(
+                work_item_key=self.__work_item_key,
+                comment_id=self.__comment_id,
+                content=self.comment_textarea.text.strip() or '',
+            )
+        )
 
     @on(Button.Pressed, '#add-comment-button-quit')
     def handle_cancel(self) -> None:
-        self.dismiss('')
+        self.dismiss(None)
 
     # logic related to user mentions in textarea widgets
     @property
@@ -149,9 +202,9 @@ class AddCommentScreen(Actionable, Screen[str]):
         await self._close_mention_picker()
         textarea.focus()
 
-    @on(TextAreaWithUserMention.MentionRequested)
+    @on(ADFMarkdownTextAreaWidget.MentionRequested)
     async def _on_mention_requested(
-        self, message: TextAreaWithUserMention.MentionRequested
+        self, message: ADFMarkdownTextAreaWidget.MentionRequested
     ) -> None:
         message.stop()
         if self._adf_support_enabled:

@@ -4,7 +4,7 @@ import pytest
 
 from jiratui.api_controller.controller import APIController, APIControllerResponse
 from jiratui.models import IssueComment, JiraUser
-from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.comments.add import AddCommentScreen, CommentScreenResult
 from jiratui.widgets.comments.comments import (
     CommentCollapsible,
     IssueCommentsWidget,
@@ -21,6 +21,66 @@ def mock_configuration():
         yield mock_config
 
 
+@pytest.mark.parametrize(
+    'update_mode, expected_title',
+    [
+        (True, 'Update Comment for WI-1'),
+        (False, 'Add Comment for WI-1'),
+    ],
+)
+@pytest.mark.asyncio
+async def test_open_add_comment_screen_with_mode(update_mode, expected_title, app):
+    async with app.run_test() as pilot:
+        # WHEN
+        screen = AddCommentScreen('WI-1', update_mode=update_mode)
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        assert screen.title == expected_title
+
+
+@patch.object(AddCommentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_open_add_comment_screen_for_update_with_adf_support_enabled(app):
+    async with app.run_test() as pilot:
+        # WHEN
+        screen = AddCommentScreen(
+            work_item_key='WI-1',
+            comment_id='1',
+            update_mode=True,
+            content={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
+        )
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        assert screen.comment_textarea.original_value == {
+            'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+            'type': 'doc',
+            'version': 1,
+        }
+
+
+@patch.object(AddCommentScreen, '_adf_support_enabled', PropertyMock(return_value=False))
+@pytest.mark.asyncio
+async def test_open_add_comment_screen_for_update_with_adf_support_disabled(app):
+    async with app.run_test() as pilot:
+        # WHEN
+        screen = AddCommentScreen(
+            work_item_key='WI-1', comment_id='1', update_mode=True, content='Hello'
+        )
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        # THEN
+        assert screen.comment_textarea.original_value == 'Hello'
+
+
 @pytest.mark.asyncio
 async def test_add_comment_cancel_without_comment(app):
     async with app.run_test() as pilot:
@@ -32,7 +92,7 @@ async def test_add_comment_cancel_without_comment(app):
         await pilot.press('escape')
         await pilot.press('enter')
         # THEN
-        assert screen.dismiss.call_args[0][0] == ''
+        assert screen.dismiss.call_args[0][0] is None
 
 
 @pytest.mark.asyncio
@@ -47,18 +107,50 @@ async def test_add_comment_save_with_comment(app):
         await pilot.press(' ')
         await pilot.press('escape')
         await pilot.press('enter')
-        assert screen.dismiss.call_args[0][0].strip() == 'a'
+        assert isinstance(screen.dismiss.call_args[0][0], CommentScreenResult)
+        assert screen.dismiss.call_args[0][0].content == 'a'
+        assert screen.dismiss.call_args[0][0].work_item_key == 'WI-1'
+
+
+@patch.object(AddCommentScreen, '_adf_support_enabled', PropertyMock(return_value=True))
+@pytest.mark.asyncio
+async def test_update_comment_save_with_comment(app):
+    async with app.run_test() as pilot:
+        screen = AddCommentScreen(
+            work_item_key='WI-1',
+            comment_id='1',
+            update_mode=True,
+            content={
+                'content': [{'content': [{'text': 'Hello ', 'type': 'text'}], 'type': 'paragraph'}],
+                'type': 'doc',
+                'version': 1,
+            },
+        )
+        screen.dismiss = Mock()
+        await app.push_screen(screen)
+        await pilot.pause()
+        await pilot.press('tab')
+        await pilot.press('!')
+        await pilot.press('escape')
+        await pilot.press('enter')
+        assert isinstance(screen.dismiss.call_args[0][0], CommentScreenResult)
+        assert screen.dismiss.call_args[0][0].content == '!Hello'
+        assert screen.dismiss.call_args[0][0].work_item_key == 'WI-1'
+        assert screen.dismiss.call_args[0][0].comment_id == '1'
 
 
 @pytest.mark.asyncio
 async def test_add_comment_save_button_enabled_with_non_empty_comment(app):
+    # GIVEN
     async with app.run_test() as pilot:
         screen = AddCommentScreen('WI-1')
         screen.dismiss = Mock()
         await app.push_screen(screen)
         await pilot.pause()
+        # WHEN
         await pilot.press('tab')
         await pilot.press('a')
+        # THEN
         assert screen.save_button.disabled is False
 
 
@@ -74,7 +166,7 @@ async def test_add_comment_cancel_with_comment(app):
         await pilot.press('escape')
         await pilot.press('tab')
         await pilot.press('enter')
-        assert screen.dismiss.call_args[0][0].strip() == ''
+        assert screen.dismiss.call_args[0][0] is None
 
 
 @pytest.mark.asyncio
@@ -204,7 +296,7 @@ async def test_save_empty_comment(add_comment_to_issue_mock: Mock, app):
         await app.screen.mount(widget)
         widget.comments = WorkItemComments(work_item_key='WI-1')
         # WHEN
-        widget._save_comment('')
+        widget._save_comment(CommentScreenResult(content=''))
         # THEN
         add_comment_to_issue_mock.assert_not_called()
 
@@ -241,7 +333,7 @@ async def test_save_comment(
         await app.screen.mount(widget)
         widget.comments = WorkItemComments(work_item_key='WI-1')
         # WHEN
-        widget._save_comment('test ')
+        widget._save_comment(CommentScreenResult(content='test '))
         await pilot.pause()
         # THEN
         add_comment_mock.assert_called_once_with('WI-1', 'test')
@@ -268,7 +360,7 @@ async def test_save_comment_no_comments_found(
         await app.screen.mount(widget)
         widget.comments = WorkItemComments(work_item_key='WI-1')
         # WHEN
-        widget._save_comment('test ')
+        widget._save_comment(CommentScreenResult(content='test '))
         await pilot.pause()
         # THEN
         add_comment_mock.assert_called_once_with('WI-1', 'test')

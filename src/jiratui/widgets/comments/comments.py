@@ -1,10 +1,11 @@
-"""Widgets for listing the comments associated to a work item and for deleting comments."""
+"""Widgets for listing the comments associated to a work item."""
 
 from dataclasses import dataclass
 from datetime import datetime
 from typing import cast
 
 from rich.text import Text
+from textual import on
 from textual.binding import Binding
 from textual.containers import HorizontalGroup, VerticalScroll
 from textual.message import Message
@@ -14,11 +15,10 @@ from textual.widgets import Collapsible, Link, Rule, Static
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.models import IssueComment
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_comment
-from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.comments.add import AddCommentScreen, CommentScreenResult
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
 from jiratui.widgets.commons.widgets import (
@@ -42,6 +42,7 @@ class CommentCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
 
     **See Also**:
     - [Use Case: Delete Comment](#use-case-delete-comment)
+    - [Use Case: Update Comment](#use-case-update-comment)
     """
 
     ACTIONS: list[UIAction] = []
@@ -49,6 +50,7 @@ class CommentCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
     key_bindings: dict[str, dict] = get_application_key_bindings()
     for supported_action_id in [
         SupportedActions.DELETE_COMMENT,
+        SupportedActions.EDIT_COMMENT,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -73,21 +75,34 @@ class CommentCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
         if isinstance(action.action, str)
     ]
 
+    @dataclass
     class Deleted(Message):
-        """Posted when a comment is deleted.
+        """Posted when the user wants to delete a comment."""
 
-        It holds the key of the work item whose comment we deleted and the ID of the deleted comment.
-        """
+        work_item_key: str
+        """The key of the work item whose comment the user wants to delete."""
+        comment_id: str
+        """The ID of the comment the user wants to delete."""
 
-        def __init__(self, work_item_key: str, comment_id: str) -> None:
-            self.work_item_key = work_item_key
-            self.comment_id = comment_id
-            super().__init__()
+    @dataclass
+    class EditComment(Message):
+        """Posted when the user wants to edit the comment's content."""
+
+        work_item_key: str
+        """The key of the work item whose comment the user wants to update."""
+        comment_id: str
+        """The ID of the comment the user wants to update."""
 
     def __init__(self, *args, **kwargs):
         self._work_item_key: str | None = kwargs.pop('work_item_key', None)  # type:ignore[annotation-unchecked]
         self._comment_id: str | None = kwargs.pop('comment_id', None)  # type:ignore[annotation-unchecked]
         super().__init__(*args, **kwargs)
+
+    def action_edit_comment(self) -> None:
+        """Posts an `EditComment` message to request updating the comment's content."""
+
+        if self._work_item_key and self._comment_id:
+            self.post_message(self.EditComment(self._work_item_key, self._comment_id))
 
     async def action_delete_comment(self) -> None:
         await self.app.push_screen(
@@ -96,14 +111,13 @@ class CommentCollapsible(Actionable, Collapsible, inherit_bindings=False):  # ty
         )
 
     def handle_delete_choice(self, result: bool) -> None:
-        """Posts a [CommentCollapsible.Deleted](#jiratui.widgets.comments.comments.CommentCollapsible.Deleted)
-        to delete a comment.
+        """Posts a `CommentCollapsible.Deleted` to delete a comment.
 
         Args:
-            result: if True then the message to delete the comment is posted. Otherwise nothing is done.
+            result: if True then the message to delete the comment is posted. Otherwise, nothing is done.
         """
 
-        if result:
+        if result and self._work_item_key and self._comment_id:
             self.post_message(self.Deleted(self._work_item_key, self._comment_id))
 
 
@@ -114,12 +128,14 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
 
     - opening the modal screen that allows users to write comments.
     - processing the result from the modal screen and adding the comment to the work item via the API.
-    - deleting comments from the work item via the API when the message
-    [CommentCollapsible.Deleted](#jiratui.widgets.comments.comments.CommentCollapsible.Deleted) is posted.
+    - deleting comments from the work item via the API when the message `CommentCollapsible.Deleted` is posted.
+    - updating a comment from the work item via the API when the message `CommentCollapsible.EditComment` is posted.
     - updating the list of comments when a comment is deleted.
 
     **See Also**:
     - [Use Case: Add Comment](#use-case-add-comment)
+    - [Use Case: Update Comment](#use-case-update-comment)
+    - [Use Case: Delete Comment](#use-case-delete-comment)
     - [Architecture](#architecture-work-item-comments-classes)
     """
 
@@ -164,6 +180,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
     def __init__(self):
         super().__init__(id='issue_comments')
         self._work_item_key = None
+        self.__comments_contents_by_id: dict[str, str | dict | None] = {}
 
     @property
     def help_anchor(self) -> str:
@@ -189,12 +206,63 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
             None
         """
 
-        self.run_worker(self._delete_comment(message.work_item_key, message.comment_id))
         message.stop()  # no need to propagate the message
+        self.run_worker(self._delete_comment(message.work_item_key, message.comment_id))
 
-    @staticmethod
-    def _fetch_comments_on_delete() -> bool:
-        return CONFIGURATION.get().fetch_comments_on_delete
+    @on(CommentCollapsible.EditComment)
+    def open_edit_comment_screen(self, message: CommentCollapsible.EditComment) -> None:
+        """Opens a modal screen to allow users to update the comment's content.
+
+        Args:
+            message: the message posted by the collapsible widget that holds the comment's content.
+
+        Returns:
+            None
+        """
+
+        message.stop()
+        if message.work_item_key and message.comment_id:
+            self.app.push_screen(
+                AddCommentScreen(
+                    message.work_item_key,
+                    update_mode=True,
+                    comment_id=message.comment_id,
+                    content=self.__comments_contents_by_id.get(message.comment_id),
+                ),
+                self._edit_comment,
+            )
+        else:
+            self.notify(
+                'Select a work item before attempting to edit one of its comments.',
+                title='No item selected',
+                severity='warning',
+            )
+
+    async def _edit_comment(self, data: CommentScreenResult | None) -> None:
+        if data and data.content and data.work_item_key and data.comment_id:
+            application = cast('JiraApp', self.app)  # type:ignore[name-defined] # noqa: F821
+            # update the comment
+            response: APIControllerResponse = await application.api.update_comment(
+                data.work_item_key,
+                data.comment_id,
+                data.content,
+            )
+            if not response.success:
+                self.notify(
+                    f'Failed to add the comment: {response.error}',
+                    severity='error',
+                    title='Comments',
+                )
+            else:
+                # refresh the comments
+                response = await application.api.get_comments(self._work_item_key)
+                if response.success:
+                    self.comments = WorkItemComments(
+                        work_item_key=self._work_item_key, comments=response.result or []
+                    )
+
+    def _fetch_comments_on_delete(self) -> bool:
+        return self.app.config.fetch_comments_on_delete  # type:ignore[attr-defined]
 
     async def _delete_comment(self, key: str, comment_id: str) -> None:
         """Attempts to delete a comment."""
@@ -222,7 +290,8 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
             )
 
     def action_add_comment(self) -> None:
-        """Opens a screen to capture the comment's text."""
+        """Opens a modal screen to allow users to add a comment for the currently selected work item."""
+
         if self._work_item_key:
             self.app.push_screen(AddCommentScreen(self._work_item_key), self._save_comment)
         else:
@@ -232,12 +301,12 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                 severity='warning',
             )
 
-    def _save_comment(self, content: str) -> None:
-        if content and content.strip():
-            self.run_worker(self._add_comment_to_issue(content))
+    def _save_comment(self, data: CommentScreenResult | None) -> None:
+        if data and data.content and data.content.strip():
+            self.run_worker(self._add_comment_to_issue(data.content))
 
     async def _add_comment_to_issue(self, content: str) -> None:
-        """Adds a comment to the issue and retrieves the list comments if the comment was added successfully.
+        """Adds a comment to the work item and refresh the list comments if the comment was added successfully.
 
         Args:
             content: the message of the comment.
@@ -280,6 +349,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                 web_links: list[Link] = []
                 if comment.rich_text_value_is_empty(comment.body):  # type:ignore[arg-type]
                     widget = Static('There is no "Comment" set.', classes='tip')
+                    self.__comments_contents_by_id[comment.id] = None
                 else:
                     widget = build_read_only_rich_text_widget(
                         jira_field_key='comment',
@@ -287,6 +357,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
                         required=False,
                         content=comment.body,
                     )
+                    self.__comments_contents_by_id[comment.id] = comment.body
                     web_links = widget.extract_web_links()
 
                 url = (
