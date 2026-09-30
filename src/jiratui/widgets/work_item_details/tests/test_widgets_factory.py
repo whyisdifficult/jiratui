@@ -1023,6 +1023,73 @@ async def test_create_dynamic_widgets_custom_field_multicheckboxes_without_chang
         assert widgets[0].value_has_changed is False
 
 
+###
+# MULTI_VERSION
+###
+
+
+@pytest.fixture
+def multiversion_edit_meta_fields() -> dict:
+    return {
+        'customfield_13610': {
+            'required': False,
+            'schema': {
+                'type': 'array',
+                'items': 'version',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:multiversion',
+                'customId': 13610,
+            },
+            'name': 'Tested In:',
+            'key': 'customfield_13610',
+            'operations': ['set', 'add', 'remove'],
+            'allowedValues': [
+                {'id': '10100', 'name': '1.0.0', 'archived': False, 'released': True},
+                {'id': '10101', 'name': '1.1.0', 'archived': False, 'released': False},
+            ],
+        }
+    }
+
+
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_multiversion(
+    work_item: JiraIssue, app: JiraApp, multiversion_edit_meta_fields: dict
+):
+    # GIVEN
+    work_item.edit_meta['fields'] = multiversion_edit_meta_fields
+    work_item.custom_fields = {
+        'customfield_13610': [{'id': '10100', 'name': '1.0.0', 'released': True}]
+    }
+
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], MultiSelectWidget)
+        assert widgets[0].id == 'customfield_13610'
+        assert widgets[0].border_title == 'Tested In:'
+        assert widgets[0].disabled is False
+        assert widgets[0].get_value_for_update() == [{'id': '10100'}]
+        assert widgets[0].value_has_changed is False
+
+
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_multiversion_without_custom_fields_values(
+    work_item: JiraIssue, app: JiraApp, multiversion_edit_meta_fields: dict
+):
+    # GIVEN
+    work_item.edit_meta['fields'] = multiversion_edit_meta_fields
+    work_item.custom_fields = None
+
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        assert isinstance(widgets[0], MultiSelectWidget)
+        assert widgets[0].get_value_for_update() == []
+
+
 @pytest.mark.asyncio
 async def test_create_dynamic_widgets(work_item: JiraIssue, app: JiraApp):
     # WHEN
