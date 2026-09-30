@@ -1085,7 +1085,7 @@ C4Component
         }
 
         namespace jiratui.widgets.comments.add {
-            class AddCommentScreen
+            class AddUpdateCommentScreen
         }
 
         namespace textual {
@@ -1093,18 +1093,19 @@ C4Component
             class VerticalScroll
             class Screen
             class TextArea
-            class Static
             class ItemGrid
         }
 
         Collapsible <|-- CommentCollapsible
         VerticalScroll <|-- IssueCommentsWidget
-        Screen <|-- AddCommentScreen
+        Screen <|-- AddUpdateCommentScreen
         IssueCommentsWidget ..> CommentCollapsible: contains
-        AddCommentScreen o-- TextArea
-        AddCommentScreen o-- Static
-        AddCommentScreen o-- ItemGrid
-        IssueCommentsWidget --> AddCommentScreen: opens
+        AddUpdateCommentScreen o-- ADFMarkdownTextAreaWidget
+        AddUpdateCommentScreen o-- PlainTextTextAreaWidget
+        AddUpdateCommentScreen o-- UserMentionOverlay
+        AddUpdateCommentScreen o-- UserMentionAutoComplete
+        AddUpdateCommentScreen o-- ItemGrid
+        IssueCommentsWidget --> AddUpdateCommentScreen: opens
 ```
 ````
 

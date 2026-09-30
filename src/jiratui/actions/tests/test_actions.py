@@ -38,7 +38,7 @@ from jiratui.widgets.attachments.attachments import (
     IssueAttachmentsWidget,
     WorkItemAttachments,
 )
-from jiratui.widgets.comments.add import AddCommentScreen
+from jiratui.widgets.comments.add import AddUpdateCommentScreen
 from jiratui.widgets.comments.comments import (
     CommentCollapsible,
     IssueCommentsWidget,
@@ -5200,7 +5200,7 @@ async def test_action_select_cursor_in_history_screen(
 
 
 def test_add_comment_screen_actions_and_bindings(bindings: dict):
-    assert AddCommentScreen.ACTIONS == [
+    assert AddUpdateCommentScreen.ACTIONS == [
         UIAction(
             action='open_user_mention_picker',
             keys=bindings.get('open_user_mention_picker', {}).get('keys', []),
@@ -5209,7 +5209,7 @@ def test_add_comment_screen_actions_and_bindings(bindings: dict):
             tooltip='User Picker',
         ),
     ]
-    assert AddCommentScreen.BINDINGS == [
+    assert AddUpdateCommentScreen.BINDINGS == [
         Binding(
             key=bindings.get('open_user_mention_picker', {}).get('keys', [])[0],
             action='open_user_mention_picker',

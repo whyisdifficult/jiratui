@@ -18,7 +18,7 @@ from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import IssueComment
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_comment
-from jiratui.widgets.comments.add import AddCommentScreen, CommentScreenResult
+from jiratui.widgets.comments.add import AddUpdateCommentScreen, CommentScreenResult
 from jiratui.widgets.commons.adf import ReadOnlyADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import build_read_only_rich_text_widget
 from jiratui.widgets.commons.widgets import (
@@ -223,7 +223,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
         message.stop()
         if message.work_item_key and message.comment_id:
             self.app.push_screen(
-                AddCommentScreen(
+                AddUpdateCommentScreen(
                     message.work_item_key,
                     update_mode=True,
                     comment_id=message.comment_id,
@@ -293,7 +293,7 @@ class IssueCommentsWidget(Actionable, VerticalScroll, inherit_bindings=False):  
         """Opens a modal screen to allow users to add a comment for the currently selected work item."""
 
         if self._work_item_key:
-            self.app.push_screen(AddCommentScreen(self._work_item_key), self._save_comment)
+            self.app.push_screen(AddUpdateCommentScreen(self._work_item_key), self._save_comment)
         else:
             self.notify(
                 'Select a work item before attempting to add a comment.',

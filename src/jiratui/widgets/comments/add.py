@@ -32,7 +32,7 @@ class CommentScreenResult:
     """The ID of the comment the user wants to delete."""
 
 
-class AddCommentScreen(Actionable, Screen[CommentScreenResult | None]):
+class AddUpdateCommentScreen(Actionable, Screen[CommentScreenResult | None]):
     """A modal screen that allows users to add/update work item's comments.
 
     The screen does not add/update the comment to the work item. Instead, it returns the comment's text to the caller
@@ -103,10 +103,8 @@ class AddCommentScreen(Actionable, Screen[CommentScreenResult | None]):
         self.__update_mode = update_mode
         self.__comment_id = comment_id
         self.__initial_content: str | dict | None = content
-        if self.__update_mode:
-            self.title = f'Update Comment for {self.__work_item_key}'
-        else:
-            self.title = f'Add Comment for {self.__work_item_key}'
+        title = f'Comment for {self.__work_item_key or ""}'
+        self.title = f'Update {title}' if self.__update_mode else f'Add {title}'
         self._mention_overlay_open: bool = False
         self._mention_trigger_location: tuple[int, int] | None = None
 

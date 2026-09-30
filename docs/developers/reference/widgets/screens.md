@@ -89,9 +89,9 @@
 ```{autodoc2-object} jiratui.widgets.create_work_item.screen.AddWorkItemScreen
 ```
 
-## AddCommentScreen
+## AddUpdateCommentScreen
 
-```{autodoc2-object} jiratui.widgets.comments.add.AddCommentScreen
+```{autodoc2-object} jiratui.widgets.comments.add.AddUpdateCommentScreen
 ```
 
 ## ViewAttachmentScreen
