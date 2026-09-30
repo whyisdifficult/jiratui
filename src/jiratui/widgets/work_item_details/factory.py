@@ -284,8 +284,12 @@ def create_dynamic_widgets_for_updating_work_item(
                     ],
                     field_supports_update=metadata.supports_update,
                 )
-            elif schema_custom_type == CustomFieldType.MULTI_SELECT.value:
+            elif schema_custom_type in (
+                CustomFieldType.MULTI_SELECT.value,
+                CustomFieldType.MULTI_VERSION.value,
+            ):
                 # Multi-select field - similar to multi-checkboxes but different widget type
+                # Multi-version picker fields use the same structure; their values are versions, i.e. `id` and `name`
                 if (value := work_item.get_custom_field_value(field_key)) is None:
                     value = []
 
