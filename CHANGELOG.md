@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 - Fix Jira Server sprint strings in work item details. By [@jesko2004](https://github.com/jesko2004) in https://github.com/whyisdifficult/jiratui/pull/361
-- Do not display empty configuration settings in the config screen. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/368
+- Do not display empty configuration settings in the config screen. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/369
 
 ## [1.15.0] 2026-09-21
 
