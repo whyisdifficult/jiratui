@@ -10,5 +10,3 @@ LOGGER_NAME = 'jiratui'
 LOG_FILE_FILE_NAME = 'jiratui.log'
 DEFAULT_JIRA_API_VERSION = 3
 FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH = 3
-SEARCH_RESULTS_ASSIGNEE_COLUMN_MAX_LENGTH = 8
-"""Controls the maximum length of the assignee column in the search results."""

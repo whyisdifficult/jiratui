@@ -14,7 +14,6 @@ from textual.widgets._data_table import RowDoesNotExist
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.constants import SEARCH_RESULTS_ASSIGNEE_COLUMN_MAX_LENGTH
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -262,7 +261,9 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             ]
             if self.app.config.search_results_show_assignee:
                 current_row.append(
-                    Text(issue.show_assignee(SEARCH_RESULTS_ASSIGNEE_COLUMN_MAX_LENGTH))
+                    Text(
+                        issue.show_assignee(self.app.config.search_results_show_assignee_max_length)
+                    )
                 )
             current_row.append(Text(issue_summary))
             self.add_row(*current_row, key=f'{issue.id}#{issue.key}')
