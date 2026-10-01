@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add the setting `show_favourite_filters_in_jql_editor`. When enabled, the JQL Expression Editor lists the filters that
+the user has favourited (starred) in Jira in its dropdown, next to the expressions in `pre_defined_jql_expressions`. By [@cullenstone1](https://github.com/cullenstone1)
+
 ## [1.16.0] 2026-10-01
 
 ### Added

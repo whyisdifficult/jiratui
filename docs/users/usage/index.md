@@ -458,7 +458,8 @@ Another way to search work items in JiraTUI is by crafting your own [JQL query](
 input field. In addition, you can also define your own JQL query expressions and save them in the config file using the
 setting `pre_defined_jql_expressions`. This is a YAML dictionary of expressions. When you focus on the JQL Query input
 field (`j`) and press `ctrl+e` the JQL Editor opens. Here you can write a complex query or, choose one from the
-dropdown.
+dropdown. If you enable the setting `show_favourite_filters_in_jql_editor` the dropdown also lists the filters you have
+favourited (starred) in Jira.
 
 **Examples**
 

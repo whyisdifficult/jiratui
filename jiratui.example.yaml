@@ -29,6 +29,7 @@ pre_defined_jql_expressions:
   1:
     label: 'Work in the current sprint'
     expression: 'sprint in openSprints()'
+show_favourite_filters_in_jql_editor: false
 jql_expression_id_for_work_items_search: null
 search_results_truncate_work_item_summary: null
 cli_search_results_truncate_work_item_summary: 20
