@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.16.0] [unreleased]
+## [1.16.0] 2026-10-01
 
 ### Added
 
 - Add support for mentioning users when editing text content. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/364
 - Add support for updating comments. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/367
+- Add support for new custom field type. By [@cullenstone1](https://github.com/cullenstone1) in https://github.com/whyisdifficult/jiratui/pull/366
 
 ### Minor Improvements
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 - Fix Jira Server sprint strings in work item details. By [@jesko2004](https://github.com/jesko2004) in https://github.com/whyisdifficult/jiratui/pull/361
+- Do not display empty configuration settings in the config screen. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/368
 
 ## [1.15.0] 2026-09-21
 

@@ -93,14 +93,16 @@ class ConfigFileScreen(ModalScreen):
         if not left_vertical_container.display:
             data = self._get_config_data()
             if event.row_key.value in self._json_fields and event.row_key.value in data:
-                left_vertical_container.display = True
                 if data.get(event.row_key.value) is not None:
                     self.textarea.load_text(
                         json.dumps(data.get(event.row_key.value), indent=3, sort_keys=True)
                     )
                     self.textarea.border_title = event.row_key.value
+                    left_vertical_container.display = True
         else:
             left_vertical_container.display = False
+            self.textarea.load_text('')
+            self.textarea.border_title = None
 
     def action_process_escape(self) -> None:
         if self.focused == self.textarea:
@@ -115,7 +117,11 @@ class ConfigFileScreen(ModalScreen):
         data = self._get_config_data()
         for key, value in data.items():
             if key in self._json_fields:
-                display_value = Text('Press enter to view', justify='left', style='blue')
+                display_value = Text(
+                    'Press enter to view' if value is not None else '-',
+                    justify='left',
+                    style='blue',
+                )
             else:
                 row_style = ''
                 if isinstance(value, bool):
