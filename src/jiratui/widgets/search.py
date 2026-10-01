@@ -62,7 +62,7 @@ class DataTableSearchInput(Input):
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
-        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:
+        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
             return False
         return True
 
@@ -77,7 +77,7 @@ class DataTableSearchInput(Input):
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         cleaned = event.value.strip() if event.value else None
         if not cleaned or (
-            len(cleaned) < self.app.config.search_results_page_filtering_minimum_term_length
+            len(cleaned) < self.app.config.search_results_page_filtering_minimum_term_length  # type:ignore[attr-defined]
         ):
             screen.search_results_table.search_results = (
                 screen.search_results_table.get_initial_results_set()
@@ -232,7 +232,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
         # set the columns
         columns = ['#', 'Key', 'Parent', 'Status', 'Type']
-        if self.app.config.search_results_show_assignee:
+        if self.app.config.search_results_show_assignee:  # type:ignore[attr-defined]
             columns.append('Assignee')
         columns.append('Summary')
         self.add_columns(*columns)
@@ -240,16 +240,16 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         # build the rows
         for index, issue in enumerate(response.issues):
             issue_summary = issue.cleaned_summary(
-                self.app.config.search_results_truncate_work_item_summary
+                self.app.config.search_results_truncate_work_item_summary  # type:ignore[attr-defined]
                 or maximum_summary_column_width
             )
 
             style_status = ''
-            if self.app.config.search_results_style_work_item_status:
+            if self.app.config.search_results_style_work_item_status:  # type:ignore[attr-defined]
                 style_status = get_style_for_work_item_status(issue.status.name.lower())
 
             style_work_type = ''
-            if self.app.config.search_results_style_work_item_type:
+            if self.app.config.search_results_style_work_item_type:  # type:ignore[attr-defined]
                 style_work_type = get_style_for_work_item_type(issue.issue_type.name.lower())
 
             current_row = [
@@ -259,7 +259,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
                 Text(issue.status.name, style=style_status),
                 Text(issue.work_item_type_name, style=style_work_type),
             ]
-            if self.app.config.search_results_show_assignee:
+            if self.app.config.search_results_show_assignee:  # type:ignore[attr-defined]
                 current_row.append(
                     Text(
                         issue.show_assignee(self.app.config.search_results_show_assignee_max_length)
@@ -366,7 +366,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
                     )
 
     def action_filter(self) -> None:
-        if not self.app.config.search_results_page_filtering_enabled:
+        if not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
             return
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         widget = screen.search_results_filter_input
@@ -377,7 +377,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         self.refresh_bindings()
 
     def action_hide(self) -> None:
-        if not self.app.config.search_results_page_filtering_enabled:
+        if not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
             return
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         # hide the input widget
@@ -391,9 +391,9 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
 
-        if action == 'filter' and not self.app.config.search_results_page_filtering_enabled:
+        if action == 'filter' and not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
             return False
-        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:
+        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
             return False
         if action == 'previous_issues_page':
             if self.page > 1:
@@ -432,7 +432,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             None
         """
 
-        if self.app.config.enable_goto and self.current_work_item_key:
+        if self.app.config.enable_goto and self.current_work_item_key:  # type:ignore[attr-defined]
             self.app.push_screen(
                 GoToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
@@ -480,8 +480,8 @@ class SearchResultsContainer(Container):
                 None if self._page_number is None else f'Page {self._page_number}'
             )
         else:
-            self._total_pages = self._total_results // self.app.config.search_results_per_page
-            if (self._total_results % self.app.config.search_results_per_page) > 0:
+            self._total_pages = self._total_results // self.app.config.search_results_per_page  # type:ignore[attr-defined]
+            if (self._total_results % self.app.config.search_results_per_page) > 0:  # type:ignore[attr-defined]
                 self._total_pages += 1
             if self._page_number is not None:
                 self.border_subtitle = f'Page {self._page_number} of {self._total_pages} (total: {self._total_results})'
