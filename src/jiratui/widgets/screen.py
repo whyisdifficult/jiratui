@@ -885,7 +885,8 @@ class MainScreen(Actionable, Screen):
 
     async def _search_single_issue(self, issue_key: str) -> WorkItemSearchResult:
         response: APIControllerResponse = await self.api.get_issue(
-            issue_id_or_key=issue_key, fields=['summary', 'status', 'issuetype', 'parent']
+            issue_id_or_key=issue_key,
+            fields=['summary', 'status', 'issuetype', 'parent', 'assignee'],
         )
         if not response.success:
             self.notify(

@@ -14,7 +14,7 @@ from textual.widgets._data_table import RowDoesNotExist
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
+from jiratui.constants import SEARCH_RESULTS_ASSIGNEE_COLUMN_MAX_LENGTH
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -63,7 +63,7 @@ class DataTableSearchInput(Input):
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
-        if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:
             return False
         return True
 
@@ -78,7 +78,7 @@ class DataTableSearchInput(Input):
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         cleaned = event.value.strip() if event.value else None
         if not cleaned or (
-            len(cleaned) < CONFIGURATION.get().search_results_page_filtering_minimum_term_length
+            len(cleaned) < self.app.config.search_results_page_filtering_minimum_term_length
         ):
             screen.search_results_table.search_results = (
                 screen.search_results_table.get_initial_results_set()
@@ -214,6 +214,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         Returns:
             None
         """
+
         if response is None:
             return
 
@@ -231,33 +232,40 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             self.token_by_page[self.page + 1] = response.next_page_token
 
         # set the columns
-        self.add_columns(*['#', 'Key', 'Parent', 'Status', 'Type', 'Summary'])
+        columns = ['#', 'Key', 'Parent', 'Status', 'Type']
+        if self.app.config.search_results_show_assignee:
+            columns.append('Assignee')
+        columns.append('Summary')
+        self.add_columns(*columns)
+
         # build the rows
         for index, issue in enumerate(response.issues):
             issue_summary = issue.cleaned_summary(
-                CONFIGURATION.get().search_results_truncate_work_item_summary
+                self.app.config.search_results_truncate_work_item_summary
                 or maximum_summary_column_width
             )
 
             style_status = ''
-            if CONFIGURATION.get().search_results_style_work_item_status:
+            if self.app.config.search_results_style_work_item_status:
                 style_status = get_style_for_work_item_status(issue.status.name.lower())
 
             style_work_type = ''
-            if CONFIGURATION.get().search_results_style_work_item_type:
+            if self.app.config.search_results_style_work_item_type:
                 style_work_type = get_style_for_work_item_type(issue.issue_type.name.lower())
 
-            self.add_row(
-                *[
-                    index + 1,
-                    issue.key,
-                    issue.parent_key,
-                    Text(issue.status.name, style=style_status),
-                    Text(issue.work_item_type_name, style=style_work_type),
-                    Text(issue_summary),
-                ],
-                key=f'{issue.id}#{issue.key}',
-            )
+            current_row = [
+                index + 1,
+                issue.key,
+                issue.parent_key,
+                Text(issue.status.name, style=style_status),
+                Text(issue.work_item_type_name, style=style_work_type),
+            ]
+            if self.app.config.search_results_show_assignee:
+                current_row.append(
+                    Text(issue.show_assignee(SEARCH_RESULTS_ASSIGNEE_COLUMN_MAX_LENGTH))
+                )
+            current_row.append(Text(issue_summary))
+            self.add_row(*current_row, key=f'{issue.id}#{issue.key}')
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Fetches the details of the currently-selected item."""
@@ -357,7 +365,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
                     )
 
     def action_filter(self) -> None:
-        if not CONFIGURATION.get().search_results_page_filtering_enabled:
+        if not self.app.config.search_results_page_filtering_enabled:
             return
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         widget = screen.search_results_filter_input
@@ -368,7 +376,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         self.refresh_bindings()
 
     def action_hide(self) -> None:
-        if not CONFIGURATION.get().search_results_page_filtering_enabled:
+        if not self.app.config.search_results_page_filtering_enabled:
             return
         screen = cast('MainScreen', self.screen)  # type:ignore[name-defined] # noqa: F821
         # hide the input widget
@@ -382,9 +390,9 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
 
-        if action == 'filter' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+        if action == 'filter' and not self.app.config.search_results_page_filtering_enabled:
             return False
-        if action == 'hide' and not CONFIGURATION.get().search_results_page_filtering_enabled:
+        if action == 'hide' and not self.app.config.search_results_page_filtering_enabled:
             return False
         if action == 'previous_issues_page':
             if self.page > 1:
@@ -423,7 +431,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             None
         """
 
-        if CONFIGURATION.get().enable_goto and self.current_work_item_key:
+        if self.app.config.enable_goto and self.current_work_item_key:
             self.app.push_screen(
                 GoToScreen(self.current_work_item_key, self.app.api),  # type:ignore[attr-defined]
                 callback=self._close_goto_screen,
@@ -461,10 +469,9 @@ class SearchResultsContainer(Container):
         border_title = kwargs.pop('border_title', None)
         super().__init__(*args, **kwargs)
         self.border_title = border_title or 'Work Items'
-        self.config = CONFIGURATION.get()
         self._total_results = None
         self._page_number = None
-        self._total_pages = None
+        self._total_pages: int | None = None
 
     def _update_border_subtitle(self) -> None:
         if self._total_results is None:
@@ -472,8 +479,8 @@ class SearchResultsContainer(Container):
                 None if self._page_number is None else f'Page {self._page_number}'
             )
         else:
-            self._total_pages = self._total_results // self.config.search_results_per_page
-            if (self._total_results % self.config.search_results_per_page) > 0:
+            self._total_pages = self._total_results // self.app.config.search_results_per_page
+            if (self._total_results % self.app.config.search_results_per_page) > 0:
                 self._total_pages += 1
             if self._page_number is not None:
                 self.border_subtitle = f'Page {self._page_number} of {self._total_pages} (total: {self._total_results})'
