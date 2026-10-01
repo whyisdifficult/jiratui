@@ -423,6 +423,18 @@ class JiraIssue(JiraBaseIssue):
             return self.assignee.display_name
         return ''
 
+    def show_assignee(self, length: int | None = None) -> str:
+        if self.assignee:
+            if self.assignee.display_name:
+                if length and len(self.assignee.display_name) > length:
+                    return self.assignee.display_name[:length] + '...'
+                return self.assignee.display_name
+            if self.assignee.email:
+                if length and len(self.assignee.email) > length:
+                    return self.assignee.email[:length] + '...'
+                return self.assignee.email
+        return ''
+
     @property
     def work_item_type_name(self) -> str:
         if self.issue_type:

@@ -1624,7 +1624,21 @@ async def test_search_issues(
         )
     ]
     build_criteria_for_searching_work_items_mock.assert_called_once()
-    search_issues_mock.assert_called_once()
+    search_issues_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=None,
+        status=None,
+        assignee=None,
+        issue_type=None,
+        search_in_active_sprint=False,
+        jql_query=None,
+        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent', 'assignee'],
+        next_page_token=None,
+        limit=None,
+        order_by=None,
+    )
 
 
 @pytest.mark.asyncio
@@ -1737,7 +1751,7 @@ async def test_search_issues_for_jira_dc(
         search_in_active_sprint=False,
         jql_query=None,
         offset=expected_offset,
-        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
+        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent', 'assignee'],
         limit=None,
         order_by=None,
     )

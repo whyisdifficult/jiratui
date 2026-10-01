@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Added
+
+- Add configuration option `search_results_show_assignee` to show the assignee in the search results. The default
+value is `False`. If `True` then the assignee of a work item (if any) will be displayed (to a maximum of 8 chars) in
+the search result table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+
 ## [1.16.0] 2026-10-01
 
 ### Added

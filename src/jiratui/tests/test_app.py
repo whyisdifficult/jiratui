@@ -44,6 +44,8 @@ def app_with_unrecognized_config_theme() -> JiraApp:
         view_work_item_after_creation=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -81,6 +83,8 @@ def app_with_input_and_config_theme() -> JiraApp:
         view_work_item_after_creation=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -118,6 +122,8 @@ def app_with_input_theme() -> JiraApp:
         view_work_item_after_creation=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock, user_theme='monokai')
     app.api = APIController(config_mock)
@@ -155,6 +161,8 @@ def app_without_config_theme() -> JiraApp:
         view_work_item_after_creation=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -192,6 +200,8 @@ def app() -> JiraApp:
         view_work_item_after_creation=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

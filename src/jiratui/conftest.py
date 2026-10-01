@@ -55,6 +55,8 @@ def config_for_testing() -> ApplicationConfiguration:
         fetch_comments_on_delete=False,
         show_keybinding_hints=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     return config_mock
 
@@ -88,6 +90,8 @@ def config_for_testing_jira_dc() -> ApplicationConfiguration:
         create_additional_fields_ignore_ids=None,
         show_keybinding_hints=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     return config_mock
 
@@ -122,6 +126,8 @@ def jira_api_controller() -> APIController:
         create_additional_fields_ignore_ids=None,
         show_keybinding_hints=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     return APIController(config_mock)
 
@@ -156,6 +162,8 @@ def jira_api_controller_for_jira_dc() -> APIController:
         create_additional_fields_ignore_ids=None,
         show_keybinding_hints=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     return APIController(config_mock)
 
@@ -197,6 +205,8 @@ def app():
         show_keybinding_hints=False,
         enable_recent_history=False,
         enable_goto=False,
+        search_results_show_assignee=False,
+        search_results_show_assignee_max_length=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
