@@ -49,6 +49,7 @@ from jiratui.models import (
     IssueType,
     JiraBaseIssue,
     JiraField,
+    JiraFilter,
     JiraGlobalSettings,
     JiraIssue,
     JiraIssuePickerSuggestion,
@@ -1483,6 +1484,30 @@ class APIController:
                 default_locale=response.get('defaultLocale', {}).get('locale'),
                 server_time_zone=response.get('serverTimeZone'),
             )
+        )
+
+    async def get_favourite_filters(self) -> APIControllerResponse:
+        """Retrieves the filters that the Jira user connecting to the API has favourited.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with a list of `JiraFilter` or,
+            `APIControllerResponse(success=False)` if there is an error fetching the filters.
+        """
+        try:
+            response: list[dict] = await self.api.get_favourite_filters()
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve the favourite filters of the logged user',
+                extra=exception_details.get('extra'),
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse(
+            result=[
+                JiraFilter(id=str(item.get('id')), name=item.get('name', ''), jql=item.get('jql'))
+                for item in response or []
+                if item.get('id')
+            ]
         )
 
     async def myself(self) -> APIControllerResponse:

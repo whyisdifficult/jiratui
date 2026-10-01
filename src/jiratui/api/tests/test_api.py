@@ -877,6 +877,25 @@ async def test_server_info(jira_api: JiraAPI):
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_get_favourite_filters(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('filter/favourite'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json=[{'id': '10000', 'name': 'Not done', 'jql': 'statusCategory != Done'}],
+        )
+    )
+    # WHEN
+    result = await jira_api.get_favourite_filters()
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/filter/favourite'
+    assert route.calls.last.request.url.params['expand'] == 'jql'
+    assert result == [{'id': '10000', 'name': 'Not done', 'jql': 'statusCategory != Done'}]
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_myself(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('myself'))
