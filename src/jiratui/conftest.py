@@ -197,6 +197,7 @@ def app():
         show_keybinding_hints=False,
         enable_recent_history=False,
         enable_goto=False,
+        show_favourite_filters_in_jql_editor=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
