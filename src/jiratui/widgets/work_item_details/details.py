@@ -94,6 +94,7 @@ from jiratui.widgets.commons.widgets import (
     SelectionWidget,
     SingleUserPickerWidget,
     SprintSelectionWidget,
+    TeamSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -693,6 +694,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                     and not isinstance(dynamic_widget, MultiUserPickerWidget)
                     and not isinstance(dynamic_widget, SingleUserPickerWidget)
                     and not isinstance(dynamic_widget, SprintSelectionWidget)
+                    and not isinstance(dynamic_widget, TeamSelectionWidget)
                 ):
                     continue
                 if dynamic_widget.value_has_changed:
@@ -1074,6 +1076,23 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 )
             if sprint_selection_widgets and self._support_sprint_selection:
                 await self._setup_sprint_selection_widgets(work_item.project.key)
+            await self._setup_team_selection_widgets()
+
+    async def _setup_team_selection_widgets(self) -> None:
+        application = cast('JiraApp', self.app)  # type: ignore[name-defined] # noqa: F821
+        for team_widget in self.dynamic_fields_widgets_container.query(TeamSelectionWidget):
+            if team_widget.custom_id is None:
+                continue
+            response: APIControllerResponse = await application.api.get_teams(team_widget.custom_id)
+            if not response.success or not response.result:
+                continue
+            options: list[tuple[str, str]] = list(response.result)
+            team_ids = {team_id for _, team_id in options}
+            # the item's current team may not be part of the suggestions; keep it in the list of options
+            options.extend(option for option in team_widget.options if option[1] not in team_ids)
+            team_widget.set_options(options)
+            if team_widget.original_value is not None:
+                team_widget.value = str(team_widget.original_value)
 
     async def _setup_sprint_selection_widgets(self, project_key: str) -> None:
         # fetch the active/future sprints associated to the item's project

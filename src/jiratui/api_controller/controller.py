@@ -3,10 +3,12 @@ from collections import defaultdict
 import dataclasses
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+import html
 import logging
 import mimetypes
 import os
 from pathlib import Path
+import re
 from typing import Any
 
 from dateutil.parser import isoparse  # type:ignore[import-untyped]
@@ -128,6 +130,7 @@ class APIController:
         self.skip_users_without_email = self.config.ignore_users_without_email
         self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.config.enable_logging)
         self._required_fields_cache: dict[str, list[str]] = {}
+        self._teams_cache: dict[str, list[tuple[str, str]]] = {}
 
     def _adf_support_enabled(self) -> bool:
         return self.config.cloud and self.config.jira_api_version == 3
@@ -3147,3 +3150,31 @@ class APIController:
                 )
             )
         return APIControllerResponse(result=suggestions)
+
+    async def get_teams(self, custom_id: int | str) -> APIControllerResponse:
+        """Retrieves the (Atlassian) teams that can be selected for a Team custom field.
+
+        Jira does not offer a public REST endpoint to list teams using the site's credentials; however, the JQL
+        autocomplete suggestions for the Team field return the ID and name of every team.
+
+        Args:
+            custom_id: the numeric ID of the Team custom field, e.g. `10001` for `customfield_10001`.
+
+        Returns:
+            An instance of `APIControllerResponse` with a list of `(team_name, team_id)` tuples sorted by name.
+        """
+
+        if (cached := self._teams_cache.get(str(custom_id))) is not None:
+            return APIControllerResponse(result=cached)
+        response = await self.get_jql_autocomplete_suggestions(field_name=f'cf[{custom_id}]')
+        if not response.success:
+            return response
+        teams: list[tuple[str, str]] = []
+        for suggestion in response.result or []:
+            if not suggestion.value:
+                continue
+            name = html.unescape(re.sub(r'<[^>]+>', '', suggestion.display_name or ''))
+            teams.append((name or suggestion.value, suggestion.value))
+        teams.sort(key=lambda x: x[0].lower())
+        self._teams_cache[str(custom_id)] = teams
+        return APIControllerResponse(result=teams)

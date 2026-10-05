@@ -51,6 +51,7 @@ from jiratui.widgets.commons.widgets import (
     SingleUserPickerWidget,
     SprintSelectionWidget,
     SprintWidget,
+    TeamSelectionWidget,
     UserMentionOverlay,
 )
 from jiratui.widgets.create_work_item.factory import create_widgets_for_work_item_creation
@@ -729,6 +730,14 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                         for sprint_widget in sprint_selection_widgets:
                             sprint_widget.set_options(sprints)
 
+                # populate the team selection widget(s) with the options
+                for team_widget in self.additional_fields.query(TeamSelectionWidget):
+                    if team_widget.custom_id is None:
+                        continue
+                    teams_response = await application.api.get_teams(team_widget.custom_id)
+                    if teams_response.success and teams_response.result:
+                        team_widget.set_options(teams_response.result)
+
     async def _retrieve_applicable_status_codes(
         self, project_key: str | None = None, issue_type_id: str | None = None
     ) -> None:
@@ -943,6 +952,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
                     or isinstance(widget, LabelsWidget)
                     or isinstance(widget, SprintWidget)
                     or isinstance(widget, SprintSelectionWidget)
+                    or isinstance(widget, TeamSelectionWidget)
                 ):
                     if value := widget.get_value_for_create():
                         data[widget.jira_field_key] = value

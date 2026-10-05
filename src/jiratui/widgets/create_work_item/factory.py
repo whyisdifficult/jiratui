@@ -5,7 +5,7 @@ from textual.widgets import Select
 
 from jiratui.api_controller.controller import APIController
 from jiratui.config import CONFIGURATION
-from jiratui.widgets.commons import CustomFieldType, FieldMode
+from jiratui.widgets.commons import CustomFieldType, FieldMode, is_team_field
 from jiratui.widgets.commons.adf import ADFMarkdownTextAreaWidget
 from jiratui.widgets.commons.factory_utils import AllowedValuesParser
 from jiratui.widgets.commons.widgets import (
@@ -21,6 +21,7 @@ from jiratui.widgets.commons.widgets import (
     SingleUserPickerWidget,
     SprintSelectionWidget,
     SprintWidget,
+    TeamSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -95,7 +96,24 @@ def create_widgets_for_work_item_creation(
             custom_type: str | None = schema.get('custom')
             if custom_type in CUSTOM_FIELD_TYPES_NOT_SUPPORTED:
                 continue
-            if custom_type == CustomFieldType.USER_PICKER.value:
+            if is_team_field(schema):
+                if not _uses_cloud_api():
+                    # the teams are fetched using the Jira Cloud API; we don't support this field in Jira DC
+                    continue
+                # the options are fetched and set when the widget is mounted
+                widget = TeamSelectionWidget(
+                    mode=FieldMode.CREATE,
+                    field_id=field_id or '',
+                    jira_field_key=item.get('key') or field_id,
+                    options=[],
+                    title=item.get('name'),
+                    required=bool(required),
+                    allow_blank=True,
+                    prompt=f'Select {item.get("name")}',
+                    custom_id=schema.get('customId')
+                    or (field_id or '').removeprefix('customfield_'),
+                )
+            elif custom_type == CustomFieldType.USER_PICKER.value:
                 widget = SingleUserPickerWidget(
                     mode=FieldMode.CREATE,
                     field_id=field_id or '',
@@ -299,7 +317,6 @@ FIELDS_IDS_NOT_SUPPORTED = [
 # their personal configuration. Otherwise, these fields will be rendered using a default text-based widget and this
 # will cause errors when creating the items; as their values are not simply strings.
 CUSTOM_FIELD_TYPES_NOT_SUPPORTED = [
-    'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
     'com.pyxis.greenhopper.jira:gh-lexo-rank',  # this requires special syntax
 ]
 
