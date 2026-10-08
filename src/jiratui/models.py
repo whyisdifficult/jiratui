@@ -733,6 +733,15 @@ class JiraUserGroup(BaseModel):
 
 
 @dataclass
+class JiraFilter(BaseModel):
+    """A Jira filter, i.e. a saved JQL search."""
+
+    id: str
+    name: str
+    jql: str | None = None
+
+
+@dataclass
 class JiraMyselfInfo(BaseModel):
     """Information of the user connected to the Jira server used by the application."""
 

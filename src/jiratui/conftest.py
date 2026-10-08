@@ -202,6 +202,7 @@ def app():
         enable_recent_history=False,
         enable_goto=False,
         search_results_columns=None,
+        show_favourite_filters_in_jql_editor=False,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)

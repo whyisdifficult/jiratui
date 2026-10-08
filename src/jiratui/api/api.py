@@ -660,6 +660,21 @@ class JiraAPI:
             params={'expand': 'groups,applicationRoles'},
         )
 
+    async def get_favourite_filters(self) -> list[dict]:
+        """Retrieves the visible filters that the user connecting to the Jira server has favourited (starred).
+
+        **See Also**:
+        - [api-rest-api-3-filter-favourite-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-filters/#api-rest-api-3-filter-favourite-get)
+
+        Returns:
+            A list of dictionaries with the details of every filter, including their JQL expression.
+        """
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get,
+            url='filter/favourite',
+            params={'expand': 'jql'},
+        )
+
     async def search_users(self, offset: int | None = None, limit: int | None = None) -> list[dict]:
         """Retrieves a list of all users, including active users, inactive users and previously deleted users that have
         an Atlassian account.
