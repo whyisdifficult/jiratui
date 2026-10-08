@@ -3147,7 +3147,7 @@ class APIController:
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'Unable to get label suggestions',
+                'Unable to get suggestions for the field name',
                 extra={
                     'field_name': field_name,
                     'field_value': field_value,
