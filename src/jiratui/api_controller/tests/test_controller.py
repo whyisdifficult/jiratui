@@ -1552,6 +1552,41 @@ async def test_search_issues_with_api_error(
 @pytest.mark.asyncio
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'search_issues')
+async def test_search_issues_with_custom_search_fields(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {'issues': [load_json_response(__file__, 'issue.json')]}
+    # WHEN
+    response = await jira_api_controller.search_issues(fields=['key'])
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=None,
+        status=None,
+        assignee=None,
+        issue_type=None,
+        search_in_active_sprint=False,
+        jql_query=None,
+        fields=['key'],
+        next_page_token=None,
+        limit=None,
+        order_by=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
 async def test_search_issues(
     search_issues_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
@@ -1634,7 +1669,7 @@ async def test_search_issues(
         issue_type=None,
         search_in_active_sprint=False,
         jql_query=None,
-        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent', 'assignee'],
+        fields=['id', 'key', 'status', 'issuetype', 'parent', 'summary'],
         next_page_token=None,
         limit=None,
         order_by=None,
@@ -1751,7 +1786,7 @@ async def test_search_issues_for_jira_dc(
         search_in_active_sprint=False,
         jql_query=None,
         offset=expected_offset,
-        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent', 'assignee'],
+        fields=['id', 'key', 'status', 'issuetype', 'parent', 'summary'],
         limit=None,
         order_by=None,
     )

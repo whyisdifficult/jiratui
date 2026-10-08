@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add configuration option `search_results_show_assignee` to show the assignee in the search results. The default
-value is `False`. If `True` then the assignee of a work item (if any) will be displayed (to a maximum of 8 chars) in
-the search result table. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/
+- Add configuration option `search_results_columns` to allow users to define some of the columns to display in the
+search results table. The default value is `None`. In this case the columns displayed are: `Key`, `Parent`, `Summary`,
+`Type`, `Status` and `Summary`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 
 ## [1.16.0] 2026-10-01
 

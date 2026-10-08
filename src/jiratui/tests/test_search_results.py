@@ -48,8 +48,7 @@ def app() -> JiraApp:
         show_keybinding_hints=False,
         enable_recent_history=False,
         enable_goto=False,
-        search_results_show_assignee=False,
-        search_results_show_assignee_max_length=None,
+        search_results_columns=None,
     )
     app = JiraApp(config_mock)
     app.api = APIController(config_mock)
@@ -110,7 +109,7 @@ async def test_click_filter_datatable_filtering_key_feature_disabled(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_search_results_table_with_optional_assignee_column(
+async def test_search_results_table_with_user_defined_column(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -119,7 +118,14 @@ async def test_search_results_table_with_optional_assignee_column(
     app,
 ):
     # GIVEN
-    app.config.search_results_show_assignee = True
+    app.config.search_results_columns = [
+        'assignee',
+        'reporter',
+        'status',
+        'issuetype',
+        'parent',
+        'summary',
+    ]
     app.config.search_results_truncate_work_item_summary = 0
     app.config.search_results_style_work_item_status = False
     app.config.search_results_style_work_item_type = False
@@ -132,12 +138,13 @@ async def test_search_results_table_with_optional_assignee_column(
         # THEN
         assert [str(c.label) for c in main_screen.search_results_table.columns.values()] == [
             '#',
+            'Assignee',
             'Key',
             'Parent',
+            'Reporter',
             'Status',
-            'Type',
-            'Assignee',
             'Summary',
+            'Type',
         ]
 
 
@@ -146,7 +153,7 @@ async def test_search_results_table_with_optional_assignee_column(
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
 @pytest.mark.asyncio
-async def test_search_results_table_default_columns(
+async def test_search_results_table_without_user_defined_column(
     search_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
@@ -155,7 +162,7 @@ async def test_search_results_table_default_columns(
     app,
 ):
     # GIVEN
-    app.config.search_results_show_assignee = False
+    app.config.search_results_columns = None
     app.config.search_results_truncate_work_item_summary = 0
     app.config.search_results_style_work_item_status = False
     app.config.search_results_style_work_item_type = False
@@ -171,8 +178,39 @@ async def test_search_results_table_default_columns(
             'Key',
             'Parent',
             'Status',
-            'Type',
             'Summary',
+            'Type',
+        ]
+
+
+@patch('jiratui.widgets.screen.MainScreen.search_issues')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_search_results_table_with_unsupported_user_defined_column(
+    search_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    search_issues_mock: AsyncMock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    app.config.search_results_columns = ['a']
+    app.config.search_results_truncate_work_item_summary = 0
+    app.config.search_results_style_work_item_status = False
+    app.config.search_results_style_work_item_type = False
+    async with app.run_test():
+        main_screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        main_screen.search_results_table.search_results = JiraIssueSearchResponse(
+            issues=jira_issues
+        )
+        # THEN
+        assert [str(c.label) for c in main_screen.search_results_table.columns.values()] == [
+            '#',
+            'Key',
         ]
 
 
@@ -512,9 +550,9 @@ async def test_delete_issue_modal_screen_click_delete(
         assert main_screen.search_results_table.search_results == JiraIssueSearchResponse(
             issues=jira_issues, next_page_token=None, is_last=None
         )
+        delete_work_item_mock.assert_called_once_with(jira_issues[1].key)
         assert main_screen.search_results_table.current_work_item_key != jira_issues[1].key
         assert isinstance(app.screen, MainScreen)
-        delete_work_item_mock.assert_called_once_with(jira_issues[1].key)
         update_border_subtitle_mock.assert_has_calls([call(), call()])
 
 

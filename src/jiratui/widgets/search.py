@@ -15,6 +15,12 @@ from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
 from jiratui.models import JiraIssue, JiraIssueSearchResponse
+from jiratui.utils.search import (
+    MAP_WORK_ITEM_SEARCH_FIELD_TO_SEARCH_RESULTS_COLUMNS,
+    SearchFieldId,
+    get_work_item_search_fields,
+    get_work_item_search_results_table_columns,
+)
 from jiratui.utils.styling import get_style_for_work_item_status, get_style_for_work_item_type
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
@@ -150,6 +156,8 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         SupportedActions.FILTER,
         SupportedActions.PREVIOUS_ISSUES_PAGE,
         SupportedActions.NEXT_ISSUES_PAGE,
+        SupportedActions.CURSOR_LEFT,
+        SupportedActions.CURSOR_RIGHT,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -231,42 +239,56 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             self.token_by_page[self.page + 1] = response.next_page_token
 
         # set the columns
-        columns = ['#', 'Key', 'Parent', 'Status', 'Type']
-        if self.app.config.search_results_show_assignee:  # type:ignore[attr-defined]
-            columns.append('Assignee')
-        columns.append('Summary')
-        self.add_columns(*columns)
+        columns: list[str] = get_work_item_search_results_table_columns(
+            self.app.config.search_results_columns  # type:ignore[attr-defined]
+        )
+        self.add_column(label='#', key='index')
+        for column in sorted(columns):
+            self.add_column(label=column, key=column)
+
+        work_item_search_fields: list[str] = get_work_item_search_fields(
+            self.app.config.search_results_columns  # type:ignore[attr-defined]
+        )
 
         # build the rows
         for index, issue in enumerate(response.issues):
-            issue_summary = issue.cleaned_summary(
-                self.app.config.search_results_truncate_work_item_summary  # type:ignore[attr-defined]
-                or maximum_summary_column_width
+            cells = self._build_row_for_work_item(
+                issue, work_item_search_fields, maximum_summary_column_width
             )
+            self.add_row(*[index + 1, *cells], key=f'{issue.id}#{issue.key}')
 
-            style_status = ''
-            if self.app.config.search_results_style_work_item_status:  # type:ignore[attr-defined]
-                style_status = get_style_for_work_item_status(issue.status.name.lower())
-
-            style_work_type = ''
-            if self.app.config.search_results_style_work_item_type:  # type:ignore[attr-defined]
-                style_work_type = get_style_for_work_item_type(issue.issue_type.name.lower())
-
-            current_row = [
-                index + 1,
-                issue.key,
-                issue.parent_key,
-                Text(issue.status.name, style=style_status),
-                Text(issue.work_item_type_name, style=style_work_type),
-            ]
-            if self.app.config.search_results_show_assignee:  # type:ignore[attr-defined]
-                current_row.append(
-                    Text(
-                        issue.show_assignee(self.app.config.search_results_show_assignee_max_length)
+    def _build_row_for_work_item(
+        self, item: JiraIssue, work_item_search_fields: list[str], maximum_summary_column_width: int
+    ) -> list:
+        cells: dict = {}
+        for field_name in work_item_search_fields:
+            column_name = MAP_WORK_ITEM_SEARCH_FIELD_TO_SEARCH_RESULTS_COLUMNS.get(field_name)
+            if field_name == SearchFieldId.KEY.value:
+                cells[column_name] = item.key
+            elif field_name == SearchFieldId.PARENT.value:
+                cells[column_name] = item.parent_key
+            elif field_name == SearchFieldId.STATUS.value:
+                style_status = ''
+                if self.app.config.search_results_style_work_item_status:  # type:ignore[attr-defined]
+                    style_status = get_style_for_work_item_status(item.status.name.lower())
+                cells[column_name] = Text(item.status.name, style=style_status)
+            elif field_name == SearchFieldId.ISSUE_TYPE.value:
+                style_work_type = ''
+                if self.app.config.search_results_style_work_item_type:  # type:ignore[attr-defined]
+                    style_work_type = get_style_for_work_item_type(item.issue_type.name.lower())
+                cells[column_name] = Text(item.work_item_type_name, style=style_work_type)
+            elif field_name == SearchFieldId.SUMMARY.value:
+                cells[column_name] = Text(
+                    item.cleaned_summary(
+                        self.app.config.search_results_truncate_work_item_summary  # type:ignore[attr-defined]
+                        or maximum_summary_column_width
                     )
                 )
-            current_row.append(Text(issue_summary))
-            self.add_row(*current_row, key=f'{issue.id}#{issue.key}')
+            elif field_name == SearchFieldId.ASSIGNEE.value:
+                cells[column_name] = item.show_assignee(10)
+            elif field_name == SearchFieldId.REPORTER.value:
+                cells[column_name] = item.show_reporter(10)
+        return [value for key, value in sorted(cells.items())]
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Fetches the details of the currently-selected item."""

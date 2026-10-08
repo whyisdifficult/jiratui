@@ -26,6 +26,7 @@ from jiratui.models import (
 )
 from jiratui.utils.history import HistoryEntry, HistoryManager
 from jiratui.utils.logging import JiraTUILogger
+from jiratui.utils.search import get_work_item_search_fields
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
@@ -810,6 +811,9 @@ class MainScreen(Actionable, Screen):
                 next_page_token=next_page_token,
                 limit=self.config.search_results_per_page,
                 order_by=order_by,
+                fields=get_work_item_search_fields(
+                    self.app.config.search_results_columns  # type:ignore[attr-defined]
+                ),
             )
         else:
             response = await self.api.search_issues_by_page_number(
@@ -824,6 +828,9 @@ class MainScreen(Actionable, Screen):
                 page=page,
                 limit=self.config.search_results_per_page,
                 order_by=order_by,
+                fields=get_work_item_search_fields(
+                    self.app.config.search_results_columns  # type:ignore[attr-defined]
+                ),
             )
 
         if not response.success or response.result is None:
@@ -838,7 +845,7 @@ class MainScreen(Actionable, Screen):
         if not self.config.cloud:
             calculate_total = False
 
-        result: JiraIssueSearchResponse = response.result
+        result: JiraIssueSearchResponse | None = response.result
         estimated_total_issues: int = 0
         if calculate_total:
             counting: APIControllerResponse = await self.api.count_issues(
@@ -964,7 +971,7 @@ class MainScreen(Actionable, Screen):
     # NEW - Actionable Logic
 
     async def action_search(self, search_term: str | None = None) -> None:
-        """Handles the event  when the user presses the "search" button or "ctrl+r"."""
+        """Handles the event  when the user presses the "search" button."""
 
         # reset the key of the currently loaded issue to avoid not fetching the selected issue again after searching
         self.current_loaded_work_item_key = None
