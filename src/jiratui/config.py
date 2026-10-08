@@ -154,6 +154,9 @@ class ApplicationConfiguration(BaseSettings):
     }
     ```
     """
+    show_favourite_filters_in_jql_editor: bool = False
+    """If `True` the JQL Expression Editor will fetch the filters that the user has favourited (starred) in Jira and
+    list them in the dropdown next to the expressions defined in `pre_defined_jql_expressions`."""
     jql_expression_id_for_work_items_search: int | None = None
     """If set to one of the expression IDs defined in pre_defined_jql_expressions then the app will use this expression
     to retrieve work items when not criteria and JQL query is provided by the user."""

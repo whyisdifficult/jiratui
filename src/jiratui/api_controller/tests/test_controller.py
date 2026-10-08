@@ -23,6 +23,7 @@ from jiratui.models import (
     IssueTransitionState,
     IssueType,
     JiraField,
+    JiraFilter,
     JiraGlobalSettings,
     JiraIssue,
     JiraIssuePickerSuggestion,
@@ -2083,6 +2084,46 @@ async def test_global_settings(global_settings_mock: Mock, jira_api_controller: 
         ),
     )
     global_settings_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_favourite_filters')
+async def test_get_favourite_filters(
+    get_favourite_filters_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_favourite_filters_mock.return_value = [
+        {'id': '10000', 'name': 'Not done', 'jql': 'statusCategory != Done'},
+        {'id': 10001, 'name': 'No JQL'},
+        {'name': 'Missing ID'},
+    ]
+    # WHEN
+    response = await jira_api_controller.get_favourite_filters()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [
+        JiraFilter(id='10000', name='Not done', jql='statusCategory != Done'),
+        JiraFilter(id='10001', name='No JQL', jql=None),
+    ]
+    get_favourite_filters_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_favourite_filters')
+async def test_get_favourite_filters_with_api_error(
+    get_favourite_filters_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_favourite_filters_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_favourite_filters()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
 
 
 @pytest.mark.asyncio
