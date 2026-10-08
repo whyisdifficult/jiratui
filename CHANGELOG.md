@@ -15,6 +15,12 @@ search results table. The default value is `None`. In this case the columns disp
 - Add the setting `show_favourite_filters_in_jql_editor`. When enabled, the JQL Expression Editor lists the filters that
 the user has favourite (starred) in Jira in its dropdown, next to the expressions in `pre_defined_jql_expressions`. By [@cullenstone1](https://github.com/cullenstone1) in https://github.com/whyisdifficult/jiratui/pull/375
 
+### Minor Improvements
+
+- Bump `gitpython` to `v3.1.62`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+- Bump `virtualenv` to `v21.14.5`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+- Bump `urllib3` to `v2.8.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+
 ## [1.16.0] 2026-10-01
 
 ### Added
