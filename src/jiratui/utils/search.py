@@ -67,7 +67,7 @@ def get_work_item_search_fields(search_results_columns: list[str]) -> list[str]:
             and (cleaned := column.strip())
             and cleaned.lower() in SUPPORTED_USER_DEFINED_WORK_ITEM_SEARCH_FIELDS
         ):
-            user_defined_fields.append(cleaned)
+            user_defined_fields.append(cleaned.lower())
     # we always need to ask for id and key; id and key are used for operations in the app
     return [SearchFieldId.ID.value, SearchFieldId.KEY.value] + user_defined_fields
 
