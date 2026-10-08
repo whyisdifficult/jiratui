@@ -6805,31 +6805,29 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             tooltip='View details of a work item',
         ),
         UIAction(
-            action='open_in_browser',
-            keys=[
-                'o',
-            ],
-            description='↗',
+            action=SupportedActions.OPEN_IN_BROWSER.value,
+            keys=bindings.get(SupportedActions.OPEN_IN_BROWSER.value, {}).get('keys', []),
+            description=bindings.get(SupportedActions.OPEN_IN_BROWSER.value, {}).get(
+                'description', []
+            ),
             show=True,
             tooltip='Open resource in the browser',
         ),
         UIAction(
-            action='delete_work_item',
-            keys=[
-                'x',
-            ],
-            description='✖',
+            action=SupportedActions.DELETE_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.DELETE_WORK_ITEM.value, {}).get('keys', []),
+            description=bindings.get(SupportedActions.DELETE_WORK_ITEM.value, {}).get(
+                'description', []
+            ),
             show=True,
             tooltip='Deletes a resource',
         ),
         UIAction(
-            action='open_go_to_screen',
-            keys=[
-                'f5',
-            ],
+            action=SupportedActions.OPEN_GO_TO_SCREEN.value,
+            keys=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', []),
             description='Related',
             show=True,
-            tooltip='View items related to the currently selected work item',
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', []),
         ),
         UIAction(
             action=SupportedActions.SELECT_CURSOR.value,
@@ -6881,49 +6879,36 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             tooltip='Scroll to the bottom',
         ),
         UIAction(
-            action='filter',
-            keys=[
-                'f',
-                '.',
-            ],
+            action=SupportedActions.FILTER.value,
+            keys=bindings.get(SupportedActions.FILTER.value, {}).get('keys', []),
             description='Filter',
             show=True,
             tooltip='Filter work items in the search results table',
         ),
         UIAction(
-            action='previous_issues_page',
-            keys=[
-                '[',
-            ],
+            action=SupportedActions.PREVIOUS_ISSUES_PAGE.value,
+            keys=bindings.get(SupportedActions.PREVIOUS_ISSUES_PAGE.value, {}).get('keys', []),
             description='\uf060',
             show=True,
             tooltip='Go to the previous page',
         ),
         UIAction(
-            action='next_issues_page',
-            keys=[
-                ']',
-            ],
+            action=SupportedActions.NEXT_ISSUES_PAGE.value,
+            keys=bindings.get(SupportedActions.NEXT_ISSUES_PAGE.value, {}).get('keys', []),
             description='\uf061',
             show=True,
             tooltip='Go to the next page',
         ),
         UIAction(
-            action='cursor_left',
-            keys=[
-                'left',
-                'h',
-            ],
+            action=SupportedActions.CURSOR_LEFT.value,
+            keys=bindings.get(SupportedActions.CURSOR_LEFT.value, {}).get('keys', []),
             description='Move to the left',
             show=False,
             tooltip='Move to the left',
         ),
         UIAction(
-            action='cursor_right',
-            keys=[
-                'right',
-                'l',
-            ],
+            action=SupportedActions.CURSOR_RIGHT.value,
+            keys=bindings.get(SupportedActions.CURSOR_RIGHT.value, {}).get('keys', []),
             description='Move to the right',
             show=False,
             tooltip='Move to the right',
@@ -6945,9 +6930,11 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='o',
-            action='open_in_browser',
-            description='↗',
+            key=','.join(bindings.get(SupportedActions.OPEN_IN_BROWSER.value, {}).get('keys', [])),
+            action=SupportedActions.OPEN_IN_BROWSER.value,
+            description=bindings.get(SupportedActions.OPEN_IN_BROWSER.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
@@ -6957,9 +6944,11 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='x',
-            action='delete_work_item',
-            description='✖',
+            key=','.join(bindings.get(SupportedActions.DELETE_WORK_ITEM.value, {}).get('keys', [])),
+            action=SupportedActions.DELETE_WORK_ITEM.value,
+            description=bindings.get(SupportedActions.DELETE_WORK_ITEM.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
@@ -6969,13 +6958,17 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='f5',
-            action='open_go_to_screen',
-            description='Related',
+            key=','.join(
+                bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.OPEN_GO_TO_SCREEN.value,
+            description=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
-            tooltip='View items related to the currently selected work item',
+            tooltip=bindings.get(SupportedActions.OPEN_GO_TO_SCREEN.value, {}).get('tooltip', ''),
             id=None,
             system=False,
             group=None,
@@ -7065,9 +7058,9 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='f,.',
-            action='filter',
-            description='Filter',
+            key=','.join(bindings.get(SupportedActions.FILTER.value, {}).get('keys', [])),
+            action=SupportedActions.FILTER.value,
+            description=bindings.get(SupportedActions.FILTER.value, {}).get('description', ''),
             show=True,
             key_display=None,
             priority=False,
@@ -7077,9 +7070,13 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='[',
-            action='previous_issues_page',
-            description='\uf060',
+            key=','.join(
+                bindings.get(SupportedActions.PREVIOUS_ISSUES_PAGE.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.PREVIOUS_ISSUES_PAGE.value,
+            description=bindings.get(SupportedActions.PREVIOUS_ISSUES_PAGE.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
@@ -7089,9 +7086,11 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key=']',
-            action='next_issues_page',
-            description='\uf061',
+            key=','.join(bindings.get(SupportedActions.NEXT_ISSUES_PAGE.value, {}).get('keys', [])),
+            action=SupportedActions.NEXT_ISSUES_PAGE.value,
+            description=bindings.get(SupportedActions.NEXT_ISSUES_PAGE.value, {}).get(
+                'description', ''
+            ),
             show=True,
             key_display=None,
             priority=False,
@@ -7101,9 +7100,9 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='left,h',
-            action='cursor_left',
-            description='Move to the left',
+            key=','.join(bindings.get(SupportedActions.CURSOR_LEFT.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_LEFT.value,
+            description=bindings.get(SupportedActions.CURSOR_LEFT.value, {}).get('description', ''),
             show=False,
             key_display=None,
             priority=False,
@@ -7113,9 +7112,11 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             group=None,
         ),
         Binding(
-            key='right,l',
-            action='cursor_right',
-            description='Move to the right',
+            key=','.join(bindings.get(SupportedActions.CURSOR_RIGHT.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_RIGHT.value,
+            description=bindings.get(SupportedActions.CURSOR_RIGHT.value, {}).get(
+                'description', ''
+            ),
             show=False,
             key_display=None,
             priority=False,
