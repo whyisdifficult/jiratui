@@ -45,13 +45,13 @@ class JQLEditorScreen(ModalScreen[str]):
 
     @property
     def _pre_defined_jql_expressions(self) -> dict | None:
-        if self.app.config.pre_defined_jql_expressions:
-            return self.app.config.pre_defined_jql_expressions
+        if self.app.config.pre_defined_jql_expressions:  # type:ignore[attr-defined]
+            return self.app.config.pre_defined_jql_expressions  # type:ignore[attr-defined]
         return None
 
     @property
     def _show_favourite_filters(self) -> bool:
-        return self.app.config.show_favourite_filters_in_jql_editor
+        return self.app.config.show_favourite_filters_in_jql_editor  # type:ignore[attr-defined]
 
     @property
     def expressions(self) -> list:
