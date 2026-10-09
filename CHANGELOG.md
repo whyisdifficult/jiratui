@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for creating and updating the (Atlassian) Team custom field in Jira Cloud.
+- Add support for creating and updating the (Atlassian) Team custom field in Jira Cloud. By [@dvaske](https://github.com/dvaske) in https://github.com/whyisdifficult/jiratui/pull/376
 - Add configuration option `search_results_columns` to allow users to define some of the columns to display in the
 search results table. The default value is `None`. In this case the columns displayed are: `Key`, `Parent`, `Summary`,
 `Type`, `Status` and `Summary`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
@@ -21,6 +21,8 @@ the user has favourite (starred) in Jira in its dropdown, next to the expression
 - Bump `gitpython` to `v3.1.62`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 - Bump `virtualenv` to `v21.14.5`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 - Bump `urllib3` to `v2.8.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+- Bump `multidict` to `v6.9.1`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/379
+- Use `self.app.config.*` in `jiratui.widgets.screens.jql.py`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/380
 
 ## [1.16.0] 2026-10-01
 
