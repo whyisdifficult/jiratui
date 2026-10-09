@@ -423,6 +423,30 @@ class JiraIssue(JiraBaseIssue):
             return self.assignee.display_name
         return ''
 
+    def show_assignee(self, length: int | None = None) -> str:
+        if self.assignee:
+            if self.assignee.display_name:
+                if length and len(self.assignee.display_name) > length:
+                    return self.assignee.display_name[:length] + '...'
+                return self.assignee.display_name
+            if self.assignee.email:
+                if length and len(self.assignee.email) > length:
+                    return self.assignee.email[:length] + '...'
+                return self.assignee.email
+        return ''
+
+    def show_reporter(self, length: int | None = None) -> str:
+        if self.reporter:
+            if self.reporter.display_name:
+                if length and len(self.reporter.display_name) > length:
+                    return self.reporter.display_name[:length] + '...'
+                return self.reporter.display_name
+            if self.reporter.email:
+                if length and len(self.reporter.email) > length:
+                    return self.reporter.email[:length] + '...'
+                return self.reporter.email
+        return ''
+
     @property
     def work_item_type_name(self) -> str:
         if self.issue_type:
@@ -706,6 +730,15 @@ class JiraUserGroup(BaseModel):
 
     id: str
     name: str
+
+
+@dataclass
+class JiraFilter(BaseModel):
+    """A Jira filter, i.e. a saved JQL search."""
+
+    id: str
+    name: str
+    jql: str | None = None
 
 
 @dataclass

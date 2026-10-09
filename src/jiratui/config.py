@@ -154,6 +154,9 @@ class ApplicationConfiguration(BaseSettings):
     }
     ```
     """
+    show_favourite_filters_in_jql_editor: bool = False
+    """If `True` the JQL Expression Editor will fetch the filters that the user has favourited (starred) in Jira and
+    list them in the dropdown next to the expressions defined in `pre_defined_jql_expressions`."""
     jql_expression_id_for_work_items_search: int | None = None
     """If set to one of the expression IDs defined in pre_defined_jql_expressions then the app will use this expression
     to retrieve work items when not criteria and JQL query is provided by the user."""
@@ -213,6 +216,11 @@ class ApplicationConfiguration(BaseSettings):
     search_results_default_order: WorkItemsSearchOrderBy = WorkItemsSearchOrderBy.CREATED_DESC
     """The default order for search results. Accepts values from [WorkItemsSearchOrderBy](#jiratui.models.WorkItemsSearchOrderBy) enum: `CREATED_ASC`,
     `CREATED_DESC`, `PRIORITY_ASC`, `PRIORITY_DESC`, `KEY_ASC`, `KEY_DESC`."""
+    search_results_columns: list[str] | None = None
+    """The columns you want to see in the search results.
+    The columns supported are: `status`, `issuetype`, `parent`, `assignee`, `reporter`, `summary`. If none is provided
+    then the default list of columns will be: `key`, `status`, `issuetype`, `parent', `summary`.
+    """
     git_repositories: dict | None = None
     """The Git repositories to create new branches based on work items. It expects a mapping from user-defined IDs into
     a dictionary with the name of the repository and the path to the directory that contains the .git directory.

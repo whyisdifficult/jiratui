@@ -1,6 +1,6 @@
 import pytest
 
-from jiratui.models import IssueStatus, IssueType, JiraIssue, RelatedJiraIssue
+from jiratui.models import IssueStatus, IssueType, JiraIssue, JiraUser, RelatedJiraIssue
 
 
 def _jira_issue(summary: str) -> JiraIssue:
@@ -40,3 +40,197 @@ def _related_jira_issue(summary: str) -> RelatedJiraIssue:
 )
 def test_cleaned_summary(issue_factory, summary, max_length, expected):
     assert issue_factory(summary).cleaned_summary(max_length) == expected
+
+
+def test_jira_issue_show_assignee():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(
+            account_id='1', active=True, display_name='Bart', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee() == 'Bart'
+
+
+def test_jira_issue_show_assignee_with_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(
+            account_id='1', active=True, display_name='Bart Simpson', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee(10) == 'Bart Simps...'
+
+
+def test_jira_issue_show_assignee_with_smaller_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(
+            account_id='1', active=True, display_name='Bart', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee(20) == 'Bart'
+
+
+def test_jira_issue_show_assignee_no_assignee():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=None,
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee() == ''
+
+
+def test_jira_issue_show_assignee_no_name():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee() == 'bart@simpson.com'
+
+
+def test_jira_issue_show_assignee_no_name_with_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee(10) == 'bart@simps...'
+
+
+def test_jira_issue_show_assignee_no_name_with_smaller_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        assignee=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_assignee(30) == 'bart@simpson.com'
+
+
+def test_jira_issue_show_reporter():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(
+            account_id='1', active=True, display_name='Bart', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter() == 'Bart'
+
+
+def test_jira_issue_show_reporter_with_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(
+            account_id='1', active=True, display_name='Bart Simpson', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter(10) == 'Bart Simps...'
+
+
+def test_jira_issue_show_reporter_with_smaller_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(
+            account_id='1', active=True, display_name='Bart', email='bart@simpson.com'
+        ),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter(20) == 'Bart'
+
+
+def test_jira_issue_show_reporter_no_reporter():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=None,
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter() == ''
+
+
+def test_jira_issue_show_reporter_no_name():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter() == 'bart@simpson.com'
+
+
+def test_jira_issue_show_reporter_no_name_with_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter(10) == 'bart@simps...'
+
+
+def test_jira_issue_show_reporter_no_name_with_smaller_length():
+    # GIVEN
+    issue = JiraIssue(
+        id='1',
+        reporter=JiraUser(account_id='1', active=True, display_name='', email='bart@simpson.com'),
+        key='WI-1',
+        summary='Test',
+        status=IssueStatus(id='WI-1', name='Done'),
+    )
+    # THEN
+    assert issue.show_reporter(30) == 'bart@simpson.com'

@@ -51,6 +51,7 @@ from jiratui.models import (
     IssueType,
     JiraBaseIssue,
     JiraField,
+    JiraFilter,
     JiraGlobalSettings,
     JiraIssue,
     JiraIssuePickerSuggestion,
@@ -72,6 +73,7 @@ from jiratui.models import (
 from jiratui.utils.adf import convert_markdown_to_adf
 from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.mentions import expand_mention_tokens
+from jiratui.utils.search import DEFAULT_WORK_ITEM_SEARCH_FIELDS
 
 
 @dataclass
@@ -1106,9 +1108,7 @@ class APIController:
                 issue_type=issue_type,
                 search_in_active_sprint=search_in_active_sprint,
                 jql_query=criteria.get('jql'),
-                fields=fields
-                if fields
-                else ['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
+                fields=fields or DEFAULT_WORK_ITEM_SEARCH_FIELDS,
                 next_page_token=next_page_token,
                 limit=limit,
                 order_by=order_by,
@@ -1212,9 +1212,7 @@ class APIController:
                 issue_type=issue_type,
                 search_in_active_sprint=search_in_active_sprint,
                 jql_query=criteria.get('jql'),
-                fields=fields
-                if fields
-                else ['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
+                fields=fields or DEFAULT_WORK_ITEM_SEARCH_FIELDS,
                 offset=offset,
                 limit=limit,
                 order_by=order_by,
@@ -1486,6 +1484,30 @@ class APIController:
                 default_locale=response.get('defaultLocale', {}).get('locale'),
                 server_time_zone=response.get('serverTimeZone'),
             )
+        )
+
+    async def get_favourite_filters(self) -> APIControllerResponse:
+        """Retrieves the filters that the Jira user connecting to the API has favourited.
+
+        Returns:
+            An instance of `APIControllerResponse(success=True)` with a list of `JiraFilter` or,
+            `APIControllerResponse(success=False)` if there is an error fetching the filters.
+        """
+        try:
+            response: list[dict] = await self.api.get_favourite_filters()
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Unable to retrieve the favourite filters of the logged user',
+                extra=exception_details.get('extra'),
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse(
+            result=[
+                JiraFilter(id=str(item.get('id')), name=item.get('name', ''), jql=item.get('jql'))
+                for item in response or []
+                if item.get('id')
+            ]
         )
 
     async def myself(self) -> APIControllerResponse:
@@ -3128,7 +3150,7 @@ class APIController:
         except Exception as e:
             exception_details: dict = self._extract_exception_details(e)
             self.logger.error(
-                'Unable to get label suggestions',
+                'Unable to get suggestions for the field name',
                 extra={
                     'field_name': field_name,
                     'field_value': field_value,

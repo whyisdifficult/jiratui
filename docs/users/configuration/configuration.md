@@ -76,6 +76,17 @@ pre_defined_jql_expressions:
     }
 ```
 
+### Listing Your Favourite Jira Filters
+
+If the setting `show_favourite_filters_in_jql_editor` is `True` the JQL Expression Editor will also fetch the filters
+that you have favourited (starred) in Jira and list them in the dropdown, prefixed with `★`, after the expressions defined in
+`pre_defined_jql_expressions`. Selecting a filter copies its JQL expression into the editor, so you can run it as is or
+adjust it before searching.
+
+```yaml
+show_favourite_filters_in_jql_editor: true
+```
+
 ## Fetching Only Projects on Startup
 
 When this setting is `True` the application will only load the list of available projects at startup. The list of

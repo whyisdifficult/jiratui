@@ -23,6 +23,7 @@ from jiratui.models import (
     IssueTransitionState,
     IssueType,
     JiraField,
+    JiraFilter,
     JiraGlobalSettings,
     JiraIssue,
     JiraIssuePickerSuggestion,
@@ -33,6 +34,7 @@ from jiratui.models import (
     JiraUser,
     JiraUserGroup,
     JiraWorklog,
+    JQLAutocompleteSuggestion,
     LinkIssueType,
     PaginatedJiraWorklog,
     Project,
@@ -1552,6 +1554,41 @@ async def test_search_issues_with_api_error(
 @pytest.mark.asyncio
 @patch.object(APIController, '_build_criteria_for_searching_work_items')
 @patch.object(JiraAPI, 'search_issues')
+async def test_search_issues_with_custom_search_fields(
+    search_issues_mock: Mock,
+    build_criteria_for_searching_work_items_mock: Mock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    build_criteria_for_searching_work_items_mock.return_value = {}
+    search_issues_mock.return_value = {'issues': [load_json_response(__file__, 'issue.json')]}
+    # WHEN
+    response = await jira_api_controller.search_issues(fields=['key'])
+    # THEN
+    assert response.success is True
+    assert response.error is None
+    assert isinstance(response.result, JiraIssueSearchResponse)
+    build_criteria_for_searching_work_items_mock.assert_called_once()
+    search_issues_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=None,
+        status=None,
+        assignee=None,
+        issue_type=None,
+        search_in_active_sprint=False,
+        jql_query=None,
+        fields=['key'],
+        next_page_token=None,
+        limit=None,
+        order_by=None,
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, '_build_criteria_for_searching_work_items')
+@patch.object(JiraAPI, 'search_issues')
 async def test_search_issues(
     search_issues_mock: Mock,
     build_criteria_for_searching_work_items_mock: Mock,
@@ -1624,7 +1661,21 @@ async def test_search_issues(
         )
     ]
     build_criteria_for_searching_work_items_mock.assert_called_once()
-    search_issues_mock.assert_called_once()
+    search_issues_mock.assert_called_once_with(
+        project_key=None,
+        created_from=None,
+        created_until=None,
+        updated_from=None,
+        status=None,
+        assignee=None,
+        issue_type=None,
+        search_in_active_sprint=False,
+        jql_query=None,
+        fields=['id', 'key', 'status', 'issuetype', 'parent', 'summary'],
+        next_page_token=None,
+        limit=None,
+        order_by=None,
+    )
 
 
 @pytest.mark.asyncio
@@ -1737,7 +1788,7 @@ async def test_search_issues_for_jira_dc(
         search_in_active_sprint=False,
         jql_query=None,
         offset=expected_offset,
-        fields=['id', 'key', 'status', 'summary', 'issuetype', 'parent'],
+        fields=['id', 'key', 'status', 'issuetype', 'parent', 'summary'],
         limit=None,
         order_by=None,
     )
@@ -2083,6 +2134,46 @@ async def test_global_settings(global_settings_mock: Mock, jira_api_controller: 
         ),
     )
     global_settings_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_favourite_filters')
+async def test_get_favourite_filters(
+    get_favourite_filters_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_favourite_filters_mock.return_value = [
+        {'id': '10000', 'name': 'Not done', 'jql': 'statusCategory != Done'},
+        {'id': 10001, 'name': 'No JQL'},
+        {'name': 'Missing ID'},
+    ]
+    # WHEN
+    response = await jira_api_controller.get_favourite_filters()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is True
+    assert response.error is None
+    assert response.result == [
+        JiraFilter(id='10000', name='Not done', jql='statusCategory != Done'),
+        JiraFilter(id='10001', name='No JQL', jql=None),
+    ]
+    get_favourite_filters_mock.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_favourite_filters')
+async def test_get_favourite_filters_with_api_error(
+    get_favourite_filters_mock: Mock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_favourite_filters_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_favourite_filters()
+    # THEN
+    assert isinstance(response, APIControllerResponse)
+    assert response.success is False
+    assert response.error == 'some error'
+    assert response.result is None
 
 
 @pytest.mark.asyncio
@@ -5386,6 +5477,23 @@ async def test_get_teams(get_suggestions_mock: Mock, jira_api_controller: APICon
     assert cached_response == response
     get_suggestions_mock.assert_called_once_with('cf[10001]', None, None, None)
 
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_jql_autocomplete_suggestions(
+    get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_jql_autocomplete_suggestions_mock.return_value = {
+        'results': [{'value': '1', 'displayName': 'One'}]
+    }
+    # WHEN
+    response = await jira_api_controller.get_jql_autocomplete_suggestions()
+    # THEN
+    assert response == APIControllerResponse(
+        success=True, result=[JQLAutocompleteSuggestion(value='1', display_name='One')], error=None
+    )
+    get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
+
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
@@ -5397,3 +5505,66 @@ async def test_get_teams_with_error(get_suggestions_mock: Mock, jira_api_control
     # THEN
     assert response.success is False
     assert response.error == 'testing an error'
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_jql_autocomplete_suggestions_with_null_response(
+    get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_jql_autocomplete_suggestions_mock.return_value = None
+    # WHEN
+    response = await jira_api_controller.get_jql_autocomplete_suggestions()
+    # THEN
+    get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
+    assert response == APIControllerResponse(
+        success=False, error='Invalid response from JQL autocomplete suggestions API'
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_jql_autocomplete_suggestions_with_invalid_response(
+    get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_jql_autocomplete_suggestions_mock.return_value = []
+    # WHEN
+    response = await jira_api_controller.get_jql_autocomplete_suggestions()
+    # THEN
+    get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
+    assert response == APIControllerResponse(
+        success=False, error='Invalid response from JQL autocomplete suggestions API'
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_jql_autocomplete_suggestions_with_parameters(
+    get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_jql_autocomplete_suggestions_mock.return_value = {
+        'results': [{'value': '1', 'displayName': 'One'}]
+    }
+    # WHEN
+    response = await jira_api_controller.get_jql_autocomplete_suggestions('1', '2', '3', '4')
+    # THEN
+    assert response == APIControllerResponse(
+        success=True, result=[JQLAutocompleteSuggestion(value='1', display_name='One')], error=None
+    )
+    get_jql_autocomplete_suggestions_mock.assert_awaited_once_with('1', '2', '3', '4')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_jql_autocomplete_suggestions_with_api_error_response(
+    get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_jql_autocomplete_suggestions_mock.side_effect = ValueError('some error')
+    # WHEN
+    response = await jira_api_controller.get_jql_autocomplete_suggestions()
+    # THEN
+    assert response == APIControllerResponse(success=False, error='some error')
+    get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
