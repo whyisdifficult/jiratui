@@ -5,12 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [unreleased]
 
 ### Added
 
+- Add configuration option `search_results_columns` to allow users to define some of the columns to display in the
+search results table. The default value is `None`. In this case the columns displayed are: `Key`, `Parent`, `Summary`,
+`Type`, `Status` and `Summary`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 - Add the setting `show_favourite_filters_in_jql_editor`. When enabled, the JQL Expression Editor lists the filters that
-the user has favourited (starred) in Jira in its dropdown, next to the expressions in `pre_defined_jql_expressions`. By [@cullenstone1](https://github.com/cullenstone1)
+the user has favourite (starred) in Jira in its dropdown, next to the expressions in `pre_defined_jql_expressions`. By [@cullenstone1](https://github.com/cullenstone1) in https://github.com/whyisdifficult/jiratui/pull/375
+
+### Minor Improvements
+
+- Bump `gitpython` to `v3.1.62`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+- Bump `virtualenv` to `v21.14.5`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
+- Bump `urllib3` to `v2.8.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 
 ## [1.16.0] 2026-10-01
 
