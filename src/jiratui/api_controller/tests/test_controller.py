@@ -5477,6 +5477,7 @@ async def test_get_teams(get_suggestions_mock: Mock, jira_api_controller: APICon
     assert cached_response == response
     get_suggestions_mock.assert_called_once_with('cf[10001]', None, None, None)
 
+
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
 async def test_get_jql_autocomplete_suggestions(
@@ -5505,6 +5506,7 @@ async def test_get_teams_with_error(get_suggestions_mock: Mock, jira_api_control
     # THEN
     assert response.success is False
     assert response.error == 'testing an error'
+
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
