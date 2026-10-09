@@ -939,6 +939,9 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
             # process non-textarea widgets that are created dynamically
             for widget in self.additional_fields.children:
                 if not hasattr(widget, 'field_id'):
+                    # support widgets such as those use for autocomplete, e.g. MultiUserPickerAutoComplete,
+                    # UsersAutoComplete and LabelsAutoComplete do not have a field_id but these should be skipped
+                    # because they do not store values to save
                     continue
 
                 if not (field_id := widget.field_id):
