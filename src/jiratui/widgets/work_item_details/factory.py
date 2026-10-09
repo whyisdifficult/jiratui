@@ -10,13 +10,14 @@ from textual.widget import Widget
 
 from jiratui.config import CONFIGURATION
 from jiratui.models import JiraIssue
-from jiratui.widgets.commons import CustomFieldType, FieldMode
+from jiratui.widgets.commons import CustomFieldType, FieldMode, is_team_field
 from jiratui.widgets.commons.factory_utils import AllowedValuesParser, FieldMetadata, WidgetBuilder
 from jiratui.widgets.commons.widgets import (
     LabelsWidget,
     MultiSelectWidget,
     MultiUserPickerWidget,
     SprintSelectionWidget,
+    TeamSelectionWidget,
 )
 from jiratui.widgets.work_item_details.fields import IssueSprintField
 
@@ -174,7 +175,36 @@ def create_dynamic_widgets_for_updating_work_item(
 
         if schema_custom_type:
             # process custom fields based on the schema custom type
-            if schema_custom_type == CustomFieldType.FLOAT.value or schema.get('type') == 'number':
+            if is_team_field(schema):
+                if _uses_cloud_api():
+                    team_options: list[tuple[str, str]] = []
+                    team_id: str | None = None
+                    if (
+                        value := work_item.get_custom_field_value(metadata.field_id)
+                    ) and isinstance(value, dict):
+                        # make sure the dropdown includes the item's current team; the rest of the options are
+                        # fetched and set when the widget is mounted
+                        if team_id := value.get('id'):
+                            team_options = [
+                                (value.get('name') or value.get('title') or team_id, team_id)
+                            ]
+                    widget = TeamSelectionWidget(
+                        mode=FieldMode.UPDATE,
+                        field_id=metadata.field_id,
+                        jira_field_key=metadata.key,
+                        options=team_options,
+                        title=metadata.name,
+                        required=metadata.required and team_id is not None,
+                        original_value=team_id,
+                        field_supports_update=metadata.supports_update,
+                        allow_blank=not (metadata.required and team_id is not None),
+                        prompt=f'Select {metadata.name}',
+                        custom_id=schema.get('customId')
+                        or metadata.field_id.removeprefix('customfield_'),
+                    )
+            elif (
+                schema_custom_type == CustomFieldType.FLOAT.value or schema.get('type') == 'number'
+            ):
                 if metadata.field_id in work_item.get_custom_fields():
                     # get the current value of the field from the issue's custom field data
                     value = work_item.get_custom_field_value(metadata.field_id)

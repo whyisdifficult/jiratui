@@ -5460,6 +5460,26 @@ def test_convert_comment_message_to_adf_without_mentions(
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_teams(get_suggestions_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    get_suggestions_mock.return_value = {
+        'results': [
+            {'value': 'id-2', 'displayName': 'Zeta &amp; <b>Co</b>'},
+            {'value': 'id-1', 'displayName': 'alpha'},
+            {'value': None, 'displayName': 'ignored'},
+        ]
+    }
+    # WHEN
+    response = await jira_api_controller.get_teams(10001)
+    cached_response = await jira_api_controller.get_teams('10001')
+    # THEN
+    assert response == APIControllerResponse(result=[('alpha', 'id-1'), ('Zeta & Co', 'id-2')])
+    assert cached_response == response
+    get_suggestions_mock.assert_called_once_with('cf[10001]', None, None, None)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
 async def test_get_jql_autocomplete_suggestions(
     get_jql_autocomplete_suggestions_mock: AsyncMock, jira_api_controller: APIController
 ):
@@ -5474,6 +5494,18 @@ async def test_get_jql_autocomplete_suggestions(
         success=True, result=[JQLAutocompleteSuggestion(value='1', display_name='One')], error=None
     )
     get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'get_jql_autocomplete_suggestions')
+async def test_get_teams_with_error(get_suggestions_mock: Mock, jira_api_controller: APIController):
+    # GIVEN
+    get_suggestions_mock.side_effect = ValueError('testing an error')
+    # WHEN
+    response = await jira_api_controller.get_teams(10001)
+    # THEN
+    assert response.success is False
+    assert response.error == 'testing an error'
 
 
 @pytest.mark.asyncio

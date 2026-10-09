@@ -12,6 +12,7 @@ from jiratui.widgets.commons.widgets import (
     NumericInputWidget,
     SelectionWidget,
     SprintSelectionWidget,
+    TeamSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -1470,3 +1471,84 @@ async def test_create_dynamic_widgets_server_sprint_as_string(
         assert len(widgets) == 1
         assert isinstance(widgets[0], IssueSprintField)
         assert widgets[0].value == expected_value
+
+
+TEAM_FIELD_EDIT_METADATA = {
+    'required': False,
+    'schema': {
+        'type': 'team',
+        'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+        'customId': 10001,
+        'configuration': {'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team': True},
+    },
+    'name': 'Team',
+    'key': 'customfield_10001',
+    'operations': ['set'],
+}
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_team_selection_with_current_team(
+    uses_cloud_api_mock, work_item: JiraIssue, app: JiraApp
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = True
+    work_item.edit_meta['fields'] = {'customfield_10001': TEAM_FIELD_EDIT_METADATA}
+    work_item.custom_fields['customfield_10001'] = {
+        'id': '36885b3c-1bf0-4f85-a357-c5b858c31de4',
+        'name': 'Some Team',
+        'title': 'Some Team',
+    }
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        widget = widgets[0]
+        assert isinstance(widget, TeamSelectionWidget)
+        assert widget.id == 'customfield_10001'
+        assert widget.custom_id == 10001
+        assert widget.original_value == '36885b3c-1bf0-4f85-a357-c5b858c31de4'
+        assert widget.options == [('Some Team', '36885b3c-1bf0-4f85-a357-c5b858c31de4')]
+        assert widget.value_has_changed is False
+        widget.clear()
+        assert widget.value_has_changed is True
+        assert widget.get_value_for_update() is None
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_team_selection_without_current_team(
+    uses_cloud_api_mock, work_item: JiraIssue, app: JiraApp
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = True
+    work_item.edit_meta['fields'] = {'customfield_10001': TEAM_FIELD_EDIT_METADATA}
+    work_item.custom_fields['customfield_10001'] = None
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert len(widgets) == 1
+        widget = widgets[0]
+        assert isinstance(widget, TeamSelectionWidget)
+        assert widget.original_value is None
+        assert widget.options == []
+        assert widget.value_has_changed is False
+        assert widget.get_value_for_update() is None
+
+
+@patch('jiratui.widgets.work_item_details.factory._uses_cloud_api')
+@pytest.mark.asyncio
+async def test_create_dynamic_widgets_custom_field_team_without_using_cloud_api(
+    uses_cloud_api_mock, work_item: JiraIssue, app: JiraApp
+):
+    # GIVEN
+    uses_cloud_api_mock.return_value = False
+    work_item.edit_meta['fields'] = {'customfield_10001': TEAM_FIELD_EDIT_METADATA}
+    # WHEN
+    async with app.run_test():
+        widgets = create_dynamic_widgets_for_updating_work_item(work_item)
+        # THEN
+        assert widgets == []

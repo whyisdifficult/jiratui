@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [Unreleased]
 
 ### Added
 
+- Add support for creating and updating the (Atlassian) Team custom field in Jira Cloud.
 - Add configuration option `search_results_columns` to allow users to define some of the columns to display in the
 search results table. The default value is `None`. In this case the columns displayed are: `Key`, `Parent`, `Summary`,
 `Type`, `Status` and `Summary`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374

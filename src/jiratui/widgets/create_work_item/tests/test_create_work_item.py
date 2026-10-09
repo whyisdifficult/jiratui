@@ -29,6 +29,7 @@ from jiratui.widgets.commons.widgets import (
     SingleUserPickerWidget,
     SprintSelectionWidget,
     SprintWidget,
+    TeamSelectionWidget,
     TextInputWidget,
     URLWidget,
 )
@@ -1531,7 +1532,8 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
             assert isinstance(widget, MultiUserPickerWidget)
         elif widget.id == 'customfield_10001':
             assert widget.jira_field_key == 'customfield_10001'
-            assert isinstance(widget, TextInputWidget)
+            assert isinstance(widget, TeamSelectionWidget)
+            assert widget.custom_id == 10001
         elif widget.id == 'customfield_10015':
             assert widget.jira_field_key == 'customfield_10015'
             assert isinstance(widget, DateInputWidget)
@@ -1574,7 +1576,63 @@ def test_create_widgets_for_work_item_creation_additional_fields_with_adf_suppor
         elif widget.id == 'customfield_10147':
             assert widget.jira_field_key == 'customfield_10147'
             assert isinstance(widget, ADFMarkdownTextAreaWidget)
-    assert len(widgets) == 15
+    assert len(widgets) == 16
+
+
+TEAM_FIELD_CREATE_METADATA = {
+    'required': False,
+    'schema': {
+        'type': 'team',
+        'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+        'customId': 10001,
+        'configuration': {'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team': True},
+    },
+    'name': 'Team',
+    'key': 'customfield_10001',
+    'hasDefaultValue': False,
+    'operations': ['set'],
+    'fieldId': 'customfield_10001',
+}
+
+
+@pytest.mark.parametrize(
+    'schema_custom',
+    [
+        'com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team',
+        'com.atlassian.teams:rm-teams-custom-field-team',
+    ],
+)
+def test_create_widgets_for_work_item_creation_with_team_widget_in_cloud(
+    schema_custom: str, config_for_testing: ApplicationConfiguration
+):
+    # GIVEN
+    config_for_testing.enable_creating_additional_fields = True
+    field = {**TEAM_FIELD_CREATE_METADATA}
+    field['schema'] = {**field['schema'], 'custom': schema_custom}
+    # WHEN
+    with patch('jiratui.widgets.create_work_item.factory._uses_cloud_api') as uses_cloud_api_mock:
+        uses_cloud_api_mock.return_value = True
+        widgets = create_widgets_for_work_item_creation([field], None, True)
+    # THEN
+    assert len(widgets) == 1
+    widget = widgets[0]
+    assert isinstance(widget, TeamSelectionWidget)
+    assert widget.jira_field_key == 'customfield_10001'
+    assert widget.custom_id == 10001
+    assert widget.get_value_for_create() is None
+
+
+def test_create_widgets_for_work_item_creation_ignores_team_field_in_jira_dc(
+    config_for_testing: ApplicationConfiguration,
+):
+    # GIVEN
+    config_for_testing.enable_creating_additional_fields = True
+    # WHEN
+    with patch('jiratui.widgets.create_work_item.factory._uses_cloud_api') as uses_cloud_api_mock:
+        uses_cloud_api_mock.return_value = False
+        widgets = create_widgets_for_work_item_creation([TEAM_FIELD_CREATE_METADATA], None, True)
+    # THEN
+    assert widgets == []
 
 
 def test_create_widgets_for_work_item_creation_with_sprint_widget(
@@ -1889,7 +1947,8 @@ def test_create_widgets_for_work_item_creation_additional_fields_without_adf_sup
             assert isinstance(widget, MultiUserPickerWidget)
         elif widget.id == 'customfield_10001':
             assert widget.jira_field_key == 'customfield_10001'
-            assert isinstance(widget, TextInputWidget)
+            assert isinstance(widget, TeamSelectionWidget)
+            assert widget.custom_id == 10001
         elif widget.id == 'customfield_10015':
             assert widget.jira_field_key == 'customfield_10015'
             assert isinstance(widget, DateInputWidget)
@@ -1932,7 +1991,7 @@ def test_create_widgets_for_work_item_creation_additional_fields_without_adf_sup
         elif widget.id == 'customfield_10147':
             assert widget.jira_field_key == 'customfield_10147'
             assert isinstance(widget, PlainTextTextAreaWidget)
-    assert len(widgets) == 15
+    assert len(widgets) == 16
 
 
 def test_create_widgets_for_work_item_creation_for_non_required_additional_fields_with_ignore_list(

@@ -4,10 +4,11 @@ from jiratui.widgets.commons.base import (
     FieldMode,
     ValidationUtils,
 )
-from jiratui.widgets.commons.constants import CustomFieldType
+from jiratui.widgets.commons.constants import CustomFieldType, is_team_field
 
 __all__ = [
     'CustomFieldType',
+    'is_team_field',
     'BaseFieldWidget',
     'BaseUpdateFieldWidget',
     'FieldMode',
