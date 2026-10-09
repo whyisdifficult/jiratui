@@ -6,7 +6,6 @@ from textual.screen import ModalScreen
 from textual.widgets import Select, TextArea
 
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.models import JiraFilter
 
 FAVOURITE_FILTER_OPTION_PREFIX = 'jira-filter-'
@@ -46,13 +45,13 @@ class JQLEditorScreen(ModalScreen[str]):
 
     @property
     def _pre_defined_jql_expressions(self) -> dict | None:
-        if CONFIGURATION.get().pre_defined_jql_expressions:
-            return CONFIGURATION.get().pre_defined_jql_expressions
+        if self.app.config.pre_defined_jql_expressions:  # type:ignore[attr-defined]
+            return self.app.config.pre_defined_jql_expressions  # type:ignore[attr-defined]
         return None
 
     @property
     def _show_favourite_filters(self) -> bool:
-        return CONFIGURATION.get().show_favourite_filters_in_jql_editor
+        return self.app.config.show_favourite_filters_in_jql_editor  # type:ignore[attr-defined]
 
     @property
     def expressions(self) -> list:
