@@ -262,10 +262,18 @@ hit `enter`.
 ## Searching Using JQL Expressions
 
 Another way to search work items in JiraTUI is by crafting your own [JQL query](https://support.atlassian.com/jira-service-management-cloud/docs/use-advanced-search-with-jira-query-language-jql/). You can do so using the JQL Query
-input field. In addition, you can also define your own JQL query expressions and save them in the config file using the
+input field.
+
+You can also define your own JQL query expressions and save them in the config file using the
 setting `pre_defined_jql_expressions`. This is a YAML dictionary of expressions. When you focus on the JQL Query input
 field (by pressing the key for the action `focus_search_jql`) and press the key for the action `edit_jql` the JQL
 Editor opens. Here you can write a complex query or, choose one from the dropdown.
+
+If you have favorite filters in Jira you can bring them into the app by setting the config variable
+`show_favourite_filters_in_jql_editor` to `True`. When you do this the JQL Expression Editor will fetch the filters
+that you have starred in Jira and list them in the dropdown next to the expressions defined in
+`pre_defined_jql_expressions`. Each filter will appear with a `*` next to it. Keep in mind that this feature is only
+supported in Jira Cloud.
 
 **Examples**
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.17.0] 2026-10-10
 
 ### Added
 
@@ -23,6 +23,7 @@ the user has favourite (starred) in Jira in its dropdown, next to the expression
 - Bump `urllib3` to `v2.8.0`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/374
 - Bump `multidict` to `v6.9.1`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/379
 - Use `self.app.config.*` in `jiratui.widgets.screens.jql.py`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/380
+- Update in-app help with instructions for using `show_favourite_filters_in_jql_editor`. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/381
 
 ## [1.16.0] 2026-10-01
 
