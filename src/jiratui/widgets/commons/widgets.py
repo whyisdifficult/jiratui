@@ -2006,6 +2006,8 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
             type_to_search=True,
         )
+        # keep the options so we can retrieve them after mounting the widget in order display the selected option
+        self.__options = options
 
         # Setup base field properties
         self.setup_base_field(
@@ -2081,6 +2083,10 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
         # Both exist - compare them
         return self.original_value != self.selection
+
+    @property
+    def initial_options(self) -> list[tuple[str, str]]:
+        return self.__options or []
 
 
 class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidget):

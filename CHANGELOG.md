@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use autocomplete to search for work items when creating a link between 2 items. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/383
 
+### Bug Fixes
+
+- When updating a work item, the `SelectWidget` instances created dynamically do not show the currently selected
+option; when the option is not `NULL`. To solve the app will set the options and set the currently selected value AFTER
+the widget is mounted. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/384
+
 ## [1.17.0] 2026-10-10
 
 ### Added
