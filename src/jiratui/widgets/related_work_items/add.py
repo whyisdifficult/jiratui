@@ -88,6 +88,10 @@ class AddWorkItemRelationshipScreen(Screen[dict]):
         return self.query_one(LinkedWorkItemKey)
 
     @property
+    def autocomplete_container(self) -> Vertical:
+        return self.query_one('#autocomplete-container', expect_type=Vertical)
+
+    @property
     def save_button(self) -> Button:
         return self.query_one('#add-link-button-save', expect_type=Button)
 
@@ -103,7 +107,7 @@ class AddWorkItemRelationshipScreen(Screen[dict]):
             with ItemGrid(classes='issue-linking-grid'):
                 yield IssueLinkTypeSelector([])
                 yield LinkedWorkItemKey()
-            yield Static('')
+            yield Vertical(id='autocomplete-container')
             with ItemGrid(classes='issue-linking-grid-buttons'):
                 yield Button('Save', variant='success', id='add-link-button-save', disabled=True)
                 yield Button('Cancel', variant='error', id='add-link-button-quit')
@@ -136,7 +140,7 @@ class AddWorkItemRelationshipScreen(Screen[dict]):
             self.app.api,  # type:ignore[attr-defined]
             work_items_search_function=self._search_work_items,
         )
-        await self.mount(work_item_key_autocomplete)
+        await self.autocomplete_container.mount(work_item_key_autocomplete)
 
     async def _search_work_items(self, query: str) -> list[JiraIssue] | None:
         """Searches work items to fill in the autocomplete suggestions for the related work item's key.
