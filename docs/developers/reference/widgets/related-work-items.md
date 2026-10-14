@@ -4,9 +4,9 @@
 ```{autodoc2-object} jiratui.widgets.related_work_items.add.IssueLinkTypeSelector
 ```
 
-## LinkedWorkItemInputWidget
+## LinkedWorkItemKey
 
-```{autodoc2-object} jiratui.widgets.related_work_items.add.LinkedWorkItemInputWidget
+```{autodoc2-object} jiratui.widgets.related_work_items.add.LinkedWorkItemKey
 ```
 
 ## RelatedIssuesWidget
