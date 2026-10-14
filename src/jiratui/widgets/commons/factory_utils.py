@@ -285,7 +285,7 @@ class WidgetBuilder:
         # CREATE mode parameters
         initial_value: Any = Select.NULL,
         # UPDATE mode parameters
-        current_value: str | None = None,
+        current_value: str | dict | None = None,
     ) -> Widget:
         """Builds a SelectionWidget for single-select dropdown fields.
 
@@ -355,12 +355,12 @@ class WidgetBuilder:
             )
         else:
             # UPDATE mode - extract ID from value
-            value_id = None
+            value_id: str | None = None
             if current_value:
-                if isinstance(current_value, dict):
-                    value_id = current_value.get('id')
-                elif isinstance(current_value, str):
+                if isinstance(current_value, str):
                     value_id = current_value
+                elif isinstance(current_value, dict):
+                    value_id = current_value.get('id')
 
             return SelectionWidget(
                 mode=mode,

@@ -1061,6 +1061,18 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             # mount the dynamic widgets
             await self.dynamic_fields_widgets_container.mount(*sorted_widgets)
 
+            # update the selection widgets to make sure that the current value of every Select widget is displayed
+            # Important: this MUST happen after the widgets are mounted; otherwise Textual does not show the current
+            # selection (if the selection is not null)
+            for select_widget in self.query(SelectionWidget):
+                select_widget.set_options(select_widget.initial_options)
+                if select_widget.original_value is not None:
+                    for option in select_widget.initial_options or []:
+                        if option[1] != select_widget.original_value:
+                            continue
+                        select_widget.value = str(select_widget.original_value)
+                        break
+
             # mount autocomplete widgets for the dynamic widgets that require them
             for widget in self.dynamic_fields_widgets_container.query(MultiUserPickerWidget):
                 await self.dynamic_fields_widgets_container.mount(
