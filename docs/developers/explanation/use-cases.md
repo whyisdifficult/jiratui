@@ -1041,7 +1041,7 @@ the application takes to add a new task related to an existing work item.
         participant RelatedIssuesWidget
         participant AddWorkItemRelationshipScreen
         participant IssueLinkTypeSelector
-        participant LinkedWorkItemInputWidget
+        participant LinkedWorkItemKey
         participant APIController
         participant JiraAPI as Jira API
         participant RelatedIssueCollapsible as RelatedIssueCollapsible
@@ -1052,7 +1052,7 @@ the application takes to add a new task related to an existing work item.
         RelatedIssuesWidget->>AddWorkItemRelationshipScreen: Create & push screen<br/>with issue_key
         activate AddWorkItemRelationshipScreen
 
-        AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: Compose UI<br/>(IssueLinkTypeSelector, LinkedWorkItemInputWidget, buttons)
+        AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: Compose UI<br/>(IssueLinkTypeSelector, LinkedWorkItemKey, buttons)
 
         Note over AddWorkItemRelationshipScreen: on_mount triggered
         AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: run_worker(fetch_issue_link_types)
@@ -1077,12 +1077,12 @@ the application takes to add a new task related to an existing work item.
         AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: Enable save_button if<br/>both fields valid
         deactivate IssueLinkTypeSelector
 
-        User->>LinkedWorkItemInputWidget: Enter work item key<br/>(e.g., "ABC-1234")
-        activate LinkedWorkItemInputWidget
-        LinkedWorkItemInputWidget->>AddWorkItemRelationshipScreen: on_input.Changed event
+        User->>LinkedWorkItemKey: Enter work item key<br/>(e.g., "ABC-1234")
+        activate LinkedWorkItemKey
+        LinkedWorkItemKey->>AddWorkItemRelationshipScreen: on_input.Changed event
         AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: validate_change()
         AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: Enable save_button if<br/>both fields valid
-        deactivate LinkedWorkItemInputWidget
+        deactivate LinkedWorkItemKey
 
         User->>AddWorkItemRelationshipScreen: Click 'Save' button
         AddWorkItemRelationshipScreen->>AddWorkItemRelationshipScreen: handle_save()

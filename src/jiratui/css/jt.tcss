@@ -574,6 +574,9 @@ AddWorkItemRelationshipScreen > Vertical {
     & > Static {
         margin-top: 1;
     }
+    & > #autocomplete-container {
+        height: 1;
+    }
 }
 #add-link-button-save {
     width: 20%;
@@ -610,7 +613,7 @@ IssueLinkTypeSelector {
     }
 }
 
-LinkedWorkItemInputWidget {
+LinkedWorkItemKey {
     box_sizing: content-box;
     height: 1;
     border: round $primary-lighten-3;

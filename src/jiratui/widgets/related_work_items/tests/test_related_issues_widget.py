@@ -1,5 +1,5 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
 from textual.widgets import Select
@@ -14,6 +14,7 @@ from jiratui.models import (
     Project,
     RelatedJiraIssue,
 )
+from jiratui.widgets.commons.base import WorkItemKeyAutoComplete
 from jiratui.widgets.related_work_items.add import AddWorkItemRelationshipScreen
 from jiratui.widgets.related_work_items.related_issues import (
     RelatedIssueCollapsible,
@@ -469,6 +470,107 @@ async def test_refresh_issues_after_delete(
                     priority=IssuePriority(id='1', name='Medium'),
                 )
             ],
+        )
+
+
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_add_work_item_relationship_screen_uses_autocomplete(
+    issue_link_types_mock: AsyncMock, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(success=False)
+    async with app.run_test():
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        # THEN
+        assert isinstance(screen.query_one(WorkItemKeyAutoComplete), WorkItemKeyAutoComplete)
+
+
+@patch.object(
+    AddWorkItemRelationshipScreen,
+    '_use_advanced_full_text_search',
+    PropertyMock(return_value=False),
+)
+@patch.object(APIController, 'search_issues')
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_autocomplete_without_advanced_text_search_enabled_triggers_search(
+    issue_link_types_mock: AsyncMock, search_issues_mock: AsyncMock, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(success=False)
+    search_issues_mock.return_value = APIControllerResponse(
+        success=True, result=JiraIssueSearchResponse(issues=[])
+    )
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('tab')
+        await pilot.press('t')
+        await pilot.press('e')
+        await pilot.press('s')
+        # THEN
+        search_issues_mock.assert_awaited_once_with(
+            jql_query='summary ~ "tes" OR description ~ "tes" OR workItemKey ~ "tes"',
+            fields=['id', 'key', 'summary'],
+        )
+
+
+@patch.object(
+    AddWorkItemRelationshipScreen,
+    '_use_advanced_full_text_search',
+    PropertyMock(return_value=False),
+)
+@patch.object(APIController, 'search_issues')
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_autocomplete_without_advanced_text_search_enabled_does_not_triggers_search_with_short_input(
+    issue_link_types_mock: AsyncMock, search_issues_mock: AsyncMock, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(success=False)
+    search_issues_mock.return_value = APIControllerResponse(
+        success=True, result=JiraIssueSearchResponse(issues=[])
+    )
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('tab')
+        await pilot.press('t')
+        await pilot.press('e')
+        # THEN
+        search_issues_mock.assert_not_awaited()
+
+
+@patch.object(
+    AddWorkItemRelationshipScreen, '_use_advanced_full_text_search', PropertyMock(return_value=True)
+)
+@patch.object(APIController, 'search_issues')
+@patch.object(APIController, 'issue_link_types')
+@pytest.mark.asyncio
+async def test_autocomplete_with_advanced_text_search_enabled_triggers_search(
+    issue_link_types_mock: AsyncMock, search_issues_mock: AsyncMock, app
+):
+    # GIVEN
+    issue_link_types_mock.return_value = APIControllerResponse(success=False)
+    search_issues_mock.return_value = APIControllerResponse(
+        success=True, result=JiraIssueSearchResponse(issues=[])
+    )
+    async with app.run_test() as pilot:
+        # GIVEN
+        screen = AddWorkItemRelationshipScreen('WI-1')
+        await app.push_screen(screen)
+        await pilot.press('tab')
+        await pilot.press('t')
+        await pilot.press('e')
+        await pilot.press('s')
+        # THEN
+        search_issues_mock.assert_awaited_once_with(
+            jql_query='text ~ "tes" OR workItemKey ~ "tes"', fields=['id', 'key', 'summary']
         )
 
 

@@ -1200,7 +1200,7 @@ C4Component
     classDiagram
         namespace related_work_items.add {
             class AddWorkItemRelationshipScreen
-            class LinkedWorkItemInputWidget
+            class LinkedWorkItemKey
             class IssueLinkTypeSelector
         }
 
@@ -1228,13 +1228,13 @@ C4Component
         }
 
         AddWorkItemRelationshipScreen --|> Screen
-        LinkedWorkItemInputWidget --|> Input
+        LinkedWorkItemKey --|> Input
         IssueLinkTypeSelector --|> Select
         RelatedIssuesWidget --|> VerticalScroll
         RelatedIssueCollapsible --|> Collapsible
         RelatedIssueCollapsible --> Text: uses
         RelatedIssueCollapsible --> Link: uses
-        AddWorkItemRelationshipScreen --> LinkedWorkItemInputWidget: uses
+        AddWorkItemRelationshipScreen --> LinkedWorkItemKey: uses
         AddWorkItemRelationshipScreen --> IssueLinkTypeSelector: uses
         RelatedIssueCollapsible --> LinkDeleted: posts
         RelatedIssuesWidget --> RelatedIssueCollapsible: contains
