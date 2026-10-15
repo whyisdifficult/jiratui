@@ -1040,9 +1040,13 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         ignore_filter_ids = self._update_additional_fields_ignore_ids
         await self.dynamic_fields_widgets_container.remove_children()
         dynamic_widgets: list[Widget]
+        # create widgets for every supported field including custom fields
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
             work_item, ignore_filter_ids=ignore_filter_ids
         ):
+            # arrange the widgets so that some can be displayed first. This makes the form's UI easy to use and
+            # navigate; for example, fields that use dropdowns are displayed first so that the dropdown overlay appears
+            # below the widget
             user_picker_widgets: list[MultiUserPickerWidget | SingleUserPickerWidget] = []
             other_widgets: list[Widget] = []
             sprint_selection_widgets: list[SprintSelectionWidget] = []
@@ -1061,17 +1065,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             # mount the dynamic widgets
             await self.dynamic_fields_widgets_container.mount(*sorted_widgets)
 
-            # update the selection widgets to make sure that the current value of every Select widget is displayed
-            # Important: this MUST happen after the widgets are mounted; otherwise Textual does not show the current
-            # selection (if the selection is not null)
-            for select_widget in self.query(SelectionWidget):
-                select_widget.set_options(select_widget.initial_options)
-                if select_widget.original_value is not None:
-                    for option in select_widget.initial_options or []:
-                        if option[1] != select_widget.original_value:
-                            continue
-                        select_widget.value = str(select_widget.original_value)
-                        break
+            # set up the selection-based widgets after mounting them so any current value is displayed as 'selected'
+            self._setup_dynamic_select_widgets()
 
             # mount autocomplete widgets for the dynamic widgets that require them
             for widget in self.dynamic_fields_widgets_container.query(MultiUserPickerWidget):
@@ -1088,6 +1083,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 )
             if sprint_selection_widgets and self._support_sprint_selection:
                 await self._setup_sprint_selection_widgets(work_item.project.key)
+
+            # set up the selection-based widget after mounting it so any current value is displayed as 'selected'
             await self._setup_team_selection_widgets()
 
     async def _setup_team_selection_widgets(self) -> None:
@@ -1105,6 +1102,15 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             team_widget.set_options(options)
             if team_widget.original_value is not None:
                 team_widget.value = str(team_widget.original_value)
+
+    def _setup_dynamic_select_widgets(self) -> None:
+        # update the selection widgets to make sure that the current value of every Select widget is displayed
+        # Important: this MUST happen after the widgets are mounted; otherwise Textual does not show the current
+        # selection (if the selection is not null)
+        for select_widget in self.dynamic_fields_widgets_container.query(SelectionWidget):
+            select_widget.set_options(select_widget.options)
+            if select_widget.original_value is not None:
+                select_widget.value = str(select_widget.original_value)
 
     async def _setup_sprint_selection_widgets(self, project_key: str) -> None:
         # fetch the active/future sprints associated to the item's project

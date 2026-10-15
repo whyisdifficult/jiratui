@@ -2006,8 +2006,6 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             compact=True,
             type_to_search=True,
         )
-        # keep the options so we can retrieve them after mounting the widget in order display the selected option
-        self.__options = options
 
         # Setup base field properties
         self.setup_base_field(
@@ -2034,6 +2032,15 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
             # CREATE mode specific setup
             if initial_value != Select.NULL:
                 self.value = initial_value
+
+        # keep the options so we can retrieve them after mounting the widget in order display the selected option
+        self.__options = options
+
+    @property
+    def options(self) -> list[tuple[str, str]]:
+        # the Textual.Select widget does not offer a public property/method/attribute to get the list of options so we
+        # implement it here
+        return self.__options
 
     def get_value_for_update(self) -> dict | None:
         """Returns the value formatted for Jira API updates (UPDATE mode).
@@ -2083,10 +2090,6 @@ class SelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
 
         # Both exist - compare them
         return self.original_value != self.selection
-
-    @property
-    def initial_options(self) -> list[tuple[str, str]]:
-        return self.__options or []
 
 
 class MultiSelectWidget(SelectionList[str], BaseFieldWidget, BaseUpdateFieldWidget):
@@ -2432,6 +2435,7 @@ class TeamSelectionWidget(Select, BaseFieldWidget, BaseUpdateFieldWidget):
                 self.value = original_value
 
         self.custom_id = custom_id
+        # keep the options so we can retrieve them after mounting the widget in order display the selected option
         self.__options = options
 
     @property

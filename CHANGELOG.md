@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.18.0] 2026-10-15
 
 ### Added
 
@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When updating a work item, the `SelectWidget` instances created dynamically do not show the currently selected
 option; when the option is not `NULL`. To solve the app will set the options and set the currently selected value AFTER
 the widget is mounted. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/384
+
+### Minor Improvements
+
+- Refactor mounting of `SelectWidget` instances when editing a work item. By [@whyisdifficult](https://github.com/whyisdifficult) in https://github.com/whyisdifficult/jiratui/pull/385
 
 ## [1.17.0] 2026-10-10
 
