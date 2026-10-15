@@ -67,7 +67,6 @@ from textual.widgets import LoadingIndicator, ProgressBar
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -302,19 +301,19 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
 
     @property
     def _support_sprint_selection(self) -> bool:
-        return CONFIGURATION.get().cloud
+        return self.app.config.cloud  # type:ignore[attr-defined]
 
     @property
     def _use_advanced_full_text_search(self) -> bool:
-        return CONFIGURATION.get().enable_advanced_full_text_search
+        return self.app.config.enable_advanced_full_text_search  # type:ignore[attr-defined]
 
     @property
     def _enable_updating_additional_fields(self) -> bool:
-        return CONFIGURATION.get().enable_updating_additional_fields
+        return self.app.config.enable_updating_additional_fields  # type:ignore[attr-defined]
 
     @property
     def _update_additional_fields_ignore_ids(self) -> list[str] | None:
-        return CONFIGURATION.get().update_additional_fields_ignore_ids
+        return self.app.config.update_additional_fields_ignore_ids  # type:ignore[attr-defined]
 
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
@@ -522,14 +521,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         if issue_details_response.success and issue_details_response.result:
             self.issue = issue_details_response.result.issues[0]
 
-    def _update_priority_selection(
-        self, priorities: list[tuple[str, str]], priority_id: str
-    ) -> None:
-        for priority in priorities or []:
-            if priority[1] == priority_id:
-                self.priority_selector.value = priority_id
-                return
-
     def _setup_priority_selector(
         self,
         issue_edit_meta: dict | None,
@@ -541,12 +532,12 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 self.priority_selector.update_enabled = False
             else:
                 priorities: list[tuple[str, str]] = []
-                for v in priority_field.get('allowedValues', []):
-                    priorities.append((v.get('name'), v.get('id')))
+                for allowed_value in priority_field.get('allowedValues', []):
+                    priorities.append((allowed_value.get('name'), allowed_value.get('id')))
                 self.priority_selector.set_options(priorities)
-                if issue_priority:
+                if issue_priority and issue_priority.id is not None:
                     # update the selection with the issue's current priority value
-                    self._update_priority_selection(priorities, issue_priority.id)
+                    self.priority_selector.value = issue_priority.id
         else:
             # we can't determine if priority is supported; disable its selection/editing
             self.priority_selector.update_enabled = False
@@ -712,7 +703,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         """Updates the fields of a work item that have changed.
 
         Returns:
-            `None`.
+            None.
         """
 
         if not self.issue:
@@ -1040,9 +1031,13 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         ignore_filter_ids = self._update_additional_fields_ignore_ids
         await self.dynamic_fields_widgets_container.remove_children()
         dynamic_widgets: list[Widget]
+        # create widgets for every supported field including custom fields
         if dynamic_widgets := create_dynamic_widgets_for_updating_work_item(
             work_item, ignore_filter_ids=ignore_filter_ids
         ):
+            # arrange the widgets so that some can be displayed first. This makes the form's UI easy to use and
+            # navigate; for example, fields that use dropdowns are displayed first so that the dropdown overlay appears
+            # below the widget
             user_picker_widgets: list[MultiUserPickerWidget | SingleUserPickerWidget] = []
             other_widgets: list[Widget] = []
             sprint_selection_widgets: list[SprintSelectionWidget] = []
@@ -1061,17 +1056,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             # mount the dynamic widgets
             await self.dynamic_fields_widgets_container.mount(*sorted_widgets)
 
-            # update the selection widgets to make sure that the current value of every Select widget is displayed
-            # Important: this MUST happen after the widgets are mounted; otherwise Textual does not show the current
-            # selection (if the selection is not null)
-            for select_widget in self.query(SelectionWidget):
-                select_widget.set_options(select_widget.initial_options)
-                if select_widget.original_value is not None:
-                    for option in select_widget.initial_options or []:
-                        if option[1] != select_widget.original_value:
-                            continue
-                        select_widget.value = str(select_widget.original_value)
-                        break
+            # set up the selection-based widgets after mounting them so any current value is displayed as 'selected'
+            self._setup_dynamic_select_widgets()
 
             # mount autocomplete widgets for the dynamic widgets that require them
             for widget in self.dynamic_fields_widgets_container.query(MultiUserPickerWidget):
@@ -1088,6 +1074,8 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 )
             if sprint_selection_widgets and self._support_sprint_selection:
                 await self._setup_sprint_selection_widgets(work_item.project.key)
+
+            # set up the selection-based widget after mounting it so any current value is displayed as 'selected'
             await self._setup_team_selection_widgets()
 
     async def _setup_team_selection_widgets(self) -> None:
@@ -1105,6 +1093,15 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
             team_widget.set_options(options)
             if team_widget.original_value is not None:
                 team_widget.value = str(team_widget.original_value)
+
+    def _setup_dynamic_select_widgets(self) -> None:
+        # update the selection widgets to make sure that the current value of every Select widget is displayed
+        # Important: this MUST happen after the widgets are mounted; otherwise Textual does not show the current
+        # selection (if the selection is not null)
+        for select_widget in self.dynamic_fields_widgets_container.query(SelectionWidget):
+            select_widget.set_options(select_widget.options)
+            if select_widget.original_value is not None:
+                select_widget.value = str(select_widget.original_value)
 
     async def _setup_sprint_selection_widgets(self, project_key: str) -> None:
         # fetch the active/future sprints associated to the item's project
