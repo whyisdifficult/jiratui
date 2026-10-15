@@ -67,7 +67,6 @@ from textual.widgets import LoadingIndicator, ProgressBar
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.exceptions import UpdateWorkItemException, ValidationError
 from jiratui.models import AgileSprint, IssuePriority, JiraIssue, TimeTracking
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -302,19 +301,19 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
 
     @property
     def _support_sprint_selection(self) -> bool:
-        return CONFIGURATION.get().cloud
+        return self.app.config.cloud  # type:ignore[attr-defined]
 
     @property
     def _use_advanced_full_text_search(self) -> bool:
-        return CONFIGURATION.get().enable_advanced_full_text_search
+        return self.app.config.enable_advanced_full_text_search  # type:ignore[attr-defined]
 
     @property
     def _enable_updating_additional_fields(self) -> bool:
-        return CONFIGURATION.get().enable_updating_additional_fields
+        return self.app.config.enable_updating_additional_fields  # type:ignore[attr-defined]
 
     @property
     def _update_additional_fields_ignore_ids(self) -> list[str] | None:
-        return CONFIGURATION.get().update_additional_fields_ignore_ids
+        return self.app.config.update_additional_fields_ignore_ids  # type:ignore[attr-defined]
 
     def show_loading(self) -> None:
         """Shows the loading indicator and hides content."""
