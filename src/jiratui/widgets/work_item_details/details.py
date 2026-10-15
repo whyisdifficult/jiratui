@@ -521,14 +521,6 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         if issue_details_response.success and issue_details_response.result:
             self.issue = issue_details_response.result.issues[0]
 
-    def _update_priority_selection(
-        self, priorities: list[tuple[str, str]], priority_id: str
-    ) -> None:
-        for priority in priorities or []:
-            if priority[1] == priority_id:
-                self.priority_selector.value = priority_id
-                return
-
     def _setup_priority_selector(
         self,
         issue_edit_meta: dict | None,
@@ -540,12 +532,12 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
                 self.priority_selector.update_enabled = False
             else:
                 priorities: list[tuple[str, str]] = []
-                for v in priority_field.get('allowedValues', []):
-                    priorities.append((v.get('name'), v.get('id')))
+                for allowed_value in priority_field.get('allowedValues', []):
+                    priorities.append((allowed_value.get('name'), allowed_value.get('id')))
                 self.priority_selector.set_options(priorities)
-                if issue_priority:
+                if issue_priority and issue_priority.id is not None:
                     # update the selection with the issue's current priority value
-                    self._update_priority_selection(priorities, issue_priority.id)
+                    self.priority_selector.value = issue_priority.id
         else:
             # we can't determine if priority is supported; disable its selection/editing
             self.priority_selector.update_enabled = False
@@ -711,7 +703,7 @@ class IssueDetailsWidget(Actionable, Vertical, inherit_bindings=False):  # type:
         """Updates the fields of a work item that have changed.
 
         Returns:
-            `None`.
+            None.
         """
 
         if not self.issue:
