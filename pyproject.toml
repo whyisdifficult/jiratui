@@ -30,7 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.5.0,<9.0.0",
-    "gitpython>=3.1.62,<3.2.0",
+    "gitpython>=3.1.62,<3.3.0",
     "httpx>=0.28.1",
     "marklas==0.8.6",
     "puremagic>=2.2.0,<3.0.0",
