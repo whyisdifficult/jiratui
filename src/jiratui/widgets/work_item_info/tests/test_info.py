@@ -709,6 +709,50 @@ async def test_build_textarea_widgets_with_non_empty_field_value_generates_adf_w
         assert widgets[0].field_title == 'Field A'
 
 
+@patch('jiratui.widgets.commons.factory_utils._adf_support_enabled')
+@patch.object(JiraIssue, 'get_custom_field_value')
+@patch.object(
+    WorkItemInfoContainer, '_update_additional_fields_ignore_ids', PropertyMock(return_value=[])
+)
+@pytest.mark.asyncio
+async def test_build_textarea_widgets_with_non_empty_field_value_and_metadata_without_key(
+    get_custom_field_value_mock: Mock,
+    adf_support_enabled_mock: Mock,
+    jira_issues_with_custom_fields,
+    app,
+):
+    """Jira Data Center's (API v2) edit metadata provides `fieldId` but not `key`."""
+
+    # GIVEN
+    adf_support_enabled_mock.return_value = False
+    get_custom_field_value_mock.return_value = 'Some decision notes'
+    jira_issues_with_custom_fields[0].edit_meta = {
+        'fields': {
+            'customfield_10102': {
+                'required': False,
+                'schema': {
+                    'type': 'string',
+                    'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                    'customId': 10102,
+                },
+                'name': 'Decision Notes',
+                'fieldId': 'customfield_10102',
+                'operations': ['set'],
+            }
+        }
+    }
+    async with app.run_test():
+        widget = WorkItemInfoContainer()
+        await app.screen.mount(widget)
+        # WHEN
+        widgets = widget._build_textarea_widgets(jira_issues_with_custom_fields[0])
+        # THEN
+        assert len(widgets) == 1
+        assert widgets[0].id == 'customfield_10102'
+        assert widgets[0].jira_field_key == 'customfield_10102'
+        assert widgets[0].field_title == 'Decision Notes'
+
+
 @patch.object(JiraIssue, 'get_custom_field_value')
 @patch.object(
     WorkItemInfoContainer, '_update_additional_fields_ignore_ids', PropertyMock(return_value=[])
