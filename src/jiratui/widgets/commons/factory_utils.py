@@ -73,8 +73,9 @@ class FieldMetadata:
         """Internal identifier (e.g., "project", "customfield_10001")"""
         self.name: str = raw_metadata.get('name', '')
         """Display name for the field (used as widget title)"""
-        self.key: str = raw_metadata.get('key', '')
-        """Jira API field key for update operations"""
+        self.key: str = raw_metadata.get('key') or self.field_id
+        """Jira API field key for update operations. Jira Data Center's (API v2) metadata does not include the `key`
+        property; in that case it falls back to the `fieldId`."""
         self.required: bool = raw_metadata.get('required', False)
         """Whether the field is mandatory"""
         self.schema: dict = raw_metadata.get('schema', {})
