@@ -258,7 +258,8 @@ class JiraAPI:
         if limit is not None:
             params['maxResults'] = limit
         if query:
-            params['query'] = query
+            # Jira DC ignores 'query' and returns the first N users alphabetically; it expects 'username'
+            params['query' if self.cloud else 'username'] = query
         if issue_key:
             params['issueKey'] = issue_key
         if issue_id:
