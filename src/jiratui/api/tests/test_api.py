@@ -3900,3 +3900,31 @@ async def test_issue_picker_without_project_without_current_issue_key(jira_api: 
             }
         ]
     }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_archive_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.put(get_url_pattern('issue/archive'))
+    route.mock(return_value=httpx.Response(200, json={'errors': {}, 'numberOfIssuesUpdated': 1}))
+    # WHEN
+    result = await jira_api.archive_work_item('task-1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/archive'
+    assert json.loads(route.calls.last.request.content) == {'issueIdsOrKeys': ['task-1']}
+    assert result == {'numberOfIssuesUpdated': 1, 'errors': {}}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_unarchive_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.put(get_url_pattern('issue/unarchive'))
+    route.mock(return_value=httpx.Response(200, json={'errors': {}, 'numberOfIssuesUpdated': 1}))
+    # WHEN
+    result = await jira_api.unarchive_work_item('task-1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/unarchive'
+    assert json.loads(route.calls.last.request.content) == {'issueIdsOrKeys': ['task-1']}
+    assert result == {'numberOfIssuesUpdated': 1, 'errors': {}}

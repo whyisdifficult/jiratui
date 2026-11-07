@@ -14,7 +14,6 @@ from textual.worker import Worker
 from jiratui.actions.constants import SupportedActions
 from jiratui.actions.keys import get_application_key_bindings
 from jiratui.api_controller.controller import APIController, APIControllerResponse
-from jiratui.config import CONFIGURATION
 from jiratui.constants import FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH, LOGGER_NAME
 from jiratui.models import (
     IssueType,
@@ -22,11 +21,12 @@ from jiratui.models import (
     JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
+    WorkItemArchivalSyncResponse,
     WorkItemsSearchOrderBy,
 )
-from jiratui.utils.history import HistoryEntry, HistoryManager
+from jiratui.utils.history import HistoryEntry
 from jiratui.utils.logging import JiraTUILogger
-from jiratui.utils.search import get_work_item_search_fields
+from jiratui.utils.search import build_jql_query, get_work_item_search_fields
 from jiratui.utils.ui_actions import Actionable, UIAction
 from jiratui.utils.urls import build_external_url_for_issue
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget, WorkItemAttachments
@@ -51,6 +51,12 @@ from jiratui.widgets.related_work_items.related_issues import (
     WorkItemRelatedItems,
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
+from jiratui.widgets.screens.clone import CloneWorkItemRequest, CloneWorkItemScreen
+from jiratui.widgets.screens.context_menu import (
+    WorkItemContextMenu,
+    WorkItemContextMenuOptionAction,
+    WorkItemContextMenuSelection,
+)
 from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.history import HistoryScreen
 from jiratui.widgets.screens.text_search import TextSearchScreen
@@ -172,7 +178,6 @@ class MainScreen(Actionable, Screen):
         """A project key to set as the initial value of the projects dropdown widget."""
         self.initial_work_item_key = work_item_key
         """A work item key to set as the initial value of the work-item-key widget."""
-        """Pre-selected project key. This is passed during the initialization of the application."""
         self.initial_assignee_account_id = user_account_id
         """Pre-selected user/assignee account id. This is passed during the initialization of the application."""
         self.initial_jql_expression_id: int | None = jql_expression_id
@@ -182,10 +187,9 @@ class MainScreen(Actionable, Screen):
         """The position of the work item to focus and open on startup. Requires search_on_startup to be enabled."""
         self.current_loaded_work_item_key: str | None = None
         """Track the currently loaded work item key to prevent redundant reloads."""
-        self.config = CONFIGURATION.get()
         self.current_key_bindings: dict[str, dict] = get_application_key_bindings()
         self.work_item_tabs_titles: dict = {}
-        if self.config.show_keybinding_hints:
+        if self.app.config.show_keybinding_hints:  # type:ignore[attr-defined]
             self.work_item_tabs_titles = {
                 'search_results_container': f'Work Items ({self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_RESULTS.value, {}).get("keys", [])[0]})',
                 'work_item_info_container': f'Info ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_INFORMATION_TAB.value, {}).get("keys", [])[0]})',
@@ -196,8 +200,7 @@ class MainScreen(Actionable, Screen):
                 'issue_remote_links': f'Links ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_LINKS_TAB.value, {}).get("keys", [])[0]})',
                 'issue_subtasks': f'Subtasks ({self.current_key_bindings.get(SupportedActions.FOCUS_WORK_ITEM_SUBTASKS_TAB.value, {}).get("keys", [])[0]})',
             }
-        self.__recent_history_manager = HistoryManager()
-        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.config.enable_logging)
+        self.logger = JiraTUILogger(logging.getLogger(LOGGER_NAME), self.app.config.enable_logging)  # type:ignore[attr-defined]
 
     @property
     def project_selector(self) -> ProjectSelectionInput:
@@ -300,7 +303,7 @@ class MainScreen(Actionable, Screen):
 
         # Only render header if tui_custom_title is not explicitly set to empty string
         should_show_header = True
-        if self.config.tui_custom_title is not None and self.config.tui_custom_title == '':
+        if self.app.config.tui_custom_title is not None and self.app.config.tui_custom_title == '':  # type:ignore[attr-defined]
             should_show_header = False
 
         # a loading indicator that will be displayed when the screen is handling a create-work-item event
@@ -315,7 +318,7 @@ class MainScreen(Actionable, Screen):
                     projects=[],
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_PROJECT_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
@@ -323,7 +326,7 @@ class MainScreen(Actionable, Screen):
                     types=[],
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_TYPE_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
@@ -331,7 +334,7 @@ class MainScreen(Actionable, Screen):
                     statuses=[],
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_STATUS_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
@@ -339,7 +342,7 @@ class MainScreen(Actionable, Screen):
                     id='search-filters-input-assignee',
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_ASSIGNEE_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                     border_title='Assignee',
@@ -349,45 +352,45 @@ class MainScreen(Actionable, Screen):
                     value=self.initial_work_item_key,
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_WORK_ITEM_KEY_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
                 yield IssueSearchCreatedFromWidget(
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_CREATED_FROM_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
                 yield IssueSearchCreatedUntilWidget(
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_CREATED_UNTIL_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
                 yield OrderByWidget(
                     WorkItemsSearchOrderBy.to_choices(),
-                    initial_value=self.config.search_results_default_order.value,
+                    initial_value=self.app.config.search_results_default_order.value,  # type:ignore[attr-defined]
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_SORT_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
                 yield ActiveSprintCheckbox(
-                    value=self.config.active_sprint_on_startup,
+                    value=self.app.config.active_sprint_on_startup,  # type:ignore[attr-defined]
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_SPRINT_FILTER.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
                 yield JQLSearchWidget(
                     border_subtitle=(
                         f'{self.current_key_bindings.get(SupportedActions.FOCUS_SEARCH_JQL.value, {}).get("keys", [])[0]}'
-                        if self.config.show_keybinding_hints
+                        if self.app.config.show_keybinding_hints  # type:ignore[attr-defined]
                         else None
                     ),
                 )
@@ -524,7 +527,7 @@ class MainScreen(Actionable, Screen):
         # if there is an initial value for the project key the worker that fetches the projects will trigger fetching
         # status codes and work item types after the project dropdown is updated with the selection.
         # the same happens when the user configures the app to fetch only projects on start up
-        if not self.config.on_start_up_only_fetch_projects and not self.initial_project_key:
+        if not self.app.config.on_start_up_only_fetch_projects and not self.initial_project_key:  # type:ignore[attr-defined]
             # in this case we need to fetch users, status codes and work item types
             self.run_worker(self.fetch_issue_types())
             self.run_worker(self.fetch_statuses())
@@ -546,7 +549,7 @@ class MainScreen(Actionable, Screen):
                 )
 
         if self.initial_jql_expression_id and (
-            pre_defined_jql_expressions := self.config.pre_defined_jql_expressions
+            pre_defined_jql_expressions := self.app.config.pre_defined_jql_expressions  # type:ignore[attr-defined]
         ):
             if (
                 expression_data := pre_defined_jql_expressions.get(self.initial_jql_expression_id)
@@ -556,7 +559,7 @@ class MainScreen(Actionable, Screen):
                 )
 
         # Trigger search on startup if enabled
-        if self.config.search_on_startup:
+        if self.app.config.search_on_startup:  # type:ignore[attr-defined]
             # make sure to wait for the related workers so the method that searches work items have the necessary
             # filters set up, e.g. the selected project (if any) and the selected users (if any)
             await self.app.workers.wait_for_complete(workers)
@@ -598,7 +601,7 @@ class MainScreen(Actionable, Screen):
 
         project_keys: list[str] = []
         if self.initial_project_key:
-            if self.config.fetch_single_project:
+            if self.app.config.fetch_single_project:  # type:ignore[attr-defined]
                 project_keys = [self.initial_project_key]
         response: APIControllerResponse = await self.api.search_projects(keys=project_keys)
         if not response.success:
@@ -719,6 +722,83 @@ class MainScreen(Actionable, Screen):
         elif event.worker.name == 'fetch_issue_types':
             self.issue_type_selector.set_options(event.worker.result or [])
 
+    # Work Item Context Menu - start
+
+    @on(IssuesSearchResultsTable.OpenWorkItemContextMenu)
+    def _open_work_item_context_menu(
+        self, message: IssuesSearchResultsTable.OpenWorkItemContextMenu
+    ) -> None:
+        # when the user requests opening the context menu from the search results table open the context menu screen
+        message.stop()
+        self.app.push_screen(
+            WorkItemContextMenu(message.work_item_key), callback=self._execute_contex_menu_action
+        )
+
+    def _execute_contex_menu_action(self, data: WorkItemContextMenuSelection | None = None) -> None:
+        """Executes the action selected by the user from the context menu.
+
+        Args:
+            data: the data returned by the context menu screen. This includes the key of work item that is the target
+            of the action selected by the user and, the id of the action to run.
+
+        Returns:
+            None
+        """
+
+        if data and data.work_item_key and data.action_id:
+            if data.action_id == WorkItemContextMenuOptionAction.CLONE_WORK_ITEM:
+                # open the screen to allow the user to override some fields for cloning
+                self.app.push_screen(
+                    CloneWorkItemScreen(data.work_item_key), callback=self._clone_work_item
+                )
+            elif data.action_id == WorkItemContextMenuOptionAction.ARCHIVE_WORK_ITEM:
+                self.run_worker(self._archive_work_item(data.work_item_key), exclusive=True)
+
+    async def _clone_work_item(self, data: CloneWorkItemRequest | None = None) -> None:
+        """Clones a work item.
+
+        Args:
+            data: contains the key of the work item to clone and the summary for the new item.
+
+        Returns:
+            None
+        """
+
+        if data:
+            response: APIControllerResponse = await self.api.clone_work_item(
+                data.work_item_key, data.summary
+            )
+            if not response.success or not response.result:
+                self.notify('Failed to clone the work item', title='Clone', severity='error')
+                self.notify(str(response.error), title='Clone', severity='error')
+            else:
+                self.notify(f'Item cloned with key: {response.result.key}', title='Clone')
+
+    async def _archive_work_item(self, work_item_key: str) -> None:
+        """Archives a work item.
+
+        Args:
+            work_item_key: the key of the work item to archive.
+
+        Returns:
+            None
+        """
+
+        response: APIControllerResponse = await self.api.archive_work_item(work_item_key)
+        if not response.success or not response.result:
+            self.notify('Failed to archive the work item', title='Archive', severity='error')
+            self.notify(str(response.error), title='Archive', severity='error')
+        else:
+            result: WorkItemArchivalSyncResponse | None = response.result
+            if result and result.number_of_issues_updated == 1:
+                self.notify(
+                    f'Item with key: {work_item_key} archived successfully', title='Archive'
+                )
+            else:
+                self.notify('Failed to archive the work item', title='Archive', severity='error')
+
+    # Work Item Context Menu - end
+
     @on(Select.Changed, '#jira-project-selector')
     async def handle_project_selection(self, event: Select.Changed) -> None:
         """Handles the selection of a project.
@@ -790,15 +870,15 @@ class MainScreen(Actionable, Screen):
         )
 
         # build the JQL query to search items based on a user-provided JQL query expression or a search term.
-        jql_query: str | None = self._build_jql_query(
+        jql_query: str | None = build_jql_query(
             search_term=search_term,
             jql_expression=self.jql_expression_input.value,
-            use_advance_search=self.config.enable_advanced_full_text_search,
+            use_advance_search=self.app.config.enable_advanced_full_text_search,  # type:ignore[attr-defined]
         )
 
         # search work items by different criteria
         response: APIControllerResponse
-        if self.config.cloud:
+        if self.app.config.cloud:  # type:ignore[attr-defined]
             response = await self.api.search_issues(
                 project_key=project_key,
                 created_from=search_field_created_from,
@@ -809,7 +889,7 @@ class MainScreen(Actionable, Screen):
                 search_in_active_sprint=self.active_sprint_checkbox.value,
                 jql_query=jql_query,
                 next_page_token=next_page_token,
-                limit=self.config.search_results_per_page,
+                limit=self.app.config.search_results_per_page,  # type:ignore[attr-defined]
                 order_by=order_by,
                 fields=get_work_item_search_fields(
                     self.app.config.search_results_columns  # type:ignore[attr-defined]
@@ -826,7 +906,7 @@ class MainScreen(Actionable, Screen):
                 search_in_active_sprint=self.active_sprint_checkbox.value,
                 jql_query=jql_query,
                 page=page,
-                limit=self.config.search_results_per_page,
+                limit=self.app.config.search_results_per_page,  # type:ignore[attr-defined]
                 order_by=order_by,
                 fields=get_work_item_search_fields(
                     self.app.config.search_results_columns  # type:ignore[attr-defined]
@@ -842,7 +922,7 @@ class MainScreen(Actionable, Screen):
             return WorkItemSearchResult(total=0, start=0, end=0)
 
         # estimation of search results count is only available in Jira Cloud
-        if not self.config.cloud:
+        if not self.app.config.cloud:  # type:ignore[attr-defined]
             calculate_total = False
 
         result: JiraIssueSearchResponse | None = response.result
@@ -875,20 +955,6 @@ class MainScreen(Actionable, Screen):
             start=1 if issues_count else 0,
             end=issues_count,
         )
-
-    @staticmethod
-    def _build_jql_query(
-        search_term: str | None = None,
-        jql_expression: str | None = None,
-        use_advance_search: bool = False,
-    ) -> str | None:
-        if search_term:
-            if use_advance_search:
-                return f'text ~ "{search_term}"'
-            return f'summary ~ "{search_term}" OR description ~ "{search_term}"'
-        elif jql_expression:
-            return jql_expression
-        return None
 
     async def _search_single_issue(self, issue_key: str) -> WorkItemSearchResult:
         response: APIControllerResponse = await self.api.get_issue(
@@ -964,7 +1030,7 @@ class MainScreen(Actionable, Screen):
 
     def action_show_recent_history(self) -> None:
         self.app.push_screen(
-            HistoryScreen(self.__recent_history_manager),
+            HistoryScreen(self.app.recent_history_manager),  # type:ignore[attr-defined]
             callback=self._close_recent_history_screen,
         )
 
@@ -1181,10 +1247,10 @@ class MainScreen(Actionable, Screen):
                     f'Work item {created_work_item.key} created successfully',
                     title='Create Work Item',
                 )
-                if self.config.view_work_item_after_creation:
+                if self.app.config.view_work_item_after_creation:  # type:ignore[attr-defined]
                     self.call_next(self._open_quick_view_screen, created_work_item.key)
-                if self.config.enable_recent_history:
-                    self._add_item_to_recent_history(created_work_item.key, '', '', '')
+                if self.app.config.enable_recent_history:  # type:ignore[attr-defined]
+                    self.app.add_to_recent_history(HistoryEntry(created_work_item.key, '', '', ''))  # type:ignore[attr-defined]
             else:
                 self.loading_container.display = False
                 self.notify(
@@ -1300,26 +1366,27 @@ class MainScreen(Actionable, Screen):
         )
 
         # step 7: populate links tab
-        if self.config.show_issue_web_links:
+        if self.app.config.show_issue_web_links:  # type:ignore[attr-defined]
             self.issue_remote_links_widget.issue_key = work_item.key
 
         # step 8: populate subtasks tab
         self.run_worker(self.retrieve_issue_subtasks(work_item))
 
-        if self.config.enable_recent_history:
-            # add the work item to the recent history
-            self._add_item_to_recent_history(
-                key=work_item.key,
-                item_type=work_item.issue_type.name if work_item.issue_type else '',
-                status=work_item.status.name if work_item.status else '',
-                summary=work_item.summary,
+        if self.app.config.enable_recent_history:  # type:ignore[attr-defined]
+            self.app.add_to_recent_history(  # type:ignore[attr-defined]
+                HistoryEntry(
+                    key=work_item.key,
+                    item_type=work_item.issue_type.name if work_item.issue_type else '',
+                    status=work_item.status.name if work_item.status else '',
+                    summary=work_item.summary,
+                )
             )
 
     async def request_text_search(self, value: str):
         value = value or ''
         if (value := value.strip()) and len(value) >= max(
             FULL_TEXT_SEARCH_DEFAULT_MINIMUM_TERM_LENGTH,
-            int(self.config.full_text_search_minimum_term_length),
+            int(self.app.config.full_text_search_minimum_term_length),  # type:ignore[attr-defined]
         ):
             self.run_worker(self.action_search(search_term=value))
         else:
@@ -1464,32 +1531,18 @@ class MainScreen(Actionable, Screen):
         # the user has requested to search for the work item with that key
         self._load_work_item(work_item_key)
 
-    def _add_item_to_recent_history(
-        self,
-        key: str,
-        item_type: str | None = None,
-        status: str | None = None,
-        summary: str | None = None,
-    ) -> None:
-        self.__recent_history_manager.add_work_item(
-            HistoryEntry(
-                key=key,
-                item_type=item_type or '',
-                status=status or '',
-                summary=summary or '',
-            )
-        )
-
     @on(IssueDetailsWidget.UpdateRecentHistory)
     def _update_recent_history(self, message: IssueDetailsWidget.UpdateRecentHistory) -> None:
-        if self.config.enable_recent_history:
-            self._add_item_to_recent_history(
-                message.work_item_key,
-                message.item_type,
-                message.status,
-                message.summary,
-            )
         message.stop()
+        if self.app.config.enable_recent_history:  # type:ignore[attr-defined]
+            self.app.add_to_recent_history(  # type:ignore[attr-defined]
+                HistoryEntry(
+                    key=message.work_item_key,
+                    item_type=message.item_type or '',
+                    status=message.status or '',
+                    summary=message.summary or '',
+                )
+            )
 
     @on(SearchWorkItem)
     def _on_search_work_item(self, message: SearchWorkItem) -> None:

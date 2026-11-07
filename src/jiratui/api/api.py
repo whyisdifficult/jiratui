@@ -1519,6 +1519,63 @@ class JiraAPI:
             params=params,
         )
 
+    async def archive_work_item(self, key: str) -> dict:
+        """Archives a work item.
+
+        Enables admins to archive up to 1000 issues in a single request using issue ID/key, returning details of
+        the issue(s) archived in the process and the errors encountered, if any.
+
+        ```{important}
+        - you can't archive subtasks directly, only through their parent issues.
+        - you can only archive issues from software, service management, and business projects.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-archive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-archive-put)
+
+        Args:
+            key: the key of the work item that the user wants to archive.
+
+        Returns:
+            A dict with the results of the operation. This includes the count of archived issues and subtasks, as well as
+            error details for issues which failed to get archived. Data is returned as `IssueArchivalSyncResponse`.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url='issue/archive',
+            data=json.dumps({'issueIdsOrKeys': [key]}),
+        )
+
+    async def unarchive_work_item(self, key: str) -> dict:
+        """Unarchives a work item.
+
+        Enables admins to unarchive up to 1000 issues in a single request using issue ID/key, returning details of the
+        issue(s) unarchived in the process and the errors encountered, if any.
+
+        ```{important}
+        - you can't unarchive subtasks directly, only through their parent issues.
+        - you can only unarchive issues from software, service management, and business projects.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-unarchive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-unarchive-put)
+
+        Args:
+            key: the key of the work item that the user wants to unarchive.
+
+        Returns:
+            A dict with the results of the operation. This includes the count of unarchived issues, which also includes
+            the count of the subtasks unarchived, and it will show the detailed errors for those issues which are not
+            unarchived. Data is returned as `IssueArchivalSyncResponse`.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url='issue/unarchive',
+            data=json.dumps({'issueIdsOrKeys': [key]}),
+        )
+
 
 class JiraAPIv2(JiraAPI):
     """Implements a client for the Jira Cloud Platform REST API v2.

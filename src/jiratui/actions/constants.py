@@ -63,6 +63,7 @@ class SupportedActions(Enum):
     NEXT_TAB = 'next_tab'
     PREVIOUS_TAB = 'previous_tab'
     OPEN_ATTACHMENT = 'open_attachment'
+    OPEN_CONTEXT_MENU = 'open_context_menu'
     OPEN_GO_TO_SCREEN = 'open_go_to_screen'
     OPEN_IN_BROWSER = 'open_in_browser'
     OPEN_TEXT_EDITOR = 'open_text_editor'
@@ -433,6 +434,12 @@ KEY_BINDINGS_LEGACY = {
         'show': True,
         'description': '\u270e',
         'tooltip': 'Open external editor',
+    },
+    SupportedActions.OPEN_CONTEXT_MENU.value: {
+        'keys': ['m'],
+        'show': True,
+        'description': 'Menu',
+        'tooltip': 'Open context menu',
     },
     SupportedActions.VIEW_WORKLOG.value: {
         'keys': ['ctrl+l', 'ctrl+t'],
@@ -907,6 +914,12 @@ KEY_BINDINGS_STANDARD = {
         'show': True,
         'description': '\u270e',
         'tooltip': 'Open external editor',
+    },
+    SupportedActions.OPEN_CONTEXT_MENU.value: {
+        'keys': ['m'],
+        'show': True,
+        'description': 'Menu',
+        'tooltip': 'Open context menu',
     },
     SupportedActions.VIEW_CONTENT.value: {
         'keys': ['v'],

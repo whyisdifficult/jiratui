@@ -1001,3 +1001,61 @@ class AgileSprint(BaseModel):
         if self.origin_board_name:
             return f'({self.state.name}) {self.origin_board_name} - {self.name}'
         return f'({self.state.name}) {self.name}'
+
+
+@dataclass
+class WorkItemArchivalError(BaseModel):
+    """An error that can occur when the API requests archiving a work item.
+
+    **See Also**:
+        - [api-rest-api-3-issue-archive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-archive-put)
+        - [api-rest-api-3-issue-unarchive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-unarchive-put)
+    """
+
+    count: int
+    issue_ids_or_keys: list[str]
+    message: str
+
+
+class WorkItemArchivalIssueIsSubtaskError(WorkItemArchivalError):
+    pass
+
+
+class WorkItemArchivalIssuesInArchivedProjectsError(WorkItemArchivalError):
+    pass
+
+
+class WorkItemArchivalIssuesInUnlicensedProjectsError(WorkItemArchivalError):
+    pass
+
+
+class WorkItemArchivalIssuesNotFoundError(WorkItemArchivalError):
+    pass
+
+
+class WorkItemArchivalUserDoesNotHavePermissionError(WorkItemArchivalError):
+    pass
+
+
+@dataclass
+class WorkItemArchivalErrors(BaseModel):
+    """Possible errors related to work item archival issues. These are returned by the API's archive operation."""
+
+    issue_is_subtask: WorkItemArchivalIssueIsSubtaskError | None = None
+    issues_in_archived_projects: WorkItemArchivalIssuesInArchivedProjectsError | None = None
+    issues_in_unlicensed_projects: WorkItemArchivalIssuesInUnlicensedProjectsError | None = None
+    issues_not_found: WorkItemArchivalIssuesNotFoundError | None = None
+    user_does_not_have_permission: WorkItemArchivalUserDoesNotHavePermissionError | None = None
+
+
+@dataclass
+class WorkItemArchivalSyncResponse(BaseModel):
+    """The response from the controller's archive work item operation.
+
+    **See Also**:
+        - [api-rest-api-3-issue-archive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-archive-put)
+        - [api-rest-api-3-issue-unarchive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-unarchive-put)
+    """
+
+    number_of_issues_updated: int
+    errors: WorkItemArchivalErrors | None = None

@@ -1,5 +1,6 @@
 """This module contains widgets for implementing work item search functionality."""
 
+from dataclasses import dataclass
 from typing import cast
 
 from rich.text import Text
@@ -110,7 +111,7 @@ class DataTableSearchInput(Input):
 
 
 class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  # type:ignore[call-arg]
-    """The widget that displays the results of a search.
+    """The widget that displays the results of a work item search.
 
     This widget provides a reactive attribute, `search_results`, that contains the issues that the table will
     display.
@@ -129,11 +130,12 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     **See Also**:
     - [Use Case: Open Go-To Screen](#use-case-search-results-goto-screen)
+    - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
     - Use Case: Open Quick-View Screen
     - Use Case: Filter Search Results
     - Use Case: Fetch Next Page
     - Use Case: Fetch Previous Page
-    - [Use Case: Search and Fetch using Go-To Screen](#use-case-search-and-fetch-item-goto-screen)
+    - Use Case: Open context menu for a work item
     """
 
     search_results: Reactive[JiraIssueSearchResponse | None] = reactive(None, always_update=True)
@@ -158,6 +160,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         SupportedActions.NEXT_ISSUES_PAGE,
         SupportedActions.CURSOR_LEFT,
         SupportedActions.CURSOR_RIGHT,
+        SupportedActions.OPEN_CONTEXT_MENU,
     ]:
         data = key_bindings.get(supported_action_id.value, {})
         ACTIONS.append(
@@ -192,6 +195,14 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
         @property
         def work_item_key(self) -> str:
             return self._work_item_key
+
+    @dataclass
+    class OpenWorkItemContextMenu(Message):
+        """A message to request the parent widget to open a context menu with a list of actions to execute on a work
+        item."""
+
+        work_item_key: str
+        """The key of he work item on which the actions will be executed."""
 
     def __init__(self):
         super().__init__(id='search_results', cursor_type='row')
@@ -307,6 +318,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     async def action_view_work_item(self) -> None:
         """Opens the quick-view screen for the currently selected work item."""
+
         if self.current_work_item_key:
             await self.app.push_screen(
                 WorkItemQuickViewScreen(self.current_work_item_key),
@@ -315,6 +327,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
     def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
+
         if self.current_work_item_key:
             self.notify('Opening Work Item in the browser...')
             self.app.open_url(build_external_url_for_issue(self.current_work_item_key))
@@ -386,6 +399,13 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
                         title='Delete Work Item',
                         severity='error',
                     )
+
+    def action_open_context_menu(self) -> None:
+        """Posts a message to request opening the work items context menu."""
+
+        if self.current_work_item_key:
+            # there is a work item selected from the results table
+            self.post_message(self.OpenWorkItemContextMenu(self.current_work_item_key))
 
     def action_filter(self) -> None:
         if not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]
