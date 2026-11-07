@@ -1536,3 +1536,39 @@ WebLinksCollapsible {
 WebLinksDataTable {
     background: transparent;
 }
+
+/* Work Item Context Menu */
+
+WorkItemContextMenu {
+    align: center middle;
+    background: transparent;
+}
+
+WorkItemContextMenu > OptionList {
+    width: 20%;
+    height: 20%;
+    border: round $foreground;
+    background: transparent;
+    padding: 0 1;
+}
+
+/* Clone Items Screen */
+
+CloneWorkItemScreen {
+    align: center middle;
+    background: $background 80%;
+}
+
+CloneWorkItemScreen > Vertical {
+    width: 60%;
+    height: 35%;
+    border: round $foreground;
+    padding: 0 1;
+    & > Center > Button {
+        margin-top: 1;
+    }
+    & > Static {
+        margin-top: 1;
+        margin-bottom: 1;
+    }
+}

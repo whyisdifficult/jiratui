@@ -1,6 +1,10 @@
 from jiratui.actions.constants import KEY_BINDINGS_LEGACY, KEY_BINDINGS_STANDARD, SupportedActions
 
 
+def test_standard_action_open_context_menu():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.OPEN_CONTEXT_MENU.value).get('keys') == ['m']
+
+
 def test_standard_action_help():
     assert KEY_BINDINGS_STANDARD.get(SupportedActions.HELP.value).get('keys') == ['f1']
 
@@ -749,3 +753,7 @@ def test_legacy_action_focus_status_dropdown_in_work_item_details():
 
 def test_legacy_action_edit_comment():
     assert KEY_BINDINGS_LEGACY.get(SupportedActions.EDIT_COMMENT.value).get('keys') == ['e']
+
+
+def test_legacy_action_open_context_menu():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.OPEN_CONTEXT_MENU.value).get('keys') == ['m']

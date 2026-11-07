@@ -6913,6 +6913,13 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             show=False,
             tooltip='Move to the right',
         ),
+        UIAction(
+            action=SupportedActions.OPEN_CONTEXT_MENU.value,
+            keys=bindings.get(SupportedActions.OPEN_CONTEXT_MENU.value, {}).get('keys', []),
+            description='Menu',
+            show=True,
+            tooltip='Open context menu',
+        ),
     ]
     assert IssuesSearchResultsTable.BINDINGS == [
         Binding(
@@ -7121,6 +7128,18 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             key_display=None,
             priority=False,
             tooltip='Move to the right',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='m',
+            action='open_context_menu',
+            description='Menu',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Open context menu',
             id=None,
             system=False,
             group=None,
