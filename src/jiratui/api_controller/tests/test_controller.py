@@ -5702,6 +5702,34 @@ async def test_clone_work_item_with_custom_summary_succeeds(
 
 @pytest.mark.asyncio
 @patch.object(JiraAPI, 'archive_work_item')
+async def test_archive_work_not_supported(
+    archive_work_item_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.archive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Archiving work items is not supported by Jira DC installations.'
+    )
+    archive_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_unarchive_work_not_supported(
+    archive_work_item_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.unarchive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Unarchiving work items is not supported by Jira DC installations.'
+    )
+    archive_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
 async def test_archive_work_item_succeeds(
     archive_work_item_mock: AsyncMock, jira_issues, jira_api_controller: APIController
 ):

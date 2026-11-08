@@ -3277,6 +3277,12 @@ class APIController:
             instance of `APIControllerResponse` with an error message.
         """
 
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Archiving work items is not supported by Jira DC installations.',
+            )
+
         try:
             response: dict = await self.api.archive_work_item(key)
         except Exception as e:
@@ -3360,6 +3366,12 @@ class APIController:
             issues and subtasks, as well as error details for issues which failed to get archived. Otherwise, an
             instance of `APIControllerResponse` with an error message.
         """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Unarchiving work items is not supported by Jira DC installations.',
+            )
 
         try:
             response: dict = await self.api.unarchive_work_item(key)

@@ -3949,3 +3949,22 @@ async def test_unarchive_issue(jira_api: JiraAPI):
     assert route.calls.last.request.url.path == '/rest/api/3/issue/unarchive'
     assert json.loads(route.calls.last.request.content) == {'issueIdsOrKeys': ['task-1']}
     assert result == {'numberOfIssuesUpdated': 1, 'errors': {}}
+
+
+@pytest.mark.asyncio
+async def test_archive_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Archiving work items is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.archive_work_item('task-1')
+
+
+@pytest.mark.asyncio
+async def test_unarchive_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError,
+        match='Unarchiving work items is not supported by Jira DC installations.',
+    ):
+        await jira_api_dc.unarchive_work_item('task-1')

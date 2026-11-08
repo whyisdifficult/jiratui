@@ -2031,6 +2031,14 @@ class JiraDataCenterAPI(JiraAPI):
             params['accountId'] = account_id
         return params
 
+    async def archive_work_item(self, key: str) -> dict:
+        raise NotImplementedError('Archiving work items is not supported by Jira DC installations.')
+
+    async def unarchive_work_item(self, key: str) -> dict:
+        raise NotImplementedError(
+            'Unarchiving work items is not supported by Jira DC installations.'
+        )
+
 
 class JiraSoftwareCloudAPI:
     """Implements a client for the
