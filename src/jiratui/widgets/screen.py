@@ -53,9 +53,9 @@ from jiratui.widgets.related_work_items.related_issues import (
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screens.clone import CloneWorkItemRequest, CloneWorkItemScreen
 from jiratui.widgets.screens.context_menu import (
-    WorkItemContextMenu,
-    WorkItemContextMenuOptionAction,
-    WorkItemContextMenuSelection,
+    ContextMenu,
+    ContextMenuOptionAction,
+    ContextMenuSelection,
 )
 from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.history import HistoryScreen
@@ -724,17 +724,17 @@ class MainScreen(Actionable, Screen):
 
     # Work Item Context Menu - start
 
-    @on(IssuesSearchResultsTable.OpenWorkItemContextMenu)
+    @on(IssuesSearchResultsTable.OpenContextMenu)
     def _open_work_item_context_menu(
-        self, message: IssuesSearchResultsTable.OpenWorkItemContextMenu
+        self, message: IssuesSearchResultsTable.OpenContextMenu
     ) -> None:
         # when the user requests opening the context menu from the search results table open the context menu screen
         message.stop()
         self.app.push_screen(
-            WorkItemContextMenu(message.work_item_key), callback=self._execute_contex_menu_action
+            ContextMenu(message.work_item_key), callback=self._execute_contex_menu_action
         )
 
-    def _execute_contex_menu_action(self, data: WorkItemContextMenuSelection | None = None) -> None:
+    def _execute_contex_menu_action(self, data: ContextMenuSelection | None = None) -> None:
         """Executes the action selected by the user from the context menu.
 
         Args:
@@ -746,12 +746,12 @@ class MainScreen(Actionable, Screen):
         """
 
         if data and data.work_item_key and data.action_id:
-            if data.action_id == WorkItemContextMenuOptionAction.CLONE_WORK_ITEM:
+            if data.action_id == ContextMenuOptionAction.CLONE_WORK_ITEM:
                 # open the screen to allow the user to override some fields for cloning
                 self.app.push_screen(
                     CloneWorkItemScreen(data.work_item_key), callback=self._clone_work_item
                 )
-            elif data.action_id == WorkItemContextMenuOptionAction.ARCHIVE_WORK_ITEM:
+            elif data.action_id == ContextMenuOptionAction.ARCHIVE_WORK_ITEM:
                 self.run_worker(self._archive_work_item(data.work_item_key), exclusive=True)
 
     async def _clone_work_item(self, data: CloneWorkItemRequest | None = None) -> None:

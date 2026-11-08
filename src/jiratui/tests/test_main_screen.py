@@ -42,7 +42,7 @@ from jiratui.widgets.related_work_items.related_issues import (
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.clone import CloneWorkItemScreen
-from jiratui.widgets.screens.context_menu import WorkItemContextMenu
+from jiratui.widgets.screens.context_menu import ContextMenu
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
@@ -1569,10 +1569,10 @@ async def test_open_context_menu(
     async with app.run_test() as pilot:
         screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        screen.post_message(IssuesSearchResultsTable.OpenWorkItemContextMenu('WI-1'))
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
         await pilot.pause()
         # THEN
-        assert isinstance(app.screen, WorkItemContextMenu)
+        assert isinstance(app.screen, ContextMenu)
 
 
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
@@ -1589,7 +1589,7 @@ async def test_context_menu_dismissed_with_clone_action(
     async with app.run_test() as pilot:
         screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        screen.post_message(IssuesSearchResultsTable.OpenWorkItemContextMenu('WI-1'))
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
         await pilot.pause()
         await pilot.press('enter')
         # THEN
@@ -1612,7 +1612,7 @@ async def test_context_menu_dismissed_with_archive_action(
     async with app.run_test() as pilot:
         screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        screen.post_message(IssuesSearchResultsTable.OpenWorkItemContextMenu('WI-1'))
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
         await pilot.pause()
         await pilot.press('down')
         await pilot.press('enter')
@@ -1643,7 +1643,7 @@ async def test_context_menu_dismissed_with_clone_action_requests_cloning(
     async with app.run_test() as pilot:
         screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        screen.post_message(IssuesSearchResultsTable.OpenWorkItemContextMenu('WI-1'))
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
         await pilot.pause()
         await pilot.press('enter')
         assert isinstance(app.screen, CloneWorkItemScreen)
@@ -1674,7 +1674,7 @@ async def test_context_menu_dismissed_with_archive_action_requests_archiving(
     async with app.run_test() as pilot:
         screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
         # WHEN
-        screen.post_message(IssuesSearchResultsTable.OpenWorkItemContextMenu('WI-1'))
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
         await pilot.pause()
         await pilot.press('down')
         await pilot.press('enter')

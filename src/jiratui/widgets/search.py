@@ -197,7 +197,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
             return self._work_item_key
 
     @dataclass
-    class OpenWorkItemContextMenu(Message):
+    class OpenContextMenu(Message):
         """A message to request the parent widget to open a context menu with a list of actions to execute on a work
         item."""
 
@@ -405,7 +405,7 @@ class IssuesSearchResultsTable(Actionable, DataTable, inherit_bindings=False):  
 
         if self.current_work_item_key:
             # there is a work item selected from the results table
-            self.post_message(self.OpenWorkItemContextMenu(self.current_work_item_key))
+            self.post_message(self.OpenContextMenu(self.current_work_item_key))
 
     def action_filter(self) -> None:
         if not self.app.config.search_results_page_filtering_enabled:  # type:ignore[attr-defined]

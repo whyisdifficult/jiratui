@@ -1539,12 +1539,12 @@ WebLinksDataTable {
 
 /* Work Item Context Menu */
 
-WorkItemContextMenu {
+ContextMenu {
     align: center middle;
     background: transparent;
 }
 
-WorkItemContextMenu > OptionList {
+ContextMenu > OptionList {
     width: 20%;
     height: 20%;
     border: round $foreground;

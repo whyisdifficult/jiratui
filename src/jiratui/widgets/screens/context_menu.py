@@ -9,7 +9,7 @@ from textual.widgets import OptionList
 from textual.widgets.option_list import Option
 
 
-class WorkItemContextMenuOptionAction(Enum):
+class ContextMenuOptionAction(Enum):
     """The possible actions a user can select from the context menu."""
 
     CLONE_WORK_ITEM = 'clone_work_item'
@@ -21,15 +21,15 @@ class WorkItemContextMenuOptionAction(Enum):
 
 
 @dataclass
-class WorkItemContextMenuSelection:
+class ContextMenuSelection:
     """The result returned by the context menu screen when the user selects an action."""
 
     work_item_key: str
-    action_id: WorkItemContextMenuOptionAction
+    action_id: ContextMenuOptionAction
 
 
-class WorkItemContextMenu(ModalScreen[WorkItemContextMenuSelection]):
-    """A modal screen to display a contextual menu to execute actions on a work item."""
+class ContextMenu(ModalScreen[ContextMenuSelection]):
+    """A modal screen to display a contextual menu to execute actions on a work items."""
 
     BINDINGS = [Binding('escape', 'app.pop_screen', 'Close')]
 
@@ -37,7 +37,7 @@ class WorkItemContextMenu(ModalScreen[WorkItemContextMenuSelection]):
         super().__init__()
         self._work_item_key = work_item_key
         """The key of the work item to which the actions in the menu will be applied"""
-        self.__menu_options: list[tuple[str, str]] = WorkItemContextMenuOptionAction.options()
+        self.__menu_options: list[tuple[str, str]] = ContextMenuOptionAction.options()
 
     @property
     def options_list(self) -> OptionList:
@@ -59,7 +59,7 @@ class WorkItemContextMenu(ModalScreen[WorkItemContextMenuSelection]):
         message.stop()
         if message.option_id:
             self.dismiss(
-                WorkItemContextMenuSelection(
-                    self._work_item_key, WorkItemContextMenuOptionAction(message.option_id)
+                ContextMenuSelection(
+                    self._work_item_key, ContextMenuOptionAction(message.option_id)
                 )
             )
