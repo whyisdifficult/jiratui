@@ -889,6 +889,42 @@ async def test_search_users_assignable_to_issue_with_exception(
 
 
 @pytest.mark.asyncio
+@patch.object(JiraDataCenterAPI, 'user_assignable_search')
+async def test_search_users_assignable_to_issue_for_jira_dc(
+    user_assignable_search_mock: Mock, jira_api_controller_for_jira_dc: APIController
+):
+    # GIVEN
+    # Jira DC users have no accountId; they are identified by their username (name)
+    user_assignable_search_mock.return_value = [
+        {
+            'name': 'jdoe',
+            'key': 'JIRAUSER1',
+            'emailAddress': 'a@a.com',
+            'displayName': 'john',
+            'active': True,
+        },
+    ]
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.search_users_assignable_to_issue(
+        project_id_or_key='p1', query='john'
+    )
+    # THEN
+    assert response == APIControllerResponse(
+        success=True,
+        result=[
+            JiraUser(
+                email='a@a.com',
+                account_id='jdoe',
+                active=True,
+                display_name='john',
+                username='jdoe',
+            ),
+        ],
+        error=None,
+    )
+
+
+@pytest.mark.asyncio
 @patch.object(JiraAPI, 'user_assignable_multi_projects')
 async def test_search_users_assignable_to_projects(
     user_assignable_multi_projects_mock: Mock,

@@ -397,6 +397,27 @@ async def test_user_assignable_search_with_multiple_parameters(jira_api: JiraAPI
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_user_assignable_search_with_jira_dc_api(jira_api_dc: JiraDataCenterAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('user/assignable/search'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json=load_json_response(__file__, 'assignable_users_search.json'),
+        )
+    )
+
+    # WHEN
+    await jira_api_dc.user_assignable_search('P1', query='q')
+    # THEN
+    request_url = str(route.calls.last.request.url)
+    assert 'username=q' in request_url
+    assert 'query=' not in request_url
+    assert 'project=P1' in request_url
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_user_assignable_multi_projects_with_multiple_parameters(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('user/assignable/multiProjectSearch'))
