@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Jira DC: the assignee autocomplete ignored the search term because `user/assignable/search` was called with the
 Cloud-only `query` parameter instead of `username`. Users returned by this endpoint are now also identified by their
-username (`name`), as Jira DC users have no `accountId`. Fixes https://github.com/whyisdifficult/jiratui/issues/397. By [@davidferlay](https://github.com/davidferlay)
+username (`name`), as Jira DC users have no `accountId`.
+Fixes https://github.com/whyisdifficult/jiratui/issues/397. By [@davidferlay](https://github.com/davidferlay) in https://github.com/whyisdifficult/jiratui/pull/398
 
 ## [1.18.0] 2026-10-15
 

@@ -551,9 +551,9 @@ class CommandHandler:
             A dictionary with a key `work_item` with the cloned work item and, a key `key` with the key of the new item.
 
         Raises:
-            CLIException: if the (source) work item can not be found.
             CLIException: if unable to clone the work item.
-            CLIException: if an error occurs while trying to retrieve the (cloned) work item.
+            CLIException: if an error occurs while trying to retrieve the (cloned) work item or, if the cloned item can
+            not be found.
         """
 
         response: APIControllerResponse = await self.api.clone_work_item(work_item_key, summary)

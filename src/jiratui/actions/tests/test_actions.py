@@ -67,6 +67,7 @@ from jiratui.widgets.remote_links.links import IssueRemoteLinkCollapsible, Issue
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.config import ConfigFileScreen, ConfigTable
 from jiratui.widgets.screens.confirmation import ConfirmationScreen
+from jiratui.widgets.screens.context_menu import ContextMenuOptionList
 from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.goto import GoToScreen
 from jiratui.widgets.screens.help import HelpScreen
@@ -7152,6 +7153,51 @@ def test_issues_search_results_table_actions_and_bindings(bindings):
             key_display=None,
             priority=False,
             tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_context_menu_option_list_actions_and_bindings(bindings):
+    assert ContextMenuOptionList.ACTIONS == [
+        UIAction(
+            action=SupportedActions.CURSOR_UP.value,
+            keys=bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', []),
+            description='Move up',
+            show=False,
+            tooltip='Move up',
+        ),
+        UIAction(
+            action=SupportedActions.CURSOR_DOWN.value,
+            keys=bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', []),
+            description='Move down',
+            show=False,
+            tooltip='Move down',
+        ),
+    ]
+    assert ContextMenuOptionList.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_UP.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_UP.value,
+            description='Move up',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move up',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.CURSOR_DOWN.value, {}).get('keys', [])),
+            action=SupportedActions.CURSOR_DOWN.value,
+            description='Move down',
+            show=False,
+            key_display=None,
+            priority=False,
+            tooltip='Move down',
             id=None,
             system=False,
             group=None,

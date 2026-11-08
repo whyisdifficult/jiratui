@@ -8,6 +8,10 @@ from textual.screen import ModalScreen
 from textual.widgets import OptionList
 from textual.widgets.option_list import Option
 
+from jiratui.actions.constants import SupportedActions
+from jiratui.actions.keys import get_application_key_bindings
+from jiratui.utils.ui_actions import Actionable, UIAction
+
 
 class ContextMenuOptionAction(Enum):
     """The possible actions a user can select from the context menu."""
@@ -28,6 +32,38 @@ class ContextMenuSelection:
     action_id: ContextMenuOptionAction
 
 
+class ContextMenuOptionList(Actionable, OptionList):
+    ACTIONS: list[UIAction] = []
+    # set up the key-bindings based on the configuration selected by the user
+    key_bindings: dict[str, dict] = get_application_key_bindings()
+    for supported_action_id in [
+        SupportedActions.CURSOR_UP,
+        SupportedActions.CURSOR_DOWN,
+    ]:
+        data = key_bindings.get(supported_action_id.value, {})
+        ACTIONS.append(
+            UIAction(
+                action=supported_action_id.value,
+                keys=data.get('keys', []),
+                show=data.get('show', False),
+                description=data.get('description'),
+                tooltip=data.get('tooltip', ''),
+            )
+        )
+
+    BINDINGS = [  # type:ignore[assignment]
+        Binding(
+            key=','.join(action.keys),
+            action=action.action,
+            show=action.show,
+            description=action.description or '',
+            tooltip=action.tooltip,
+        )
+        for action in ACTIONS
+        if isinstance(action.action, str)
+    ]
+
+
 class ContextMenu(ModalScreen[ContextMenuSelection]):
     """A modal screen to display a contextual menu to execute actions on a work items."""
 
@@ -40,11 +76,11 @@ class ContextMenu(ModalScreen[ContextMenuSelection]):
         self.__menu_options: list[tuple[str, str]] = ContextMenuOptionAction.options()
 
     @property
-    def options_list(self) -> OptionList:
-        return self.query_one(OptionList)
+    def options_list(self) -> ContextMenuOptionList:
+        return self.query_one(ContextMenuOptionList)
 
     def compose(self) -> ComposeResult:
-        yield OptionList()
+        yield ContextMenuOptionList()
 
     def on_mount(self) -> None:
         self.options_list.clear_options()
@@ -54,8 +90,8 @@ class ContextMenu(ModalScreen[ContextMenuSelection]):
         self.options_list.highlighted = 0
         self.focus()
 
-    @on(OptionList.OptionSelected)
-    def handle_option_selection(self, message: OptionList.OptionSelected) -> None:
+    @on(ContextMenuOptionList.OptionSelected)
+    def handle_option_selection(self, message: ContextMenuOptionList.OptionSelected) -> None:  # type:ignore[name-defined]
         message.stop()
         if message.option_id:
             self.dismiss(

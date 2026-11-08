@@ -250,6 +250,30 @@ class JiraAPI:
         if not any([project_id_or_key, issue_id, issue_key]):
             raise ValueError('One of these parameters is required: project_id, issue_id, issue_key')
 
+        params: dict[str, Any] = self._build_user_assignable_search_parameters(
+            project_id_or_key,
+            issue_key,
+            issue_id,
+            account_id,
+            offset,
+            limit,
+            query,
+        )
+
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get, url='user/assignable/search', params=params
+        )
+
+    @staticmethod
+    def _build_user_assignable_search_parameters(
+        project_id_or_key: str | None = None,
+        issue_key: str | None = None,
+        issue_id: str | None = None,
+        account_id: str | None = None,
+        offset: int | None = None,
+        limit: int | None = 50,
+        query: str | None = None,
+    ) -> dict[str, Any]:
         params: dict[str, Any] = {}
         if project_id_or_key:
             params['project'] = project_id_or_key  # accept case-sensitive project key as well
@@ -258,18 +282,14 @@ class JiraAPI:
         if limit is not None:
             params['maxResults'] = limit
         if query:
-            # Jira DC ignores 'query' and returns the first N users alphabetically; it expects 'username'
-            params['query' if self.cloud else 'username'] = query
+            params['query'] = query
         if issue_key:
             params['issueKey'] = issue_key
         if issue_id:
             params['issueId'] = issue_id
         if account_id:
             params['accountId'] = account_id
-
-        return await self._client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.get, url='user/assignable/search', params=params
-        )
+        return params
 
     async def user_assignable_multi_projects(
         self,
@@ -1982,6 +2002,34 @@ class JiraDataCenterAPI(JiraAPI):
             data=json.dumps(payload),
             params=params,
         )
+
+    @staticmethod
+    def _build_user_assignable_search_parameters(
+        project_id_or_key: str | None = None,
+        issue_key: str | None = None,
+        issue_id: str | None = None,
+        account_id: str | None = None,
+        offset: int | None = None,
+        limit: int | None = 50,
+        query: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        if project_id_or_key:
+            params['project'] = project_id_or_key  # accept case-sensitive project key as well
+        if offset is not None:
+            params['startAt'] = offset
+        if limit is not None:
+            params['maxResults'] = limit
+        if query:
+            # Jira DC ignores 'query' and returns the first N users alphabetically; it expects 'username'
+            params['username'] = query
+        if issue_key:
+            params['issueKey'] = issue_key
+        if issue_id:
+            params['issueId'] = issue_id
+        if account_id:
+            params['accountId'] = account_id
+        return params
 
 
 class JiraSoftwareCloudAPI:
