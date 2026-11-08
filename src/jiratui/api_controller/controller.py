@@ -68,6 +68,13 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     Project,
     UpdateWorkItemResponse,
+    WorkItemArchivalErrors,
+    WorkItemArchivalIssueIsSubtaskError,
+    WorkItemArchivalIssuesInArchivedProjectsError,
+    WorkItemArchivalIssuesInUnlicensedProjectsError,
+    WorkItemArchivalIssuesNotFoundError,
+    WorkItemArchivalSyncResponse,
+    WorkItemArchivalUserDoesNotHavePermissionError,
     WorkItemsSearchOrderBy,
 )
 from jiratui.utils.adf import convert_markdown_to_adf
@@ -690,9 +697,11 @@ class APIController:
             users.append(
                 JiraUser(
                     email=email,
-                    account_id=user.get('accountId')
-                    if self.config.cloud is True
-                    else user.get('name'),
+                    account_id=(
+                        user.get('accountId', '')
+                        if self.config.cloud is True
+                        else user.get('name', '')
+                    ),
                     active=user.get('active'),
                     display_name=user.get('displayName'),
                     username=user.get('name') if not self.config.cloud else None,
@@ -3203,3 +3212,234 @@ class APIController:
         teams.sort(key=lambda x: x[0].lower())
         self._teams_cache[str(custom_id)] = teams
         return APIControllerResponse(result=teams)
+
+    async def clone_work_item(self, key: str, summary: str | None = None) -> APIControllerResponse:
+        """Clones a work item.
+
+        This only clones the following fields.
+
+        - assignee
+        - reporter
+        - parent
+        - priority
+        - due date
+        - type of issue
+        - description
+
+        Args:
+            key: the key of the item to clone.
+            summary: an optional summary to set for the new item. If not provided then the new item will have the same
+            summary as the source item prepended with the string '(cloned)'.
+
+        Returns:
+            An instance of `APIControllerResponse` with an instance of `JiraBaseIssue` as the result. This includes the
+            item's id and key. If an error occurs while creating the new item then
+            `APIControllerResponse.success == False` and `APIControllerResponse.error` indicates the error. If the
+            source work item is not found then an error is returned.
+        """
+
+        # search the item to extract based fields
+        fetch_item_response: APIControllerResponse = await self.get_issue(issue_id_or_key=key)
+        items_found: JiraIssueSearchResponse | None
+        if not fetch_item_response.success or not (items_found := fetch_item_response.result):
+            return fetch_item_response
+
+        work_item: JiraIssue = items_found.issues[0]
+        # build the payload for creating the clone
+        clone_data: dict = {
+            'summary': summary or f'(cloned) {work_item.summary}',
+            'project_key': work_item.project.key,
+            'issue_type_id': work_item.issue_type.id,
+            'description': work_item.description or '',
+        }
+        if work_item.assignee:
+            clone_data['assignee_account_id'] = work_item.assignee.account_id
+        if work_item.reporter:
+            clone_data['reporter_account_id'] = work_item.reporter.account_id
+        if work_item.parent_key:
+            clone_data['parent_key'] = work_item.parent_key
+        if work_item.priority:
+            clone_data['priority'] = work_item.priority.id
+        if work_item.due_date:
+            clone_data['duedate'] = work_item.due_date.strftime('%Y-%m-%d')
+        return await self.create_work_item(clone_data)
+
+    async def archive_work_item(self, key: str) -> APIControllerResponse:
+        """Archives a work item.
+
+        Args:
+            key: the key of the work item that the user wants to archive.
+
+        Returns:
+            If successful, an instance of `APIControllerResponse` with `success=True` and an instance of
+            [WorkItemArchivalSyncResponse](#jiratui.models.WorkItemArchivalSyncResponse) with the count of archived
+            issues and subtasks, as well as error details for issues which failed to get archived. Otherwise, an
+            instance of `APIControllerResponse` with an error message.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Archiving work items is not supported by Jira DC installations.',
+            )
+
+        try:
+            response: dict = await self.api.archive_work_item(key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to archive the work item',
+                extra={
+                    'work_item_key': key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        errors = response.get('errors', {})
+        issue_is_subtask = errors.get('issueIsSubtask', {})
+        issues_in_archived_projects = errors.get('issuesInArchivedProjects', {})
+        issues_in_unlicensed_projects = errors.get('issuesInUnlicensedProjects', {})
+        issues_not_found = errors.get('issuesNotFound', {})
+        user_does_not_have_permission = errors.get('userDoesNotHavePermission', {})
+        return APIControllerResponse(
+            result=WorkItemArchivalSyncResponse(
+                number_of_issues_updated=response.get('numberOfIssuesUpdated', 0),
+                errors=WorkItemArchivalErrors(
+                    issue_is_subtask=WorkItemArchivalIssueIsSubtaskError(
+                        count=issue_is_subtask.get('count', 0),
+                        message=issue_is_subtask.get('message', ''),
+                        issue_ids_or_keys=issue_is_subtask.get('issueIdsOrKeys', []),
+                    )
+                    if issue_is_subtask
+                    else None,
+                    issues_in_archived_projects=WorkItemArchivalIssuesInArchivedProjectsError(
+                        count=issues_in_archived_projects.get('count', 0),
+                        message=issues_in_archived_projects.get('message', ''),
+                        issue_ids_or_keys=issues_in_archived_projects.get('issueIdsOrKeys', []),
+                    )
+                    if issues_in_archived_projects
+                    else None,
+                    issues_in_unlicensed_projects=WorkItemArchivalIssuesInUnlicensedProjectsError(
+                        count=issues_in_unlicensed_projects.get('count', 0),
+                        message=issues_in_unlicensed_projects.get('message', ''),
+                        issue_ids_or_keys=issues_in_unlicensed_projects.get('issueIdsOrKeys', []),
+                    )
+                    if issues_in_unlicensed_projects
+                    else None,
+                    issues_not_found=WorkItemArchivalIssuesNotFoundError(
+                        count=issues_not_found.get('count', 0),
+                        message=issues_not_found.get('message', ''),
+                        issue_ids_or_keys=issues_not_found.get('issueIdsOrKeys', []),
+                    )
+                    if issues_not_found
+                    else None,
+                    user_does_not_have_permission=WorkItemArchivalUserDoesNotHavePermissionError(
+                        count=user_does_not_have_permission.get('count', 0),
+                        message=user_does_not_have_permission.get('message', ''),
+                        issue_ids_or_keys=user_does_not_have_permission.get('issueIdsOrKeys', []),
+                    )
+                    if user_does_not_have_permission
+                    else None,
+                )
+                if any(
+                    [
+                        issue_is_subtask,
+                        issues_in_archived_projects,
+                        issues_in_unlicensed_projects,
+                        issues_not_found,
+                        user_does_not_have_permission,
+                    ]
+                )
+                else None,
+            )
+        )
+
+    async def unarchive_work_item(self, key: str) -> APIControllerResponse:
+        """Unarchives a work item.
+
+        Args:
+            key: the key of the work item that the user wants to unarchive.
+
+        Returns:
+            If successful, an instance of `APIControllerResponse` with `success=True` and an instance of
+            [WorkItemArchivalSyncResponse](#jiratui.models.WorkItemArchivalSyncResponse) with the count of archived
+            issues and subtasks, as well as error details for issues which failed to get archived. Otherwise, an
+            instance of `APIControllerResponse` with an error message.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Unarchiving work items is not supported by Jira DC installations.',
+            )
+
+        try:
+            response: dict = await self.api.unarchive_work_item(key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to unarchive the work item',
+                extra={
+                    'work_item_key': key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        errors = response.get('errors', {})
+        issue_is_subtask = errors.get('issueIsSubtask', {})
+        issues_in_archived_projects = errors.get('issuesInArchivedProjects', {})
+        issues_in_unlicensed_projects = errors.get('issuesInUnlicensedProjects', {})
+        issues_not_found = errors.get('issuesNotFound', {})
+        user_does_not_have_permission = errors.get('userDoesNotHavePermission', {})
+        return APIControllerResponse(
+            result=WorkItemArchivalSyncResponse(
+                number_of_issues_updated=response.get('numberOfIssuesUpdated', 0),
+                errors=WorkItemArchivalErrors(
+                    issue_is_subtask=WorkItemArchivalIssueIsSubtaskError(
+                        count=issue_is_subtask.get('count', 0),
+                        message=issue_is_subtask.get('message', ''),
+                        issue_ids_or_keys=issue_is_subtask.get('issueIdsOrKeys', []),
+                    )
+                    if issue_is_subtask
+                    else None,
+                    issues_in_archived_projects=WorkItemArchivalIssuesInArchivedProjectsError(
+                        count=issues_in_archived_projects.get('count', 0),
+                        message=issues_in_archived_projects.get('message', ''),
+                        issue_ids_or_keys=issues_in_archived_projects.get('issueIdsOrKeys', []),
+                    )
+                    if issues_in_archived_projects
+                    else None,
+                    issues_in_unlicensed_projects=WorkItemArchivalIssuesInUnlicensedProjectsError(
+                        count=issues_in_unlicensed_projects.get('count', 0),
+                        message=issues_in_unlicensed_projects.get('message', ''),
+                        issue_ids_or_keys=issues_in_unlicensed_projects.get('issueIdsOrKeys', []),
+                    )
+                    if issues_in_unlicensed_projects
+                    else None,
+                    issues_not_found=WorkItemArchivalIssuesNotFoundError(
+                        count=issues_not_found.get('count', 0),
+                        message=issues_not_found.get('message', ''),
+                        issue_ids_or_keys=issues_not_found.get('issueIdsOrKeys', []),
+                    )
+                    if issues_not_found
+                    else None,
+                    user_does_not_have_permission=WorkItemArchivalUserDoesNotHavePermissionError(
+                        count=user_does_not_have_permission.get('count', 0),
+                        message=user_does_not_have_permission.get('message', ''),
+                        issue_ids_or_keys=user_does_not_have_permission.get('issueIdsOrKeys', []),
+                    )
+                    if user_does_not_have_permission
+                    else None,
+                )
+                if any(
+                    [
+                        issue_is_subtask,
+                        issues_in_archived_projects,
+                        issues_in_unlicensed_projects,
+                        issues_not_found,
+                        user_does_not_have_permission,
+                    ]
+                )
+                else None,
+            )
+        )

@@ -95,3 +95,17 @@ def get_work_item_search_results_table_columns(search_results_columns: list[str]
         if field != SearchFieldId.ID.value:
             columns.append(MAP_WORK_ITEM_SEARCH_FIELD_TO_SEARCH_RESULTS_COLUMNS.get(field, ''))
     return columns
+
+
+def build_jql_query(
+    search_term: str | None = None,
+    jql_expression: str | None = None,
+    use_advance_search: bool = False,
+) -> str | None:
+    if search_term:
+        if use_advance_search:
+            return f'text ~ "{search_term}"'
+        return f'summary ~ "{search_term}" OR description ~ "{search_term}"'
+    elif jql_expression:
+        return jql_expression
+    return None

@@ -22,6 +22,7 @@ from jiratui.models import (
     IssueTransition,
     IssueTransitionState,
     IssueType,
+    JiraBaseIssue,
     JiraField,
     JiraFilter,
     JiraGlobalSettings,
@@ -39,6 +40,13 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     Project,
     UpdateWorkItemResponse,
+    WorkItemArchivalErrors,
+    WorkItemArchivalIssueIsSubtaskError,
+    WorkItemArchivalIssuesInArchivedProjectsError,
+    WorkItemArchivalIssuesInUnlicensedProjectsError,
+    WorkItemArchivalIssuesNotFoundError,
+    WorkItemArchivalSyncResponse,
+    WorkItemArchivalUserDoesNotHavePermissionError,
 )
 from jiratui.utils.adf import convert_markdown_to_adf
 from jiratui.utils.mentions import expand_mention_tokens
@@ -5606,3 +5614,317 @@ async def test_get_jql_autocomplete_suggestions_with_api_error_response(
     # THEN
     assert response == APIControllerResponse(success=False, error='some error')
     get_jql_autocomplete_suggestions_mock.assert_awaited_once_with(None, None, None, None)
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'get_issue')
+async def test_clone_work_item_fails_to_find_source_item(
+    get_issue_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(success=False, error='testing an error')
+    # WHEN
+    response = await jira_api_controller.clone_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='testing an error')
+    get_issue_mock.assert_awaited_once_with(issue_id_or_key='WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+async def test_clone_work_item_succeeds(
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    jira_issues,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    # WHEN
+    response = await jira_api_controller.clone_work_item(jira_issues[1].key)
+    # THEN
+    assert response == APIControllerResponse(result=JiraBaseIssue(id='2', key='WI-2'))
+    get_issue_mock.assert_awaited_once_with(issue_id_or_key=jira_issues[1].key)
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'summary': f'(cloned) {jira_issues[1].summary}',
+            'project_key': jira_issues[1].project.key,
+            'issue_type_id': jira_issues[1].issue_type.id,
+            'description': jira_issues[1].description or '',
+            'reporter_account_id': '1',
+            'parent_key': 'P2',
+            'priority': '1',
+            'duedate': '2025-10-12',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'create_work_item')
+@patch.object(APIController, 'get_issue')
+async def test_clone_work_item_with_custom_summary_succeeds(
+    get_issue_mock: AsyncMock,
+    create_work_item_mock: AsyncMock,
+    jira_issues,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    create_work_item_mock.return_value = APIControllerResponse(
+        result=JiraBaseIssue(id='2', key='WI-2')
+    )
+    # WHEN
+    response = await jira_api_controller.clone_work_item(jira_issues[1].key, 'new summary')
+    # THEN
+    assert response == APIControllerResponse(result=JiraBaseIssue(id='2', key='WI-2'))
+    get_issue_mock.assert_awaited_once_with(issue_id_or_key=jira_issues[1].key)
+    create_work_item_mock.assert_awaited_once_with(
+        {
+            'summary': 'new summary',
+            'project_key': jira_issues[1].project.key,
+            'issue_type_id': jira_issues[1].issue_type.id,
+            'description': jira_issues[1].description or '',
+            'reporter_account_id': '1',
+            'parent_key': 'P2',
+            'priority': '1',
+            'duedate': '2025-10-12',
+        }
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_archive_work_not_supported(
+    archive_work_item_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.archive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Archiving work items is not supported by Jira DC installations.'
+    )
+    archive_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_unarchive_work_not_supported(
+    archive_work_item_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.unarchive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Unarchiving work items is not supported by Jira DC installations.'
+    )
+    archive_work_item_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_archive_work_item_succeeds(
+    archive_work_item_mock: AsyncMock, jira_issues, jira_api_controller: APIController
+):
+    # GIVEN
+    archive_work_item_mock.return_value = {
+        'errors': {
+            'issueIsSubtask': {
+                'count': 3,
+                'issueIdsOrKeys': ['ST-1', 'ST-2', 'ST-3'],
+                'message': 'Issue is subtask.',
+            },
+            'issuesInArchivedProjects': {
+                'count': 2,
+                'issueIdsOrKeys': ['AR-1', 'AR-2'],
+                'message': 'Issue exists in archived project.',
+            },
+            'issuesInUnlicensedProjects': {
+                'count': 3,
+                'issueIdsOrKeys': ['UL-1', 'UL-2', 'UL-3'],
+                'message': 'Issues with these IDs are in unlicensed projects.',
+            },
+            'issuesNotFound': {
+                'count': 3,
+                'issueIdsOrKeys': ['PR-1', 'PR-2', 'PR-3'],
+                'message': 'Issue not found.',
+            },
+            'userDoesNotHavePermission': {
+                'count': 2,
+                'issueIdsOrKeys': ['PR-1', 'PR-2'],
+                'message': 'Permission denied.',
+            },
+        },
+        'numberOfIssuesUpdated': 1,
+    }
+    # WHEN
+    response = await jira_api_controller.archive_work_item(jira_issues[1].key)
+    # THEN
+    assert response == APIControllerResponse(
+        result=WorkItemArchivalSyncResponse(
+            number_of_issues_updated=1,
+            errors=WorkItemArchivalErrors(
+                issue_is_subtask=WorkItemArchivalIssueIsSubtaskError(
+                    count=3, message='Issue is subtask.', issue_ids_or_keys=['ST-1', 'ST-2', 'ST-3']
+                ),
+                issues_in_archived_projects=WorkItemArchivalIssuesInArchivedProjectsError(
+                    count=2,
+                    message='Issue exists in archived project.',
+                    issue_ids_or_keys=['AR-1', 'AR-2'],
+                ),
+                issues_in_unlicensed_projects=WorkItemArchivalIssuesInUnlicensedProjectsError(
+                    count=3,
+                    message='Issues with these IDs are in unlicensed projects.',
+                    issue_ids_or_keys=['UL-1', 'UL-2', 'UL-3'],
+                ),
+                issues_not_found=WorkItemArchivalIssuesNotFoundError(
+                    count=3,
+                    message='Issue not found.',
+                    issue_ids_or_keys=['PR-1', 'PR-2', 'PR-3'],
+                ),
+                user_does_not_have_permission=WorkItemArchivalUserDoesNotHavePermissionError(
+                    count=2,
+                    message='Permission denied.',
+                    issue_ids_or_keys=['PR-1', 'PR-2'],
+                ),
+            ),
+        )
+    )
+    archive_work_item_mock.assert_awaited_once_with(jira_issues[1].key)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_archive_work_item_succeeds_without_errors(
+    archive_work_item_mock: AsyncMock, jira_issues, jira_api_controller: APIController
+):
+    # GIVEN
+    archive_work_item_mock.return_value = {'errors': {}, 'numberOfIssuesUpdated': 1}
+    # WHEN
+    response = await jira_api_controller.archive_work_item(jira_issues[1].key)
+    # THEN
+    assert response == APIControllerResponse(
+        result=WorkItemArchivalSyncResponse(number_of_issues_updated=1, errors=None)
+    )
+    archive_work_item_mock.assert_awaited_once_with(jira_issues[1].key)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'archive_work_item')
+async def test_archive_work_item_fails(
+    archive_work_item_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    archive_work_item_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.archive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'unarchive_work_item')
+async def test_unarchive_work_item_succeeds(
+    unarchive_work_item_mock: AsyncMock, jira_issues, jira_api_controller: APIController
+):
+    # GIVEN
+    unarchive_work_item_mock.return_value = {
+        'errors': {
+            'issueIsSubtask': {
+                'count': 3,
+                'issueIdsOrKeys': ['ST-1', 'ST-2', 'ST-3'],
+                'message': 'Issue is subtask.',
+            },
+            'issuesInArchivedProjects': {
+                'count': 2,
+                'issueIdsOrKeys': ['AR-1', 'AR-2'],
+                'message': 'Issue exists in archived project.',
+            },
+            'issuesInUnlicensedProjects': {
+                'count': 3,
+                'issueIdsOrKeys': ['UL-1', 'UL-2', 'UL-3'],
+                'message': 'Issues with these IDs are in unlicensed projects.',
+            },
+            'issuesNotFound': {
+                'count': 3,
+                'issueIdsOrKeys': ['PR-1', 'PR-2', 'PR-3'],
+                'message': 'Issue not found.',
+            },
+            'userDoesNotHavePermission': {
+                'count': 2,
+                'issueIdsOrKeys': ['PR-1', 'PR-2'],
+                'message': 'Permission denied.',
+            },
+        },
+        'numberOfIssuesUpdated': 1,
+    }
+    # WHEN
+    response = await jira_api_controller.unarchive_work_item(jira_issues[1].key)
+    # THEN
+    assert response == APIControllerResponse(
+        result=WorkItemArchivalSyncResponse(
+            number_of_issues_updated=1,
+            errors=WorkItemArchivalErrors(
+                issue_is_subtask=WorkItemArchivalIssueIsSubtaskError(
+                    count=3, message='Issue is subtask.', issue_ids_or_keys=['ST-1', 'ST-2', 'ST-3']
+                ),
+                issues_in_archived_projects=WorkItemArchivalIssuesInArchivedProjectsError(
+                    count=2,
+                    message='Issue exists in archived project.',
+                    issue_ids_or_keys=['AR-1', 'AR-2'],
+                ),
+                issues_in_unlicensed_projects=WorkItemArchivalIssuesInUnlicensedProjectsError(
+                    count=3,
+                    message='Issues with these IDs are in unlicensed projects.',
+                    issue_ids_or_keys=['UL-1', 'UL-2', 'UL-3'],
+                ),
+                issues_not_found=WorkItemArchivalIssuesNotFoundError(
+                    count=3,
+                    message='Issue not found.',
+                    issue_ids_or_keys=['PR-1', 'PR-2', 'PR-3'],
+                ),
+                user_does_not_have_permission=WorkItemArchivalUserDoesNotHavePermissionError(
+                    count=2,
+                    message='Permission denied.',
+                    issue_ids_or_keys=['PR-1', 'PR-2'],
+                ),
+            ),
+        )
+    )
+    unarchive_work_item_mock.assert_awaited_once_with(jira_issues[1].key)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'unarchive_work_item')
+async def test_unarchive_work_item_succeeds_without_errors(
+    unarchive_work_item_mock: AsyncMock, jira_issues, jira_api_controller: APIController
+):
+    # GIVEN
+    unarchive_work_item_mock.return_value = {'errors': {}, 'numberOfIssuesUpdated': 1}
+    # WHEN
+    response = await jira_api_controller.unarchive_work_item(jira_issues[1].key)
+    # THEN
+    assert response == APIControllerResponse(
+        result=WorkItemArchivalSyncResponse(number_of_issues_updated=1, errors=None)
+    )
+    unarchive_work_item_mock.assert_awaited_once_with(jira_issues[1].key)
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'unarchive_work_item')
+async def test_unarchive_work_item_fails(
+    archive_work_item_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    archive_work_item_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.unarchive_work_item('WI-1')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')

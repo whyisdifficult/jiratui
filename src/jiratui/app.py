@@ -13,6 +13,7 @@ from jiratui.api_controller.controller import APIController, APIControllerRespon
 from jiratui.config import CONFIGURATION, ApplicationConfiguration
 from jiratui.constants import LOGGER_NAME
 from jiratui.models import JiraServerInfo
+from jiratui.utils.history import HistoryEntry, HistoryManager
 from jiratui.utils.logging import JiraTUILogger
 from jiratui.utils.session import ApplicationSession
 from jiratui.utils.ui_actions import Actionable, UIAction
@@ -132,6 +133,11 @@ class JiraApp(Actionable, App, inherit_bindings=False):  # type:ignore[call-arg]
             logging.getLogger(LOGGER_NAME), CONFIGURATION.get().enable_logging
         )
         self._setup_theme(user_theme)
+        self._recent_history_manager = HistoryManager()
+
+    @property
+    def recent_history_manager(self) -> HistoryManager:
+        return self._recent_history_manager
 
     def _setup_theme(self, user_theme: str | None = None) -> None:
         if input_theme := (user_theme or CONFIGURATION.get().theme):
@@ -210,6 +216,9 @@ class JiraApp(Actionable, App, inherit_bindings=False):  # type:ignore[call-arg]
         ):
             self.server_info = response_server_info.result
             self.title = f'{self.title} - {self.server_info.base_url_or_server_title}'  # type:ignore[has-type]
+
+    def add_to_recent_history(self, entry: HistoryEntry) -> None:
+        self.recent_history_manager.add_work_item(entry)
 
     def _set_application_title(self) -> None:
         config = CONFIGURATION.get()

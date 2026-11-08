@@ -17,7 +17,6 @@ from jiratui.models import (
     IssueTransition,
     IssueType,
     JiraBaseIssue,
-    JiraIssue,
     JiraIssueSearchResponse,
     JiraUser,
     JiraUserGroup,
@@ -552,79 +551,52 @@ class CommandHandler:
             A dictionary with a key `work_item` with the cloned work item and, a key `key` with the key of the new item.
 
         Raises:
-            CLIException: if the (source) work item can not be found.
             CLIException: if unable to clone the work item.
-            CLIException: if an error occurs while trying to retrieve the (cloned) work item.
+            CLIException: if an error occurs while trying to retrieve the (cloned) work item or, if the cloned item can
+            not be found.
         """
 
-        get_item_response: APIControllerResponse = await self.api.get_issue(
-            issue_id_or_key=work_item_key
-        )
-        items_found: JiraIssueSearchResponse | None
-        if not get_item_response.success or not (items_found := get_item_response.result):
-            raise CLIException(
-                f'Unable to find the work item with key {work_item_key}',
-                extra={'work_item_key': work_item_key, 'error_message': get_item_response.error},
-            )
+        response: APIControllerResponse = await self.api.clone_work_item(work_item_key, summary)
 
-        issue: JiraIssue = items_found.issues[0]
-
-        # build the payload for creating the clone
-        clone_data: dict = {
-            'summary': summary or f'(cloned) {issue.summary}',
-            'project_key': issue.project.key,
-            'issue_type_id': issue.issue_type.id,
-            'description': issue.description,
-        }
-
-        if issue.assignee:
-            clone_data['assignee_account_id'] = issue.assignee.account_id
-        if issue.reporter:
-            clone_data['reporter_account_id'] = issue.reporter.account_id
-        if issue.parent_key:
-            clone_data['parent_key'] = issue.parent_key
-        if issue.priority:
-            clone_data['priority'] = issue.priority.id
-        if issue.due_date:
-            clone_data['duedate'] = issue.due_date.strftime('%Y-%m-%d')
-
-        create_work_item_response: APIControllerResponse = await self.api.create_work_item(
-            clone_data
-        )
-
-        if not create_work_item_response.success or not create_work_item_response.result:
+        if not response.success or not response.result:
             raise CLIException(
                 'Unable to clone the work item.',
                 extra={
                     'work_item_key': work_item_key,
-                    'error_message': create_work_item_response.error,
+                    'error_message': response.error,
                 },
             )
 
-        cloned_item: JiraBaseIssue | None = create_work_item_response.result
+        cloned_item_key = response.result.key
 
-        # if required then transition the status of the new item to match the status of the source item
         if clone_status:
-            await self.api.transition_issue_status(cloned_item.key, issue.status.id)
+            get_item_response: APIControllerResponse = await self.api.get_issue(
+                issue_id_or_key=work_item_key
+            )
+            items_found: JiraIssueSearchResponse | None
+            if get_item_response.success and (items_found := get_item_response.result):
+                await self.api.transition_issue_status(
+                    cloned_item_key, items_found.issues[0].status.id
+                )
 
         # retrieve the basic details of the new item
         try:
             get_issue_response: APIControllerResponse = await self.api.get_issue(
-                issue_id_or_key=cloned_item.key
+                issue_id_or_key=cloned_item_key
             )
         except Exception as e:
             raise CLIException(
-                f'An error occurred while trying to retrieve the cloned item with key {cloned_item.key}',
-                extra={'work_item_key': cloned_item.key, 'error_message': str(e)},
+                f'An error occurred while trying to retrieve the cloned item with key {cloned_item_key}',
+                extra={'work_item_key': cloned_item_key, 'error_message': str(e)},
             ) from e
         if not get_issue_response.success or not get_issue_response.result:
             raise CLIException(
-                f'Not Found: (cloned) item with key {cloned_item.key}',
-                extra={'work_item_key': cloned_item.key, 'error_message': get_issue_response.error},
+                f'Not Found: (cloned) item with key {cloned_item_key}',
+                extra={'work_item_key': cloned_item_key, 'error_message': get_issue_response.error},
             )
 
         return {
-            'key': cloned_item.key,
+            'key': cloned_item_key,
             'work_item': get_issue_response.result,
         }
 

@@ -250,6 +250,30 @@ class JiraAPI:
         if not any([project_id_or_key, issue_id, issue_key]):
             raise ValueError('One of these parameters is required: project_id, issue_id, issue_key')
 
+        params: dict[str, Any] = self._build_user_assignable_search_parameters(
+            project_id_or_key,
+            issue_key,
+            issue_id,
+            account_id,
+            offset,
+            limit,
+            query,
+        )
+
+        return await self._client.make_request(  # type:ignore[return-value]
+            method=httpx.AsyncClient.get, url='user/assignable/search', params=params
+        )
+
+    @staticmethod
+    def _build_user_assignable_search_parameters(
+        project_id_or_key: str | None = None,
+        issue_key: str | None = None,
+        issue_id: str | None = None,
+        account_id: str | None = None,
+        offset: int | None = None,
+        limit: int | None = 50,
+        query: str | None = None,
+    ) -> dict[str, Any]:
         params: dict[str, Any] = {}
         if project_id_or_key:
             params['project'] = project_id_or_key  # accept case-sensitive project key as well
@@ -258,18 +282,14 @@ class JiraAPI:
         if limit is not None:
             params['maxResults'] = limit
         if query:
-            # Jira DC ignores 'query' and returns the first N users alphabetically; it expects 'username'
-            params['query' if self.cloud else 'username'] = query
+            params['query'] = query
         if issue_key:
             params['issueKey'] = issue_key
         if issue_id:
             params['issueId'] = issue_id
         if account_id:
             params['accountId'] = account_id
-
-        return await self._client.make_request(  # type:ignore[return-value]
-            method=httpx.AsyncClient.get, url='user/assignable/search', params=params
-        )
+        return params
 
     async def user_assignable_multi_projects(
         self,
@@ -1520,6 +1540,63 @@ class JiraAPI:
             params=params,
         )
 
+    async def archive_work_item(self, key: str) -> dict:
+        """Archives a work item.
+
+        Enables admins to archive up to 1000 issues in a single request using issue ID/key, returning details of
+        the issue(s) archived in the process and the errors encountered, if any.
+
+        ```{important}
+        - you can't archive subtasks directly, only through their parent issues.
+        - you can only archive issues from software, service management, and business projects.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-archive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-archive-put)
+
+        Args:
+            key: the key of the work item that the user wants to archive.
+
+        Returns:
+            A dict with the results of the operation. This includes the count of archived issues and subtasks, as well as
+            error details for issues which failed to get archived. Data is returned as `IssueArchivalSyncResponse`.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url='issue/archive',
+            data=json.dumps({'issueIdsOrKeys': [key]}),
+        )
+
+    async def unarchive_work_item(self, key: str) -> dict:
+        """Unarchives a work item.
+
+        Enables admins to unarchive up to 1000 issues in a single request using issue ID/key, returning details of the
+        issue(s) unarchived in the process and the errors encountered, if any.
+
+        ```{important}
+        - you can't unarchive subtasks directly, only through their parent issues.
+        - you can only unarchive issues from software, service management, and business projects.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-unarchive-put](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-unarchive-put)
+
+        Args:
+            key: the key of the work item that the user wants to unarchive.
+
+        Returns:
+            A dict with the results of the operation. This includes the count of unarchived issues, which also includes
+            the count of the subtasks unarchived, and it will show the detailed errors for those issues which are not
+            unarchived. Data is returned as `IssueArchivalSyncResponse`.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.put,
+            url='issue/unarchive',
+            data=json.dumps({'issueIdsOrKeys': [key]}),
+        )
+
 
 class JiraAPIv2(JiraAPI):
     """Implements a client for the Jira Cloud Platform REST API v2.
@@ -1924,6 +2001,42 @@ class JiraDataCenterAPI(JiraAPI):
             url=f'issue/{issue_id_or_key}/worklog/{worklog_id}',
             data=json.dumps(payload),
             params=params,
+        )
+
+    @staticmethod
+    def _build_user_assignable_search_parameters(
+        project_id_or_key: str | None = None,
+        issue_key: str | None = None,
+        issue_id: str | None = None,
+        account_id: str | None = None,
+        offset: int | None = None,
+        limit: int | None = 50,
+        query: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        if project_id_or_key:
+            params['project'] = project_id_or_key  # accept case-sensitive project key as well
+        if offset is not None:
+            params['startAt'] = offset
+        if limit is not None:
+            params['maxResults'] = limit
+        if query:
+            # Jira DC ignores 'query' and returns the first N users alphabetically; it expects 'username'
+            params['username'] = query
+        if issue_key:
+            params['issueKey'] = issue_key
+        if issue_id:
+            params['issueId'] = issue_id
+        if account_id:
+            params['accountId'] = account_id
+        return params
+
+    async def archive_work_item(self, key: str) -> dict:
+        raise NotImplementedError('Archiving work items is not supported by Jira DC installations.')
+
+    async def unarchive_work_item(self, key: str) -> dict:
+        raise NotImplementedError(
+            'Unarchiving work items is not supported by Jira DC installations.'
         )
 
 

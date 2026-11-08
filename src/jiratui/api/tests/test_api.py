@@ -3921,3 +3921,50 @@ async def test_issue_picker_without_project_without_current_issue_key(jira_api: 
             }
         ]
     }
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_archive_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.put(get_url_pattern('issue/archive'))
+    route.mock(return_value=httpx.Response(200, json={'errors': {}, 'numberOfIssuesUpdated': 1}))
+    # WHEN
+    result = await jira_api.archive_work_item('task-1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/archive'
+    assert json.loads(route.calls.last.request.content) == {'issueIdsOrKeys': ['task-1']}
+    assert result == {'numberOfIssuesUpdated': 1, 'errors': {}}
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_unarchive_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.put(get_url_pattern('issue/unarchive'))
+    route.mock(return_value=httpx.Response(200, json={'errors': {}, 'numberOfIssuesUpdated': 1}))
+    # WHEN
+    result = await jira_api.unarchive_work_item('task-1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/unarchive'
+    assert json.loads(route.calls.last.request.content) == {'issueIdsOrKeys': ['task-1']}
+    assert result == {'numberOfIssuesUpdated': 1, 'errors': {}}
+
+
+@pytest.mark.asyncio
+async def test_archive_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Archiving work items is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.archive_work_item('task-1')
+
+
+@pytest.mark.asyncio
+async def test_unarchive_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError,
+        match='Unarchiving work items is not supported by Jira DC installations.',
+    ):
+        await jira_api_dc.unarchive_work_item('task-1')

@@ -218,32 +218,3 @@ async def test_dismiss_fulltext_search_screen_with_value(
         await pilot.press('escape')
         assert isinstance(app.screen, MainScreen)
         action_search_mock.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    'search_term, jql_expression, advanced_search, expected_query',
-    [
-        ('text search', None, False, 'summary ~ "text search" OR description ~ "text search"'),
-        ('text search', None, True, 'text ~ "text search"'),
-        ('text search', 'project = 1', True, 'text ~ "text search"'),
-        (
-            'text search',
-            'project = 1',
-            False,
-            'summary ~ "text search" OR description ~ "text search"',
-        ),
-        (None, None, False, None),
-        (None, None, True, None),
-        (None, 'project = 1', False, 'project = 1'),
-        (None, 'project = 1', True, 'project = 1'),
-    ],
-)
-def test_build_jql_query(
-    search_term, jql_expression, advanced_search, expected_query, jira_api_controller
-):
-    # GIVEN
-    screen = MainScreen(api=jira_api_controller)
-    # WHEN
-    query = screen._build_jql_query(search_term, jql_expression, advanced_search)
-    # THEN
-    assert query == expected_query

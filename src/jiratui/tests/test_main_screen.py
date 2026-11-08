@@ -16,8 +16,10 @@ from jiratui.models import (
     JiraIssueSearchResponse,
     JiraUser,
     Project,
+    WorkItemArchivalSyncResponse,
     WorkItemsSearchOrderBy,
 )
+from jiratui.utils.history import HistoryEntry
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.commons.users import JiraUserInput
@@ -39,6 +41,8 @@ from jiratui.widgets.related_work_items.related_issues import (
 )
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
+from jiratui.widgets.screens.clone import CloneWorkItemScreen
+from jiratui.widgets.screens.context_menu import ContextMenu
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
@@ -267,7 +271,7 @@ async def test_fetch_projects_without_initial_project_key(
     async with app.run_test():
         screen = MainScreen()
         screen.initial_project_key = ''
-        screen.config.fetch_single_project = True
+        screen.app.config.fetch_single_project = True
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -300,7 +304,7 @@ async def test_fetch_projects_with_initial_project_key_fetch_single_project_true
     async with app.run_test():
         screen = MainScreen()
         screen.initial_project_key = 'P1'
-        screen.config.fetch_single_project = True
+        screen.app.config.fetch_single_project = True
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -333,7 +337,7 @@ async def test_fetch_projects_with_initial_project_key_fetch_single_project_fals
     async with app.run_test():
         screen = MainScreen()
         screen.initial_project_key = 'P1'
-        screen.config.fetch_single_project = False
+        screen.app.config.fetch_single_project = False
         # WHEN
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
@@ -952,7 +956,7 @@ async def test_show_quick_view_screen_after_creating_work_item_view_work_item_af
         create_work_item_mock.assert_called_once_with({'summary': 'some value here'})
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch.object(APIController, 'create_work_item')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -978,7 +982,7 @@ async def test_create_work_item_with_recent_history_enabled(
         await app.screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         # THEN
-        add_item_to_recent_history_mock.assert_called_once_with('key-2', '', '', '')
+        add_item_to_recent_history_mock.assert_called_once_with(HistoryEntry('key-2', '', '', ''))
 
 
 @patch.object(APIController, 'transition_issue_status')
@@ -1043,7 +1047,7 @@ async def test_create_work_item_without_status_transition(
         transition_issue_status_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch('jiratui.widgets.screen.MainScreen._open_quick_view_screen')
 @patch.object(APIController, 'transition_issue_status')
 @patch.object(APIController, 'create_work_item')
@@ -1079,7 +1083,7 @@ async def test_create_work_item_fails_to_create_item(
         assert not screen.loading_container.display
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch.object(APIController, 'create_work_item')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1296,7 +1300,6 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_escape(
         load_work_item_mock.assert_not_called()
 
 
-# @patch.object(APIController, 'transition_issue_status')
 @patch.object(APIController, 'create_work_item')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1384,7 +1387,7 @@ async def test_create_work_item_with_data_to_add(
         )
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1413,11 +1416,11 @@ async def test_fetch_issue_with_recent_history_enabled(
         await app.workers.wait_for_complete()
         # THEN
         add_item_to_recent_history_mock.assert_called_once_with(
-            key='key-2', item_type='Bug', status='Done', summary='qwerty'
+            HistoryEntry(key='key-2', item_type='Bug', status='Done', summary='qwerty')
         )
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch.object(APIController, 'get_issue')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
@@ -1448,7 +1451,7 @@ async def test_fetch_issue_with_recent_history_disabled(
         add_item_to_recent_history_mock.assert_not_called()
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
@@ -1457,7 +1460,6 @@ async def test_process_message_update_recent_history_with_recent_history_enabled
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    # get_issue_mock: AsyncMock,
     add_item_to_recent_history_mock: Mock,
     app,
 ):
@@ -1474,10 +1476,10 @@ async def test_process_message_update_recent_history_with_recent_history_enabled
         )
         await pilot.pause()
         # THEN
-        add_item_to_recent_history_mock.assert_called_once_with('key-2', 'Bug', 'Done', 'qwerty')
+        add_item_to_recent_history_mock.assert_called_once()
 
 
-@patch('jiratui.widgets.screen.MainScreen._add_item_to_recent_history')
+@patch.object(JiraApp, 'add_to_recent_history')
 @patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
 @patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
 @patch('jiratui.widgets.screen.MainScreen.fetch_projects')
@@ -1486,7 +1488,6 @@ async def test_process_message_update_recent_history_with_recent_history_disable
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    # get_issue_mock: AsyncMock,
     add_item_to_recent_history_mock: Mock,
     app,
 ):
@@ -1515,7 +1516,6 @@ async def test_handle_search_work_item_message(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    # get_issue_mock: AsyncMock,
     load_work_item_mock: Mock,
     app,
 ):
@@ -1540,7 +1540,6 @@ async def test_handle_search_work_item_message_without_work_item_key(
     fetch_projects_mock: AsyncMock,
     fetch_issue_types_mock: AsyncMock,
     fetch_statuses_mock: AsyncMock,
-    # get_issue_mock: AsyncMock,
     load_work_item_mock: Mock,
     app,
 ):
@@ -1554,3 +1553,131 @@ async def test_handle_search_work_item_message_without_work_item_key(
         await pilot.pause()
         # THEN
         load_work_item_mock.assert_not_called()
+
+
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_open_context_menu(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        # THEN
+        assert isinstance(app.screen, ContextMenu)
+
+
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_clone_action(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        await pilot.press('enter')
+        # THEN
+        assert isinstance(app.screen, CloneWorkItemScreen)
+
+
+@patch('jiratui.widgets.screen.MainScreen._archive_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_archive_action(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    archive_work_item_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        await pilot.press('down')
+        await pilot.press('enter')
+        # THEN
+        archive_work_item_mock.assert_awaited_once_with('WI-1')
+        assert isinstance(app.screen, MainScreen)
+
+
+@patch.object(APIController, 'get_issue')
+@patch.object(APIController, 'clone_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_clone_action_requests_cloning(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    clone_work_item_mock: AsyncMock,
+    get_issue_mock: AsyncMock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    get_issue_mock.return_value = APIControllerResponse(
+        result=JiraIssueSearchResponse(issues=[jira_issues[1]])
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        await pilot.press('enter')
+        assert isinstance(app.screen, CloneWorkItemScreen)
+        assert app.screen.summary.value == 'qwerty'
+        await pilot.press('tab')
+        await pilot.press('enter')
+        # THEN
+        clone_work_item_mock.assert_awaited_once_with('WI-1', 'qwerty')
+
+
+@patch.object(APIController, 'archive_work_item')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_archive_action_requests_archiving(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    archive_work_item_mock: AsyncMock,
+    jira_issues,
+    app,
+):
+    # GIVEN
+    archive_work_item_mock.return_value = APIControllerResponse(
+        result=WorkItemArchivalSyncResponse(number_of_issues_updated=1, errors=None)
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        await pilot.press('down')
+        await pilot.press('enter')
+        assert isinstance(app.screen, MainScreen)
+        # THEN
+        archive_work_item_mock.assert_awaited_once_with('WI-1')
