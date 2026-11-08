@@ -733,7 +733,6 @@ dependencies = [
     { name = "textual", extra = ["syntax"] },
     { name = "textual-autocomplete" },
     { name = "textual-image" },
-    { name = "urllib3" },
     { name = "xdg-base-dirs" },
 ]
 
@@ -778,7 +777,6 @@ requires-dist = [
     { name = "textual", extras = ["syntax"], specifier = ">=8.2.8,<9.0.0" },
     { name = "textual-autocomplete", specifier = ">=4.0.6" },
     { name = "textual-image", specifier = ">=0.13.2,<0.14.0" },
-    { name = "urllib3", specifier = ">=2.8.0,<2.9.0" },
     { name = "xdg-base-dirs", specifier = ">=6.0.2" },
 ]
 

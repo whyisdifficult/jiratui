@@ -506,3 +506,29 @@ def test_build_selection_for_service_desk_language_field():
     )
 
     assert widget.value == 'en'
+
+
+def test_field_metadata_key_falls_back_to_field_id_when_key_is_missing():
+    """Jira Data Center's (API v2) edit/create metadata provides `fieldId` but not `key`."""
+
+    metadata = FieldMetadata(
+        {
+            'required': False,
+            'schema': {
+                'type': 'string',
+                'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea',
+                'customId': 10102,
+            },
+            'name': 'Decision Notes',
+            'fieldId': 'customfield_10102',
+            'operations': ['set'],
+        }
+    )
+
+    assert metadata.key == 'customfield_10102'
+
+
+def test_field_metadata_key_takes_precedence_over_field_id():
+    metadata = FieldMetadata({'fieldId': 'field_a', 'key': 'field_a_key'})
+
+    assert metadata.key == 'field_a_key'
