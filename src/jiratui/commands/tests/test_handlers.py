@@ -1108,10 +1108,10 @@ async def test_clone_work_item_cloning_fails(
     clone_work_item_mock.return_value = APIControllerResponse(success=False, error='Not Found')
     handler = CommandHandler()
     # WHEN
-    with pytest.raises(CLIException, match='Unable to find the work item'):
+    with pytest.raises(CLIException, match='Unable to clone the work item.'):
         await handler.clone_work_item('WI-1')
     # THEN
-    clone_work_item_mock.assert_called_once_with(issue_id_or_key='WI-1')
+    clone_work_item_mock.assert_called_once_with('WI-1', None)
 
 
 @pytest.mark.asyncio

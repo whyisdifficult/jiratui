@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add support for a context menu to execute commands on work items. By [@davidferlay](https://github.com/davidferlay) in https://github.com/whyisdifficult/jiratui/pull/401
+- Add support for cloning work items in the UI. By [@davidferlay](https://github.com/davidferlay) in https://github.com/whyisdifficult/jiratui/pull/401
+- Add support for archiving work items in the UI. This is only supported in Jira Cloud instances. By [@davidferlay](https://github.com/davidferlay) in https://github.com/whyisdifficult/jiratui/pull/401
+
+### Minor Improvements
+
+- Remove dependency `urllib3`. By [@booxter](https://github.com/booxter) in https://github.com/whyisdifficult/jiratui/pull/402
+
 ### Bug Fixes
 
 - Jira DC: the assignee autocomplete ignored the search term because `user/assignable/search` was called with the
