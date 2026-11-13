@@ -1624,7 +1624,7 @@ class JiraAPI:
             issue_id_or_key: the ID or key of the issue.
 
         Returns:
-
+            HTTP 204 on success.
         """
 
         return await self._client.make_request(
@@ -1641,7 +1641,7 @@ class JiraAPI:
             issue_id_or_key: the ID or key of the issue.
 
         Returns:
-
+            HTTP 204 on success.
         """
 
         await self._client.make_request(
@@ -2159,6 +2159,24 @@ class JiraDataCenterAPI(JiraAPI):
         raise NotImplementedError(
             'Unarchiving work items is not supported by Jira DC installations.'
         )
+
+    async def add_work_item_vote(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def delete_work_item_vote(self, issue_id_or_key: str) -> bool:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def retrieve_work_item_votes(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def add_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
+
+    async def delete_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
+
+    async def retrieve_work_item_watchers(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
 
 
 class JiraSoftwareCloudAPI:

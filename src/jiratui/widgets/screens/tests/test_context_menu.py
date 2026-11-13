@@ -19,8 +19,10 @@ async def test_context_menu_screen(app):
         # THEN
         options_list = screen.options_list
         assert [(o.prompt, o.id) for o in options_list.options] == [
-            ('Clone Work Item', 'clone_work_item'),
-            ('Archive Work Item', 'archive_work_item'),
+            ('Clone Item...', 'clone_work_item'),
+            ('Archive Item', 'archive_work_item'),
+            ('Vote...', 'votes'),
+            ('Watch...', 'watchers'),
         ]
 
 

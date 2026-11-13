@@ -3968,3 +3968,103 @@ async def test_unarchive_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCen
         match='Unarchiving work items is not supported by Jira DC installations.',
     ):
         await jira_api_dc.unarchive_work_item('task-1')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_vote_issue(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/votes'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    await jira_api.add_work_item_vote('1')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/votes'
+
+
+@pytest.mark.asyncio
+async def test_vote_issue_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Voting is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.add_work_item_vote('1')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_delete_work_item_vote(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.delete(get_url_pattern('issue/1/votes'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    result = await jira_api.delete_work_item_vote('1')
+    # THEN
+    assert result is True
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/votes'
+
+
+@pytest.mark.asyncio
+async def test_delete_work_item_vote_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Voting is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.delete_work_item_vote('1')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_add_watcher(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.post(get_url_pattern('issue/1/watchers'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    await jira_api.add_watcher('1', '2')
+    # THEN
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/watchers'
+    assert json.loads(route.calls.last.request.content) == '2'
+
+
+@pytest.mark.asyncio
+async def test_add_watcher_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Watching work items is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.add_watcher('1', '2')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_delete_watcher(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.delete(get_url_pattern('issue/1/watchers'))
+    route.mock(return_value=httpx.Response(204))
+    # WHEN
+    result = await jira_api.delete_watcher('1', '2')
+    # THEN
+    assert result == {}
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/watchers'
+    assert route.calls.last.request.url.params.get('accountId') == '2'
+
+
+@pytest.mark.asyncio
+async def test_delete_watcher_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Watching work items is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.delete_watcher('1', '2')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_retrieve_work_item_votes(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/1/votes'))
+    route.mock(return_value=httpx.Response(200, json={}))
+    # WHEN
+    result = await jira_api.retrieve_work_item_votes('1')
+    # THEN
+    assert result == {'TODO add mock data'}
