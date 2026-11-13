@@ -68,6 +68,8 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     Project,
     UpdateWorkItemResponse,
+    Votes,
+    Watchers,
     WorkItemArchivalErrors,
     WorkItemArchivalIssueIsSubtaskError,
     WorkItemArchivalIssuesInArchivedProjectsError,
@@ -3213,6 +3215,8 @@ class APIController:
         self._teams_cache[str(custom_id)] = teams
         return APIControllerResponse(result=teams)
 
+    # cloning
+
     async def clone_work_item(self, key: str, summary: str | None = None) -> APIControllerResponse:
         """Clones a work item.
 
@@ -3263,6 +3267,8 @@ class APIController:
         if work_item.due_date:
             clone_data['duedate'] = work_item.due_date.strftime('%Y-%m-%d')
         return await self.create_work_item(clone_data)
+
+    # archiving
 
     async def archive_work_item(self, key: str) -> APIControllerResponse:
         """Archives a work item.
@@ -3443,3 +3449,184 @@ class APIController:
                 else None,
             )
         )
+
+    # voting
+
+    async def get_work_item_votes(self, issue_id_or_key: str) -> APIControllerResponse:
+        """Retrieves details about the users that have voted an issue.
+
+        Args:
+            issue_id_or_key: the key of the item.
+
+        Returns:
+            An instance of `APIControllerResponse` with `APIControllerResponse.success == False` and
+            `APIControllerResponse.error` if an error occurs. `APIControllerResponse.success == True` and an instance
+            of `Votes` with the detail sof the votes. The field `has_voted` indicates whether the current user has voted
+            or not.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Voting for work items is not supported by Jira DC installations.',
+            )
+
+        try:
+            response: dict = await self.api.retrieve_work_item_votes(issue_id_or_key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to retrieve voting data for the work item',
+                extra={
+                    'work_item_key': issue_id_or_key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        votes = Votes(
+            has_voted=response.get('hasVoted', False),
+            votes=response.get('votes', 0),
+            voters=[
+                JiraUser(
+                    account_id=voter.get('accountId'),
+                    active=voter.get('active'),
+                    display_name=voter.get('displayName') or voter.get('name'),
+                )
+                for voter in response.get('voters', [])
+            ],
+        )
+        return APIControllerResponse(result=votes)
+
+    async def update_work_item_vote(
+        self, issue_id_or_key: str, vote: bool
+    ) -> APIControllerResponse:
+        """Updates the voting status of a work item for the current user.
+
+        Args:
+            issue_id_or_key: the key of the work item.
+            vote: True to vte for the issue; False to remove the user's vote.
+
+        Returns:
+            An instance of `APIControllerResponse` with `APIControllerResponse.success == False` and
+            `APIControllerResponse.error` if an error occurs. `APIControllerResponse.success == True` if adding/removing
+            the user's vote succeeds.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Voting for work items is not supported by Jira DC installations.',
+            )
+
+        try:
+            if vote:
+                await self.api.add_work_item_vote(issue_id_or_key)
+            else:
+                await self.api.delete_work_item_vote(issue_id_or_key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to add/remove the vote for the work item',
+                extra={
+                    'work_item_key': issue_id_or_key,
+                    'add_vote': vote,
+                    'remove_vote': not vote,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse()
+
+    # watching
+
+    async def get_work_item_watchers(self, issue_id_or_key: str) -> APIControllerResponse:
+        """Retrieves details about the users watching an issue.
+
+        Args:
+            issue_id_or_key: the key of the item.
+
+        Returns:
+            An instance of `APIControllerResponse` with `APIControllerResponse.success == False` and
+            `APIControllerResponse.error` if an error occurs. `APIControllerResponse.success == True` and an instance of
+            `Watchers` with the details of the watchers. The field `is_watching` indicates whether the current user is
+            watching the issue or not.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Voting for work items is not supported by Jira DC installations.',
+            )
+
+        try:
+            response: dict = await self.api.retrieve_work_item_watchers(issue_id_or_key)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to retrieve watchers data for the work item',
+                extra={
+                    'work_item_key': issue_id_or_key,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+
+        watchers = Watchers(
+            is_watching=response.get('isWatching', False),
+            count=response.get('watchCount', 0),
+            watchers=[
+                JiraUser(
+                    account_id=voter.get('accountId'),
+                    active=voter.get('active'),
+                    display_name=voter.get('displayName') or voter.get('name'),
+                )
+                for voter in response.get('watchers', [])
+            ],
+        )
+        return APIControllerResponse(result=watchers)
+
+    async def update_work_item_watch_status(
+        self, issue_id_or_key: str, watch: bool
+    ) -> APIControllerResponse:
+        """Updates the watching status of a work item for the current user.
+
+        Args:
+            issue_id_or_key: the key of the work item.
+            watch: True to add the user as a watcher; False to remove the user.
+
+        Returns:
+            An instance of `APIControllerResponse` with `APIControllerResponse.success == False` and
+            `APIControllerResponse.error` if an error occurs. `APIControllerResponse.success == True` if adding/removing
+            the user as a watcher succeeds.
+        """
+
+        if not self.config.cloud:
+            return APIControllerResponse(
+                success=False,
+                error='Watching/Unwatching of work items is not supported by Jira DC installations.',
+            )
+
+        # get the account id of the user connecting to the API
+        user_data: APIControllerResponse = await self.myself()
+        if not user_data.success or not user_data.result:
+            return user_data
+
+        try:
+            if watch:
+                await self.api.add_watcher(issue_id_or_key, user_data.result.account_id)
+            else:
+                await self.api.delete_watcher(issue_id_or_key, user_data.result.account_id)
+        except Exception as e:
+            exception_details: dict = self._extract_exception_details(e)
+            self.logger.error(
+                'Failed to watch/unwatch the work item',
+                extra={
+                    'work_item_key': issue_id_or_key,
+                    'watch': watch,
+                    'unwatch': not watch,
+                    **exception_details.get('extra', {}),
+                },
+            )
+            return APIControllerResponse(success=False, error=exception_details.get('message'))
+        return APIControllerResponse()

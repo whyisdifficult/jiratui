@@ -4,7 +4,7 @@ import pytest
 
 from jiratui.widgets.screens.context_menu import (
     ContextMenu,
-    ContextMenuOptionAction,
+    ContextMenuAction,
     ContextMenuSelection,
 )
 
@@ -36,5 +36,5 @@ async def test_context_menu_screen_selection(app):
         await pilot.press('enter')
         # THEN
         assert isinstance(screen.dismiss.call_args[0][0], ContextMenuSelection)
-        assert screen.dismiss.call_args[0][0].action_id == ContextMenuOptionAction.ARCHIVE_WORK_ITEM
+        assert screen.dismiss.call_args[0][0].action_id == ContextMenuAction.ARCHIVE_WORK_ITEM
         assert screen.dismiss.call_args[0][0].work_item_key == 'WI-1'

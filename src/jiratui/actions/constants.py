@@ -13,6 +13,7 @@ class SupportedActions(Enum):
     ADD_ATTACHMENT = 'add_attachment'
     ADD_COMMENT = 'add_comment'
     ADD_REMOTE_LINK = 'add_remote_link'
+    ADD_VOTE = 'add_vote'
     CONFIG_INFO = 'config_info'
     COPY_CONTENT = 'copy_content'
     COPY_ISSUE_KEY = 'copy_issue_key'
@@ -27,6 +28,7 @@ class SupportedActions(Enum):
     DELETE_ATTACHMENT = 'delete_attachment'
     DELETE_COMMENT = 'delete_comment'
     DELETE_REMOTE_LINK = 'delete_remote_link'
+    DELETE_VOTE = 'delete_vote'
     DELETE_WORKLOG = 'delete_worklog'
     DELETE_WORK_ITEM = 'delete_work_item'
     EDIT_COMMENT = 'edit_comment'
@@ -86,9 +88,17 @@ class SupportedActions(Enum):
     VIEW_WORKLOG = 'view_worklog'
     VIEW_WORK_ITEM = 'view_work_item'
     OPEN_USER_MENTION_PICKER = 'open_user_mention_picker'
+    UNWATCH_WORK_ITEM = 'unwatch_work_item'
+    WATCH_WORK_ITEM = 'watch_work_item'
 
 
 KEY_BINDINGS_LEGACY = {
+    SupportedActions.ADD_VOTE.value: {
+        'keys': ['a'],
+        'show': True,
+        'description': 'Add Vote',
+        'tooltip': 'Vote for a work item',
+    },
     SupportedActions.HELP.value: {
         'keys': ['f1', 'ctrl+question_mark', 'ctrl+shift+slash'],
         'show': True,
@@ -106,6 +116,12 @@ KEY_BINDINGS_LEGACY = {
         'show': True,
         'description': '\u2699',
         'tooltip': 'View the configuration file',
+    },
+    SupportedActions.DELETE_VOTE.value: {
+        'keys': ['x'],
+        'show': True,
+        'description': 'Delete Vote',
+        'tooltip': 'Delete the vote for a work item',
     },
     SupportedActions.FOCUS_PROJECT_FILTER.value: {
         'keys': ['p'],
@@ -549,9 +565,27 @@ KEY_BINDINGS_LEGACY = {
         'description': 'Focuses the work item status dropdown',
         'tooltip': 'Focuses the work item status dropdown',
     },
+    SupportedActions.UNWATCH_WORK_ITEM.value: {
+        'keys': ['x'],
+        'show': True,
+        'description': 'Unwatch',
+        'tooltip': 'Stop watching the work item',
+    },
+    SupportedActions.WATCH_WORK_ITEM.value: {
+        'keys': ['a'],
+        'show': True,
+        'description': 'Watch',
+        'tooltip': 'Set the user as a watcher for a work item',
+    },
 }
 
 KEY_BINDINGS_STANDARD = {
+    SupportedActions.ADD_VOTE.value: {
+        'keys': ['a'],
+        'show': True,
+        'description': 'Add Vote',
+        'tooltip': 'Vote for a work item',
+    },
     # Help and Information
     SupportedActions.HELP.value: {
         'keys': ['f1'],
@@ -570,6 +604,12 @@ KEY_BINDINGS_STANDARD = {
         'show': True,
         'description': '\u2699',
         'tooltip': 'View the configuration file',
+    },
+    SupportedActions.DELETE_VOTE.value: {
+        'keys': ['x'],
+        'show': True,
+        'description': 'Delete Vote',
+        'tooltip': 'Delete the vote for a work item',
     },
     # Filter Focus - Alt+Letter (reliably works)
     SupportedActions.FOCUS_PROJECT_FILTER.value: {
@@ -1026,5 +1066,17 @@ KEY_BINDINGS_STANDARD = {
         'show': False,
         'description': 'Focuses the work item status dropdown',
         'tooltip': 'Focuses the work item status dropdown',
+    },
+    SupportedActions.UNWATCH_WORK_ITEM.value: {
+        'keys': ['x'],
+        'show': True,
+        'description': 'Unwatch',
+        'tooltip': 'Stop watching the work item',
+    },
+    SupportedActions.WATCH_WORK_ITEM.value: {
+        'keys': ['a'],
+        'show': True,
+        'description': 'Watch',
+        'tooltip': 'Set the user as a watcher for a work item',
     },
 }

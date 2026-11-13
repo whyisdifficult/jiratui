@@ -13,15 +13,26 @@ from jiratui.actions.keys import get_application_key_bindings
 from jiratui.utils.ui_actions import Actionable, UIAction
 
 
-class ContextMenuOptionAction(Enum):
+class ContextMenuAction(Enum):
     """The possible actions a user can select from the context menu."""
 
     CLONE_WORK_ITEM = 'clone_work_item'
     ARCHIVE_WORK_ITEM = 'archive_work_item'
+    VOTES = 'votes'
+    WATCHERS = 'watchers'
 
-    @classmethod
-    def options(cls):
-        return [(item.value.replace('_', ' ').title(), item.value) for item in cls]
+
+@dataclass
+class ContextMenuOption:
+    action_id: ContextMenuAction
+    """The name of the action. The action can be handled in the caller by implementing a method named
+    `menu_action_{action_id.value}`.
+    Example:
+    action_id = ContextMenuAction.CLONE_WORK_ITEM
+    def menu_action_clone_work_item(work_item_key):
+        ...
+    """
+    label: str
 
 
 @dataclass
@@ -29,7 +40,7 @@ class ContextMenuSelection:
     """The result returned by the context menu screen when the user selects an action."""
 
     work_item_key: str
-    action_id: ContextMenuOptionAction
+    action_id: ContextMenuAction
 
 
 class ContextMenuOptionList(Actionable, OptionList):
@@ -69,11 +80,32 @@ class ContextMenu(ModalScreen[ContextMenuSelection]):
 
     BINDINGS = [Binding('escape', 'app.pop_screen', 'Close')]
 
+    DEFAULT_MENU_OPTIONS = [
+        ContextMenuOption(
+            action_id=ContextMenuAction.CLONE_WORK_ITEM,
+            label='Clone Item...',
+        ),
+        ContextMenuOption(
+            action_id=ContextMenuAction.ARCHIVE_WORK_ITEM,
+            label='Archive Item',
+        ),
+        ContextMenuOption(
+            action_id=ContextMenuAction.VOTES,
+            label='Vote...',
+        ),
+        ContextMenuOption(
+            action_id=ContextMenuAction.WATCHERS,
+            label='Watch...',
+        ),
+    ]
+
     def __init__(self, work_item_key: str):
         super().__init__()
         self._work_item_key = work_item_key
         """The key of the work item to which the actions in the menu will be applied"""
-        self.__menu_options: list[tuple[str, str]] = ContextMenuOptionAction.options()
+        self.__menu_options: list[tuple[str, str]] = [
+            (option.label, option.action_id.value) for option in self.DEFAULT_MENU_OPTIONS
+        ]
 
     @property
     def options_list(self) -> ContextMenuOptionList:
@@ -95,7 +127,5 @@ class ContextMenu(ModalScreen[ContextMenuSelection]):
         message.stop()
         if message.option_id:
             self.dismiss(
-                ContextMenuSelection(
-                    self._work_item_key, ContextMenuOptionAction(message.option_id)
-                )
+                ContextMenuSelection(self._work_item_key, ContextMenuAction(message.option_id))
             )

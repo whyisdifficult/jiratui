@@ -54,12 +54,13 @@ from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screens.clone import CloneWorkItemRequest, CloneWorkItemScreen
 from jiratui.widgets.screens.context_menu import (
     ContextMenu,
-    ContextMenuOptionAction,
     ContextMenuSelection,
 )
 from jiratui.widgets.screens.git import GitScreen
 from jiratui.widgets.screens.history import HistoryScreen
 from jiratui.widgets.screens.text_search import TextSearchScreen
+from jiratui.widgets.screens.votes import WorkItemVotesScreen, WorkItemVoteUpdateRequest
+from jiratui.widgets.screens.watchers import WorkItemWatchersScreen, WorkItemWatchersUpdateRequest
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import (
     DataTableSearchInput,
@@ -731,10 +732,12 @@ class MainScreen(Actionable, Screen):
         # when the user requests opening the context menu from the search results table open the context menu screen
         message.stop()
         self.app.push_screen(
-            ContextMenu(message.work_item_key), callback=self._execute_contex_menu_action
+            ContextMenu(message.work_item_key), callback=self._handle_contex_menu_action_selection
         )
 
-    def _execute_contex_menu_action(self, data: ContextMenuSelection | None = None) -> None:
+    def _handle_contex_menu_action_selection(
+        self, data: ContextMenuSelection | None = None
+    ) -> None:
         """Executes the action selected by the user from the context menu.
 
         Args:
@@ -746,13 +749,26 @@ class MainScreen(Actionable, Screen):
         """
 
         if data and data.work_item_key and data.action_id:
-            if data.action_id == ContextMenuOptionAction.CLONE_WORK_ITEM:
-                # open the screen to allow the user to override some fields for cloning
-                self.app.push_screen(
-                    CloneWorkItemScreen(data.work_item_key), callback=self._clone_work_item
-                )
-            elif data.action_id == ContextMenuOptionAction.ARCHIVE_WORK_ITEM:
-                self.run_worker(self._archive_work_item(data.work_item_key), exclusive=True)
+            executable_action = getattr(self, f'menu_action_{data.action_id.value}', None)
+            if callable(executable_action):
+                executable_action(data.work_item_key)
+
+    def menu_action_votes(self, work_item_key: str) -> None:
+        self.app.push_screen(
+            WorkItemVotesScreen(work_item_key), callback=self._update_work_item_votes
+        )
+
+    def menu_action_archive_work_item(self, work_item_key: str) -> None:
+        self.run_worker(self._archive_work_item(work_item_key), exclusive=True)
+
+    def menu_action_clone_work_item(self, work_item_key: str) -> None:
+        # open the screen to allow the user to override some fields for cloning
+        self.app.push_screen(CloneWorkItemScreen(work_item_key), callback=self._clone_work_item)
+
+    def menu_action_watchers(self, work_item_key: str) -> None:
+        self.app.push_screen(
+            WorkItemWatchersScreen(work_item_key), callback=self._update_work_item_watching_status
+        )
 
     async def _clone_work_item(self, data: CloneWorkItemRequest | None = None) -> None:
         """Clones a work item.
@@ -796,6 +812,40 @@ class MainScreen(Actionable, Screen):
                 )
             else:
                 self.notify('Failed to archive the work item', title='Archive', severity='error')
+
+    async def _update_work_item_votes(self, data: WorkItemVoteUpdateRequest) -> None:
+        if data.work_item_key and data.update:
+            response = await self.api.update_work_item_vote(data.work_item_key, data.vote)
+            if response.success:
+                message = (
+                    f'I voted for the issue {data.work_item_key}'
+                    if data.vote
+                    else f'I removed my vote for the issue {data.work_item_key}'
+                )
+                self.notify(message, title='Votes')
+            else:
+                self.notify(
+                    'Failed to update voting for the work item', title='Votes', severity='error'
+                )
+                self.notify(str(response.error), title='Votes', severity='error')
+
+    async def _update_work_item_watching_status(self, data: WorkItemWatchersUpdateRequest) -> None:
+        if data.work_item_key and data.update:
+            response = await self.api.update_work_item_watch_status(data.work_item_key, data.watch)
+            if response.success:
+                message = (
+                    f'I am now watching the issue {data.work_item_key}'
+                    if data.watch
+                    else f'I am no longer watching the issue {data.work_item_key}'
+                )
+                self.notify(message, title='Watching Status')
+            else:
+                self.notify(
+                    'Failed to watch/unwatch the work item',
+                    title='Watching Status',
+                    severity='error',
+                )
+                self.notify(str(response.error), title='Watching Status', severity='error')
 
     # Work Item Context Menu - end
 
