@@ -7249,6 +7249,18 @@ def test_work_item_votes_screen_actions_and_bindings(bindings):
             system=False,
             group=None,
         ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
     ]
 
 
@@ -7257,9 +7269,9 @@ def test_work_item_watchers_screen_actions_and_bindings(bindings):
         UIAction(
             action=SupportedActions.WATCH_WORK_ITEM.value,
             keys=bindings.get(SupportedActions.WATCH_WORK_ITEM.value, {}).get('keys', []),
-            description='Add Vote',
+            description='Watch',
             show=True,
-            tooltip='Vote for a work item',
+            tooltip='Set the user as a watcher for a work item',
         ),
         UIAction(
             action=SupportedActions.UNWATCH_WORK_ITEM.value,
