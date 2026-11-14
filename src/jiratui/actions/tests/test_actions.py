@@ -74,6 +74,8 @@ from jiratui.widgets.screens.help import HelpScreen
 from jiratui.widgets.screens.history import HistoryScreen
 from jiratui.widgets.screens.jql import JQLEditorScreen
 from jiratui.widgets.screens.server import ServerInfoScreen
+from jiratui.widgets.screens.votes import WorkItemVotesScreen
+from jiratui.widgets.screens.watchers import WorkItemWatchersScreen
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import IssuesSearchResultsTable
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
@@ -7198,6 +7200,122 @@ def test_context_menu_option_list_actions_and_bindings(bindings):
             key_display=None,
             priority=False,
             tooltip='Move down',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_work_item_votes_screen_actions_and_bindings(bindings):
+    assert WorkItemVotesScreen.ACTIONS == [
+        UIAction(
+            action=SupportedActions.ADD_VOTE.value,
+            keys=bindings.get(SupportedActions.ADD_VOTE.value, {}).get('keys', []),
+            description='Add Vote',
+            show=True,
+            tooltip='Vote for a work item',
+        ),
+        UIAction(
+            action=SupportedActions.DELETE_VOTE.value,
+            keys=bindings.get(SupportedActions.DELETE_VOTE.value, {}).get('keys', []),
+            description='Delete Vote',
+            show=True,
+            tooltip='Delete the vote for a work item',
+        ),
+    ]
+    assert WorkItemVotesScreen.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.ADD_VOTE.value, {}).get('keys', [])),
+            action=SupportedActions.ADD_VOTE.value,
+            description='Add Vote',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Vote for a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(bindings.get(SupportedActions.DELETE_VOTE.value, {}).get('keys', [])),
+            action=SupportedActions.DELETE_VOTE.value,
+            description='Delete Vote',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Delete the vote for a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
+    ]
+
+
+def test_work_item_watchers_screen_actions_and_bindings(bindings):
+    assert WorkItemWatchersScreen.ACTIONS == [
+        UIAction(
+            action=SupportedActions.WATCH_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.WATCH_WORK_ITEM.value, {}).get('keys', []),
+            description='Watch',
+            show=True,
+            tooltip='Set the user as a watcher for a work item',
+        ),
+        UIAction(
+            action=SupportedActions.UNWATCH_WORK_ITEM.value,
+            keys=bindings.get(SupportedActions.UNWATCH_WORK_ITEM.value, {}).get('keys', []),
+            description='Unwatch',
+            show=True,
+            tooltip='Stop watching the work item',
+        ),
+    ]
+    assert WorkItemWatchersScreen.BINDINGS == [
+        Binding(
+            key=','.join(bindings.get(SupportedActions.WATCH_WORK_ITEM.value, {}).get('keys', [])),
+            action=SupportedActions.WATCH_WORK_ITEM.value,
+            description='Watch',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Set the user as a watcher for a work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key=','.join(
+                bindings.get(SupportedActions.UNWATCH_WORK_ITEM.value, {}).get('keys', [])
+            ),
+            action=SupportedActions.UNWATCH_WORK_ITEM.value,
+            description='Unwatch',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='Stop watching the work item',
+            id=None,
+            system=False,
+            group=None,
+        ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
             id=None,
             system=False,
             group=None,

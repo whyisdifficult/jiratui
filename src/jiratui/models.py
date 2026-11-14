@@ -1059,3 +1059,31 @@ class WorkItemArchivalSyncResponse(BaseModel):
 
     number_of_issues_updated: int
     errors: WorkItemArchivalErrors | None = None
+
+
+@dataclass
+class Votes(BaseModel):
+    """The details of votes on an issue.
+
+    **See Also**:
+    - [api-rest-api-3-issue-issueidorkey-votes-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-votes/#api-rest-api-3-issue-issueidorkey-votes-get)
+    """
+
+    has_voted: bool
+    """Indicates whether the user making the request has voted or not."""
+    voters: list[JiraUser]
+    votes: int
+
+
+@dataclass
+class Watchers(BaseModel):
+    """The details of watchers on an issue.
+
+    **See Also**:
+    - [api-rest-api-3-issue-issueidorkey-watchers-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-watchers/#api-rest-api-3-issue-issueidorkey-watchers-get)
+    """
+
+    is_watching: bool
+    """Indicates whether the user making the request is watching the issue."""
+    watchers: list[JiraUser]
+    count: int

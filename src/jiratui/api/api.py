@@ -1597,6 +1597,129 @@ class JiraAPI:
             data=json.dumps({'issueIdsOrKeys': [key]}),
         )
 
+    async def retrieve_work_item_votes(self, issue_id_or_key: str) -> dict:
+        """Retrieves details about the votes on an issue.
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-votes-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-votes/#api-rest-api-3-issue-issueidorkey-votes-get)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+
+        Returns:
+            A dict with the list of users that have voted on an issue, the number of votes in total and whether the
+            user making the request has voted or not.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/votes'
+        )
+
+    async def add_work_item_vote(self, issue_id_or_key: str) -> dict:
+        """Adds the user's vote to an issue.
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-votes-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-votes/#api-rest-api-3-issue-issueidorkey-votes-post)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+
+        Returns:
+            HTTP 204 on success.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.post, url=f'issue/{issue_id_or_key}/votes'
+        )
+
+    async def delete_work_item_vote(self, issue_id_or_key: str) -> bool:
+        """Deletes a user's vote from an issue.
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-votes-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-votes/#api-rest-api-3-issue-issueidorkey-votes-delete)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+
+        Returns:
+            HTTP 204 on success.
+        """
+
+        await self._client.make_request(
+            method=httpx.AsyncClient.delete, url=f'issue/{issue_id_or_key}/votes'
+        )
+        return True
+
+    async def retrieve_work_item_watchers(self, issue_id_or_key: str) -> dict:
+        """Retrieves details about the users watching an issue.
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-watchers-get](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-watchers/#api-rest-api-3-issue-issueidorkey-watchers-get)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+
+        Returns:
+            A dict with the list of users that are watching an issue, the number of watchers in total and whether the
+            user making the request is watching the issue or not.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.get, url=f'issue/{issue_id_or_key}/watchers'
+        )
+
+    async def add_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        """Adds a user as a watcher of an issue.
+
+        ```{important}
+        This operation requires the **Allow users to watch issues** option to be ON. This option is set in General
+        configuration for Jira. See [Configuring Jira application options](https://confluence.atlassian.com/x/uYXKM) for
+        details.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-watchers-post](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-watchers/#api-rest-api-3-issue-issueidorkey-watchers-post)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            user_account_id: the account id of the user.
+
+        Returns:
+            HTTP 204
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.post,
+            url=f'issue/{issue_id_or_key}/watchers',
+            json=user_account_id,
+        )
+
+    async def delete_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        """Deletes a user as a watcher of an issue.
+
+        ```{important}
+        This operation requires the **Allow users to watch issues** option to be ON. This option is set in General
+        configuration for Jira. See [Configuring Jira application options](https://confluence.atlassian.com/x/uYXKM) for
+        details.
+        ```
+
+        **See Also**:
+        - [api-rest-api-3-issue-issueidorkey-watchers-delete](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-watchers/#api-rest-api-3-issue-issueidorkey-watchers-delete)
+
+        Args:
+            issue_id_or_key: the ID or key of the issue.
+            user_account_id: the account id of the user.
+
+        Returns:
+            HTTP 204 if the request is successful.
+        """
+
+        return await self._client.make_request(
+            method=httpx.AsyncClient.delete,
+            url=f'issue/{issue_id_or_key}/watchers',
+            params={'accountId': user_account_id},
+        )
+
 
 class JiraAPIv2(JiraAPI):
     """Implements a client for the Jira Cloud Platform REST API v2.
@@ -2038,6 +2161,24 @@ class JiraDataCenterAPI(JiraAPI):
         raise NotImplementedError(
             'Unarchiving work items is not supported by Jira DC installations.'
         )
+
+    async def add_work_item_vote(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def delete_work_item_vote(self, issue_id_or_key: str) -> bool:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def retrieve_work_item_votes(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Voting is not supported by Jira DC installations.')
+
+    async def add_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
+
+    async def delete_watcher(self, issue_id_or_key: str, user_account_id: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
+
+    async def retrieve_work_item_watchers(self, issue_id_or_key: str) -> dict:
+        raise NotImplementedError('Watching work items is not supported by Jira DC installations.')
 
 
 class JiraSoftwareCloudAPI:

@@ -1572,3 +1572,30 @@ CloneWorkItemScreen > Vertical {
         margin-bottom: 1;
     }
 }
+
+WorkItemVotesScreen, WorkItemWatchersScreen {
+    align: center middle;
+    background: $background 80%;
+    & > Vertical {
+        width: 60%;
+        height: 45%;
+        border: round $foreground;
+        & > DataTable {
+            border: round $secondary;
+            background: transparent;
+            height: auto;
+            scrollbar-size-vertical: 1;
+        }
+        & > Label {
+            min-width: 9;
+            max-width: 12;
+            border: round $accent;
+            padding: 0 1;
+        }
+        & > Static {
+            width: 100%;
+            margin-top: 0;
+            padding: 0 1;
+        }
+    }
+}

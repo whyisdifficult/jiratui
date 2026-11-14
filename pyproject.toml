@@ -1,6 +1,6 @@
 [project]
 name = "jiratui"
-version = "1.19.0"
+version = "1.20.0"
 description = "A TUI for interacting with Atlassian Jira from your terminal."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
@@ -30,12 +30,12 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.5.0,<9.0.0",
-    "gitpython>=3.1.62,<3.3.0",
+    "gitpython>=3.2.1,<4.0.0",
     "httpx>=0.28.1",
     "marklas==0.8.6",
     "puremagic>=2.2.0,<3.0.0",
     "pydantic-settings[yaml]>=2.14.2,<3.0.0",
-    "python-dateutil>=2.9.0.post0",
+    "python-dateutil>=4.0.0,<5.0.0",
     "python-json-logger>=4.2.0,<5.0.0",
     "questionary>=2.1.1",
     "textual-autocomplete>=4.0.6",

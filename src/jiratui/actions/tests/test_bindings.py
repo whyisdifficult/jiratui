@@ -388,6 +388,22 @@ def test_standard_action_edit_comment():
     assert KEY_BINDINGS_STANDARD.get(SupportedActions.EDIT_COMMENT.value).get('keys') == ['e']
 
 
+def test_standard_action_watch_work_item():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.WATCH_WORK_ITEM.value).get('keys') == ['a']
+
+
+def test_standard_action_unwatch_work_item():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.UNWATCH_WORK_ITEM.value).get('keys') == ['x']
+
+
+def test_standard_action_vote_work_item():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.ADD_VOTE.value).get('keys') == ['a']
+
+
+def test_standard_action_unvote_work_item():
+    assert KEY_BINDINGS_STANDARD.get(SupportedActions.DELETE_VOTE.value).get('keys') == ['x']
+
+
 # Legacy Binding Style
 
 
@@ -757,3 +773,19 @@ def test_legacy_action_edit_comment():
 
 def test_legacy_action_open_context_menu():
     assert KEY_BINDINGS_LEGACY.get(SupportedActions.OPEN_CONTEXT_MENU.value).get('keys') == ['m']
+
+
+def test_legacy_action_watch_work_item():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.WATCH_WORK_ITEM.value).get('keys') == ['a']
+
+
+def test_legacy_action_unwatch_work_item():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.UNWATCH_WORK_ITEM.value).get('keys') == ['x']
+
+
+def test_legacy_action_vote_work_item():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.ADD_VOTE.value).get('keys') == ['a']
+
+
+def test_legacy_action_unvote_work_item():
+    assert KEY_BINDINGS_LEGACY.get(SupportedActions.DELETE_VOTE.value).get('keys') == ['x']
