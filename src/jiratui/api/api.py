@@ -1607,7 +1607,8 @@ class JiraAPI:
             issue_id_or_key: the ID or key of the issue.
 
         Returns:
-
+            A dict with the list of users that have voted on an issue, the number of votes in total and whether the
+            user making the request has voted or not.
         """
 
         return await self._client.make_request(
@@ -1659,7 +1660,8 @@ class JiraAPI:
             issue_id_or_key: the ID or key of the issue.
 
         Returns:
-
+            A dict with the list of users that are watching an issue, the number of watchers in total and whether the
+            user making the request is watching the issue or not.
         """
 
         return await self._client.make_request(

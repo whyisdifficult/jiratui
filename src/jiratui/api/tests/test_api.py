@@ -4063,8 +4063,104 @@ async def test_delete_watcher_not_supported_in_jira_dc(jira_api_dc: JiraDataCent
 async def test_retrieve_work_item_votes(jira_api: JiraAPI):
     # GIVEN
     route = respx.get(get_url_pattern('issue/1/votes'))
-    route.mock(return_value=httpx.Response(200, json={}))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'hasVoted': True,
+                'self': 'https://your-domain.atlassian.net/rest/api/issue/MKY-1/votes',
+                'voters': [
+                    {
+                        'accountId': '5b10a2844c20165700ede21g',
+                        'accountType': 'atlassian',
+                        'active': False,
+                        'displayName': 'Bart',
+                        'key': '',
+                        'name': '',
+                        'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+                    }
+                ],
+                'votes': 24,
+            },
+        )
+    )
     # WHEN
     result = await jira_api.retrieve_work_item_votes('1')
     # THEN
-    assert result == {'TODO add mock data'}
+    assert result == {
+        'hasVoted': True,
+        'self': 'https://your-domain.atlassian.net/rest/api/issue/MKY-1/votes',
+        'voters': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'active': False,
+                'displayName': 'Bart',
+                'key': '',
+                'name': '',
+                'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+            }
+        ],
+        'votes': 24,
+    }
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/votes'
+
+
+@pytest.mark.asyncio
+async def test_retrieve_work_item_votes_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Voting is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.retrieve_work_item_votes('1')
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_retrieve_work_item_watchers(jira_api: JiraAPI):
+    # GIVEN
+    route = respx.get(get_url_pattern('issue/1/watchers'))
+    route.mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                'isWatching': False,
+                'self': 'https://your-domain.atlassian.net/rest/api/3/issue/EX-1/watchers',
+                'watchCount': 1,
+                'watchers': [
+                    {
+                        'accountId': '5b10a2844c20165700ede21g',
+                        'active': False,
+                        'displayName': 'Bart',
+                        'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+                    }
+                ],
+            },
+        )
+    )
+    # WHEN
+    result = await jira_api.retrieve_work_item_watchers('1')
+    # THEN
+    assert result == {
+        'isWatching': False,
+        'self': 'https://your-domain.atlassian.net/rest/api/3/issue/EX-1/watchers',
+        'watchCount': 1,
+        'watchers': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'active': False,
+                'displayName': 'Bart',
+                'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+            }
+        ],
+    }
+    assert route.calls.last.request.url.path == '/rest/api/3/issue/1/watchers'
+
+
+@pytest.mark.asyncio
+async def test_retrieve_work_item_watchers_not_supported_in_jira_dc(jira_api_dc: JiraDataCenterAPI):
+    # WHEN/THEN
+    with pytest.raises(
+        NotImplementedError, match='Watching work items is not supported by Jira DC installations.'
+    ):
+        await jira_api_dc.retrieve_work_item_watchers('1')

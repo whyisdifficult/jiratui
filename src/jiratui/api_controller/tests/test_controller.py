@@ -40,6 +40,8 @@ from jiratui.models import (
     PaginatedJiraWorklog,
     Project,
     UpdateWorkItemResponse,
+    Votes,
+    Watchers,
     WorkItemArchivalErrors,
     WorkItemArchivalIssueIsSubtaskError,
     WorkItemArchivalIssuesInArchivedProjectsError,
@@ -5928,3 +5930,373 @@ async def test_unarchive_work_item_fails(
     response = await jira_api_controller.unarchive_work_item('WI-1')
     # THEN
     assert response == APIControllerResponse(success=False, error='test error')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_votes')
+async def test_get_work_item_votes_not_supported(
+    retrieve_work_item_votes_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.get_work_item_votes('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Voting for work items is not supported by Jira DC installations.'
+    )
+    retrieve_work_item_votes_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_votes')
+async def test_get_work_item_votes_fails(
+    retrieve_work_item_votes_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    retrieve_work_item_votes_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.get_work_item_votes('WI-1')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    retrieve_work_item_votes_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_votes')
+async def test_get_work_item_votes_succeeds(
+    retrieve_work_item_votes_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    retrieve_work_item_votes_mock.return_value = {
+        'hasVoted': True,
+        'self': 'https://your-domain.atlassian.net/rest/api/issue/MKY-1/votes',
+        'voters': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'accountType': 'atlassian',
+                'active': False,
+                'displayName': 'Bart',
+                'key': '',
+                'name': '',
+                'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+            }
+        ],
+        'votes': 24,
+    }
+    # WHEN
+    response = await jira_api_controller.get_work_item_votes('WI-1')
+    # THEN
+    retrieve_work_item_votes_mock.assert_awaited_once_with('WI-1')
+    assert response == APIControllerResponse(
+        success=True,
+        result=Votes(
+            has_voted=True,
+            votes=24,
+            voters=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_work_item_vote')
+async def test_update_work_item_vote_not_supported(
+    add_work_item_vote_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.update_work_item_vote('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Voting for work items is not supported by Jira DC installations.'
+    )
+    add_work_item_vote_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_work_item_vote')
+async def test_update_work_item_vote_fails_when_vote_is_true(
+    add_work_item_vote_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    add_work_item_vote_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.update_work_item_vote('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    add_work_item_vote_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_item_vote')
+async def test_update_work_item_vote_fails_when_vote_is_false(
+    delete_work_item_vote_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_work_item_vote_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.update_work_item_vote('WI-1', False)
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    delete_work_item_vote_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'add_work_item_vote')
+async def test_update_work_item_vote_succeeds_when_vote_is_true(
+    add_work_item_vote_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    add_work_item_vote_mock.return_value = {}
+    # WHEN
+    response = await jira_api_controller.update_work_item_vote('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(success=True)
+    add_work_item_vote_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_work_item_vote')
+async def test_update_work_item_vote_succeeds_when_vote_is_false(
+    delete_work_item_vote_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    delete_work_item_vote_mock.return_value = {}
+    # WHEN
+    response = await jira_api_controller.update_work_item_vote('WI-1', False)
+    # THEN
+    assert response == APIControllerResponse(success=True)
+    delete_work_item_vote_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_watchers')
+async def test_gget_work_item_watchers_not_supported(
+    retrieve_work_item_watchers_mock: AsyncMock, jira_api_controller_for_jira_dc: APIController
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.get_work_item_watchers('WI-1')
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Watching issues is not supported by Jira DC installations.'
+    )
+    retrieve_work_item_watchers_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_watchers')
+async def test_get_work_item_watchers_fails(
+    retrieve_work_item_watchers_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    retrieve_work_item_watchers_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.get_work_item_watchers('WI-1')
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    retrieve_work_item_watchers_mock.assert_awaited_once_with('WI-1')
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'retrieve_work_item_watchers')
+async def test_get_work_item_watchers_succeeds(
+    retrieve_work_item_watchers_mock: AsyncMock, jira_api_controller: APIController
+):
+    # GIVEN
+    retrieve_work_item_watchers_mock.return_value = {
+        'isWatching': False,
+        'self': 'https://your-domain.atlassian.net/rest/api/3/issue/EX-1/watchers',
+        'watchCount': 1,
+        'watchers': [
+            {
+                'accountId': '5b10a2844c20165700ede21g',
+                'active': False,
+                'displayName': 'Bart',
+                'self': 'https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g',
+            }
+        ],
+    }
+    # WHEN
+    response = await jira_api_controller.get_work_item_watchers('WI-1')
+    # THEN
+    retrieve_work_item_watchers_mock.assert_awaited_once_with('WI-1')
+    assert response == APIControllerResponse(
+        success=True,
+        result=Watchers(
+            is_watching=False,
+            count=1,
+            watchers=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_not_supported(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    jira_api_controller_for_jira_dc: APIController,
+):
+    # WHEN
+    response = await jira_api_controller_for_jira_dc.update_work_item_watch_status('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(
+        success=False, error='Watching issues is not supported by Jira DC installations.'
+    )
+    add_watcher_mock.assert_not_awaited()
+    delete_watcher_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'myself')
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_unable_to_fetch_user_details(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    myself_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    myself_mock.return_value = APIControllerResponse(success=False)
+    # WHEN
+    response = await jira_api_controller.update_work_item_watch_status('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(success=False)
+    add_watcher_mock.assert_not_awaited()
+    delete_watcher_mock.assert_not_awaited()
+    myself_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'myself')
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_add_watcher_fails(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    myself_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    myself_mock.return_value = APIControllerResponse(
+        result=JiraMyselfInfo(
+            account_id='12345',
+            account_type='atlassian',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+            groups=[],
+        )
+    )
+    add_watcher_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.update_work_item_watch_status('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    add_watcher_mock.assert_awaited_once_with('WI-1', '12345')
+    delete_watcher_mock.assert_not_awaited()
+    myself_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'myself')
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_delete_watcher_fails(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    myself_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    myself_mock.return_value = APIControllerResponse(
+        result=JiraMyselfInfo(
+            account_id='12345',
+            account_type='atlassian',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+            groups=[],
+        )
+    )
+    delete_watcher_mock.side_effect = ValueError('test error')
+    # WHEN
+    response = await jira_api_controller.update_work_item_watch_status('WI-1', False)
+    # THEN
+    assert response == APIControllerResponse(success=False, error='test error')
+    delete_watcher_mock.assert_awaited_once_with('WI-1', '12345')
+    add_watcher_mock.assert_not_awaited()
+    myself_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'myself')
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_add_watcher_succeeds(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    myself_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    myself_mock.return_value = APIControllerResponse(
+        result=JiraMyselfInfo(
+            account_id='12345',
+            account_type='atlassian',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+            groups=[],
+        )
+    )
+    add_watcher_mock.return_value = {}
+    # WHEN
+    response = await jira_api_controller.update_work_item_watch_status('WI-1', True)
+    # THEN
+    assert response == APIControllerResponse(success=True)
+    add_watcher_mock.assert_awaited_once_with('WI-1', '12345')
+    delete_watcher_mock.assert_not_awaited()
+    myself_mock.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch.object(APIController, 'myself')
+@patch.object(JiraAPI, 'delete_watcher')
+@patch.object(JiraAPI, 'add_watcher')
+async def test_update_work_item_watch_status_delete_watcher_succeeds(
+    add_watcher_mock: AsyncMock,
+    delete_watcher_mock: AsyncMock,
+    myself_mock: AsyncMock,
+    jira_api_controller: APIController,
+):
+    # GIVEN
+    myself_mock.return_value = APIControllerResponse(
+        result=JiraMyselfInfo(
+            account_id='12345',
+            account_type='atlassian',
+            active=True,
+            display_name='Bart',
+            email='bart@simpson.com',
+            groups=[],
+        )
+    )
+    delete_watcher_mock.return_value = {}
+    # WHEN
+    response = await jira_api_controller.update_work_item_watch_status('WI-1', False)
+    # THEN
+    assert response == APIControllerResponse(success=True)
+    delete_watcher_mock.assert_awaited_once_with('WI-1', '12345')
+    add_watcher_mock.assert_not_awaited()
+    myself_mock.assert_awaited_once()

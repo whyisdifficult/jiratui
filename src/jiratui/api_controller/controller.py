@@ -3484,19 +3484,20 @@ class APIController:
             )
             return APIControllerResponse(success=False, error=exception_details.get('message'))
 
-        votes = Votes(
-            has_voted=response.get('hasVoted', False),
-            votes=response.get('votes', 0),
-            voters=[
-                JiraUser(
-                    account_id=voter.get('accountId'),
-                    active=voter.get('active'),
-                    display_name=voter.get('displayName') or voter.get('name'),
-                )
-                for voter in response.get('voters', [])
-            ],
+        return APIControllerResponse(
+            result=Votes(
+                has_voted=response.get('hasVoted', False),
+                votes=response.get('votes', 0),
+                voters=[
+                    JiraUser(
+                        account_id=voter.get('accountId'),
+                        active=voter.get('active'),
+                        display_name=voter.get('displayName') or voter.get('name'),
+                    )
+                    for voter in response.get('voters', [])
+                ],
+            )
         )
-        return APIControllerResponse(result=votes)
 
     async def update_work_item_vote(
         self, issue_id_or_key: str, vote: bool
@@ -3556,7 +3557,7 @@ class APIController:
         if not self.config.cloud:
             return APIControllerResponse(
                 success=False,
-                error='Voting for work items is not supported by Jira DC installations.',
+                error='Watching issues is not supported by Jira DC installations.',
             )
 
         try:
@@ -3604,7 +3605,7 @@ class APIController:
         if not self.config.cloud:
             return APIControllerResponse(
                 success=False,
-                error='Watching/Unwatching of work items is not supported by Jira DC installations.',
+                error='Watching issues is not supported by Jira DC installations.',
             )
 
         # get the account id of the user connecting to the API
