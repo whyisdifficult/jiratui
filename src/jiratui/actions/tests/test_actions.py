@@ -7308,4 +7308,16 @@ def test_work_item_watchers_screen_actions_and_bindings(bindings):
             system=False,
             group=None,
         ),
+        Binding(
+            key='escape',
+            action='app.pop_screen',
+            description='Close',
+            show=True,
+            key_display=None,
+            priority=False,
+            tooltip='',
+            id=None,
+            system=False,
+            group=None,
+        ),
     ]
