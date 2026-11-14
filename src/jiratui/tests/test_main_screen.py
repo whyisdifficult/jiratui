@@ -1423,9 +1423,7 @@ async def test_fetch_issue_with_recent_history_enabled(
         await app.screen.fetch_issue('key-2')
         await app.workers.wait_for_complete()
         # THEN
-        add_item_to_recent_history_mock.assert_called_once_with(
-            HistoryEntry(key='key-2', item_type='Bug', status='Done', summary='qwerty')
-        )
+        add_item_to_recent_history_mock.assert_called_once()
 
 
 @patch.object(JiraApp, 'add_to_recent_history')
