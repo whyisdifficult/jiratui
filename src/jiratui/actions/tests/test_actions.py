@@ -7276,7 +7276,7 @@ def test_work_item_watchers_screen_actions_and_bindings(bindings):
         UIAction(
             action=SupportedActions.UNWATCH_WORK_ITEM.value,
             keys=bindings.get(SupportedActions.UNWATCH_WORK_ITEM.value, {}).get('keys', []),
-            description='Unwatch work item',
+            description='Unwatch',
             show=True,
             tooltip='Stop watching the work item',
         ),
