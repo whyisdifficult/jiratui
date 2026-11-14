@@ -16,6 +16,8 @@ from jiratui.models import (
     JiraIssueSearchResponse,
     JiraUser,
     Project,
+    Votes,
+    Watchers,
     WorkItemArchivalSyncResponse,
     WorkItemsSearchOrderBy,
 )
@@ -42,7 +44,13 @@ from jiratui.widgets.related_work_items.related_issues import (
 from jiratui.widgets.remote_links.links import IssueRemoteLinksWidget
 from jiratui.widgets.screen import MainScreen, WorkItemSearchResult
 from jiratui.widgets.screens.clone import CloneWorkItemScreen
-from jiratui.widgets.screens.context_menu import ContextMenu
+from jiratui.widgets.screens.context_menu import (
+    ContextMenu,
+    ContextMenuAction,
+    ContextMenuSelection,
+)
+from jiratui.widgets.screens.votes import WorkItemVotesScreen, WorkItemVoteUpdateRequest
+from jiratui.widgets.screens.watchers import WorkItemWatchersScreen, WorkItemWatchersUpdateRequest
 from jiratui.widgets.screens.work_item_quick_view import WorkItemQuickViewScreen
 from jiratui.widgets.search import IssuesSearchResultsTable, SearchResultsContainer
 from jiratui.widgets.work_item_details.details import IssueDetailsWidget
@@ -1681,3 +1689,298 @@ async def test_context_menu_dismissed_with_archive_action_requests_archiving(
         assert isinstance(app.screen, MainScreen)
         # THEN
         archive_work_item_mock.assert_awaited_once_with('WI-1')
+
+
+@patch.object(APIController, 'get_work_item_votes')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_vote_action_opens_votes_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_votes_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_votes_mock.return_value = APIControllerResponse(
+        result=Votes(
+            has_voted=True,
+            votes=1,
+            voters=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.VOTES))
+        )
+        # THEN
+        assert isinstance(app.screen, WorkItemVotesScreen)
+
+
+@patch.object(APIController, 'get_work_item_watchers')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_context_menu_dismissed_with_watch_action_opens_watch_screen(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_watchers_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_watchers_mock.return_value = APIControllerResponse(
+        result=Watchers(
+            is_watching=True,
+            count=1,
+            watchers=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.WATCHERS))
+        )
+        # THEN
+        assert isinstance(app.screen, WorkItemWatchersScreen)
+
+
+@patch.object(APIController, 'update_work_item_vote')
+@patch.object(APIController, 'get_work_item_votes')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_votes_screen_dismissed_with_vote_request(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_votes_mock: AsyncMock,
+    update_work_item_vote_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_votes_mock.return_value = APIControllerResponse(
+        result=Votes(
+            has_voted=False,
+            votes=1,
+            voters=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.VOTES))
+        )
+        await pilot.press('a')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        update_work_item_vote_mock.assert_awaited_once_with('WI-1', True)
+
+
+@patch.object(APIController, 'update_work_item_vote')
+@patch.object(APIController, 'get_work_item_votes')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_votes_screen_dismissed_with_unvote_request(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_votes_mock: AsyncMock,
+    update_work_item_vote_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_votes_mock.return_value = APIControllerResponse(
+        result=Votes(
+            has_voted=True,
+            votes=1,
+            voters=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.VOTES))
+        )
+        await pilot.press('x')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        update_work_item_vote_mock.assert_awaited_once_with('WI-1', False)
+
+
+@patch.object(APIController, 'update_work_item_vote')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_update_work_item_votes_with_update_false(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    update_work_item_vote_mock: AsyncMock,
+    app,
+):
+    async with app.run_test():
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen._update_work_item_votes(WorkItemVoteUpdateRequest('WI-1', False, False))
+        # THEN
+        update_work_item_vote_mock.assert_not_awaited()
+
+
+####
+
+
+@patch.object(APIController, 'update_work_item_watch_status')
+@patch.object(APIController, 'get_work_item_watchers')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_watch_screen_dismissed_with_watch_request(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_watchers_mock: AsyncMock,
+    update_work_item_watch_status_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_watchers_mock.return_value = APIControllerResponse(
+        result=Watchers(
+            is_watching=False,
+            count=1,
+            watchers=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.WATCHERS))
+        )
+        await pilot.press('a')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        update_work_item_watch_status_mock.assert_awaited_once_with('WI-1', True)
+
+
+@patch.object(APIController, 'update_work_item_watch_status')
+@patch.object(APIController, 'get_work_item_watchers')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_watch_screen_dismissed_with_unwatch_request(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    get_work_item_watchers_mock: AsyncMock,
+    update_work_item_watch_status_mock: AsyncMock,
+    app,
+):
+    # GIVEN
+    get_work_item_watchers_mock.return_value = APIControllerResponse(
+        result=Watchers(
+            is_watching=True,
+            count=1,
+            watchers=[
+                JiraUser(
+                    account_id='5b10a2844c20165700ede21g',
+                    active=False,
+                    display_name='Bart',
+                )
+            ],
+        ),
+    )
+    async with app.run_test() as pilot:
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        screen.post_message(IssuesSearchResultsTable.OpenContextMenu('WI-1'))
+        await pilot.pause()
+        assert isinstance(app.screen, ContextMenu)
+        await app.screen.dismiss(
+            ContextMenuSelection('WI-1', ContextMenuAction(ContextMenuAction.WATCHERS))
+        )
+        await pilot.press('x')
+        # THEN
+        assert isinstance(app.screen, MainScreen)
+        update_work_item_watch_status_mock.assert_awaited_once_with('WI-1', False)
+
+
+@patch.object(APIController, 'update_work_item_watch_status')
+@patch('jiratui.widgets.screen.MainScreen.fetch_statuses')
+@patch('jiratui.widgets.screen.MainScreen.fetch_issue_types')
+@patch('jiratui.widgets.screen.MainScreen.fetch_projects')
+@pytest.mark.asyncio
+async def test_update_work_item_watching_status_with_update_false(
+    fetch_projects_mock: AsyncMock,
+    fetch_issue_types_mock: AsyncMock,
+    fetch_statuses_mock: AsyncMock,
+    update_work_item_watch_status_mock: AsyncMock,
+    app,
+):
+    async with app.run_test():
+        screen = cast('MainScreen', app.screen)  # type:ignore[name-defined] # noqa: F821
+        # WHEN
+        await screen._update_work_item_watching_status(
+            WorkItemWatchersUpdateRequest('WI-1', False, False)
+        )
+        # THEN
+        update_work_item_watch_status_mock.assert_not_awaited()

@@ -15,7 +15,8 @@ from jiratui.utils.ui_actions import Actionable, UIAction
 
 @dataclass
 class WorkItemVoteUpdateRequest:
-    """"""
+    """The result of the modal screen when the user dismisses the screen by pressing the keys to vote or to remove a
+    vote from a work item."""
 
     work_item_key: str
     vote: bool
@@ -25,7 +26,7 @@ class WorkItemVoteUpdateRequest:
 
 
 class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
-    """A modal screen that allows users to view the votes and update their vote on work item."""
+    """A modal screen that allows users to view the votes and update their vote on a work item."""
 
     ACTIONS: list[UIAction] = []
     # set up the key-bindings based on the configuration selected by the user
@@ -60,8 +61,8 @@ class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
     def __init__(self, work_item_key: str):
         super().__init__()
         self.__work_item_key = work_item_key
-        self.__voting_enabled = True
-        self.__unvoting_enabled = False
+        self.voting_enabled = True
+        self.unvoting_enabled = False
 
     @property
     def vertical_container(self) -> Vertical:
@@ -97,9 +98,9 @@ class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
 
-        if action == SupportedActions.ADD_VOTE.value and not self.__voting_enabled:
+        if action == SupportedActions.ADD_VOTE.value and not self.voting_enabled:
             return False
-        if action == SupportedActions.DELETE_VOTE.value and not self.__unvoting_enabled:
+        if action == SupportedActions.DELETE_VOTE.value and not self.unvoting_enabled:
             return False
         return True
 
@@ -109,8 +110,8 @@ class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
         )
         if response.success and response.result:
             votes: Votes = response.result
-            self.__voting_enabled = not votes.has_voted
-            self.__unvoting_enabled = votes.has_voted
+            self.voting_enabled = not votes.has_voted
+            self.unvoting_enabled = votes.has_voted
             if votes.has_voted:
                 self.vote_status_field.content = 'Voted'
                 self.vote_status_field.styles.display = 'block'
@@ -126,6 +127,9 @@ class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
             else:
                 self.message.content = 'The work item does not have votes yet.'
                 self.message.display = True
+        else:
+            self.message.content = 'Failed to retrieve voting data'
+            self.message.display = True
         self.refresh_bindings()
 
     def action_add_vote(self) -> None:

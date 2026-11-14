@@ -723,7 +723,7 @@ class MainScreen(Actionable, Screen):
         elif event.worker.name == 'fetch_issue_types':
             self.issue_type_selector.set_options(event.worker.result or [])
 
-    # Work Item Context Menu - start
+    # Context Menu - start
 
     @on(IssuesSearchResultsTable.OpenContextMenu)
     def _open_work_item_context_menu(
@@ -847,7 +847,7 @@ class MainScreen(Actionable, Screen):
                 )
                 self.notify(str(response.error), title='Watching Status', severity='error')
 
-    # Work Item Context Menu - end
+    # Context Menu - end
 
     @on(Select.Changed, '#jira-project-selector')
     async def handle_project_selection(self, event: Select.Changed) -> None:

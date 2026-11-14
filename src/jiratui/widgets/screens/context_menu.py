@@ -41,6 +41,13 @@ class ContextMenuSelection:
 
     work_item_key: str
     action_id: ContextMenuAction
+    """The name of the action. The action can be handled in the caller by implementing a method named
+    `menu_action_{action_id.value}`.
+    Example:
+    action_id = ContextMenuAction.CLONE_WORK_ITEM
+    def menu_action_clone_work_item(work_item_key):
+        ...
+    """
 
 
 class ContextMenuOptionList(Actionable, OptionList):
@@ -123,7 +130,7 @@ class ContextMenu(ModalScreen[ContextMenuSelection]):
         self.focus()
 
     @on(ContextMenuOptionList.OptionSelected)
-    def handle_option_selection(self, message: ContextMenuOptionList.OptionSelected) -> None:  # type:ignore[name-defined]
+    def _handle_option_selection(self, message: ContextMenuOptionList.OptionSelected) -> None:  # type:ignore[name-defined]
         message.stop()
         if message.option_id:
             self.dismiss(

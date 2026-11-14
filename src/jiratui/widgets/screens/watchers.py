@@ -61,8 +61,8 @@ class WorkItemWatchersScreen(Actionable, ModalScreen[WorkItemWatchersUpdateReque
     def __init__(self, work_item_key: str):
         super().__init__()
         self.__work_item_key = work_item_key
-        self.__watching_enabled = True
-        self.__unwatching_enabled = False
+        self.watching_enabled = True
+        self.unwatching_enabled = False
 
     @property
     def vertical_container(self) -> Vertical:
@@ -98,9 +98,9 @@ class WorkItemWatchersScreen(Actionable, ModalScreen[WorkItemWatchersUpdateReque
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
         """Check if an action may run."""
 
-        if action == SupportedActions.WATCH_WORK_ITEM.value and not self.__watching_enabled:
+        if action == SupportedActions.WATCH_WORK_ITEM.value and not self.watching_enabled:
             return False
-        if action == SupportedActions.UNWATCH_WORK_ITEM.value and not self.__unwatching_enabled:
+        if action == SupportedActions.UNWATCH_WORK_ITEM.value and not self.unwatching_enabled:
             return False
         return True
 
@@ -110,8 +110,8 @@ class WorkItemWatchersScreen(Actionable, ModalScreen[WorkItemWatchersUpdateReque
         )
         if response.success and response.result:
             watchers: Watchers = response.result
-            self.__watching_enabled = not watchers.is_watching
-            self.__unwatching_enabled = watchers.is_watching
+            self.watching_enabled = not watchers.is_watching
+            self.unwatching_enabled = watchers.is_watching
             if watchers.is_watching:
                 self.watching_status_field.content = 'Watching'
                 self.watching_status_field.styles.display = 'block'
@@ -125,8 +125,11 @@ class WorkItemWatchersScreen(Actionable, ModalScreen[WorkItemWatchersUpdateReque
                 self.datatable.display = True
                 self.message.display = False
             else:
-                self.message.content = 'The work item does not have watchers yet.'
+                self.message.content = 'The work item does not have watchers yet'
                 self.message.display = True
+        else:
+            self.message.content = 'Failed to retrieve watch data'
+            self.message.display = True
         self.refresh_bindings()
 
     def action_watch_work_item(self) -> None:
