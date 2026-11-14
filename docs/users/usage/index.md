@@ -251,6 +251,11 @@ context.
 | `down`, `j`  | Move down                                                                   | Search results table                                                    |
 | `right`, `l` | Move to the right                                                           | Search results table                                                    |
 | `left`, `h`  | Move to the left                                                            | Search results table                                                    |
+| `m`  | Opens context menu                                                           | Search results table                                                    |
+| `a`  | Add vote to the selected work item                                                            | Voting screen                                                    |
+| `x`  | Remove vote from the selected work item                                                           | Voting screen                                                    |
+| `a`  | Watch the selected work item                                                            | Watch screen                                                    |
+| `x`  | Unwatch the selected work item                                                           | Watch screen                                                    |
 | `^u`         | Move 1 page up                                                              | Search results table, Scrollable content                                |
 | `^d`         | Move 1 page down                                                            | Search results table, Scrollable content                                |
 | `g`          | Scroll to the top                                                           | Search results table, Scrollable content                                |
@@ -363,6 +368,11 @@ context.
 | `d`                 | Delete attachment                                        |         |
 | `z`      | Focus the status dropdown when editing items details                        | Details Tab                                                             |
 | `ctrl+@` | Allows searching users to mention in comments and work item textarea fields | Create work item screen, Comments Tab                                               |
+| `m`  | Opens context menu                                                           | Search results table                                                    |
+| `a`  | Add vote to the selected work item                                                            | Voting screen                                                    |
+| `x`  | Remove vote from the selected work item                                                           | Voting screen                                                    |
+| `a`  | Watch the selected work item                                                            | Watch screen                                                    |
+| `x`  | Unwatch the selected work item                                                           | Watch screen                                                    |
 
 ### Searching Work Items
 
