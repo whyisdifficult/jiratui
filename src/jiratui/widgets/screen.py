@@ -150,7 +150,7 @@ class MainScreen(Actionable, Screen):
             )
         )
 
-    BINDINGS = [
+    BINDINGS = [  # type:ignore[assignment]
         Binding(
             key=','.join(action.keys),
             action=action.action,

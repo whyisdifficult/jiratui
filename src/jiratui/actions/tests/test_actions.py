@@ -4819,7 +4819,6 @@ async def test_action_cursor_up_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
         # THEN
         action_cursor_up_mock.assert_called_once()
@@ -4847,7 +4846,6 @@ async def test_action_cursor_down_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
         # THEN
         action_cursor_down_mock.assert_called_once()
@@ -4875,7 +4873,6 @@ async def test_action_page_up_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
         # THEN
         action_page_up_mock.assert_called_once()
@@ -4903,7 +4900,6 @@ async def test_action_page_down_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
         # THEN
         action_page_down_mock.assert_called_once()
@@ -4931,7 +4927,6 @@ async def test_action_scroll_top_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
         # THEN
         action_scroll_top_mock.assert_called_once()
@@ -4959,7 +4954,6 @@ async def test_action_scroll_bottom_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
         # THEN
         action_scroll_bottom_mock.assert_called_once()
@@ -4987,7 +4981,6 @@ async def test_action_select_cursor_in_goto_screen(
     )
     async with app.run_test() as pilot:
         app.push_screen(GoToScreen(jira_issues[0].key, APIController()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
         # THEN
         action_select_cursor_mock.assert_called_once()
@@ -5016,7 +5009,6 @@ async def test_action_cursor_up_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('cursor_up', {}).get('keys', [])[0])
         # THEN
         action_cursor_up_mock.assert_called_once()
@@ -5046,7 +5038,6 @@ async def test_action_cursor_down_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('cursor_down', {}).get('keys', [])[0])
         # THEN
         action_cursor_down_mock.assert_called_once()
@@ -5076,7 +5067,6 @@ async def test_action_page_up_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('page_up', {}).get('keys', [])[0])
         # THEN
         action_page_up_mock.assert_called_once()
@@ -5106,7 +5096,6 @@ async def test_action_page_down_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('page_down', {}).get('keys', [])[0])
         # THEN
         action_page_down_mock.assert_called_once()
@@ -5136,7 +5125,6 @@ async def test_action_scroll_top_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('scroll_top', {}).get('keys', [])[0])
         # THEN
         action_scroll_top_mock.assert_called_once()
@@ -5166,7 +5154,6 @@ async def test_action_scroll_bottom_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('scroll_bottom', {}).get('keys', [])[0])
         # THEN
         action_scroll_bottom_mock.assert_called_once()
@@ -5196,7 +5183,6 @@ async def test_action_select_cursor_in_history_screen(
     ]
     async with app.run_test() as pilot:
         app.push_screen(HistoryScreen(HistoryManager()))
-        await pilot.press('tab')
         await pilot.press(bindings.get('select_cursor', {}).get('keys', [])[0])
         # THEN
         action_select_cursor_mock.assert_called_once()
@@ -5718,6 +5704,13 @@ def test_main_screen_actions_and_bindings(bindings: dict):
             id=None,
             system=False,
             group=None,
+        ),
+        Binding(
+            key='escape',
+            action='unfocus',
+            show=False,
+            description='Unfocus the currently-focused widget.',
+            tooltip='',
         ),
     ]
 
