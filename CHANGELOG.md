@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pressing `escape` in the main screen unfocus the widget currently focused. In https://github.com/whyisdifficult/jiratui/pull/406
 
+### Minor Improvements
+
+- Add `textual-speedups`. In https://github.com/whyisdifficult/jiratui/pull/406
+
 ## [1.20.0] 2026-11-14
 
 ### Added
