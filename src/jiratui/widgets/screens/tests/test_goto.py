@@ -397,7 +397,6 @@ async def test_goto_screen_copy_key(
         await app.push_screen(screen)
         await app.workers.wait_for_complete()
         await pilot.press('tab')
-        await pilot.press('tab')
         await pilot.press('ctrl+k')
         # THEN
         copy_to_clipboard_mock.assert_called_once_with('key-1')

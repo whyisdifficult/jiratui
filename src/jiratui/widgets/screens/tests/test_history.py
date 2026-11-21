@@ -53,7 +53,6 @@ async def test_history_screen_copy_key(app):
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
-        await pilot.press('tab')
         await pilot.press('ctrl+k')
         # THEN
         app.copy_to_clipboard.assert_called_once_with('key-1')
@@ -62,15 +61,15 @@ async def test_history_screen_copy_key(app):
 @pytest.mark.asyncio
 async def test_history_screen_copy_key_no_row_highlighted(app):
     # GIVEN
-    manager = HistoryManager()
-    manager.add_work_item(
-        HistoryEntry(key='key-1', item_type='task', status='completed', summary='summary 1')
-    )
+    manager = HistoryManager()  # now data to display
     async with app.run_test() as pilot:
         app.copy_to_clipboard = Mock()
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
+        dt = screen.query_one(HistoryWorkItemsTable)
+        assert dt.row_count == 0
+        await pilot.press('tab')
         await pilot.press('ctrl+k')
         # THEN
         app.copy_to_clipboard.assert_not_called()
@@ -90,7 +89,6 @@ async def test_history_screen_copy_url(build_external_url_for_issue_mock: Mock, 
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
-        await pilot.press('tab')
         await pilot.press('ctrl+j')
         # THEN
         app.copy_to_clipboard.assert_called_once_with('http://foo.bar/key-1')
@@ -99,15 +97,15 @@ async def test_history_screen_copy_url(build_external_url_for_issue_mock: Mock, 
 @pytest.mark.asyncio
 async def test_history_screen_copy_url_no_row_highlighted(app):
     # GIVEN
-    manager = HistoryManager()
-    manager.add_work_item(
-        HistoryEntry(key='key-1', item_type='task', status='completed', summary='summary 1')
-    )
+    manager = HistoryManager()  # now data to display
     async with app.run_test() as pilot:
         app.copy_to_clipboard = Mock()
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
+        dt = screen.query_one(HistoryWorkItemsTable)
+        assert dt.row_count == 0
+        await pilot.press('tab')
         await pilot.press('ctrl+j')
         # THEN
         app.copy_to_clipboard.assert_not_called()
@@ -127,7 +125,6 @@ async def test_history_screen_open_url(build_external_url_for_issue_mock: Mock, 
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
-        await pilot.press('tab')
         await pilot.press('ctrl+o')
         # THEN
         app.open_url.assert_called_once_with('http://foo.bar/key-1')
@@ -137,14 +134,14 @@ async def test_history_screen_open_url(build_external_url_for_issue_mock: Mock, 
 async def test_history_screen_open_url_no_row_highlighted(app):
     # GIVEN
     manager = HistoryManager()
-    manager.add_work_item(
-        HistoryEntry(key='key-1', item_type='task', status='completed', summary='summary 1')
-    )
     async with app.run_test() as pilot:
         app.open_url = Mock()
         # WHEN
         screen = HistoryScreen(manager)
         await app.push_screen(screen)
+        dt = screen.query_one(HistoryWorkItemsTable)
+        assert dt.row_count == 0
+        await pilot.press('tab')
         await pilot.press('ctrl+o')
         # THEN
         app.open_url.assert_not_called()
@@ -162,7 +159,6 @@ async def test_history_screen_select_item_row(app):
         screen = HistoryScreen(manager)
         screen.dismiss = Mock()
         await app.push_screen(screen)
-        await pilot.press('tab')
         await pilot.press('enter')
         # THEN
         assert screen.dismiss.call_args[0][0] == 'key-1'
