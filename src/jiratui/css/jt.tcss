@@ -437,9 +437,9 @@ GoToScreen > VerticalScroll {
 
 /* New Comment Screen */
 
-AddCommentScreen {
+AddUpdateCommentScreen {
     align: center middle;
-    background: $background 90%;
+    background: $background 80%;
 }
 
 #add-comment-screen-vertical {

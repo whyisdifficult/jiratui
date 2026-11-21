@@ -886,7 +886,6 @@ async def test_dismiss_goto_screen_with_key(
         await pilot.press('5')
         await pilot.press('tab')
         await pilot.press('f6')
-        await pilot.press('tab')
         await pilot.press('enter')
         # THEN
         assert isinstance(app.screen, MainScreen)

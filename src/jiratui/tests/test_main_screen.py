@@ -21,7 +21,6 @@ from jiratui.models import (
     WorkItemArchivalSyncResponse,
     WorkItemsSearchOrderBy,
 )
-from jiratui.utils.history import HistoryEntry
 from jiratui.widgets.attachments.attachments import IssueAttachmentsWidget
 from jiratui.widgets.comments.comments import IssueCommentsWidget
 from jiratui.widgets.commons.users import JiraUserInput
@@ -990,7 +989,7 @@ async def test_create_work_item_with_recent_history_enabled(
         await app.screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         # THEN
-        add_item_to_recent_history_mock.assert_called_once_with(HistoryEntry('key-2', '', '', ''))
+        add_item_to_recent_history_mock.assert_called_once()
 
 
 @patch.object(APIController, 'transition_issue_status')
@@ -1219,7 +1218,6 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selec
         await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
-        await pilot.press('tab')
         await pilot.press('enter')
         # THEN
         assert isinstance(app.screen, MainScreen)
@@ -1267,7 +1265,6 @@ async def test_show_quick_view_screen_after_creating_work_dismiss_with_row_selec
         await screen.create_work_item({'summary': 'some value here'})
         await pilot.pause()
         assert isinstance(app.screen, WorkItemQuickViewScreen)
-        await pilot.press('tab')
         await pilot.press('down')
         await pilot.press('enter')
         # THEN

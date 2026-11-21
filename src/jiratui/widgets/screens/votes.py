@@ -115,15 +115,19 @@ class WorkItemVotesScreen(Actionable, ModalScreen[WorkItemVoteUpdateRequest]):
             if votes.has_voted:
                 self.vote_status_field.content = 'Voted'
                 self.vote_status_field.styles.display = 'block'
-            self.datatable.clear()
+            dt = self.datatable
+            dt.clear()
             if votes.voters:
-                self.datatable.add_columns('Name')
+                dt.add_columns('Name')
                 for voter in votes.voters:
-                    self.datatable.add_row(voter.display_name)
-                self.datatable.border_subtitle = f'{votes.votes} votes'
-                self.datatable.border_title = 'Voters'
-                self.datatable.display = True
+                    dt.add_row(voter.display_name)
+                dt.border_subtitle = f'{votes.votes} votes'
+                dt.border_title = 'Voters'
+                dt.display = True
                 self.message.display = False
+                if dt.row_count > 0:
+                    dt.move_cursor(row=0, column=0)
+                    dt.focus()
             else:
                 self.message.content = 'The work item does not have votes yet.'
                 self.message.display = True

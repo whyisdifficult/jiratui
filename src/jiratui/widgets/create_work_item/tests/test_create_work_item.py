@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
@@ -336,7 +337,6 @@ async def test_create_work_item_open_modal_screen_search_assignee_and_reporter(
     async with app.run_test() as pilot:
         # WHEN
         await pilot.press('ctrl+n')
-        await pilot.press('tab')
         await pilot.press('enter')
         await pilot.press('down')
         await pilot.press('enter')
@@ -399,7 +399,6 @@ async def test_create_work_item_open_modal_screen_search_reporter_only(
     async with app.run_test() as pilot:
         # WHEN
         await pilot.press('ctrl+n')
-        await pilot.press('tab')
         await pilot.press('enter')
         await pilot.press('down')
         await pilot.press('enter')
@@ -1607,7 +1606,7 @@ def test_create_widgets_for_work_item_creation_with_team_widget_in_cloud(
 ):
     # GIVEN
     config_for_testing.enable_creating_additional_fields = True
-    field = {**TEAM_FIELD_CREATE_METADATA}
+    field: dict[str, Any] = {**TEAM_FIELD_CREATE_METADATA}
     field['schema'] = {**field['schema'], 'custom': schema_custom}
     # WHEN
     with patch('jiratui.widgets.create_work_item.factory._uses_cloud_api') as uses_cloud_api_mock:
@@ -3217,7 +3216,6 @@ async def test_press_edit_on_description_widget_calls_open_as_temporary_file_whe
         await pilot.press('tab')
         await pilot.press('tab')
         await pilot.press('tab')
-        await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')
         await pilot.press('b')
@@ -3317,7 +3315,6 @@ async def test_typing_at_opens_mention_overlay(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN
-        await pilot.press('tab')  # focus project dropdown
         await pilot.press('tab')  # focus issue type dropdown
         await pilot.press('tab')  # focus reporter
         await pilot.press('tab')  # focus assignee
@@ -3371,8 +3368,8 @@ async def test_typing_at_after_word_does_not_open_overlay(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN
-        for _i in range(0, 5):
-            # focus project/issue type dropdown, reporter, assignee, summary
+        for _i in range(0, 4):
+            # focus issue type dropdown, reporter, assignee, summary
             await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')  # focus parent
@@ -3424,8 +3421,8 @@ async def test_mention_overlay_not_opened_when_adf_disabled(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN the user types '@' but ADF is not supported (e.g. Jira DC / API v2)
-        for _i in range(0, 5):
-            # focus project/issue type dropdown, reporter, assignee, summary
+        for _i in range(0, 4):
+            # focus issue type dropdown, reporter, assignee, summary
             await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')  # focus parent
@@ -3478,8 +3475,8 @@ async def test_selecting_user_inserts_mention_token(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN a user is selected from the mention autocomplete
-        for _i in range(0, 5):
-            # focus project/issue type dropdown, reporter, assignee, summary
+        for _i in range(0, 4):
+            # focus issue type dropdown, reporter, assignee, summary
             await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')  # focus parent
@@ -3538,8 +3535,8 @@ async def test_cancelling_mention_restores_literal_at(
         screen.dismiss = Mock()
         await app.push_screen(screen)
         # WHEN a user is selected from the mention autocomplete
-        for _i in range(0, 5):
-            # focus project/issue type dropdown, reporter, assignee, summary
+        for _i in range(0, 4):
+            # focus issue type dropdown, reporter, assignee, summary
             await pilot.press('tab')
         await pilot.press('a')
         await pilot.press('tab')  # focus parent

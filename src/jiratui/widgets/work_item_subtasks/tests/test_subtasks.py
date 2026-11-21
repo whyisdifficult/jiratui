@@ -171,7 +171,6 @@ async def test_select_item_in_goto_screen(
         await pilot.press('8')
         await pilot.press('tab')
         await pilot.press('f6')
-        await pilot.press('tab')
         await pilot.press('enter')
         # THEN
         assert isinstance(app.screen, MainScreen)

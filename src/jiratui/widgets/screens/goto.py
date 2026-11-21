@@ -246,6 +246,10 @@ class GoToScreen(ModalScreen[str]):
             if related_issues:
                 self._fill_in_related_work_items_table(related_issues)
 
+            if table.row_count > 0:
+                table.move_cursor(row=0, column=0)
+                table.focus()
+
     def _fill_in_subtasks_table(self, tasks: list[JiraIssue]) -> None:
         table = self.table_subtasks
         table.clear()
