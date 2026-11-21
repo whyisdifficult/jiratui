@@ -471,6 +471,7 @@ class AddWorkItemScreen(Actionable, Screen[dict[str, Any]]):
             [reporter_autocomplete, assignee_autocomplete, work_item_parent_key_autocomplete]
         )
         self.user_mention_overlay_container.styles.display = 'none'
+        self.set_focus(self.project_selector)
 
     def _use_advanced_full_text_search(self) -> bool:
         return self.app.config.enable_advanced_full_text_search  # type:ignore[attr-defined]

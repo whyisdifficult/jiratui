@@ -160,6 +160,14 @@ class MainScreen(Actionable, Screen):
         )
         for action in ACTIONS
         if isinstance(action.action, str)
+    ] + [
+        Binding(
+            key='escape',
+            action='unfocus',
+            show=False,
+            description='Unfocus the currently-focused widget.',
+            tooltip='',
+        )
     ]
 
     def __init__(
@@ -1177,6 +1185,10 @@ class MainScreen(Actionable, Screen):
 
     async def action_focus_work_item_subtasks_tab(self) -> None:
         self.set_focus(self.issue_child_work_items_widget)
+
+    def action_unfocus(self) -> None:
+        # this allows the user to pres `escape` to unfocus the currently focused widget
+        self.set_focus(None)
 
     def action_copy_issue_url(self) -> None:
         """Copy to the clipboard the URL of the item currently selected in the search results."""

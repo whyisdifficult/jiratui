@@ -203,3 +203,7 @@ class HistoryScreen(Actionable, ModalScreen[str]):
                 *[entry.key, entry.item_type or '-', entry.status or '-', entry_summary],
                 key=f'key:{entry.key}',
             )
+        # focus the first row; if any exists
+        if table.row_count > 0:
+            table.move_cursor(row=0, column=0)
+            table.focus()

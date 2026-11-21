@@ -360,6 +360,10 @@ class WorkItemQuickViewScreen(Actionable, ModalScreen[str]):
                             )
                         )
 
+            if table.row_count > 0:
+                table.move_cursor(row=0, column=0)
+                table.focus()
+
     def action_open_in_browser(self) -> None:
         """Opens the currently-selected item in the default browser."""
         if self._work_item_key:

@@ -158,8 +158,9 @@ class ServerInfoScreen(ModalScreen):
                 ]
             )
 
-        self.datatable_config_info.add_columns(*['Property', 'Value'])
-        self.datatable_config_info.add_rows(
+        datatable_config_info = self.datatable_config_info
+        datatable_config_info.add_columns(*['Property', 'Value'])
+        datatable_config_info.add_rows(
             [
                 (
                     Text('API Version', justify='right', style='yellow'),
@@ -236,3 +237,7 @@ class ServerInfoScreen(ModalScreen):
                         ),
                     ]
                 )
+
+        if datatable_config_info.row_count > 0:
+            datatable_config_info.move_cursor(row=0, column=0)
+            datatable_config_info.focus()
